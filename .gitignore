@@ -1,23 +1,29 @@
 # Python
 __pycache__/
 *.py[cod]
+*.pyo
+
+# Virtual environment
 .venv/
 venv/
+env/
 
 # Jupyter
 .ipynb_checkpoints/
 
-# Data
-data/raw/*
-data/interim/*
-data/processed/*
-
-# Environment
+# Environment / secrets
 .env
+.env.*
 
-# VS Code
-.vscode/
-
-# OS
+# OS files
 .DS_Store
 Thumbs.db
+
+# Large/raw datasets
+data/raw/
+
+# Generated processed datasets
+data/processed/
+
+# Temporary/intermediate data
+data/interim/
