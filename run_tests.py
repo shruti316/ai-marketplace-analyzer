@@ -49,6 +49,14 @@ from tests.test_vision import (
     test_packaging_consistency_exact,
     test_packaging_consistency_neutral_on_empty,
 )
+from tests.test_nlp import (
+    test_sentiment_compound_polarity,
+    test_polar_discordance_logic,
+    test_product_review_analyzer_zero_reviews,
+    test_product_review_analyzer_single_review,
+    test_product_review_analyzer_multi_review_similarity,
+    test_product_review_analyzer_missing_empty_text,
+)
 
 
 def run_all_tests():
@@ -75,6 +83,12 @@ def run_all_tests():
         ("test_dhash_determinism", test_dhash_determinism),
         ("test_packaging_consistency_exact", test_packaging_consistency_exact),
         ("test_packaging_consistency_neutral_on_empty", test_packaging_consistency_neutral_on_empty),
+        ("test_sentiment_compound_polarity", test_sentiment_compound_polarity),
+        ("test_polar_discordance_logic", test_polar_discordance_logic),
+        ("test_product_review_analyzer_zero_reviews", test_product_review_analyzer_zero_reviews),
+        ("test_product_review_analyzer_single_review", test_product_review_analyzer_single_review),
+        ("test_product_review_analyzer_multi_review_similarity", test_product_review_analyzer_multi_review_similarity),
+        ("test_product_review_analyzer_missing_empty_text", test_product_review_analyzer_missing_empty_text),
     ]
 
     print("==================================================")

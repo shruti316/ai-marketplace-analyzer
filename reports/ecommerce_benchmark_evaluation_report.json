@@ -5,45 +5,51 @@
     "license": "Apache 2.0",
     "task": "E-Commerce Review Deception Detection",
     "total_benchmark_records": 40526,
-    "evaluated_sample_records": 10000
+    "deduplicated_benchmark_records": 40493,
+    "evaluated_records": 40493,
+    "duplicate_texts_quarantined": 33
+  },
+  "label_semantics": {
+    "0": "Authentic / Real customer review",
+    "1": "Computer-generated / Synthetic fake review"
   },
   "evaluation_protocol": {
-    "split_method": "Stratified 75/25 Train-Test Split",
-    "leakage_prevention": "Vectorizer fit strictly on training partition; zero test tokens in vocabulary",
+    "split_method": "Stratified 75/25 Train-Test Split (Zero text overlap)",
+    "leakage_prevention": "Deduplicated prior to split; Vectorizer fit strictly on training partition; zero test tokens in vocabulary",
     "model": "TF-IDF (1-2 grams, 5k features) + Logistic Regression (L2)"
   },
   "metrics": {
-    "accuracy": 0.8448,
-    "precision": 0.8527,
-    "recall": 0.8336,
-    "f1_score": 0.843,
-    "roc_auc": 0.9264,
+    "accuracy": 0.8785,
+    "precision": 0.8812,
+    "recall": 0.8752,
+    "f1_score": 0.8782,
+    "roc_auc": 0.9517,
     "confusion_matrix": {
-      "true_negative": 1070,
-      "false_positive": 180,
-      "false_negative": 208,
-      "true_positive": 1042
+      "true_negative": 4460,
+      "false_positive": 598,
+      "false_negative": 632,
+      "true_positive": 4434
     }
   },
   "category_distribution": {
-    "Kindle_Store": 1153,
-    "Books": 1088,
-    "Pet_Supplies": 1041,
-    "Sports_and_Outdoors": 990,
-    "Home_and_Kitchen": 987,
-    "Electronics": 977,
-    "Tools_and_Home_Improvement": 974,
-    "Clothing_Shoes_and_Jewelry": 937,
-    "Toys_and_Games": 935,
-    "Movies_and_TV": 901,
-    "Food": 3,
-    "Toys": 3,
-    "Clothing": 3,
-    "Beauty": 2,
-    "Automotive": 2,
-    "Gardening": 2,
-    "Sporting Goods": 1,
-    "Home Appliances": 1
+    "Kindle_Store": 4727,
+    "Books": 4377,
+    "Pet_Supplies": 4251,
+    "Home_and_Kitchen": 4055,
+    "Electronics": 3997,
+    "Sports_and_Outdoors": 3943,
+    "Tools_and_Home_Improvement": 3858,
+    "Clothing_Shoes_and_Jewelry": 3845,
+    "Toys_and_Games": 3791,
+    "Movies_and_TV": 3585,
+    "Home Appliances": 10,
+    "Toys": 8,
+    "Beauty": 8,
+    "Clothing": 8,
+    "Sporting Goods": 8,
+    "Food": 8,
+    "Automotive": 8,
+    "Gardening": 6
   },
-  "boundary_notice": "This benchmark evaluates lexical deception detection on e-commerce review text. It is maintained separately from production observational marketplace data and serves as an empirical baseline for NLP stylometry."
+  "boundary_notice": "This benchmark evaluates lexical deception detection on e-commerce review text. It is maintained separately from production observational marketplace data and serves as an empirical baseline for NLP stylometry. High benchmark accuracy does not imply equivalent accuracy on observational production fraud, where multi-signal evidence is required."
 }

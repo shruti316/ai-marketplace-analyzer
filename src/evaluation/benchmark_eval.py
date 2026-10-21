@@ -5,16 +5,18 @@ Leakage-Safe E-Commerce Review Manipulation & Deception Evaluation Suite.
 
 Evaluates text stylometry and supervised NLP classification models on the
 Salminen et al. (2022) / theArijitDas E-Commerce Fake Reviews Benchmark (40,526 records):
-- Categories: Electronics, Home and Kitchen, Clothing Shoes and Jewelry, Beauty, etc.
+- Categories: Electronics, Home and Kitchen, Clothing Shoes and Jewelry, Beauty, Books, etc.
 - Labels: 0 = Authentic/Real Review, 1 = Computer-Generated/Fake Review.
 - License: Apache 2.0.
 
 Key Guarantees:
 1. Strict boundary isolation: Benchmark data is quarantined in data/raw/benchmarks/
    and NEVER merged into production observational marketplace datasets.
-2. Leakage-safe evaluation: All transformers (TF-IDF vectorizers) fit strictly on
+2. Duplicate leakage prevention: Identical text strings are deduplicated prior to
+   train/test splitting, ensuring zero text overlap across partitions.
+3. Preprocessing isolation: All transformers (TF-IDF vectorizers) fit strictly on
    the training partition.
-3. Multi-metric evaluation: Precision, Recall, F1, PR-AUC, and Confusion Matrix.
+4. Multi-metric evaluation: Precision, Recall, F1, PR-AUC, ROC-AUC, and Confusion Matrix.
 
 Outputs:
 - data/raw/benchmarks/ecommerce_fake_reviews_benchmark.parquet
@@ -22,16 +24,18 @@ Outputs:
 """
 
 import os
+import sys
 import json
 import logging
-from typing import Dict, Any, Tuple
+
+sys.path.insert(0, os.path.abspath("."))
+from typing import Dict, Any, Tuple, Optional
 import requests
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import StratifiedKFold, train_test_split
+from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
-from sklearn.naive_bayes import MultinomialNB
 from sklearn.metrics import (
     accuracy_score,
     precision_score,
@@ -78,7 +82,8 @@ def acquire_ecommerce_benchmark(
 def evaluate_ecommerce_benchmark(
     benchmark_path: str = "data/raw/benchmarks/ecommerce_fake_reviews_benchmark.parquet",
     reports_dir: str = "reports",
-    sample_size: int = 10000,
+    sample_size: Optional[int] = None,
+    deduplicate_texts: bool = True,
     random_state: int = 42,
 ) -> Dict[str, Any]:
     """
@@ -86,15 +91,25 @@ def evaluate_ecommerce_benchmark(
     """
     logging.info("Loading e-commerce benchmark from %s...", benchmark_path)
     df = pd.read_parquet(benchmark_path)
+    raw_total = len(df)
     logging.info("Loaded benchmark shape: %s. Columns: %s", df.shape, list(df.columns))
 
-    # Stratified sample for fast, reproducible evaluation
-    if len(df) > sample_size:
-        df_eval = df.groupby("label").sample(
+    # Duplicate text leakage prevention
+    dup_text_count = df.duplicated(subset=["text"]).sum()
+    if deduplicate_texts and dup_text_count > 0:
+        logging.info("Removing %d duplicate text strings to prevent cross-partition leakage...", dup_text_count)
+        df_clean = df.drop_duplicates(subset=["text"]).reset_index(drop=True)
+    else:
+        df_clean = df.copy()
+
+    # Stratified sample if sample_size is explicitly constrained
+    if sample_size is not None and len(df_clean) > sample_size:
+        logging.info("Sampling %d records stratified by label...", sample_size)
+        df_eval = df_clean.groupby("label").sample(
             n=sample_size // 2, random_state=random_state
         ).reset_index(drop=True)
     else:
-        df_eval = df.copy()
+        df_eval = df_clean.copy()
 
     logging.info("Evaluation sample shape: %s. Class balance:\n%s", df_eval.shape, df_eval["label"].value_counts().to_dict())
 
@@ -106,7 +121,10 @@ def evaluate_ecommerce_benchmark(
         X, y, test_size=0.25, random_state=random_state, stratify=y
     )
 
-    logging.info("Train set: %d reviews | Test set: %d reviews", len(X_train), len(X_test))
+    # Verify zero text overlap between partitions
+    overlap = len(set(X_train) & set(X_test))
+    assert overlap == 0, f"Duplicate text leakage detected! {overlap} strings overlap between train and test."
+    logging.info("Train set: %d reviews | Test set: %d reviews | Text overlap: 0", len(X_train), len(X_test))
 
     # 2. Strict Preprocessing Isolation: Fit vectorizer ONLY on training set
     logging.info("Fitting TF-IDF vectorizer strictly on training partition...")
@@ -140,12 +158,18 @@ def evaluate_ecommerce_benchmark(
             "source": "theArijitDas/Fake-Reviews-Dataset (Hugging Face)",
             "license": "Apache 2.0",
             "task": "E-Commerce Review Deception Detection",
-            "total_benchmark_records": len(df),
-            "evaluated_sample_records": len(df_eval),
+            "total_benchmark_records": raw_total,
+            "deduplicated_benchmark_records": len(df_clean),
+            "evaluated_records": len(df_eval),
+            "duplicate_texts_quarantined": int(dup_text_count),
+        },
+        "label_semantics": {
+            "0": "Authentic / Real customer review",
+            "1": "Computer-generated / Synthetic fake review"
         },
         "evaluation_protocol": {
-            "split_method": "Stratified 75/25 Train-Test Split",
-            "leakage_prevention": "Vectorizer fit strictly on training partition; zero test tokens in vocabulary",
+            "split_method": "Stratified 75/25 Train-Test Split (Zero text overlap)",
+            "leakage_prevention": "Deduplicated prior to split; Vectorizer fit strictly on training partition; zero test tokens in vocabulary",
             "model": "TF-IDF (1-2 grams, 5k features) + Logistic Regression (L2)",
         },
         "metrics": {
@@ -165,7 +189,8 @@ def evaluate_ecommerce_benchmark(
         "boundary_notice": (
             "This benchmark evaluates lexical deception detection on e-commerce review text. "
             "It is maintained separately from production observational marketplace data and "
-            "serves as an empirical baseline for NLP stylometry."
+            "serves as an empirical baseline for NLP stylometry. High benchmark accuracy does not "
+            "imply equivalent accuracy on observational production fraud, where multi-signal evidence is required."
         ),
     }
 
