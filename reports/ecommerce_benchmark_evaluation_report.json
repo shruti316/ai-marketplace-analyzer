@@ -1,0 +1,49 @@
+{
+  "benchmark_name": "Salminen et al. (2022) E-Commerce Fake Reviews Benchmark",
+  "provenance": {
+    "source": "theArijitDas/Fake-Reviews-Dataset (Hugging Face)",
+    "license": "Apache 2.0",
+    "task": "E-Commerce Review Deception Detection",
+    "total_benchmark_records": 40526,
+    "evaluated_sample_records": 10000
+  },
+  "evaluation_protocol": {
+    "split_method": "Stratified 75/25 Train-Test Split",
+    "leakage_prevention": "Vectorizer fit strictly on training partition; zero test tokens in vocabulary",
+    "model": "TF-IDF (1-2 grams, 5k features) + Logistic Regression (L2)"
+  },
+  "metrics": {
+    "accuracy": 0.8448,
+    "precision": 0.8527,
+    "recall": 0.8336,
+    "f1_score": 0.843,
+    "roc_auc": 0.9264,
+    "confusion_matrix": {
+      "true_negative": 1070,
+      "false_positive": 180,
+      "false_negative": 208,
+      "true_positive": 1042
+    }
+  },
+  "category_distribution": {
+    "Kindle_Store": 1153,
+    "Books": 1088,
+    "Pet_Supplies": 1041,
+    "Sports_and_Outdoors": 990,
+    "Home_and_Kitchen": 987,
+    "Electronics": 977,
+    "Tools_and_Home_Improvement": 974,
+    "Clothing_Shoes_and_Jewelry": 937,
+    "Toys_and_Games": 935,
+    "Movies_and_TV": 901,
+    "Food": 3,
+    "Toys": 3,
+    "Clothing": 3,
+    "Beauty": 2,
+    "Automotive": 2,
+    "Gardening": 2,
+    "Sporting Goods": 1,
+    "Home Appliances": 1
+  },
+  "boundary_notice": "This benchmark evaluates lexical deception detection on e-commerce review text. It is maintained separately from production observational marketplace data and serves as an empirical baseline for NLP stylometry."
+}

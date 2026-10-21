@@ -20,7 +20,9 @@ def test_category_normalization():
     assert normalize_category_name("Home and Kitchen") == "Home & Kitchen"
     assert normalize_category_name("Toys & Games") == "Toys & Games"
     assert normalize_category_name("Books") == "Books & Stationery"
-    assert normalize_category_name("Random Nonexistent Category") == "Random Nonexistent Category"
+    assert normalize_category_name("inkjet printer ink") == "Books & Stationery"
+    assert normalize_category_name("headphones") == "Electronics"
+    assert normalize_category_name("Random Nonexistent Category") == "Other"
     assert normalize_category_name(None) == "Other"
 
 

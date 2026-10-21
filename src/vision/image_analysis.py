@@ -59,8 +59,14 @@ def extract_ocr_text(image_path: str) -> Optional[str]:
     if _HAS_WINOCR:
         try:
             res = winocr.recognize_pil_sync(Image.open(image_path))
-            if res and hasattr(res, "text"):
-                return str(res.text).strip()
+            if res:
+                if isinstance(res, dict):
+                    raw_text = res.get("text", "")
+                elif hasattr(res, "text"):
+                    raw_text = getattr(res, "text", "")
+                else:
+                    raw_text = str(res)
+                return str(raw_text).strip() if raw_text else None
         except Exception as e:
             logging.warning("WinOCR extraction failed for %s: %s", image_path, e)
 

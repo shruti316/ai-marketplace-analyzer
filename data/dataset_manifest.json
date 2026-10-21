@@ -1,6 +1,6 @@
 {
   "manifest_version": "3.0.0",
-  "generated_at": "2026-10-21T05:56:03.472554",
+  "generated_at": "2026-10-21T07:24:13.769374",
   "project": "AI-Powered Marketplace Trust Intelligence Platform",
   "dataset_collection": [
     {
@@ -20,9 +20,9 @@
         "collection_method": "Deterministic canonical normalization across categories & marketplaces"
       },
       "status": "UPGRADED_CANONICAL_TABLE",
-      "file_size_bytes": 3612652,
-      "sha256_checksum": "a7a09f1f9fcd0837df8f2f667023c3c77baa0d57cbe0be288cb7ca455286a1de",
-      "rows": 27739,
+      "file_size_bytes": 3564506,
+      "sha256_checksum": "73794c3d53285234c83fe60760a17fa4267fa66100b215d194c83a27d5d86bf6",
+      "rows": 27789,
       "columns": 21,
       "column_names": [
         "canonical_product_id",
@@ -48,13 +48,13 @@
         "field_availability"
       ],
       "missing_value_counts": {
-        "brand": 3276,
+        "brand": 3077,
         "description": 3077,
-        "price": 6451,
-        "rating": 25350,
-        "rating_count": 25350,
+        "price": 6501,
+        "rating": 25400,
+        "rating_count": 25400,
         "product_url": 3077,
-        "seller_id": 27739,
+        "seller_id": 27789,
         "seller_name": 3077
       }
     },
@@ -76,9 +76,9 @@
         "collection_method": "Multi-category ingestion with strict foreign key integrity validation"
       },
       "status": "UPGRADED_CANONICAL_TABLE",
-      "file_size_bytes": 2638563,
-      "sha256_checksum": "dc9656f1a169615c386ed0abf224ae7cf8b69244d54d250a8b9c8b768c93b891",
-      "rows": 12346,
+      "file_size_bytes": 9138089,
+      "sha256_checksum": "2201fdd8cd346c76b7c043c7b3c96d068c2295769471a767df7d2f65a17e42e6",
+      "rows": 55616,
       "columns": 15,
       "column_names": [
         "canonical_review_id",
@@ -98,9 +98,9 @@
         "ground_truth_label"
       ],
       "missing_value_counts": {
-        "timestamp": 1695,
+        "timestamp": 44965,
         "review_date": 10651,
-        "ground_truth_label": 12346
+        "ground_truth_label": 55616
       }
     },
     {
@@ -118,10 +118,10 @@
         "collection_method": "Structured image URL parsing linked to canonical products"
       },
       "status": "UPGRADED_CANONICAL_TABLE",
-      "file_size_bytes": 85821,
-      "sha256_checksum": "5c000ba42439c1f9c0adfe9dad2638fae2c0192c8518308c9db308823f2fa732",
-      "rows": 3489,
-      "columns": 11,
+      "file_size_bytes": 169692,
+      "sha256_checksum": "0bf02773dc432d613822140efc95bc1421ec82ae3e131e3247cfc6145d7a3789",
+      "rows": 3909,
+      "columns": 15,
       "column_names": [
         "image_id",
         "canonical_product_id",
@@ -130,17 +130,105 @@
         "local_path",
         "image_type",
         "download_status",
+        "file_size_bytes",
+        "width",
+        "height",
         "content_hash_sha256",
         "perceptual_hash_dhash",
         "ocr_text",
+        "packaging_consistency_score",
         "source_provenance"
       ],
       "missing_value_counts": {
-        "local_path": 3489,
-        "content_hash_sha256": 3489,
-        "perceptual_hash_dhash": 3489,
-        "ocr_text": 3489
+        "local_path": 3389,
+        "file_size_bytes": 3389,
+        "width": 3389,
+        "height": 3389,
+        "content_hash_sha256": 3389,
+        "perceptual_hash_dhash": 3389,
+        "ocr_text": 3705,
+        "packaging_consistency_score": 3389
       }
+    },
+    {
+      "id": "canonical_relationships",
+      "path": "data/processed/canonical_relationships.parquet",
+      "role": "Auditable Entity Relationship Graph",
+      "entity_level": "Entity Relationship Edge",
+      "primary_key": "relationship_id",
+      "foreign_keys": {
+        "source_entity_id": "canonical_products.canonical_product_id"
+      },
+      "provenance": {
+        "sources": [
+          "canonical_products",
+          "canonical_reviews",
+          "canonical_images"
+        ],
+        "license": "Academic Research Use",
+        "collection_method": "Deterministic relational linkage modeling with seller quarantine policy"
+      },
+      "status": "UPGRADED_CANONICAL_TABLE",
+      "file_size_bytes": 3690224,
+      "sha256_checksum": "75926f0eec5a92e966933913e22e2c06974c7b0009c5fb16cd184207901928d6",
+      "rows": 139708,
+      "columns": 10,
+      "column_names": [
+        "relationship_id",
+        "source_entity_id",
+        "source_entity_type",
+        "target_entity_id",
+        "target_entity_type",
+        "relationship_type",
+        "marketplace",
+        "evidence_source",
+        "verification_status",
+        "confidence_score"
+      ],
+      "missing_value_counts": {}
+    },
+    {
+      "id": "matched_cross_marketplace_pairs",
+      "path": "data/processed/matched_cross_marketplace_pairs.parquet",
+      "role": "Cross-Marketplace Entity Matching Decisional Dataset",
+      "entity_level": "Product Pair Comparison",
+      "primary_key": "match_id",
+      "foreign_keys": {
+        "product_id_1": "canonical_products.canonical_product_id",
+        "product_id_2": "canonical_products.canonical_product_id"
+      },
+      "provenance": {
+        "sources": [
+          "Walmart catalog",
+          "Amazon electronics catalog"
+        ],
+        "license": "Academic Research Use",
+        "collection_method": "Exact model number matching and title token Jaccard similarity evaluation"
+      },
+      "status": "UPGRADED_CANONICAL_TABLE",
+      "file_size_bytes": 10497,
+      "sha256_checksum": "84ae81db0a4d7d5a7e0b7e33d70528fa7dd9b8d4135dbadc9b248038cf13a401",
+      "rows": 1,
+      "columns": 16,
+      "column_names": [
+        "match_id",
+        "product_id_1",
+        "marketplace_1",
+        "title_1",
+        "brand_1",
+        "model_1",
+        "product_id_2",
+        "marketplace_2",
+        "title_2",
+        "brand_2",
+        "model_2",
+        "match_method",
+        "confidence_score",
+        "token_jaccard_similarity",
+        "supporting_evidence",
+        "match_decision"
+      ],
+      "missing_value_counts": {}
     },
     {
       "id": "dense_products",
@@ -290,33 +378,37 @@
         "collection_method": "Automated download of 50 primary packaging images; SHA-256, dHash, and Windows WinRT OCR extraction"
       },
       "status": "UPGRADED_INTERIM_TABLE",
-      "file_size_bytes": 20933,
-      "sha256_checksum": "373980442b25662eef1115130ce4536c7927a5d503744a8781eb79b6681eef6e",
-      "rows": 50,
-      "columns": 19,
+      "file_size_bytes": 135710,
+      "sha256_checksum": "815c49630c8891f2a634da8b7f25ae7e0e56fd0cca4dadcc80efdaf2d4c0454d",
+      "rows": 520,
+      "columns": 22,
       "column_names": [
         "image_id",
-        "parent_asin",
+        "canonical_product_id",
+        "marketplace",
+        "category",
+        "title",
+        "brand",
         "image_type",
         "image_url",
-        "source",
+        "local_path",
         "http_status",
-        "download_success",
+        "download_status",
         "file_size_bytes",
-        "image_format",
         "width",
         "height",
-        "aspect_ratio",
-        "sha256_hash",
-        "dhash",
-        "ocr_status",
+        "image_format",
+        "content_hash_sha256",
+        "perceptual_hash_dhash",
         "ocr_text",
-        "ocr_word_count",
-        "local_path",
-        "error_message"
+        "has_readable_text",
+        "packaging_consistency_score",
+        "error_message",
+        "source_provenance"
       ],
       "missing_value_counts": {
-        "error_message": 50
+        "ocr_text": 316,
+        "error_message": 520
       }
     },
     {
@@ -343,6 +435,32 @@
         "polarity",
         "source",
         "text"
+      ],
+      "missing_value_counts": {}
+    },
+    {
+      "id": "ecommerce_fake_reviews_benchmark",
+      "path": "data/raw/benchmarks/ecommerce_fake_reviews_benchmark.parquet",
+      "role": "E-Commerce Review Manipulation & Deception Benchmark",
+      "entity_level": "Benchmark Review",
+      "primary_key": null,
+      "foreign_keys": {},
+      "provenance": {
+        "source": "Salminen et al. (2022) / theArijitDas (Hugging Face)",
+        "url": "https://huggingface.co/datasets/theArijitDas/Fake-Reviews-Dataset",
+        "license": "Apache 2.0",
+        "collection_method": "Multi-category e-commerce reviews with genuine vs. computer-generated manipulation ground-truth"
+      },
+      "status": "BENCHMARK_ISOLATED",
+      "file_size_bytes": 8292172,
+      "sha256_checksum": "3384e50f7bbc34b4458baa3d103db39313bed83000f31d15858c930cf0f62ba9",
+      "rows": 40526,
+      "columns": 4,
+      "column_names": [
+        "category",
+        "rating",
+        "text",
+        "label"
       ],
       "missing_value_counts": {}
     },

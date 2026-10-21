@@ -35,6 +35,20 @@ from tests.test_risk_engine import (
     test_risk_engine_compound_risk,
     test_risk_engine_handles_missing_signals_non_punitively,
 )
+from tests.test_relationships import (
+    test_canonical_relationship_dataclass,
+    test_relationship_table_integrity,
+)
+from tests.test_matching import (
+    test_jaccard_token_similarity,
+    test_exact_model_match,
+    test_conflicting_attributes_rejection,
+)
+from tests.test_vision import (
+    test_dhash_determinism,
+    test_packaging_consistency_exact,
+    test_packaging_consistency_neutral_on_empty,
+)
 
 
 def run_all_tests():
@@ -53,6 +67,14 @@ def run_all_tests():
         ("test_risk_engine_baseline_low_risk", test_risk_engine_baseline_low_risk),
         ("test_risk_engine_compound_risk", test_risk_engine_compound_risk),
         ("test_risk_engine_handles_missing_signals_non_punitively", test_risk_engine_handles_missing_signals_non_punitively),
+        ("test_canonical_relationship_dataclass", test_canonical_relationship_dataclass),
+        ("test_relationship_table_integrity", test_relationship_table_integrity),
+        ("test_jaccard_token_similarity", test_jaccard_token_similarity),
+        ("test_exact_model_match", test_exact_model_match),
+        ("test_conflicting_attributes_rejection", test_conflicting_attributes_rejection),
+        ("test_dhash_determinism", test_dhash_determinism),
+        ("test_packaging_consistency_exact", test_packaging_consistency_exact),
+        ("test_packaging_consistency_neutral_on_empty", test_packaging_consistency_neutral_on_empty),
     ]
 
     print("==================================================")

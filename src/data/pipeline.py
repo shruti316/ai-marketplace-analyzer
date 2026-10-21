@@ -88,8 +88,14 @@ def parse_numeric_price(val: Any) -> Optional[float]:
 
 
 class CanonicalPipeline:
-    def __init__(self, raw_dir: str = "data/raw", processed_dir: str = "data/processed"):
+    def __init__(
+        self,
+        raw_dir: str = "data/raw",
+        interim_dir: str = "data/interim",
+        processed_dir: str = "data/processed",
+    ):
         self.raw_dir = raw_dir
+        self.interim_dir = interim_dir
         self.processed_dir = processed_dir
         os.makedirs(processed_dir, exist_ok=True)
 
@@ -135,27 +141,58 @@ class CanonicalPipeline:
                 )
                 self.products.append(asdict(p) if hasattr(p, "__dict__") else p)
 
-        # 2. Ingest dense images
+        # 2. Ingest verified multimodal images and dense images
+        manifest_path = os.path.join(self.interim_dir, "image_manifest.parquet")
+        manifest_by_id = {}
+        if os.path.exists(manifest_path):
+            logging.info("Ingesting verified multimodal images from %s...", manifest_path)
+            df_man = pd.read_parquet(manifest_path)
+            for _, mrow in df_man.iterrows():
+                img_dict = {
+                    "image_id": str(mrow["image_id"]),
+                    "canonical_product_id": str(mrow["canonical_product_id"]),
+                    "marketplace": str(mrow["marketplace"]),
+                    "image_url": str(mrow.get("image_url", "")),
+                    "local_path": str(mrow.get("local_path")) if pd.notna(mrow.get("local_path")) else None,
+                    "image_type": str(mrow.get("image_type", "primary")),
+                    "download_status": str(mrow.get("download_status", "DOWNLOADED")),
+                    "file_size_bytes": int(mrow["file_size_bytes"]) if pd.notna(mrow.get("file_size_bytes")) else None,
+                    "width": int(mrow["width"]) if pd.notna(mrow.get("width")) else None,
+                    "height": int(mrow["height"]) if pd.notna(mrow.get("height")) else None,
+                    "content_hash_sha256": str(mrow["content_hash_sha256"]) if pd.notna(mrow.get("content_hash_sha256")) else None,
+                    "perceptual_hash_dhash": str(mrow["perceptual_hash_dhash"]) if pd.notna(mrow.get("perceptual_hash_dhash")) else None,
+                    "ocr_text": str(mrow["ocr_text"]) if pd.notna(mrow.get("ocr_text")) else None,
+                    "packaging_consistency_score": float(mrow["packaging_consistency_score"]) if pd.notna(mrow.get("packaging_consistency_score")) else None,
+                    "source_provenance": str(mrow.get("source_provenance", "Image Manifest Pipeline")),
+                }
+                manifest_by_id[img_dict["image_id"]] = img_dict
+                self.images.append(img_dict)
+
         if os.path.exists(dense_img_path):
-            logging.info("Ingesting dense images from %s...", dense_img_path)
+            logging.info("Ingesting additional dense images from %s...", dense_img_path)
             dense_imgs = pd.read_parquet(dense_img_path)
             for _, irow in dense_imgs.iterrows():
                 asin = str(irow["parent_asin"])
                 cid = f"amazon_{asin}"
-                iid = str(irow["image_id"])
-                self.images.append({
-                    "image_id": f"amazon_{iid}",
-                    "canonical_product_id": cid,
-                    "marketplace": "amazon",
-                    "image_url": str(irow.get("image_url", "")),
-                    "local_path": None,
-                    "image_type": str(irow.get("image_type", "primary")),
-                    "download_status": "PENDING",
-                    "content_hash_sha256": None,
-                    "perceptual_hash_dhash": None,
-                    "ocr_text": None,
-                    "source_provenance": "Amazon Reviews'23 Dense Images",
-                })
+                iid = f"amazon_{irow['image_id']}"
+                if iid not in manifest_by_id:
+                    self.images.append({
+                        "image_id": iid,
+                        "canonical_product_id": cid,
+                        "marketplace": "amazon",
+                        "image_url": str(irow.get("image_url", "")),
+                        "local_path": None,
+                        "image_type": str(irow.get("image_type", "primary")),
+                        "download_status": "PENDING",
+                        "file_size_bytes": None,
+                        "width": None,
+                        "height": None,
+                        "content_hash_sha256": None,
+                        "perceptual_hash_dhash": None,
+                        "ocr_text": None,
+                        "packaging_consistency_score": None,
+                        "source_provenance": "Amazon Reviews'23 Dense Images",
+                    })
 
         # 3. Sample additional raw products from full catalog
         meta_path = os.path.join(self.raw_dir, "amazon", "all_beauty_metadata.parquet")
@@ -385,7 +422,7 @@ class CanonicalPipeline:
             )
             self.products.append(asdict(p) if hasattr(p, "__dict__") else p)
 
-    def ingest_bestbuy_reviews(self, max_reviews: int = 5000):
+    def ingest_bestbuy_reviews(self, max_reviews: Optional[int] = None):
         """Ingest BestBuy product reviews and synthesize canonical products for them."""
         bb_path = os.path.join(self.raw_dir, "bestbuy", "bestbuy_reviews_raw.parquet")
         if not os.path.exists(bb_path):
@@ -394,12 +431,12 @@ class CanonicalPipeline:
 
         logging.info("Ingesting BestBuy reviews and products...")
         df_bb = pd.read_parquet(bb_path)
-        if len(df_bb) > max_reviews:
+        if max_reviews is not None and len(df_bb) > max_reviews:
             df_bb = df_bb.sample(n=max_reviews, random_state=42)
 
         # Track unique products from reviews
         seen_products = set()
-        for _, row in df_bb.iterrows():
+        for idx, row in df_bb.iterrows():
             prod_name = clean_text_field(row.get("product_name"))
             prod_model = clean_text_field(row.get("product_model"))
             if not prod_name:
@@ -415,12 +452,12 @@ class CanonicalPipeline:
                     canonical_product_id=cid,
                     marketplace="bestbuy",
                     source_product_id=prod_slug,
-                    parent_product_id=prod_model,
+                    parent_product_id=prod_model if prod_model else None,
                     title=prod_name,
                     category="Electronics",
-                    subcategory="Electronics & Appliances",
-                    brand=None,
-                    description=f"Model: {prod_model}",
+                    subcategory="Consumer Electronics",
+                    brand=prod_name.split(" - ")[0] if " - " in prod_name else None,
+                    description=f"Model: {prod_model}" if prod_model else prod_name,
                     price=None,
                     currency="USD",
                     rating=None,
@@ -434,12 +471,12 @@ class CanonicalPipeline:
                 )
                 self.products.append(asdict(p) if hasattr(p, "__dict__") else p)
 
-            # Ingest review
-            rev_idx = str(row.get("review_index", ""))
-            rid = f"bestbuy_{prod_slug}_{rev_idx}"
+            # Ingest review with globally unique row ID
+            row_id = str(row.get("__index_level_0__", idx))
+            rid = f"bestbuy_{prod_slug}_{row_id}"
             r = CanonicalReview(
                 canonical_review_id=rid,
-                source_review_id=rev_idx,
+                source_review_id=row_id,
                 canonical_product_id=cid,
                 marketplace="bestbuy",
                 reviewer_id=clean_text_field(row.get("author")),
@@ -490,8 +527,10 @@ class CanonicalPipeline:
 
         # Check image orphans
         if not df_imgs.empty:
+            df_imgs = df_imgs.drop_duplicates(subset=["image_id"]).reset_index(drop=True)
             orphan_images = ~df_imgs["canonical_product_id"].isin(valid_product_ids)
             logging.info("Image orphans: %d / %d", orphan_images.sum(), len(df_imgs))
+            df_imgs = df_imgs[~orphan_images].reset_index(drop=True)
 
         # 3. Export Canonical Processed Parquet Tables
         prod_out = os.path.join(self.processed_dir, "canonical_products.parquet")

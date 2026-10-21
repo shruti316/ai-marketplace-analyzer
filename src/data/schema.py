@@ -18,48 +18,179 @@ import datetime
 import re
 
 
-# Standard Category Taxonomy for Multi-Category Normalization
-STANDARD_CATEGORIES = {
+# Six Standardized Core Parent Categories Supported by Platform
+STANDARD_CATEGORIES = [
+    "Electronics",
+    "Beauty & Personal Care",
+    "Clothing & Fashion",
+    "Home & Kitchen",
+    "Books & Stationery",
+    "Toys & Games",
+]
+
+# Comprehensive Category Taxonomy Mapping (Subcategories -> Standardized Parent Categories)
+CATEGORY_MAPPING_RULES = {
+    # Electronics & Accessories
     "electronics": "Electronics",
-    "cell_phones_and_accessories": "Electronics",
+    "cell_phones": "Electronics",
+    "cell_phone": "Electronics",
+    "phones": "Electronics",
+    "phone": "Electronics",
     "computers": "Electronics",
-    "camera_and_photo": "Electronics",
+    "computer": "Electronics",
+    "camera": "Electronics",
+    "cameras": "Electronics",
+    "audio": "Electronics",
+    "video": "Electronics",
     "headphones": "Electronics",
+    "headphone": "Electronics",
+    "headset": "Electronics",
+    "headsets": "Electronics",
+    "speaker": "Electronics",
+    "speakers": "Electronics",
+    "mice": "Electronics",
+    "mouse": "Electronics",
+    "keyboard": "Electronics",
+    "keyboards": "Electronics",
+    "monitor": "Electronics",
+    "monitors": "Electronics",
+    "laptop": "Electronics",
+    "laptops": "Electronics",
+    "projector": "Electronics",
+    "projectors": "Electronics",
+    "hard_drive": "Electronics",
+    "flash_drive": "Electronics",
+    "memory_card": "Electronics",
+    "memory": "Electronics",
+    "cable": "Electronics",
+    "cables": "Electronics",
+    "adapter": "Electronics",
+    "adapters": "Electronics",
+    "charger": "Electronics",
+    "chargers": "Electronics",
+    "battery": "Electronics",
+    "batteries": "Electronics",
+    "router": "Electronics",
+    "routers": "Electronics",
+    "network": "Electronics",
+    "networking": "Electronics",
+    "switch": "Electronics",
+    "switches": "Electronics",
+    "modem": "Electronics",
+    "modems": "Electronics",
+    "tv": "Electronics",
+    "tvs": "Electronics",
+    "television": "Electronics",
+    "gps": "Electronics",
+    "radio": "Electronics",
+    "radios": "Electronics",
+    "mp3": "Electronics",
+    "surveillance": "Electronics",
+    "security_system": "Electronics",
+    "camcorder": "Electronics",
+    "tripod": "Electronics",
+    "scanners": "Electronics",
+    "scanner": "Electronics",
+
+    # Beauty & Personal Care
     "beauty": "Beauty & Personal Care",
     "all_beauty": "Beauty & Personal Care",
     "premium_beauty": "Beauty & Personal Care",
-    "beauty_and_personal_care": "Beauty & Personal Care",
+    "personal_care": "Beauty & Personal Care",
+    "cosmetics": "Beauty & Personal Care",
+    "skin_care": "Beauty & Personal Care",
+    "hair_care": "Beauty & Personal Care",
+    "fragrance": "Beauty & Personal Care",
+    "makeup": "Beauty & Personal Care",
+
+    # Clothing & Fashion
     "fashion": "Clothing & Fashion",
-    "amazon_fashion": "Clothing & Fashion",
-    "clothing_shoes_and_jewelry": "Clothing & Fashion",
+    "clothing": "Clothing & Fashion",
+    "shoes": "Clothing & Fashion",
+    "jewelry": "Clothing & Fashion",
     "apparel": "Clothing & Fashion",
-    "home_and_kitchen": "Home & Kitchen",
-    "kitchen_and_dining": "Home & Kitchen",
+    "dress": "Clothing & Fashion",
+    "dresses": "Clothing & Fashion",
+    "shirt": "Clothing & Fashion",
+    "shirts": "Clothing & Fashion",
+    "pants": "Clothing & Fashion",
+    "wear": "Clothing & Fashion",
+    "bags_cases": "Clothing & Fashion",
+    "cases_bags": "Clothing & Fashion",
+    "briefcases": "Clothing & Fashion",
+
+    # Home & Kitchen
+    "home": "Home & Kitchen",
+    "kitchen": "Home & Kitchen",
+    "dining": "Home & Kitchen",
     "appliances": "Home & Kitchen",
-    "toys_and_games": "Toys & Games",
+    "appliance": "Home & Kitchen",
+    "furniture": "Home & Kitchen",
+    "bedding": "Home & Kitchen",
+    "bath": "Home & Kitchen",
+    "decor": "Home & Kitchen",
+    "storage": "Home & Kitchen",
+    "lighting": "Home & Kitchen",
+    "light": "Home & Kitchen",
+    "bulbs": "Home & Kitchen",
+    "lamps": "Home & Kitchen",
+    "air_purifiers": "Home & Kitchen",
+    "clocks": "Home & Kitchen",
+
+    # Toys & Games
+    "toys": "Toys & Games",
+    "toy": "Toys & Games",
+    "games": "Toys & Games",
+    "game": "Toys & Games",
+    "puzzles": "Toys & Games",
+    "action_figures": "Toys & Games",
+    "collectibles": "Toys & Games",
+    "hobbies": "Toys & Games",
+
+    # Books & Stationery
     "books": "Books & Stationery",
-    "office_products": "Books & Stationery",
-    "sports_and_outdoors": "Sports & Outdoors",
-    "grocery_and_gourmet_food": "Grocery & Household",
-    "health_and_household": "Grocery & Household",
-    "unknown": "Other",
+    "book": "Books & Stationery",
+    "stationery": "Books & Stationery",
+    "office": "Books & Stationery",
+    "printer_ink": "Books & Stationery",
+    "printer_toner": "Books & Stationery",
+    "inkjet": "Books & Stationery",
+    "laser_printer": "Books & Stationery",
+    "laminating": "Books & Stationery",
+    "presentation": "Books & Stationery",
+    "paper": "Books & Stationery",
+    "binders": "Books & Stationery",
+    "labels": "Books & Stationery",
+    "shredders": "Books & Stationery",
+    "pens": "Books & Stationery",
+    "markers": "Books & Stationery",
+    "calculators": "Books & Stationery",
 }
 
 
 def normalize_category_name(raw_cat: Optional[str]) -> str:
-    """Normalize raw marketplace categories into the platform standard taxonomy."""
+    """
+    Hierarchically normalize raw marketplace categories into the platform's
+    six standardized parent categories:
+    1. Electronics
+    2. Beauty & Personal Care
+    3. Clothing & Fashion
+    4. Home & Kitchen
+    5. Books & Stationery
+    6. Toys & Games
+    (or 'Other' if unclassified)
+    """
     if not raw_cat or not str(raw_cat).strip():
         return "Other"
 
-    cleaned = str(raw_cat).strip().lower().replace("&", "and").replace("-", "_").replace(" ", "_")
-    cleaned = re.sub(r"[^\w_]", "", cleaned)
+    raw_clean = str(raw_cat).strip().lower().replace("&", "and").replace("-", "_").replace(" ", "_")
+    raw_clean = re.sub(r"[^\w_]", "", raw_clean)
 
-    for key, standard in STANDARD_CATEGORIES.items():
-        if key in cleaned:
-            return standard
+    for keyword, parent in CATEGORY_MAPPING_RULES.items():
+        if keyword in raw_clean:
+            return parent
 
-    # Capitalize cleanly if unmatched
-    return str(raw_cat).strip().title()
+    return "Other"
 
 
 @dataclass
