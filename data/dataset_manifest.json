@@ -1,0 +1,452 @@
+{
+  "manifest_version": "3.0.0",
+  "generated_at": "2026-10-21T05:56:03.472554",
+  "project": "AI-Powered Marketplace Trust Intelligence Platform",
+  "dataset_collection": [
+    {
+      "id": "canonical_products",
+      "path": "data/processed/canonical_products.parquet",
+      "role": "Unified Multi-Category & Multi-Marketplace Product Catalog",
+      "entity_level": "Product Listing",
+      "primary_key": "canonical_product_id",
+      "foreign_keys": {},
+      "provenance": {
+        "sources": [
+          "Amazon Reviews'23 (UCSD McAuley Lab)",
+          "Magellan / matchbench Walmart Catalog (Univ. of Wisconsin)",
+          "BestBuy Customer Reviews (ValerianFourel)"
+        ],
+        "license": "Academic Research & Educational Use",
+        "collection_method": "Deterministic canonical normalization across categories & marketplaces"
+      },
+      "status": "UPGRADED_CANONICAL_TABLE",
+      "file_size_bytes": 3612652,
+      "sha256_checksum": "a7a09f1f9fcd0837df8f2f667023c3c77baa0d57cbe0be288cb7ca455286a1de",
+      "rows": 27739,
+      "columns": 21,
+      "column_names": [
+        "canonical_product_id",
+        "marketplace",
+        "source_product_id",
+        "parent_product_id",
+        "title",
+        "category",
+        "subcategory",
+        "brand",
+        "description",
+        "price",
+        "currency",
+        "rating",
+        "rating_count",
+        "product_url",
+        "image_urls",
+        "seller_id",
+        "seller_name",
+        "metadata_details",
+        "source_provenance",
+        "collection_timestamp",
+        "field_availability"
+      ],
+      "missing_value_counts": {
+        "brand": 3276,
+        "description": 3077,
+        "price": 6451,
+        "rating": 25350,
+        "rating_count": 25350,
+        "product_url": 3077,
+        "seller_id": 27739,
+        "seller_name": 3077
+      }
+    },
+    {
+      "id": "canonical_reviews",
+      "path": "data/processed/canonical_reviews.parquet",
+      "role": "Unified Multi-Category & Multi-Marketplace Review Catalog",
+      "entity_level": "Customer Review",
+      "primary_key": "canonical_review_id",
+      "foreign_keys": {
+        "canonical_product_id": "canonical_products.canonical_product_id"
+      },
+      "provenance": {
+        "sources": [
+          "Amazon Reviews'23 Reviews (All Beauty, Electronics, Fashion, Home, Toys, Books)",
+          "BestBuy Reviews"
+        ],
+        "license": "Academic Research & Educational Use",
+        "collection_method": "Multi-category ingestion with strict foreign key integrity validation"
+      },
+      "status": "UPGRADED_CANONICAL_TABLE",
+      "file_size_bytes": 2638563,
+      "sha256_checksum": "dc9656f1a169615c386ed0abf224ae7cf8b69244d54d250a8b9c8b768c93b891",
+      "rows": 12346,
+      "columns": 15,
+      "column_names": [
+        "canonical_review_id",
+        "source_review_id",
+        "canonical_product_id",
+        "marketplace",
+        "reviewer_id",
+        "review_title",
+        "review_text",
+        "rating",
+        "timestamp",
+        "review_date",
+        "verified_purchase",
+        "helpful_votes",
+        "language",
+        "source_provenance",
+        "ground_truth_label"
+      ],
+      "missing_value_counts": {
+        "timestamp": 1695,
+        "review_date": 10651,
+        "ground_truth_label": 12346
+      }
+    },
+    {
+      "id": "canonical_images",
+      "path": "data/processed/canonical_images.parquet",
+      "role": "Unified Multimodal Product Image Catalog",
+      "entity_level": "Image Asset",
+      "primary_key": "image_id",
+      "foreign_keys": {
+        "canonical_product_id": "canonical_products.canonical_product_id"
+      },
+      "provenance": {
+        "source": "Amazon CloudFront Image CDN",
+        "license": "Academic Research Use",
+        "collection_method": "Structured image URL parsing linked to canonical products"
+      },
+      "status": "UPGRADED_CANONICAL_TABLE",
+      "file_size_bytes": 85821,
+      "sha256_checksum": "5c000ba42439c1f9c0adfe9dad2638fae2c0192c8518308c9db308823f2fa732",
+      "rows": 3489,
+      "columns": 11,
+      "column_names": [
+        "image_id",
+        "canonical_product_id",
+        "marketplace",
+        "image_url",
+        "local_path",
+        "image_type",
+        "download_status",
+        "content_hash_sha256",
+        "perceptual_hash_dhash",
+        "ocr_text",
+        "source_provenance"
+      ],
+      "missing_value_counts": {
+        "local_path": 3489,
+        "content_hash_sha256": 3489,
+        "perceptual_hash_dhash": 3489,
+        "ocr_text": 3489
+      }
+    },
+    {
+      "id": "dense_products",
+      "path": "data/interim/dense_products.parquet",
+      "role": "Dense Product Catalog Cohort",
+      "entity_level": "Product",
+      "primary_key": "parent_asin",
+      "foreign_keys": {},
+      "provenance": {
+        "source": "Amazon Reviews'23 Metadata (Local Raw Archive)",
+        "category": "All_Beauty",
+        "license": "Non-commercial Academic Research",
+        "collection_method": "Filtered to products with positive price and >=10 source reviews; sampled 300 products"
+      },
+      "status": "UPGRADED_INTERIM_TABLE",
+      "file_size_bytes": 187247,
+      "sha256_checksum": "3d045841876f9ffffa781600f479e2b323bca2274e32a183718cae5d412f2b6b",
+      "rows": 300,
+      "columns": 11,
+      "column_names": [
+        "parent_asin",
+        "title",
+        "main_category",
+        "store",
+        "price",
+        "average_rating",
+        "rating_number",
+        "full_review_count",
+        "description_text",
+        "features_text",
+        "details"
+      ],
+      "missing_value_counts": {}
+    },
+    {
+      "id": "dense_reviews",
+      "path": "data/interim/dense_reviews.parquet",
+      "role": "Dense Clustered Reviews",
+      "entity_level": "Review",
+      "primary_key": "review_id",
+      "foreign_keys": {
+        "parent_asin": "dense_products.parent_asin"
+      },
+      "provenance": {
+        "source": "Amazon Reviews'23 Reviews (Local Raw Archive)",
+        "category": "All_Beauty",
+        "license": "Non-commercial Academic Research",
+        "collection_method": "Extracted all matching reviews for the 300 dense products; capped at 40 reviews/product"
+      },
+      "status": "UPGRADED_INTERIM_TABLE",
+      "file_size_bytes": 2264694,
+      "sha256_checksum": "43efa0d2d4f6756dafb8cb3a5145bbb70e9f0d52e2a3474a9a84464ff5a3a354",
+      "rows": 7595,
+      "columns": 11,
+      "column_names": [
+        "review_id",
+        "parent_asin",
+        "asin",
+        "user_id",
+        "rating",
+        "title",
+        "text",
+        "review_text",
+        "timestamp",
+        "helpful_vote",
+        "verified_purchase"
+      ],
+      "missing_value_counts": {}
+    },
+    {
+      "id": "dense_product_images",
+      "path": "data/interim/dense_product_images.parquet",
+      "role": "Relational Product Image Catalog",
+      "entity_level": "Image Record",
+      "primary_key": "image_id",
+      "foreign_keys": {
+        "parent_asin": "dense_products.parent_asin"
+      },
+      "provenance": {
+        "source": "Amazon Reviews'23 Metadata Image Dict",
+        "category": "All_Beauty",
+        "license": "Non-commercial Academic Research",
+        "collection_method": "Parsed structured 'large', 'hi_res', and 'thumb' arrays from raw metadata"
+      },
+      "status": "UPGRADED_INTERIM_TABLE",
+      "file_size_bytes": 80411,
+      "sha256_checksum": "70fedaeba32fab8085222793c7a358739579269ff274b7f26a8da80d782de2d4",
+      "rows": 3489,
+      "columns": 5,
+      "column_names": [
+        "image_id",
+        "parent_asin",
+        "image_type",
+        "image_url",
+        "image_index"
+      ],
+      "missing_value_counts": {}
+    },
+    {
+      "id": "product_pricing_cohort",
+      "path": "data/interim/product_pricing_cohort.parquet",
+      "role": "Category Pricing & Rating Distribution Cohort",
+      "entity_level": "Product",
+      "primary_key": "parent_asin",
+      "foreign_keys": {},
+      "provenance": {
+        "source": "Amazon Reviews'23 Metadata (Local Raw Archive)",
+        "category": "All_Beauty",
+        "license": "Non-commercial Academic Research",
+        "collection_method": "Complete extraction of all products with valid positive numeric price"
+      },
+      "status": "UPGRADED_INTERIM_TABLE",
+      "file_size_bytes": 1536898,
+      "sha256_checksum": "0b4b7b6fd7835224c4438838f3ed012e991245232f1901c3cd896955f120b3c0",
+      "rows": 17704,
+      "columns": 12,
+      "column_names": [
+        "parent_asin",
+        "title",
+        "main_category",
+        "store",
+        "price",
+        "average_rating",
+        "rating_number",
+        "category_median_price",
+        "price_robust_zscore",
+        "is_price_dumping",
+        "is_price_gouging",
+        "price_anomaly_flag"
+      ],
+      "missing_value_counts": {
+        "store": 883
+      }
+    },
+    {
+      "id": "image_manifest",
+      "path": "data/interim/image_manifest.parquet",
+      "role": "Product Image Validation, Hashing & WinOCR Manifest",
+      "entity_level": "Downloaded Image Batch",
+      "primary_key": "image_id",
+      "foreign_keys": {
+        "parent_asin": "dense_products.parent_asin"
+      },
+      "provenance": {
+        "source": "Amazon CloudFront CDN (Live Downloaded Batch)",
+        "license": "Academic Research Use",
+        "collection_method": "Automated download of 50 primary packaging images; SHA-256, dHash, and Windows WinRT OCR extraction"
+      },
+      "status": "UPGRADED_INTERIM_TABLE",
+      "file_size_bytes": 20933,
+      "sha256_checksum": "373980442b25662eef1115130ce4536c7927a5d503744a8781eb79b6681eef6e",
+      "rows": 50,
+      "columns": 19,
+      "column_names": [
+        "image_id",
+        "parent_asin",
+        "image_type",
+        "image_url",
+        "source",
+        "http_status",
+        "download_success",
+        "file_size_bytes",
+        "image_format",
+        "width",
+        "height",
+        "aspect_ratio",
+        "sha256_hash",
+        "dhash",
+        "ocr_status",
+        "ocr_text",
+        "ocr_word_count",
+        "local_path",
+        "error_message"
+      ],
+      "missing_value_counts": {
+        "error_message": 50
+      }
+    },
+    {
+      "id": "deceptive_opinion_spam",
+      "path": "data/raw/benchmarks/deceptive_opinion_spam.parquet",
+      "role": "External Deceptive Opinion NLP Benchmark (Isolated Research Baseline)",
+      "entity_level": "Benchmark Review",
+      "primary_key": null,
+      "foreign_keys": {},
+      "provenance": {
+        "source": "Ott et al. (ACL 2011, EMNLP 2013)",
+        "url": "https://myleott.com/op-spam.html",
+        "license": "Academic Research Use",
+        "collection_method": "400 truthful positive, 400 deceptive positive, 400 truthful negative, 400 deceptive negative hotel reviews"
+      },
+      "status": "BENCHMARK_ISOLATED",
+      "file_size_bytes": 751544,
+      "sha256_checksum": "eaeceee0a9aa985f509d52ed4a2841a93584265787ec9687be5d7161ae7aaf7c",
+      "rows": 1600,
+      "columns": 5,
+      "column_names": [
+        "deceptive",
+        "hotel",
+        "polarity",
+        "source",
+        "text"
+      ],
+      "missing_value_counts": {}
+    },
+    {
+      "id": "synthetic_stress_test_cases",
+      "path": "data/raw/benchmarks/synthetic_stress_test_cases.parquet",
+      "role": "Controlled Synthetic Stress-Test Suite (Software Verification Only)",
+      "entity_level": "Benchmark Test Case",
+      "primary_key": "case_id",
+      "foreign_keys": {},
+      "provenance": {
+        "source": "Synthesized edge-case scenarios explicitly tagged is_synthetic=True",
+        "license": "Internal Project Verification",
+        "collection_method": "Deterministic rule-based parameter generation"
+      },
+      "status": "BENCHMARK_ISOLATED",
+      "file_size_bytes": 16141,
+      "sha256_checksum": "6407a4691c9170973dc6c9e0068124673a7b4bc6f245f2b94de5917d3b8df730",
+      "rows": 5,
+      "columns": 21,
+      "column_names": [
+        "case_id",
+        "is_synthetic",
+        "test_category",
+        "parent_asin",
+        "title",
+        "main_category",
+        "store",
+        "price",
+        "category_median_price",
+        "price_robust_zscore",
+        "average_rating",
+        "rating_number",
+        "review_count_observed",
+        "verified_purchase_ratio",
+        "review_text_similarity_max",
+        "ocr_text",
+        "ocr_packaging_match_score",
+        "expected_risk_tier",
+        "expected_confidence",
+        "target_failure_mode",
+        "benchmark_rationale"
+      ],
+      "missing_value_counts": {
+        "price": 1,
+        "price_robust_zscore": 1
+      }
+    },
+    {
+      "id": "baseline_processed_features",
+      "path": "data/processed/marketplace_text_features.parquet",
+      "role": "Global Category Baseline Sample",
+      "entity_level": "Review-level flat sample",
+      "primary_key": null,
+      "foreign_keys": {
+        "parent_asin": "raw_metadata.parent_asin"
+      },
+      "provenance": {
+        "source": "Amazon Reviews'23 (UCSD McAuley Lab)",
+        "url": "https://amazon-reviews-2023.github.io/",
+        "category": "All_Beauty",
+        "license": "Non-commercial Academic Research",
+        "collection_method": "Random review sampling (seed=42) + left-join metadata"
+      },
+      "status": "PRESERVED_WEEK_2_OUTPUT",
+      "file_size_bytes": 9293378,
+      "sha256_checksum": "9ebcbe58c9d337a3e543687822b29c9c2a1e4cad2df4fc685d821c93c95cead8",
+      "rows": 19991,
+      "columns": 30,
+      "column_names": [
+        "rating",
+        "title_review",
+        "text",
+        "asin",
+        "parent_asin",
+        "user_id",
+        "timestamp",
+        "helpful_vote",
+        "verified_purchase",
+        "main_category",
+        "title_product",
+        "average_rating",
+        "rating_number",
+        "price",
+        "store",
+        "details",
+        "review_year",
+        "review_month",
+        "review_day",
+        "review_day_of_week",
+        "review_hour",
+        "price_available",
+        "review_text",
+        "review_word_count",
+        "review_char_count",
+        "punctuation_count",
+        "exclamation_count",
+        "question_count",
+        "uppercase_count",
+        "uppercase_ratio"
+      ],
+      "missing_value_counts": {
+        "price": 14729
+      }
+    }
+  ]
+}

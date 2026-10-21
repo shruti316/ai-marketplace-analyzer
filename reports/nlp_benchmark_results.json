@@ -1,0 +1,48 @@
+{
+    "experiment": "hotel_review_deception_baseline",
+    "model": "TF-IDF + Logistic Regression",
+    "split_strategy": "GroupShuffleSplit by hotel",
+    "test_size": 400,
+    "accuracy": 0.8475,
+    "classification_report": {
+        "deceptive": {
+            "precision": 0.8756756756756757,
+            "recall": 0.81,
+            "f1-score": 0.8415584415584415,
+            "support": 200.0
+        },
+        "truthful": {
+            "precision": 0.8232558139534883,
+            "recall": 0.885,
+            "f1-score": 0.8530120481927711,
+            "support": 200.0
+        },
+        "accuracy": 0.8475,
+        "macro avg": {
+            "precision": 0.849465744814582,
+            "recall": 0.8475,
+            "f1-score": 0.8472852448756063,
+            "support": 400.0
+        },
+        "weighted avg": {
+            "precision": 0.8494657448145821,
+            "recall": 0.8475,
+            "f1-score": 0.8472852448756063,
+            "support": 400.0
+        }
+    },
+    "confusion_matrix": [
+        [
+            177,
+            23
+        ],
+        [
+            38,
+            162
+        ]
+    ],
+    "class_order": [
+        "truthful",
+        "deceptive"
+    ]
+}
