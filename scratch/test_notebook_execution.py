@@ -3,7 +3,7 @@ import traceback
 import sys
 from pathlib import Path
 
-def test_run_notebook(nb_path):
+def run_notebook(nb_path):
     print(f"=== Testing notebook execution: {nb_path} ===")
     with open(nb_path, "r", encoding="utf-8") as f:
         nb = json.load(f)
@@ -23,10 +23,10 @@ def test_run_notebook(nb_path):
     print(f"[PASS] Successfully executed all {len(code_cells)} code cells in {nb_path}!\n")
     return True
 
-ok_hotel = test_run_notebook("notebooks/hotel_benchmark_isolated.ipynb")
+ok_hotel = run_notebook("notebooks/hotel_benchmark_isolated.ipynb")
 assert ok_hotel, "Hotel notebook failed!"
 
-ok_04 = test_run_notebook("notebooks/04_nlp_analysis.ipynb")
+ok_04 = run_notebook("notebooks/04_nlp_analysis.ipynb")
 assert ok_04, "04_nlp_analysis notebook failed!"
 
 print("ALL NOTEBOOKS EXECUTED CLEANLY AND PASSED!")

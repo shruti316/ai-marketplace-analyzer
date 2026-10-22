@@ -24,9 +24,11 @@ def sample_pricing_data():
     ])
 
 
-def test_pricing_analyzer_fit_and_normal(sample_pricing_data):
+def test_pricing_analyzer_fit_and_normal(pricing_data=None):
+    if pricing_data is None:
+        pricing_data = sample_pricing_data()
     analyzer = CategoryPricingAnalyzer(min_sample_size=3)
-    analyzer.fit(sample_pricing_data)
+    analyzer.fit(pricing_data)
 
     res = analyzer.analyze_product_price(102.0, "Electronics")
     assert res["price_status"] == "VALID"
@@ -34,9 +36,11 @@ def test_pricing_analyzer_fit_and_normal(sample_pricing_data):
     assert "within expected category" in res["evidence_explanation"]
 
 
-def test_pricing_dumping_anomaly(sample_pricing_data):
+def test_pricing_dumping_anomaly(pricing_data=None):
+    if pricing_data is None:
+        pricing_data = sample_pricing_data()
     analyzer = CategoryPricingAnalyzer(min_sample_size=3)
-    analyzer.fit(sample_pricing_data)
+    analyzer.fit(pricing_data)
 
     # Extreme low price ($10 for an electronic device whose median is ~$102)
     res = analyzer.analyze_product_price(10.0, "Electronics")
