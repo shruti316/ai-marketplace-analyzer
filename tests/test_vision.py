@@ -32,3 +32,30 @@ def test_packaging_consistency_neutral_on_empty():
     brand = "KitchenAid"
     score = calculate_packaging_consistency(None, title, brand)
     assert score == 0.50, "Absence of text should yield neutral score 0.50"
+
+
+def test_packaging_consistency_normalizes_punctuation():
+    score = calculate_packaging_consistency(
+        "BEAUTIFY- DUO-PRO HAIR EXTENSION TAPE",
+        "DUO-PRO Extension tabs",
+        "Duo",
+    )
+    assert score == 0.75, f"Expected normalized token overlap of 0.75, got {score}"
+
+def test_packaging_consistency_neutral_when_no_usable_tokens():
+    score = calculate_packaging_consistency(
+        "a b c",
+        "x y",
+        None,
+    )
+    assert score == 0.50, f"Expected neutral score, got {score}"
+
+
+
+def test_packaging_consistency_is_case_insensitive():
+    score = calculate_packaging_consistency(
+        "CERAVE MOISTURIZING CREAM",
+        "CeraVe Moisturizing Cream",
+        None,
+    )
+    assert score == 1.0, f"Expected case-insensitive match, got {score}"

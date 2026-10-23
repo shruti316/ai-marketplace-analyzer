@@ -10,7 +10,7 @@ Features:
 - Listing-to-packaging textual consistency scoring (brand & title overlap).
 - Transparent handling of missing images, download timeouts, and textless packaging.
 """
-
+import re
 import os
 import hashlib
 import logging
@@ -73,31 +73,36 @@ def extract_ocr_text(image_path: str) -> Optional[str]:
     return None
 
 
+
 def calculate_packaging_consistency(ocr_text: Optional[str], title: str, brand: Optional[str]) -> float:
     """
-    Computes consistency score (0.0 to 1.0) between OCR text on packaging
-    and the product title / brand.
+    Computes consistency between packaging OCR text and the product title/brand.
+
+    Normalizes case, punctuation, and whitespace before comparing tokens.
+    Returns 0.50 when text is missing or no usable tokens remain.
     """
     if not ocr_text or not ocr_text.strip():
-        # No text on packaging (e.g. plain sponge, brush, tool) -> neutral score
         return 0.50
 
-    ocr_tokens = set(ocr_text.lower().split())
-    ref_tokens = set(str(title).lower().split())
-    if brand:
-        ref_tokens.update(str(brand).lower().split())
+    def normalize_tokens(text: str) -> set[str]:
+        # Replace punctuation with spaces, then split into normalized tokens.
+        normalized = re.sub(r"[^\w\s]", " ", text.lower())
+        return {word for word in normalized.split() if len(word) >= 3}
 
-    # Remove short noise tokens
-    ocr_words = {w for w in ocr_tokens if len(w) >= 3}
-    ref_words = {w for w in ref_tokens if len(w) >= 3}
+    ocr_words = normalize_tokens(ocr_text)
+    ref_words = normalize_tokens(str(title))
+
+    if brand:
+        ref_words.update(normalize_tokens(str(brand)))
 
     if not ocr_words or not ref_words:
         return 0.50
 
     overlap = ocr_words.intersection(ref_words)
-    # Overlap relative to the smaller set
     score = len(overlap) / min(len(ocr_words), len(ref_words))
     return round(float(min(1.0, score)), 2)
+
+
 
 
 class ProductVisualAnalyzer:

@@ -51,6 +51,33 @@ class MarketplaceRiskEngine:
         triggered_signals: List[str] = []
         missing_signals: List[str] = []
 
+        
+        # Customer experience is reported separately from fraud risk.
+        average_rating = review_analysis.get("average_rating")
+        average_sentiment = review_analysis.get("average_sentiment_compound")
+
+        customer_experience_summary = "Insufficient review evidence to assess customer experience."
+
+        if average_rating is not None:
+            customer_experience_summary = (
+                f"Average customer rating: {average_rating}/5."
+            )
+
+            if average_sentiment is not None:
+                customer_experience_summary += (
+                    f" Average review sentiment: {average_sentiment:.2f}."
+                )
+
+            if average_rating <= 2.5:
+                customer_experience_summary += (
+                    " Customer satisfaction appears low; this is not, by itself, evidence of fraud."
+                )
+            elif average_rating >= 4.0:
+                customer_experience_summary += (
+                    " Customer ratings are generally positive."
+                )
+
+
         # Tracking signal availability for Confidence Scoring
         signal_weights = {
             "price": 0.25,
@@ -197,12 +224,20 @@ class MarketplaceRiskEngine:
             "risk_tier": risk_tier,
             "risk_score": round(final_risk_score, 1),
             "confidence_score": confidence_score,
+            
+            "customer_experience": {
+                "average_rating": average_rating,
+                "average_sentiment_compound": average_sentiment,
+                "summary": customer_experience_summary,
+            },
+
             "risk_signals_triggered": triggered_signals,
             "missing_signals": missing_signals,
             "observed_evidence": observed_evidence,
             "risk_narrative": narrative,
             "engine_metadata": {
                 "engine_version": self.engine_version,
+                "confidence_interpretation": "evidence_availability_not_probability",
                 "independent_of_hotel_benchmark": True,
                 "cautious_terminology_enforced": True,
             },

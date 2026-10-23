@@ -120,3 +120,93 @@ def test_risk_engine_handles_missing_signals_non_punitively():
     assert result["confidence_score"] <= 0.35
     assert "PRICE_UNAVAILABLE" in result["missing_signals"]
     assert "CUSTOMER_REVIEWS_UNAVAILABLE (Zero reviews on record)" in result["missing_signals"]
+
+
+   
+def test_low_customer_rating_does_not_increase_fraud_risk():
+    engine = MarketplaceRiskEngine()
+
+    product = {
+        "canonical_product_id": "amazon_LOW_RATING",
+        "marketplace": "amazon",
+        "category": "Beauty",
+        "title": "Basic Hair Extension Tape",
+        "description": "Hair extension tape replacement pack.",
+        "brand": "Duo",
+        "seller_id": "M_TEST",
+    }
+
+    price_analysis = {
+        "price_status": "VALID",
+        "price_observed": 16.75,
+        "anomaly_flag": "NORMAL_PRICE_RANGE",
+        "evidence_explanation": "Price is within the expected range.",
+    }
+
+    review_analysis = {
+        "review_count": 28,
+        "review_status": "DENSE_MULTI_REVIEW",
+        "average_rating": 2.0,
+        "average_sentiment_compound": -0.40,
+        "verified_purchase_ratio": 0.90,
+        "repetitive_review_pairs": 0,
+        "sentiment_disagreement_ratio": 0.05,
+        "evidence_summary": "Reviews indicate poor customer satisfaction.",
+    }
+
+    result = engine.evaluate_product_listing(
+        product, price_analysis, review_analysis, None
+    )
+
+    assert result["risk_score"] == 0.0
+    assert result["risk_tier"] == "LOW"
+    assert result["customer_experience"]["average_rating"] == 2.0
+    assert "satisfaction appears low" in (
+        result["customer_experience"]["summary"]
+    ).lower()
+    assert not any(
+        "LOW_RATING" in signal
+        for signal in result["risk_signals_triggered"]
+    )
+
+
+
+
+def test_confidence_score_is_documented_as_evidence_availability():
+    engine = MarketplaceRiskEngine()
+
+    product = {
+        "canonical_product_id": "amazon_CONFIDENCE_TEST",
+        "marketplace": "amazon",
+        "category": "Electronics",
+        "title": "Basic Wireless Mouse",
+        "description": "Wireless mouse with USB receiver.",
+        "brand": "ExampleBrand",
+        "seller_id": "M_TEST",
+    }
+
+    price_analysis = {
+        "price_status": "VALID",
+        "price_observed": 20.0,
+        "anomaly_flag": "NORMAL_PRICE_RANGE",
+        "evidence_explanation": "Price is within the expected range.",
+    }
+
+    review_analysis = {
+        "review_count": 10,
+        "review_status": "DENSE_MULTI_REVIEW",
+        "average_rating": 4.0,
+        "verified_purchase_ratio": 0.8,
+        "repetitive_review_pairs": 0,
+        "sentiment_disagreement_ratio": 0.0,
+        "evidence_summary": "Ten reviews analyzed.",
+    }
+
+    result = engine.evaluate_product_listing(
+        product, price_analysis, review_analysis, None
+    )
+
+    assert 0.0 <= result["confidence_score"] <= 1.0
+    assert result["engine_metadata"]["confidence_interpretation"] == (
+        "evidence_availability_not_probability"
+    )

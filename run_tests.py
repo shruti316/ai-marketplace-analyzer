@@ -30,10 +30,13 @@ from tests.test_pricing import (
     test_pricing_dumping_anomaly,
     test_pricing_missing_price,
 )
+
 from tests.test_risk_engine import (
     test_risk_engine_baseline_low_risk,
     test_risk_engine_compound_risk,
     test_risk_engine_handles_missing_signals_non_punitively,
+    test_low_customer_rating_does_not_increase_fraud_risk,
+    test_confidence_score_is_documented_as_evidence_availability,
 )
 from tests.test_relationships import (
     test_canonical_relationship_dataclass,
@@ -44,11 +47,16 @@ from tests.test_matching import (
     test_exact_model_match,
     test_conflicting_attributes_rejection,
 )
+
 from tests.test_vision import (
     test_dhash_determinism,
     test_packaging_consistency_exact,
     test_packaging_consistency_neutral_on_empty,
+    test_packaging_consistency_normalizes_punctuation,
+    test_packaging_consistency_neutral_when_no_usable_tokens,
+    test_packaging_consistency_is_case_insensitive,
 )
+
 from tests.test_nlp import (
     test_sentiment_compound_polarity,
     test_polar_discordance_logic,
@@ -89,6 +97,11 @@ def run_all_tests():
         ("test_product_review_analyzer_single_review", test_product_review_analyzer_single_review),
         ("test_product_review_analyzer_multi_review_similarity", test_product_review_analyzer_multi_review_similarity),
         ("test_product_review_analyzer_missing_empty_text", test_product_review_analyzer_missing_empty_text),
+        ("test_low_customer_rating_does_not_increase_fraud_risk", test_low_customer_rating_does_not_increase_fraud_risk),
+        ("test_confidence_score_is_documented_as_evidence_availability", test_confidence_score_is_documented_as_evidence_availability),
+        ("test_packaging_consistency_normalizes_punctuation", test_packaging_consistency_normalizes_punctuation),
+        ("test_packaging_consistency_neutral_when_no_usable_tokens", test_packaging_consistency_neutral_when_no_usable_tokens),
+        ("test_packaging_consistency_is_case_insensitive", test_packaging_consistency_is_case_insensitive),
     ]
 
     print("==================================================")
