@@ -187,7 +187,7 @@ class ProductReviewAnalyzer:
                 eval_texts = non_empty_texts if len(non_empty_texts) <= 200 else non_empty_texts[:200]
                 vec = TfidfVectorizer(stop_words="english", ngram_range=(1, 2), min_df=1, max_features=1000)
                 tfidf_mat = vec.fit_transform(eval_texts)
-                sim_matrix = cosine_similarity(tfidf_mat)
+                sim_matrix = np.clip(cosine_similarity(tfidf_mat), 0.0, 1.0)
 
                 for i in range(len(eval_texts)):
                     for j in range(i + 1, len(eval_texts)):
