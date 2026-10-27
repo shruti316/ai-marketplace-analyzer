@@ -306,7 +306,9 @@ def build_cross_marketplace_matches(
                 "marketplace": "amazon",
                 "title": str(a_row.get("title", "")),
                 "brand": str(a_row.get("brand", "")),
-                "modelno": str(a_row.get("parent_product_id", "")),
+                # Do not treat parent_product_id as a manufacturer model number.
+                # Real model metadata will be integrated after validation.
+                "modelno": "",
             }
 
             match_res = matcher.evaluate_pair(p_wm, p_am)

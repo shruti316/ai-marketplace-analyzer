@@ -168,3 +168,42 @@ def test_builder_empty_input_preserves_result_columns(tmp_path):
     saved_results = pd.read_parquet(output_path)
     assert saved_results.empty
     assert list(saved_results.columns) == expected_columns
+
+
+def test_builder_does_not_use_amazon_parent_id_as_model_number(tmp_path):
+    """Amazon parent IDs must not trigger exact manufacturer-model matches."""
+    walmart_path = tmp_path / "walmart.csv"
+    amazon_path = tmp_path / "amazon.parquet"
+    output_path = tmp_path / "matches.parquet"
+
+    pd.DataFrame([
+        {
+            "id": 1,
+            "title": "Sony WH-1000XM4 Wireless Headphones Black",
+            "brand": "Sony",
+            "modelno": "B0863TXGM3",
+        }
+    ]).to_csv(walmart_path, index=False)
+
+    pd.DataFrame([
+        {
+            "canonical_product_id": "amazon_B0863TXGM3",
+            "marketplace": "amazon",
+            "title": "Sony WH-1000XM4 Wireless Headphones Black",
+            "brand": "Sony",
+            "source_product_id": "B0863TXGM3",
+            "parent_product_id": "B0863TXGM3",
+        }
+    ]).to_parquet(amazon_path, index=False)
+
+    results = build_cross_marketplace_matches(
+        walmart_csv_path=str(walmart_path),
+        amazon_prods_path=str(amazon_path),
+        output_path=str(output_path),
+        sample_size=10,
+    )
+
+    # A title/brand match may still be valid, but it must not
+    # claim an exact manufacturer-model match based on the Amazon ID.
+    if not results.empty:
+        assert not (results["match_method"] == "EXACT_MODEL_MATCH").any()
