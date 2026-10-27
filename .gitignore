@@ -27,3 +27,7 @@ data/processed/
 
 # Temporary/intermediate data
 data/interim/
+
+# Local audit artifacts
+/audit_model_fields.py
+/project_inventory.csv
