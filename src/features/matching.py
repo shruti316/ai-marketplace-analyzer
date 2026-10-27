@@ -6,37 +6,48 @@ Cross-Marketplace Product Entity Matching Intelligence Module.
 Evaluates candidate listing pairs across Amazon and Walmart to determine
 whether they represent the same underlying retail product:
 - Exact Model Number Matching (high confidence: 0.95)
-- Normalized Title Token Jaccard Similarity with Brand Agreement (confidence: 0.85)
-- Variant & Attribute Conflict Detection (prevents false merges of color/size variants)
+- Normalized Title Token Jaccard Similarity with Brand Agreement
+- Variant & Attribute Conflict Detection
 - Transparent Decisions: MATCHED, REQUIRES_MANUAL_REVIEW, REJECTED
 
 Outputs:
 - data/processed/matched_cross_marketplace_pairs.parquet
 """
 
-import re
 import logging
-from dataclasses import dataclass, asdict
-from typing import Dict, Any, List, Optional, Tuple
+import re
+from dataclasses import asdict, dataclass, fields
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
 import pandas as pd
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+)
 
 
 def normalize_title_tokens(title: Optional[str]) -> set:
-    """Normalize string and extract informative alphanumeric tokens."""
-    if not title or not str(title).strip():
+    """Normalize a title and extract informative alphanumeric tokens."""
+    if title is None or not str(title).strip():
         return set()
+
     cleaned = re.sub(r"[^\w\s]", " ", str(title).lower())
-    tokens = {t for t in cleaned.split() if len(t) >= 2}
-    stopwords = {"and", "with", "for", "the", "in", "of", "to", "by", "on", "pack", "count", "new", "item"}
+    tokens = {token for token in cleaned.split() if len(token) >= 2}
+
+    stopwords = {
+        "and", "with", "for", "the", "in", "of", "to", "by",
+        "on", "pack", "count", "new", "item",
+    }
     return tokens - stopwords
 
 
 def calculate_jaccard(tokens1: set, tokens2: set) -> float:
-    """Calculates Jaccard token similarity [0.0, 1.0]."""
+    """Calculate Jaccard token similarity in the range [0.0, 1.0]."""
     if not tokens1 or not tokens2:
         return 0.0
+
     intersection = tokens1.intersection(tokens2)
     union = tokens1.union(tokens2)
     return round(float(len(intersection) / len(union)), 3)
@@ -45,6 +56,7 @@ def calculate_jaccard(tokens1: set, tokens2: set) -> float:
 @dataclass
 class ProductMatchResult:
     """Standardized record for an entity matching decision."""
+
     match_id: str
     product_id_1: str
     marketplace_1: str
@@ -56,19 +68,21 @@ class ProductMatchResult:
     title_2: str
     brand_2: Optional[str]
     model_2: Optional[str]
-    match_method: str                     # 'EXACT_MODEL_MATCH', 'HIGH_SIMILARITY_TOKEN_MATCH', 'AMBIGUOUS_SIMILARITY', 'NO_MATCH'
-    confidence_score: float               # 0.0 to 1.0
+    match_method: str
+    confidence_score: float
     token_jaccard_similarity: float
     supporting_evidence: str
-    match_decision: str                   # 'MATCHED', 'REQUIRES_MANUAL_REVIEW', 'REJECTED'
+    match_decision: str
 
 
 class CrossMarketplaceMatcher:
-    """
-    Evaluates and links matching products across Amazon, Walmart, and other marketplaces.
-    """
+    """Evaluate candidate listings across marketplaces."""
 
-    def __init__(self, match_threshold: float = 0.75, review_threshold: float = 0.50):
+    def __init__(
+        self,
+        match_threshold: float = 0.75,
+        review_threshold: float = 0.50,
+    ):
         self.match_threshold = match_threshold
         self.review_threshold = review_threshold
 
@@ -77,9 +91,8 @@ class CrossMarketplaceMatcher:
         p1: Dict[str, Any],
         p2: Dict[str, Any],
     ) -> ProductMatchResult:
-        """
-        Evaluates two candidate product listings.
-        """
+        """Evaluate two candidate product listings."""
+
         id1 = p1.get("canonical_product_id", "")
         m1 = p1.get("marketplace", "")
         title1 = p1.get("title", "")
@@ -96,14 +109,13 @@ class CrossMarketplaceMatcher:
         tokens2 = normalize_title_tokens(title2)
         jaccard = calculate_jaccard(tokens1, tokens2)
 
-        clean_b1 = brand1 if brand1 not in ["none", "unknown", "nan", ""] else None
-        clean_b2 = brand2 if brand2 not in ["none", "unknown", "nan", ""] else None
-        clean_m1 = model1 if model1 not in ["none", "unknown", "nan", ""] else None
-        clean_m2 = model2 if model2 not in ["none", "unknown", "nan", ""] else None
+        clean_b1 = brand1 if brand1 not in {"none", "unknown", "nan", ""} else None
+        clean_b2 = brand2 if brand2 not in {"none", "unknown", "nan", ""} else None
+        clean_m1 = model1 if model1 not in {"none", "unknown", "nan", ""} else None
+        clean_m2 = model2 if model2 not in {"none", "unknown", "nan", ""} else None
 
-        # 1. Exact Model Number Match
+        # 1. Exact model number match.
         if clean_m1 and clean_m2 and clean_m1 == clean_m2 and len(clean_m1) >= 3:
-            # Check for brand conflict
             if clean_b1 and clean_b2 and clean_b1 != clean_b2:
                 return ProductMatchResult(
                     match_id=f"match_{id1}_{id2}",
@@ -120,7 +132,10 @@ class CrossMarketplaceMatcher:
                     match_method="MODEL_MATCH_BRAND_CONFLICT",
                     confidence_score=0.45,
                     token_jaccard_similarity=jaccard,
-                    supporting_evidence=f"Model matches ('{clean_m1}') but brands conflict ('{clean_b1}' vs '{clean_b2}').",
+                    supporting_evidence=(
+                        f"Model matches ('{clean_m1}') but brands conflict "
+                        f"('{clean_b1}' vs '{clean_b2}')."
+                    ),
                     match_decision="REQUIRES_MANUAL_REVIEW",
                 )
 
@@ -139,14 +154,17 @@ class CrossMarketplaceMatcher:
                 match_method="EXACT_MODEL_MATCH",
                 confidence_score=0.95,
                 token_jaccard_similarity=jaccard,
-                supporting_evidence=f"Identical manufacturer model number ('{clean_m1}') across {m1} and {m2}.",
+                supporting_evidence=(
+                    f"Identical manufacturer model number ('{clean_m1}') "
+                    f"across {m1} and {m2}."
+                ),
                 match_decision="MATCHED",
             )
 
-        # 2. Brand Agreement + High Token Overlap
-        brand_match = (clean_b1 and clean_b2 and clean_b1 == clean_b2)
+        # 2. Brand agreement + high title-token overlap.
+        brand_match = bool(clean_b1 and clean_b2 and clean_b1 == clean_b2)
+
         if brand_match and jaccard >= self.match_threshold:
-            # Check for conflicting non-empty model numbers
             if clean_m1 and clean_m2 and clean_m1 != clean_m2:
                 return ProductMatchResult(
                     match_id=f"match_{id1}_{id2}",
@@ -163,7 +181,11 @@ class CrossMarketplaceMatcher:
                     match_method="HIGH_SIMILARITY_MODEL_CONFLICT",
                     confidence_score=0.40,
                     token_jaccard_similarity=jaccard,
-                    supporting_evidence=f"High title similarity ({jaccard:.2f}) and brand match ('{clean_b1}'), but distinct model numbers ('{clean_m1}' vs '{clean_m2}'). Likely product variants.",
+                    supporting_evidence=(
+                        f"High title similarity ({jaccard:.2f}) and brand match "
+                        f"('{clean_b1}'), but distinct model numbers "
+                        f"('{clean_m1}' vs '{clean_m2}'). Likely product variants."
+                    ),
                     match_decision="REJECTED",
                 )
 
@@ -182,11 +204,15 @@ class CrossMarketplaceMatcher:
                 match_method="HIGH_SIMILARITY_TOKEN_MATCH",
                 confidence_score=0.85,
                 token_jaccard_similarity=jaccard,
-                supporting_evidence=f"Brand agreement ('{clean_b1}') with {round(jaccard*100)}% title token overlap without conflicting model numbers.",
+                supporting_evidence=(
+                    f"Brand agreement ('{clean_b1}') with "
+                    f"{round(jaccard * 100)}% title token overlap "
+                    "without conflicting model numbers."
+                ),
                 match_decision="MATCHED",
             )
 
-        # 3. Ambiguous Similarity
+        # 3. Ambiguous title similarity: request manual review.
         if jaccard >= self.review_threshold:
             return ProductMatchResult(
                 match_id=f"match_{id1}_{id2}",
@@ -203,11 +229,14 @@ class CrossMarketplaceMatcher:
                 match_method="AMBIGUOUS_SIMILARITY",
                 confidence_score=round(jaccard * 0.7, 2),
                 token_jaccard_similarity=jaccard,
-                supporting_evidence=f"Moderate token overlap ({round(jaccard*100)}%). Insufficient evidence for automated match.",
+                supporting_evidence=(
+                    f"Moderate token overlap ({round(jaccard * 100)}%). "
+                    "Insufficient evidence for automated match."
+                ),
                 match_decision="REQUIRES_MANUAL_REVIEW",
             )
 
-        # 4. No Match
+        # 4. No match.
         return ProductMatchResult(
             match_id=f"match_{id1}_{id2}",
             product_id_1=id1,
@@ -223,7 +252,10 @@ class CrossMarketplaceMatcher:
             match_method="NO_MATCH",
             confidence_score=round(jaccard * 0.5, 2),
             token_jaccard_similarity=jaccard,
-            supporting_evidence=f"Low title similarity ({round(jaccard*100)}%). Listings represent distinct products.",
+            supporting_evidence=(
+                f"Low title similarity ({round(jaccard * 100)}%). "
+                "Listings represent distinct products."
+            ),
             match_decision="REJECTED",
         )
 
@@ -235,17 +267,29 @@ def build_cross_marketplace_matches(
     sample_size: int = 200,
 ) -> pd.DataFrame:
     """
-    Evaluates cross-marketplace matches between Walmart and Amazon listings.
+    Evaluate candidate Walmart-Amazon listing pairs and save real results.
+
+    Returns an empty DataFrame with the expected result columns when no
+    candidate pairs qualify. No synthetic or fabricated matches are inserted.
     """
+    if sample_size < 0:
+        raise ValueError("sample_size must be non-negative.")
+
     logging.info("Building cross-marketplace matching dataset...")
     matcher = CrossMarketplaceMatcher()
 
     df_wm = pd.read_csv(walmart_csv_path).head(sample_size)
     df_am = pd.read_parquet(amazon_prods_path)
+
+    if "marketplace" not in df_am.columns:
+        raise ValueError(
+            "Amazon canonical products data must contain a 'marketplace' column."
+        )
+
     df_am_elec = df_am[df_am["marketplace"] == "amazon"].head(sample_size)
 
-    results = []
-    # Test sample candidate pairs
+    results: List[Dict[str, Any]] = []
+
     for _, w_row in df_wm.iterrows():
         p_wm = {
             "canonical_product_id": f"walmart_{w_row['id']}",
@@ -255,7 +299,7 @@ def build_cross_marketplace_matches(
             "modelno": str(w_row.get("modelno", "")),
         }
 
-        # Find closest Amazon match by brand or model
+        # Find the first qualifying Amazon candidate, preserving existing behavior.
         for _, a_row in df_am_elec.iterrows():
             p_am = {
                 "canonical_product_id": str(a_row["canonical_product_id"]),
@@ -266,21 +310,27 @@ def build_cross_marketplace_matches(
             }
 
             match_res = matcher.evaluate_pair(p_wm, p_am)
-            if match_res.match_decision in ["MATCHED", "REQUIRES_MANUAL_REVIEW"]:
+
+            if match_res.match_decision in {
+                "MATCHED",
+                "REQUIRES_MANUAL_REVIEW",
+            }:
                 results.append(asdict(match_res))
                 break
 
-    df_res = pd.DataFrame(results)
-    if df_res.empty:
-        # Create representative test results
-        p_ex1 = {"canonical_product_id": "walmart_101", "marketplace": "walmart", "title": "Sony WH-1000XM4 Wireless Headphones Black", "brand": "Sony", "modelno": "WH1000XM4"}
-        p_ex2 = {"canonical_product_id": "amazon_B0863TXGM3", "marketplace": "amazon", "title": "Sony WH-1000XM4 Wireless Noise-Canceling Overhead Headphones", "brand": "Sony", "modelno": "WH1000XM4"}
-        res1 = matcher.evaluate_pair(p_ex1, p_ex2)
-        results.append(asdict(res1))
-        df_res = pd.DataFrame(results)
+    # Keep the schema stable even when no pairs qualify.
+    result_columns = [field.name for field in fields(ProductMatchResult)]
+    df_res = pd.DataFrame(results, columns=result_columns)
 
-    df_res.to_parquet(output_path, index=False)
-    logging.info("Saved %s (%d candidate pairs evaluated)", output_path, len(df_res))
+    output_file = Path(output_path)
+    output_file.parent.mkdir(parents=True, exist_ok=True)
+    df_res.to_parquet(output_file, index=False)
+
+    logging.info(
+        "Saved %s (%d candidate pairs evaluated)",
+        output_file,
+        len(df_res),
+    )
     return df_res
 
 
