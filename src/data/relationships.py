@@ -154,20 +154,24 @@ class RelationshipGraphBuilder:
                     )
                     self.relationships.append(asdict(rel))
 
-        # 4. Product Variant -> Parent Product Relationships (Hierarchical Variant Modeling)
-        logging.info("Extracting product variant-to-parent relationships...")
+        # 4. Product Variant -> Parent Style Group Relationships (Hierarchical Variant Modeling)
+        logging.info("Extracting genuine product variant-to-parent relationships...")
         for _, prow in df_prods.iterrows():
             cid = str(prow["canonical_product_id"])
             parent_id = str(prow.get("parent_product_id", "")).strip()
             market = str(prow.get("marketplace", "unknown"))
 
-            if parent_id and parent_id.lower() not in ["none", "unknown", "nan", ""] and parent_id != cid:
+            # Scope: Restrict is_variant_of strictly to genuine variant-parent hierarchies
+            # explicitly supported by source schema (currently Myntra).
+            # Standalone items (ASINs, PIDs) and raw catalog attributes (model numbers)
+            # are excluded from is_variant_of edges.
+            if market == "myntra" and parent_id and parent_id.lower() not in ["none", "unknown", "nan", ""] and parent_id != cid:
                 rel = CanonicalRelationship(
                     relationship_id=f"variant_{cid}_{parent_id}",
                     source_entity_id=cid,
                     source_entity_type="product_variant",
                     target_entity_id=parent_id,
-                    target_entity_type="parent_product",
+                    target_entity_type="product_style_group",
                     relationship_type="is_variant_of",
                     marketplace=market,
                     evidence_source="canonical_products.parent_product_id",
