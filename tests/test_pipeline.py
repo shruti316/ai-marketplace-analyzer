@@ -21,6 +21,24 @@ def test_multi_marketplace_coverage():
     assert "amazon" in markets, "Amazon products missing from canonical catalog!"
     assert "walmart" in markets, "Walmart products missing from canonical catalog!"
     assert "bestbuy" in markets, "BestBuy products missing from canonical catalog!"
+    assert "flipkart" in markets, "Flipkart products missing from canonical catalog!"
+    assert "amazon_in" in markets, "Amazon India products missing from canonical catalog!"
+
+
+def test_indian_marketplace_and_currency_provenance():
+    df_p = pd.read_parquet("data/processed/canonical_products.parquet")
+    countries = set(df_p["country"].unique())
+    currencies = set(df_p["currency"].unique())
+
+    assert "US" in countries, "US country missing!"
+    assert "IN" in countries, "India country provenance missing!"
+    assert "USD" in currencies, "USD currency missing!"
+    assert "INR" in currencies, "INR currency missing!"
+
+    # Verify India listings specifically have INR
+    india_prods = df_p[df_p["country"] == "IN"]
+    assert len(india_prods) >= 1000, "Too few Indian marketplace products!"
+    assert (india_prods["currency"] == "INR").all(), "Indian products must have INR currency!"
 
 
 def test_multi_category_coverage():
@@ -33,6 +51,7 @@ def test_multi_category_coverage():
         "Clothing & Fashion",
         "Toys & Games",
         "Home & Kitchen",
+        "Grocery & Household Essentials",
     ]
     for c in expected_categories:
         assert c in cats, f"Expected category '{c}' missing from canonical catalog!"

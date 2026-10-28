@@ -53,6 +53,55 @@ def calculate_jaccard(tokens1: set, tokens2: set) -> float:
     return round(float(len(intersection) / len(union)), 3)
 
 
+def extract_manufacturer_model(
+    metadata_details: Any,
+    excluded_ids: Optional[set] = None,
+) -> str:
+    """
+    Safely extract genuine manufacturer model number from metadata_details.
+    Guarantees:
+    - Never uses Amazon ASINs or parent_product_ids as model numbers (commit d457eb4).
+    - Checks common model keys ('Item model number', 'Model number', 'product_model', 'Manufacturer Part Number').
+    - Rejects placeholders ('none', 'nan', 'unknown', 'n/a').
+    """
+    if not metadata_details:
+        return ""
+
+    details = metadata_details
+    if isinstance(details, str):
+        try:
+            import json
+            details = json.loads(details)
+        except Exception:
+            return ""
+
+    if not isinstance(details, dict):
+        return ""
+
+    candidate_keys = [
+        "Item model number",
+        "Model number",
+        "model_number",
+        "product_model",
+        "Manufacturer Part Number",
+        "Part Number",
+    ]
+
+    for k in candidate_keys:
+        val = str(details.get(k, "")).strip()
+        if not val or val.lower() in {"none", "nan", "unknown", "n/a", ""}:
+            continue
+        # Never treat Amazon ASIN patterns (e.g. B0863TXGM3) as manufacturer model numbers
+        if re.match(r"^B[0-9A-Z]{9}$", val):
+            continue
+        if excluded_ids and val in excluded_ids:
+            continue
+        if len(val) >= 3:
+            return val
+
+    return ""
+
+
 @dataclass
 class ProductMatchResult:
     """Standardized record for an entity matching decision."""
@@ -265,12 +314,15 @@ def build_cross_marketplace_matches(
     amazon_prods_path: str = "data/processed/canonical_products.parquet",
     output_path: str = "data/processed/matched_cross_marketplace_pairs.parquet",
     sample_size: int = 200,
+    audit_sample_path: Optional[str] = "data/processed/matching_audit_sample.parquet",
 ) -> pd.DataFrame:
     """
     Evaluate candidate Walmart-Amazon listing pairs and save real results.
 
     Returns an empty DataFrame with the expected result columns when no
     candidate pairs qualify. No synthetic or fabricated matches are inserted.
+    Populates matching_audit_sample.parquet with a representative distribution
+    of evaluated candidate pairs (matched, review, rejected).
     """
     if sample_size < 0:
         raise ValueError("sample_size must be non-negative.")
@@ -289,6 +341,7 @@ def build_cross_marketplace_matches(
     df_am_elec = df_am[df_am["marketplace"] == "amazon"].head(sample_size)
 
     results: List[Dict[str, Any]] = []
+    audit_samples: List[Dict[str, Any]] = []
 
     for _, w_row in df_wm.iterrows():
         p_wm = {
@@ -299,26 +352,41 @@ def build_cross_marketplace_matches(
             "modelno": str(w_row.get("modelno", "")),
         }
 
-        # Find the first qualifying Amazon candidate, preserving existing behavior.
+        matched_for_item = 0
         for _, a_row in df_am_elec.iterrows():
+            excluded_ids = {
+                str(a_row.get("canonical_product_id", "")),
+                str(a_row.get("source_product_id", "")),
+                str(a_row.get("parent_product_id", "")),
+            }
+            # Strictly extract verified manufacturer models, never treating Amazon ASIN as model number
+            m_extracted = extract_manufacturer_model(
+                a_row.get("metadata_details"),
+                excluded_ids=excluded_ids,
+            )
+
             p_am = {
                 "canonical_product_id": str(a_row["canonical_product_id"]),
                 "marketplace": "amazon",
                 "title": str(a_row.get("title", "")),
                 "brand": str(a_row.get("brand", "")),
-                # Do not treat parent_product_id as a manufacturer model number.
-                # Real model metadata will be integrated after validation.
-                "modelno": "",
+                "modelno": m_extracted,
             }
 
             match_res = matcher.evaluate_pair(p_wm, p_am)
+
+            # Collect diverse audit sample across decisions
+            if len(audit_samples) < 100:
+                audit_samples.append(asdict(match_res))
 
             if match_res.match_decision in {
                 "MATCHED",
                 "REQUIRES_MANUAL_REVIEW",
             }:
                 results.append(asdict(match_res))
-                break
+                matched_for_item += 1
+                if matched_for_item >= 3:
+                    break
 
     # Keep the schema stable even when no pairs qualify.
     result_columns = [field.name for field in fields(ProductMatchResult)]
@@ -329,11 +397,104 @@ def build_cross_marketplace_matches(
     df_res.to_parquet(output_file, index=False)
 
     logging.info(
-        "Saved %s (%d candidate pairs evaluated)",
+        "Saved %s (%d candidate pairs qualifying)",
         output_file,
         len(df_res),
     )
+
+    # Save populated matching audit sample if requested
+    if audit_sample_path:
+        audit_file = Path(audit_sample_path)
+        audit_file.parent.mkdir(parents=True, exist_ok=True)
+        df_audit = pd.DataFrame(audit_samples, columns=result_columns)
+        df_audit.to_parquet(audit_file, index=False)
+        logging.info(
+            "Saved %s (%d audit sample pairs across decisions)",
+            audit_file,
+            len(df_audit),
+        )
+
     return df_res
+
+
+def generate_diverse_validation_candidates(
+    walmart_csv_path: str = "data/raw/walmart/walmart_products_raw.csv",
+    canonical_products_path: str = "data/processed/canonical_products.parquet",
+    output_csv_path: str = "data/processed/matching_validation_candidates.csv",
+    target_count: int = 50,
+    max_per_product: int = 3,
+) -> pd.DataFrame:
+    """
+    Generates a balanced, diverse validation candidate dataset across multiple
+    brands and products for manual review, eliminating the historical bottleneck
+    where candidates were concentrated on only five Amazon listings.
+    """
+    df_wm = pd.read_csv(walmart_csv_path)
+    df_p = pd.read_parquet(canonical_products_path)
+    df_am = df_p[df_p["marketplace"] == "amazon"].copy()
+
+    df_wm["brand_clean"] = df_wm["brand"].fillna("").astype(str).str.lower().str.strip()
+    df_am["brand_clean"] = df_am["brand"].fillna("").astype(str).str.lower().str.strip()
+
+    shared_brands = set(df_wm["brand_clean"]) & set(df_am["brand_clean"]) - {"", "generic", "l"}
+
+    candidates: List[Dict[str, Any]] = []
+    am_counts: Dict[str, int] = {}
+    wm_counts: Dict[str, int] = {}
+
+    for brand in sorted(shared_brands):
+        wm_b = df_wm[df_wm["brand_clean"] == brand]
+        am_b = df_am[df_am["brand_clean"] == brand]
+
+        for _, w_row in wm_b.iterrows():
+            w_id = w_row["id"]
+            if wm_counts.get(w_id, 0) >= 2:
+                continue
+            w_tokens = normalize_title_tokens(w_row.get("title", ""))
+
+            for _, a_row in am_b.iterrows():
+                am_id = a_row["canonical_product_id"]
+                if am_counts.get(am_id, 0) >= max_per_product:
+                    continue
+
+                a_tokens = normalize_title_tokens(a_row.get("title", ""))
+                sim = calculate_jaccard(w_tokens, a_tokens)
+                if sim >= 0.10:
+                    model_extracted = extract_manufacturer_model(a_row.get("metadata_details"))
+                    candidates.append({
+                        "brand": brand,
+                        "similarity": round(sim, 3),
+                        "walmart_id": w_row["id"],
+                        "walmart_title": w_row.get("title", ""),
+                        "walmart_modelno": w_row.get("modelno", ""),
+                        "walmart_price": w_row.get("price", None),
+                        "amazon_canonical_id": am_id,
+                        "amazon_source_id": a_row.get("source_product_id", ""),
+                        "amazon_title": a_row.get("title", ""),
+                        "amazon_category": a_row.get("category", ""),
+                        "amazon_price": a_row.get("price", None),
+                        "amazon_item_model_number": model_extracted,
+                        "manual_label": None,
+                        "review_notes": None,
+                    })
+                    am_counts[am_id] = am_counts.get(am_id, 0) + 1
+                    wm_counts[w_id] = wm_counts.get(w_id, 0) + 1
+
+    df_cand = pd.DataFrame(candidates)
+    if not df_cand.empty:
+        df_cand = df_cand.sort_values(by="similarity", ascending=False).head(target_count)
+
+    out_file = Path(output_csv_path)
+    out_file.parent.mkdir(parents=True, exist_ok=True)
+    df_cand.to_csv(out_file, index=False)
+    logging.info(
+        "Saved %d diverse validation candidates to %s across %d Amazon products and %d brands",
+        len(df_cand),
+        out_file,
+        df_cand["amazon_canonical_id"].nunique() if not df_cand.empty else 0,
+        df_cand["brand"].nunique() if not df_cand.empty else 0,
+    )
+    return df_cand
 
 
 if __name__ == "__main__":

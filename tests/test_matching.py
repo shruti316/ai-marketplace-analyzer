@@ -75,6 +75,21 @@ def test_empty_results_have_stable_schema():
     assert list(results.columns) == expected_columns
 
 
+def test_model_extraction_preserves_asin_quarantine():
+    from src.features.matching import extract_manufacturer_model
+    # Real manufacturer model extracted
+    assert extract_manufacturer_model({"Item model number": "WH-1000XM4"}) == "WH-1000XM4"
+    assert extract_manufacturer_model({"product_model": "SM-S901U"}) == "SM-S901U"
+    # Amazon ASIN pattern rejected as manufacturer model
+    assert extract_manufacturer_model({"Item model number": "B0863TXGM3"}) == ""
+    assert extract_manufacturer_model({"model_number": "B00176GTAG"}) == ""
+    # Excluded parent IDs rejected
+    assert extract_manufacturer_model({"model_number": "PROD123"}, excluded_ids={"PROD123"}) == ""
+    # Placeholders rejected
+    assert extract_manufacturer_model({"Model number": "none"}) == ""
+    assert extract_manufacturer_model({"Model number": "N/A"}) == ""
+
+
 def test_builder_does_not_create_fabricated_match(tmp_path):
     """No qualifying real pairs must not produce a fabricated Sony match."""
     walmart_path = tmp_path / "walmart.csv"

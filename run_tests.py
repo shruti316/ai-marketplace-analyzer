@@ -21,6 +21,7 @@ from tests.test_schema import (
 from tests.test_pipeline import (
     test_canonical_datasets_exist,
     test_multi_marketplace_coverage,
+    test_indian_marketplace_and_currency_provenance,
     test_multi_category_coverage,
     test_referential_integrity,
 )
@@ -29,6 +30,7 @@ from tests.test_pricing import (
     test_pricing_analyzer_fit_and_normal,
     test_pricing_dumping_anomaly,
     test_pricing_missing_price,
+    test_pricing_multi_currency_stratification,
 )
 
 from tests.test_risk_engine import (
@@ -46,6 +48,7 @@ from tests.test_matching import (
     test_jaccard_token_similarity,
     test_exact_model_match,
     test_conflicting_attributes_rejection,
+    test_model_extraction_preserves_asin_quarantine,
 )
 
 from tests.test_vision import (
@@ -75,11 +78,13 @@ def run_all_tests():
         ("test_canonical_image_initialization", test_canonical_image_initialization),
         ("test_canonical_datasets_exist", test_canonical_datasets_exist),
         ("test_multi_marketplace_coverage", test_multi_marketplace_coverage),
+        ("test_indian_marketplace_and_currency_provenance", test_indian_marketplace_and_currency_provenance),
         ("test_multi_category_coverage", test_multi_category_coverage),
         ("test_referential_integrity", test_referential_integrity),
         ("test_pricing_analyzer_fit_and_normal", lambda: test_pricing_analyzer_fit_and_normal(sample_pricing_data())),
         ("test_pricing_dumping_anomaly", lambda: test_pricing_dumping_anomaly(sample_pricing_data())),
         ("test_pricing_missing_price", test_pricing_missing_price),
+        ("test_pricing_multi_currency_stratification", test_pricing_multi_currency_stratification),
         ("test_risk_engine_baseline_low_risk", test_risk_engine_baseline_low_risk),
         ("test_risk_engine_compound_risk", test_risk_engine_compound_risk),
         ("test_risk_engine_handles_missing_signals_non_punitively", test_risk_engine_handles_missing_signals_non_punitively),
@@ -88,6 +93,7 @@ def run_all_tests():
         ("test_jaccard_token_similarity", test_jaccard_token_similarity),
         ("test_exact_model_match", test_exact_model_match),
         ("test_conflicting_attributes_rejection", test_conflicting_attributes_rejection),
+        ("test_model_extraction_preserves_asin_quarantine", test_model_extraction_preserves_asin_quarantine),
         ("test_dhash_determinism", test_dhash_determinism),
         ("test_packaging_consistency_exact", test_packaging_consistency_exact),
         ("test_packaging_consistency_neutral_on_empty", test_packaging_consistency_neutral_on_empty),

@@ -308,6 +308,22 @@ class DatasetValidator:
             f"Seller quarantine enforced: {len(verified_sellers)} verified merchant tokens; brand display names quarantined.",
         )
 
+        # Geographic & Currency integrity
+        countries = df_p["country"].value_counts().to_dict() if "country" in df_p.columns else {"US": len(df_p)}
+        currencies = df_p["currency"].value_counts().to_dict() if "currency" in df_p.columns else {"USD": len(df_p)}
+        if "IN" in countries and "INR" in currencies:
+            self.record(
+                "canonical_geographic_and_currency_provenance",
+                "PASS",
+                f"Multi-region provenance verified: Countries={countries}, Currencies={currencies}",
+            )
+        else:
+            self.record(
+                "canonical_geographic_and_currency_provenance",
+                "WARNING",
+                f"Missing Indian region coverage: Countries={countries}, Currencies={currencies}",
+            )
+
     def validate_leakage_status(self):
         logging.info("--- Validating Leakage Constraints ---")
         # Explicit confirmation

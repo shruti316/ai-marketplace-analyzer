@@ -492,6 +492,156 @@ class CanonicalPipeline:
             )
             self.reviews.append(asdict(r) if hasattr(r, "__dict__") else r)
 
+    def ingest_flipkart_catalog(self, sample_size: Optional[int] = None):
+        """Ingest Flipkart product catalog with Indian market provenance and INR pricing."""
+        fk_path = os.path.join(self.raw_dir, "flipkart", "flipkart_products_raw.csv")
+        if not os.path.exists(fk_path):
+            logging.info("Flipkart raw catalog not found at %s. Skipping.", fk_path)
+            return
+
+        logging.info("Ingesting Flipkart product catalog from %s...", fk_path)
+        try:
+            df_fk = pd.read_csv(fk_path)
+            if sample_size is not None and len(df_fk) > sample_size:
+                df_fk = df_fk.sample(n=sample_size, random_state=42)
+
+            for _, row in df_fk.iterrows():
+                pid = clean_text_field(row.get("pid", row.get("uniq_id")))
+                if not pid:
+                    continue
+                cid = f"flipkart_{pid}"
+                title = clean_text_field(row.get("product_name"))
+                if not title:
+                    continue
+
+                # Parse category tree
+                raw_tree = clean_text_field(row.get("product_category_tree"))
+                cat_tree_parts = [p.strip().strip('"').strip("'") for p in raw_tree.strip("[]").split(">>") if p.strip()]
+                primary_cat = cat_tree_parts[0] if cat_tree_parts else "Other"
+                sub_cat = " > ".join(cat_tree_parts[:3]) if cat_tree_parts else None
+                normalized_cat = normalize_category_name(primary_cat)
+                if normalized_cat == "Other" and len(cat_tree_parts) > 1:
+                    normalized_cat = normalize_category_name(raw_tree)
+
+                # Parse price (discounted_price or retail_price in INR)
+                price = parse_numeric_price(row.get("discounted_price"))
+                if price is None:
+                    price = parse_numeric_price(row.get("retail_price"))
+
+                # Rating
+                raw_rating = row.get("product_rating")
+                rating = None
+                try:
+                    r_float = float(raw_rating)
+                    if 1.0 <= r_float <= 5.0:
+                        rating = round(r_float, 2)
+                except (ValueError, TypeError):
+                    pass
+
+                # Image URLs
+                raw_imgs = row.get("image", "")
+                img_urls = []
+                if isinstance(raw_imgs, str) and raw_imgs.strip().startswith("["):
+                    try:
+                        import ast
+                        parsed_imgs = ast.literal_eval(raw_imgs)
+                        if isinstance(parsed_imgs, list):
+                            img_urls = [str(u).strip() for u in parsed_imgs if u]
+                    except Exception:
+                        pass
+
+                details = {"category_tree": raw_tree}
+                if row.get("retail_price") is not None:
+                    details["retail_price_mrp_inr"] = parse_numeric_price(row.get("retail_price"))
+                if row.get("is_FK_Advantage_product") is not None:
+                    details["is_fk_advantage"] = bool(row.get("is_FK_Advantage_product"))
+
+                brand_val = clean_text_field(row.get("brand"))
+                p = CanonicalProduct(
+                    canonical_product_id=cid,
+                    marketplace="flipkart",
+                    source_product_id=pid,
+                    parent_product_id=pid,
+                    country="IN",
+                    title=title,
+                    category=normalized_cat,
+                    subcategory=sub_cat,
+                    brand=brand_val if brand_val else None,
+                    description=clean_text_field(row.get("description")),
+                    price=price,
+                    currency="INR",
+                    rating=rating,
+                    rating_count=None,
+                    product_url=clean_text_field(row.get("product_url")),
+                    image_urls=img_urls[:5],
+                    seller_id=None,
+                    seller_name="Flipkart Seller",
+                    metadata_details=details,
+                    source_provenance="PromptCloud Flipkart E-Commerce Dataset",
+                )
+                self.products.append(asdict(p) if hasattr(p, "__dict__") else p)
+        except Exception as e:
+            logging.warning("Error ingesting Flipkart catalog: %s", e)
+
+    def ingest_amazon_india_catalog(self, sample_size: Optional[int] = None):
+        """Ingest Amazon India (Amazon.in) product catalog with INR pricing."""
+        amz_in_path = os.path.join(self.raw_dir, "amazon_india", "amazon_india_products_raw.csv")
+        if not os.path.exists(amz_in_path):
+            logging.info("Amazon India raw catalog not found at %s. Skipping.", amz_in_path)
+            return
+
+        logging.info("Ingesting Amazon India product catalog from %s...", amz_in_path)
+        try:
+            df_in = pd.read_csv(amz_in_path)
+            if sample_size is not None and len(df_in) > sample_size:
+                df_in = df_in.sample(n=sample_size, random_state=42)
+
+            for _, row in df_in.iterrows():
+                asin = clean_text_field(row.get("Product Asin", row.get("asin", row.get("Uniq Id", row.get("id")))))
+                if not asin:
+                    continue
+                cid = f"amazon_in_{asin}"
+                title = clean_text_field(row.get("Product Title", row.get("title", row.get("product_name"))))
+                if not title:
+                    continue
+
+                raw_cat = clean_text_field(row.get("Category", row.get("category", "Grocery & Gourmet Foods")))
+                normalized_cat = normalize_category_name(raw_cat)
+                price = parse_numeric_price(row.get("Price", row.get("price", row.get("Mrp", row.get("mrp")))))
+                brand_val = clean_text_field(row.get("Brand", row.get("brand")))
+                desc = clean_text_field(row.get("Product Description", row.get("description")))
+
+                img_field = row.get("Image Urls", row.get("image_urls", ""))
+                img_urls = []
+                if isinstance(img_field, str) and img_field.strip():
+                    img_urls = [u.strip().strip("'\"|") for u in re.split(r"[|,]", img_field) if u.strip().startswith("http")]
+
+                p = CanonicalProduct(
+                    canonical_product_id=cid,
+                    marketplace="amazon_in",
+                    source_product_id=asin,
+                    parent_product_id=asin,
+                    country="IN",
+                    title=title,
+                    category=normalized_cat,
+                    subcategory=raw_cat,
+                    brand=brand_val if brand_val else None,
+                    description=desc,
+                    price=price,
+                    currency="INR",
+                    rating=None,
+                    rating_count=None,
+                    product_url=f"https://www.amazon.in/dp/{asin}",
+                    image_urls=img_urls[:5],
+                    seller_id=None,
+                    seller_name="Amazon.in Seller",
+                    metadata_details={"asin": asin, "storefront": "amazon.in"},
+                    source_provenance="Amazon India Product Catalog (pgurazada1)",
+                )
+                self.products.append(asdict(p) if hasattr(p, "__dict__") else p)
+        except Exception as e:
+            logging.warning("Error ingesting Amazon India catalog: %s", e)
+
     def run_pipeline(self) -> Dict[str, Any]:
         """Runs full ingestion, deduplication, referential integrity check, and exports."""
         logging.info("==================================================")
@@ -503,6 +653,8 @@ class CanonicalPipeline:
         self.ingest_amazon_expanded_categories()
         self.ingest_walmart_catalog()
         self.ingest_bestbuy_reviews()
+        self.ingest_flipkart_catalog()
+        self.ingest_amazon_india_catalog()
 
         # Convert to DataFrames
         df_prods = pd.DataFrame(self.products)

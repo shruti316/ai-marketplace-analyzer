@@ -18,7 +18,7 @@ import datetime
 import re
 
 
-# Six Standardized Core Parent Categories Supported by Platform
+# Standardized Core Parent Categories Supported by Platform
 STANDARD_CATEGORIES = [
     "Electronics",
     "Beauty & Personal Care",
@@ -26,6 +26,8 @@ STANDARD_CATEGORIES = [
     "Home & Kitchen",
     "Books & Stationery",
     "Toys & Games",
+    "Grocery & Household Essentials",
+    "Home Appliances",
 ]
 
 # Comprehensive Category Taxonomy Mapping (Subcategories -> Standardized Parent Categories)
@@ -36,6 +38,8 @@ CATEGORY_MAPPING_RULES = {
     "cell_phone": "Electronics",
     "phones": "Electronics",
     "phone": "Electronics",
+    "mobiles": "Electronics",
+    "mobile": "Electronics",
     "computers": "Electronics",
     "computer": "Electronics",
     "camera": "Electronics",
@@ -102,12 +106,16 @@ CATEGORY_MAPPING_RULES = {
     "hair_care": "Beauty & Personal Care",
     "fragrance": "Beauty & Personal Care",
     "makeup": "Beauty & Personal Care",
+    "bath_and_shower": "Beauty & Personal Care",
+    "bath_shower": "Beauty & Personal Care",
 
     # Clothing & Fashion
     "fashion": "Clothing & Fashion",
     "clothing": "Clothing & Fashion",
     "shoes": "Clothing & Fashion",
+    "footwear": "Clothing & Fashion",
     "jewelry": "Clothing & Fashion",
+    "jewellery": "Clothing & Fashion",
     "apparel": "Clothing & Fashion",
     "dress": "Clothing & Fashion",
     "dresses": "Clothing & Fashion",
@@ -165,6 +173,70 @@ CATEGORY_MAPPING_RULES = {
     "pens": "Books & Stationery",
     "markers": "Books & Stationery",
     "calculators": "Books & Stationery",
+    "labeling_tapes": "Books & Stationery",
+    "label_makers": "Books & Stationery",
+
+    # Computer Accessories & Unclassified Electronics
+    "cases_sleeves": "Electronics",
+    "projection_screens": "Electronics",
+    "projection_screen": "Electronics",
+    "printers": "Electronics",
+    "printer": "Electronics",
+    "graphics_cards": "Electronics",
+    "graphics_card": "Electronics",
+    "webcam": "Electronics",
+    "webcams": "Electronics",
+    "docking_stations": "Electronics",
+    "docking_station": "Electronics",
+    "screen_protectors": "Electronics",
+    "screen_protector": "Electronics",
+    "blank_media": "Electronics",
+    "data_cartridges": "Electronics",
+
+    # Home & Kitchen: Crockery, Cookware, Tableware & Decor
+    "crockery": "Home & Kitchen",
+    "dinner_set": "Home & Kitchen",
+    "dinner_sets": "Home & Kitchen",
+    "cookware": "Home & Kitchen",
+    "kitchen_dining": "Home & Kitchen",
+    "kitchen_and_dining": "Home & Kitchen",
+    "tableware": "Home & Kitchen",
+    "cutlery": "Home & Kitchen",
+    "glassware": "Home & Kitchen",
+    "plates": "Home & Kitchen",
+    "bowls": "Home & Kitchen",
+    "cups_mugs": "Home & Kitchen",
+    "mugs": "Home & Kitchen",
+    "utensils": "Home & Kitchen",
+    "home_furnishing": "Home & Kitchen",
+    "furnishing": "Home & Kitchen",
+    "home_decor": "Home & Kitchen",
+    "festive_needs": "Home & Kitchen",
+
+    # Home Appliances
+    "refrigerator": "Home Appliances",
+    "washing_machine": "Home Appliances",
+    "microwave": "Home Appliances",
+    "mixer": "Home Appliances",
+    "grinder": "Home Appliances",
+    "air_conditioner": "Home Appliances",
+    "home_appliances": "Home Appliances",
+    "appliances": "Home Appliances",
+
+    # Grocery & Household Essentials
+    "grocery": "Grocery & Household Essentials",
+    "gourmet_foods": "Grocery & Household Essentials",
+    "packaged_food": "Grocery & Household Essentials",
+    "food": "Grocery & Household Essentials",
+    "tea": "Grocery & Household Essentials",
+    "coffee": "Grocery & Household Essentials",
+    "spices": "Grocery & Household Essentials",
+    "household_essentials": "Grocery & Household Essentials",
+    "cleaning_supplies": "Grocery & Household Essentials",
+    "detergent": "Grocery & Household Essentials",
+    "detergents": "Grocery & Household Essentials",
+    "dishwash": "Grocery & Household Essentials",
+    "dishwashing": "Grocery & Household Essentials",
 }
 
 
@@ -202,6 +274,7 @@ class CanonicalProduct:
     marketplace: str                      # 'amazon', 'walmart', 'bestbuy', 'target'
     source_product_id: str                # Raw source ID: ASIN, SKU, Item ID
     parent_product_id: Optional[str] = None  # Parent ASIN or variant group ID
+    country: str = "US"                   # Country of marketplace storefront (e.g., 'US', 'IN')
     title: str = ""                       # Product title / name
     category: str = "Other"               # Standardized platform category
     subcategory: Optional[str] = None     # Granular category from source
@@ -242,7 +315,8 @@ class CanonicalReview:
     canonical_review_id: str              # e.g., 'amazon_R123456789'
     source_review_id: str                 # Raw review ID
     canonical_product_id: str             # Foreign key referencing CanonicalProduct
-    marketplace: str                      # 'amazon', 'walmart', 'bestbuy'
+    marketplace: str                      # 'amazon', 'walmart', 'bestbuy', 'flipkart'
+    country: str = "US"                   # Country of marketplace storefront (e.g., 'US', 'IN')
     reviewer_id: Optional[str] = None     # Customer / reviewer identifier
     review_title: Optional[str] = None    # Review headline
     review_text: str = ""                 # Review body text

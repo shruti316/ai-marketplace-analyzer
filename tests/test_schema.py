@@ -22,6 +22,13 @@ def test_category_normalization():
     assert normalize_category_name("Books") == "Books & Stationery"
     assert normalize_category_name("inkjet printer ink") == "Books & Stationery"
     assert normalize_category_name("headphones") == "Electronics"
+    assert normalize_category_name("Mobiles & Accessories") == "Electronics"
+    assert normalize_category_name("Dinner Sets & Crockery") == "Home & Kitchen"
+    assert normalize_category_name("Cookware & Utensils") == "Home & Kitchen"
+    assert normalize_category_name("Washing Machine & Refrigerator") == "Home Appliances"
+    assert normalize_category_name("Grocery & Gourmet Foods") == "Grocery & Household Essentials"
+    assert normalize_category_name("Detergents & Dishwash") == "Grocery & Household Essentials"
+    assert normalize_category_name("Jewellery & Footwear") == "Clothing & Fashion"
     assert normalize_category_name("Random Nonexistent Category") == "Other"
     assert normalize_category_name(None) == "Other"
 
