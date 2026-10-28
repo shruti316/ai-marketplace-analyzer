@@ -25,7 +25,7 @@ import re
 import json
 import logging
 import hashlib
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Tuple
 from dataclasses import asdict
 import numpy as np
 import pandas as pd
@@ -33,6 +33,7 @@ from src.data.schema import (
     CanonicalProduct,
     CanonicalReview,
     CanonicalImage,
+    UnlinkedReviewRecord,
     STANDARD_CATEGORIES,
     normalize_category_name,
 )
@@ -87,6 +88,49 @@ def parse_numeric_price(val: Any) -> Optional[float]:
         return None
 
 
+def normalize_amazon_india_price(val_str: Any) -> Tuple[Optional[float], Optional[str]]:
+    """
+    Normalizes Amazon India price formats only for explicitly validated patterns (Revision 2).
+    Returns (numeric_price, transformation_reason).
+    Missing, ambiguous, or invalid strings return (None, reason) without speculative guessing.
+    """
+    if val_str is None or pd.isna(val_str):
+        return None, None
+    s = str(val_str).strip()
+    if not s or s.lower() in ("nan", "none"):
+        return None, None
+
+    # 1. Standard valid numeric float/int e.g. "250.00", "199"
+    if re.match(r"^\d+(\.\d+)?$", s):
+        try:
+            p = float(s)
+            return (p, "standard_numeric") if p > 0 else (None, "zero_or_negative_price")
+        except ValueError:
+            return None, "parse_error"
+
+    # 2. Leading dot scraper artifact: e.g. ".250.00" -> 250.00
+    m_dot = re.match(r"^\.(\d+(\.\d+)?)$", s)
+    if m_dot:
+        try:
+            p = float(m_dot.group(1))
+            return (p, "leading_dot_scraper_artifact_normalized") if p > 0 else (None, "zero_or_negative_price")
+        except ValueError:
+            return None, "parse_error"
+
+    # 3. Currency symbol prefixed e.g. "₹250.00" or "Rs. 250.00"
+    m_curr = re.match(r"^(?:₹|rs\.?)\s*(\d+(?:,\d+)*(?:\.\d+)?)$", s, re.IGNORECASE)
+    if m_curr:
+        clean_num = m_curr.group(1).replace(",", "")
+        try:
+            p = float(clean_num)
+            return (p, "currency_prefix_stripped") if p > 0 else (None, "zero_or_negative_price")
+        except ValueError:
+            return None, "parse_error"
+
+    # Ambiguous or non-validated format: do NOT infer, return None and document quarantine
+    return None, "unsupported_ambiguous_format_quarantined"
+
+
 class CanonicalPipeline:
     def __init__(
         self,
@@ -102,6 +146,7 @@ class CanonicalPipeline:
         self.products: List[Dict[str, Any]] = []
         self.reviews: List[Dict[str, Any]] = []
         self.images: List[Dict[str, Any]] = []
+        self.unlinked_reviews: List[Dict[str, Any]] = []
 
     def ingest_amazon_beauty_cohort(self, sample_size: int = 1500, random_state: int = 42):
         """Ingest dense & sampled All_Beauty products, reviews, and images."""
@@ -580,11 +625,28 @@ class CanonicalPipeline:
                     source_provenance="PromptCloud Flipkart E-Commerce Dataset",
                 )
                 self.products.append(asdict(p) if hasattr(p, "__dict__") else p)
+
+                # Multimodal Image References (download_status=PENDING)
+                for img_idx, iurl in enumerate(img_urls):
+                    img_rec = CanonicalImage(
+                        image_id=f"flipkart_{pid}_{img_idx}",
+                        canonical_product_id=cid,
+                        marketplace="flipkart",
+                        image_url=iurl,
+                        image_type="primary" if img_idx == 0 else "secondary",
+                        download_status="PENDING",
+                        source_provenance="PromptCloud Flipkart E-Commerce Dataset",
+                    )
+                    self.images.append(asdict(img_rec) if hasattr(img_rec, "__dict__") else img_rec)
         except Exception as e:
             logging.warning("Error ingesting Flipkart catalog: %s", e)
 
     def ingest_amazon_india_catalog(self, sample_size: Optional[int] = None):
-        """Ingest Amazon India (Amazon.in) product catalog with INR pricing."""
+        """
+        Ingest Amazon India (Amazon.in) product catalog with native INR pricing.
+        Applies evidence-based price normalization preserving raw values and transformation reasons (Revision 2).
+        Ingests verified CDN image URLs with download_status=PENDING.
+        """
         amz_in_path = os.path.join(self.raw_dir, "amazon_india", "amazon_india_products_raw.csv")
         if not os.path.exists(amz_in_path):
             logging.info("Amazon India raw catalog not found at %s. Skipping.", amz_in_path)
@@ -607,7 +669,14 @@ class CanonicalPipeline:
 
                 raw_cat = clean_text_field(row.get("Category", row.get("category", "Grocery & Gourmet Foods")))
                 normalized_cat = normalize_category_name(raw_cat)
-                price = parse_numeric_price(row.get("Price", row.get("price", row.get("Mrp", row.get("mrp")))))
+
+                # Strict price normalization preserving raw strings and keeping selling price & MRP distinct
+                raw_price_str = str(row.get("Price", "")).strip() if pd.notna(row.get("Price")) else None
+                raw_mrp_str = str(row.get("Mrp", "")).strip() if pd.notna(row.get("Mrp")) else None
+
+                price, price_reason = normalize_amazon_india_price(raw_price_str)
+                mrp_num, mrp_reason = normalize_amazon_india_price(raw_mrp_str)
+
                 brand_val = clean_text_field(row.get("Brand", row.get("brand")))
                 desc = clean_text_field(row.get("Product Description", row.get("description")))
 
@@ -615,6 +684,16 @@ class CanonicalPipeline:
                 img_urls = []
                 if isinstance(img_field, str) and img_field.strip():
                     img_urls = [u.strip().strip("'\"|") for u in re.split(r"[|,]", img_field) if u.strip().startswith("http")]
+
+                details = {
+                    "asin": asin,
+                    "storefront": "amazon.in",
+                    "raw_price_string": raw_price_str,
+                    "price_transformation_reason": price_reason,
+                    "raw_mrp_string": raw_mrp_str,
+                    "mrp_transformation_reason": mrp_reason,
+                    "mrp_inr": mrp_num,
+                }
 
                 p = CanonicalProduct(
                     canonical_product_id=cid,
@@ -635,12 +714,169 @@ class CanonicalPipeline:
                     image_urls=img_urls[:5],
                     seller_id=None,
                     seller_name="Amazon.in Seller",
-                    metadata_details={"asin": asin, "storefront": "amazon.in"},
+                    metadata_details=details,
                     source_provenance="Amazon India Product Catalog (pgurazada1)",
                 )
                 self.products.append(asdict(p) if hasattr(p, "__dict__") else p)
+
+                # Multimodal Image References (download_status=PENDING)
+                for img_idx, iurl in enumerate(img_urls):
+                    img_rec = CanonicalImage(
+                        image_id=f"amz_in_{asin}_{img_idx}",
+                        canonical_product_id=cid,
+                        marketplace="amazon_in",
+                        image_url=iurl,
+                        image_type="primary" if img_idx == 0 else "secondary",
+                        download_status="PENDING",
+                        source_provenance="Amazon India Product Catalog (pgurazada1)",
+                    )
+                    self.images.append(asdict(img_rec) if hasattr(img_rec, "__dict__") else img_rec)
         except Exception as e:
             logging.warning("Error ingesting Amazon India catalog: %s", e)
+
+    def ingest_flipkart_reviews(self, sample_size: Optional[int] = None):
+        """
+        Ingest genuine Flipkart customer reviews into dedicated unlinked review corpus (Option A).
+        Preserves all reviews, raw texts, sentiment labels, and ratings without fabricating
+        synthetic products, users, or seller accounts.
+        """
+        fk_rev_path = os.path.join(self.raw_dir, "flipkart", "flipkart_reviews_raw.csv")
+        if not os.path.exists(fk_rev_path):
+            logging.info("Flipkart raw reviews not found at %s. Skipping.", fk_rev_path)
+            return
+
+        logging.info("Ingesting Flipkart customer reviews into unlinked corpus from %s...", fk_rev_path)
+        try:
+            df_rev = pd.read_csv(fk_rev_path)
+            if sample_size is not None and len(df_rev) > sample_size:
+                df_rev = df_rev.sample(n=sample_size, random_state=42)
+
+            for idx, row in df_rev.iterrows():
+                pname = clean_text_field(row.get("product_name"))
+                price_val = parse_numeric_price(row.get("product_price"))
+                rate_raw = row.get("Rate")
+                rate_val = float(rate_raw) if pd.notna(rate_raw) else None
+
+                rec = UnlinkedReviewRecord(
+                    corpus_review_id=f"flipkart_corpus_{idx}",
+                    marketplace="flipkart",
+                    country="IN",
+                    product_name_raw=pname if pname else "",
+                    product_price_raw=price_val,
+                    review_title=clean_text_field(row.get("Review")),
+                    review_text=clean_text_field(row.get("text")),
+                    rating=rate_val,
+                    sentiment_label=clean_text_field(row.get("labels")),
+                    sentiment_code=int(row["sentiment_code"]) if pd.notna(row.get("sentiment_code")) else None,
+                    currency="INR",
+                    language="en",
+                    source_provenance="Flipkart Customer Reviews Dataset (ml-hub)",
+                    linkage_status="UNLINKED_RESEARCH_CORPUS",
+                )
+                self.unlinked_reviews.append(asdict(rec) if hasattr(rec, "__dict__") else rec)
+        except Exception as e:
+            logging.warning("Error ingesting Flipkart reviews: %s", e)
+
+    def ingest_myntra_catalog(self, sample_size: Optional[int] = None):
+        """
+        Ingest Myntra catalog records representing Indian fashion, ethnic wear, and apparel
+        with native INR pricing and full variant SKU preservation (Revision 2 & 5).
+        """
+        myn_path = os.path.join(self.raw_dir, "myntra", "myntra_products_raw.csv")
+        if not os.path.exists(myn_path):
+            logging.info("Myntra raw catalog not found at %s. Skipping.", myn_path)
+            return
+
+        logging.info("Ingesting Myntra fashion catalog from %s...", myn_path)
+        try:
+            df_myn = pd.read_csv(myn_path)
+            if sample_size is not None and len(df_myn) > sample_size:
+                df_myn = df_myn.sample(n=sample_size, random_state=42)
+
+            for _, row in df_myn.iterrows():
+                sku_raw = clean_text_field(row.get("variant_sku"))
+                pid_raw = str(row.get("product_id", "")).split(".")[0].strip()
+                uniq_id = clean_text_field(row.get("uniq_id"))
+
+                # Primary canonical product ID is based on variant_sku (1,000 unique SKUs)
+                if not sku_raw:
+                    continue
+                cid = f"myntra_{sku_raw}"
+                parent_id = f"myntra_{pid_raw}" if pid_raw else None
+
+                title = clean_text_field(row.get("title"))
+                if not title:
+                    continue
+
+                ptype = clean_text_field(row.get("product_type"))
+                cat_input = f"{ptype} {title}" if ptype else title
+                norm_cat = normalize_category_name(cat_input)
+
+                # Keep selling price and MRP distinct (no silent fallback)
+                selling_price = parse_numeric_price(row.get("variant_price"))
+                mrp_val = parse_numeric_price(row.get("variant_compare_at_price"))
+
+                brand_val = clean_text_field(row.get("brand"))
+                desc = clean_text_field(row.get("body", row.get("product_details", "")))
+
+                raw_inv = row.get("inventory")
+                inv_val = None
+                if pd.notna(raw_inv):
+                    try:
+                        inv_val = int(raw_inv)
+                    except (ValueError, TypeError):
+                        inv_val = None
+
+                raw_stock = row.get("is_in_stock")
+                is_in_stock_val = None
+                if pd.notna(raw_stock):
+                    if str(raw_stock).strip().lower() in ("true", "1"):
+                        is_in_stock_val = True
+                    elif str(raw_stock).strip().lower() in ("false", "0"):
+                        is_in_stock_val = False
+
+                details = {
+                    "parent_product_id": parent_id,
+                    "source_product_id": pid_raw,
+                    "variant_sku": sku_raw,
+                    "uniq_id": uniq_id,
+                    "size": clean_text_field(row.get("size")),
+                    "actual_color": clean_text_field(row.get("actual_color")),
+                    "dominant_color": clean_text_field(row.get("dominant_color")),
+                    "dominant_material": clean_text_field(row.get("dominant_material")),
+                    "care_instructions": clean_text_field(row.get("care_instructions")),
+                    "is_in_stock": is_in_stock_val,
+                    "inventory": inv_val,
+                    "mrp_inr": mrp_val,
+                }
+                if ptype:
+                    details["product_type"] = ptype
+
+                p = CanonicalProduct(
+                    canonical_product_id=cid,
+                    marketplace="myntra",
+                    source_product_id=sku_raw,
+                    parent_product_id=parent_id,
+                    country="IN",
+                    title=title,
+                    category=norm_cat,
+                    subcategory=ptype if ptype else "Indian Ethnic & Fashion Wear",
+                    brand=brand_val if brand_val else None,
+                    description=desc,
+                    price=selling_price,
+                    currency="INR",
+                    rating=None,
+                    rating_count=None,
+                    product_url=f"https://www.myntra.com/{pid_raw}" if pid_raw else None,
+                    image_urls=[],
+                    seller_id=None,
+                    seller_name="Myntra Brand Partner",
+                    metadata_details=details,
+                    source_provenance="Myntra E-Commerce Dataset (PromptCloud / Gssmc)",
+                )
+                self.products.append(asdict(p) if hasattr(p, "__dict__") else p)
+        except Exception as e:
+            logging.warning("Error ingesting Myntra catalog: %s", e)
 
     def run_pipeline(self) -> Dict[str, Any]:
         """Runs full ingestion, deduplication, referential integrity check, and exports."""
@@ -654,12 +890,15 @@ class CanonicalPipeline:
         self.ingest_walmart_catalog()
         self.ingest_bestbuy_reviews()
         self.ingest_flipkart_catalog()
+        self.ingest_flipkart_reviews()
         self.ingest_amazon_india_catalog()
+        self.ingest_myntra_catalog()
 
         # Convert to DataFrames
         df_prods = pd.DataFrame(self.products)
         df_revs = pd.DataFrame(self.reviews)
         df_imgs = pd.DataFrame(self.images)
+        df_unlinked = pd.DataFrame(self.unlinked_reviews)
 
         # 1. Deduplication
         logging.info("Deduplicating entities...")
@@ -668,14 +907,22 @@ class CanonicalPipeline:
         logging.info("Products: %d raw -> %d deduplicated (0 duplicates remaining).", init_prods, len(df_prods))
 
         init_revs = len(df_revs)
-        df_revs = df_revs.drop_duplicates(subset=["canonical_review_id"]).reset_index(drop=True)
+        if not df_revs.empty:
+            df_revs = df_revs.drop_duplicates(subset=["canonical_review_id"]).reset_index(drop=True)
         logging.info("Reviews: %d raw -> %d deduplicated (0 duplicates remaining).", init_revs, len(df_revs))
+
+        if not df_unlinked.empty:
+            init_unlinked = len(df_unlinked)
+            df_unlinked = df_unlinked.drop_duplicates(subset=["corpus_review_id"]).reset_index(drop=True)
+            logging.info("Unlinked corpus reviews: %d raw -> %d deduplicated.", init_unlinked, len(df_unlinked))
 
         # 2. Referential Integrity Validation
         valid_product_ids = set(df_prods["canonical_product_id"])
         # Check review orphans
-        orphan_reviews = ~df_revs["canonical_product_id"].isin(valid_product_ids)
-        logging.info("Review orphans (foreign key mismatches): %d / %d", orphan_reviews.sum(), len(df_revs))
+        if not df_revs.empty:
+            orphan_reviews = ~df_revs["canonical_product_id"].isin(valid_product_ids)
+            logging.info("Review orphans (foreign key mismatches): %d / %d", orphan_reviews.sum(), len(df_revs))
+            df_revs = df_revs[~orphan_reviews].reset_index(drop=True)
 
         # Check image orphans
         if not df_imgs.empty:
@@ -688,10 +935,14 @@ class CanonicalPipeline:
         prod_out = os.path.join(self.processed_dir, "canonical_products.parquet")
         rev_out = os.path.join(self.processed_dir, "canonical_reviews.parquet")
         img_out = os.path.join(self.processed_dir, "canonical_images.parquet")
+        unlinked_out = os.path.join(self.processed_dir, "review_corpus_unlinked.parquet")
 
         df_prods.to_parquet(prod_out, index=False)
         df_revs.to_parquet(rev_out, index=False)
         df_imgs.to_parquet(img_out, index=False)
+        if not df_unlinked.empty:
+            df_unlinked.to_parquet(unlinked_out, index=False)
+            logging.info("Saved %s (%d rows, %.2f MB)", unlinked_out, len(df_unlinked), os.path.getsize(unlinked_out) / (1024 * 1024))
 
         logging.info("Saved %s (%d rows, %.2f MB)", prod_out, len(df_prods), os.path.getsize(prod_out) / (1024 * 1024))
         logging.info("Saved %s (%d rows, %.2f MB)", rev_out, len(df_revs), os.path.getsize(rev_out) / (1024 * 1024))
@@ -706,12 +957,14 @@ class CanonicalPipeline:
         return {
             "products_count": len(df_prods),
             "reviews_count": len(df_revs),
+            "unlinked_reviews_count": len(df_unlinked),
             "images_count": len(df_imgs),
             "categories": cat_counts,
             "marketplaces": market_counts,
             "product_path": prod_out,
             "review_path": rev_out,
             "image_path": img_out,
+            "unlinked_review_path": unlinked_out,
         }
 
 

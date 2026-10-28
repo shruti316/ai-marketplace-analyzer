@@ -21,6 +21,7 @@ Adheres strictly to core design principles:
 import logging
 from typing import Dict, Any, List, Optional
 import numpy as np
+import pandas as pd
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 
@@ -92,12 +93,15 @@ class MarketplaceRiskEngine:
         # =====================================================================
         # 1. Metadata Completeness Evaluation
         # =====================================================================
-        title = product.get("title", "")
-        desc = product.get("description", "")
-        brand = product.get("brand", "")
+        title_raw = product.get("title", "")
+        desc_raw = product.get("description", "")
+        brand_raw = product.get("brand", "")
+        title = str(title_raw).strip() if pd.notna(title_raw) and str(title_raw).lower() != "nan" else ""
+        desc = str(desc_raw).strip() if pd.notna(desc_raw) and str(desc_raw).lower() != "nan" else ""
+        brand = str(brand_raw).strip() if pd.notna(brand_raw) and str(brand_raw).lower() != "nan" else ""
         seller_id = product.get("seller_id")
 
-        if title and len(title.strip()) > 5:
+        if title and len(title) > 5:
             observed_evidence.append(f"Product title present ({len(title)} chars).")
             available_signal_weight += signal_weights["metadata"] * 0.5
         else:
@@ -105,7 +109,7 @@ class MarketplaceRiskEngine:
             missing_signals.append("TITLE_MISSING_OR_SHORT")
             risk_penalty += 10.0
 
-        if desc and len(desc.strip()) > 10:
+        if desc and len(desc) > 10:
             observed_evidence.append("Listing description present.")
             available_signal_weight += signal_weights["metadata"] * 0.5
         else:

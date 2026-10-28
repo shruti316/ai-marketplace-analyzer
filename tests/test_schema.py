@@ -8,6 +8,7 @@ from src.data.schema import (
     CanonicalProduct,
     CanonicalReview,
     CanonicalImage,
+    UnlinkedReviewRecord,
     normalize_category_name,
 )
 
@@ -83,3 +84,80 @@ def test_canonical_image_initialization():
     assert img.image_id == "img_001"
     assert img.download_status == "DOWNLOADED"
     assert img.content_hash_sha256 == "abc123sha"
+
+
+def test_country_and_currency_guardrails():
+    # US marketplace defaults to US / USD
+    us_prod = CanonicalProduct(
+        canonical_product_id="amazon_us_1",
+        marketplace="amazon",
+        source_product_id="us_1",
+        title="US Gadget",
+    )
+    assert us_prod.country == "US"
+    assert us_prod.currency == "USD"
+
+    # Indian marketplace auto-corrects to IN / INR to prevent silent geographic mislabeling
+    in_prod = CanonicalProduct(
+        canonical_product_id="flipkart_in_1",
+        marketplace="flipkart",
+        source_product_id="in_1",
+        title="Indian Ethnic Kurta",
+    )
+    assert in_prod.country == "IN"
+    assert in_prod.currency == "INR"
+
+    # Indian review auto-corrects country to IN
+    in_rev = CanonicalReview(
+        canonical_review_id="fk_rev_1",
+        source_review_id="1",
+        canonical_product_id="flipkart_in_1",
+        marketplace="flipkart",
+        review_text="Very good material.",
+    )
+    assert in_rev.country == "IN"
+
+
+def test_nullable_review_rating():
+    # None rating remains None, not defaulted to 0.0 or 5.0
+    rev_no_rate = CanonicalReview(
+        canonical_review_id="rev_none",
+        source_review_id="none",
+        canonical_product_id="prod_1",
+        marketplace="walmart",
+        rating=None,
+    )
+    assert rev_no_rate.rating is None
+
+    # Valid rating is cast to float
+    rev_with_rate = CanonicalReview(
+        canonical_review_id="rev_4",
+        source_review_id="4",
+        canonical_product_id="prod_1",
+        marketplace="walmart",
+        rating="4.5",
+    )
+    assert rev_with_rate.rating == 4.5
+
+
+def test_unlinked_review_record():
+    unlinked = UnlinkedReviewRecord(
+        corpus_review_id="flipkart_corpus_101",
+        marketplace="flipkart",
+        country="IN",
+        product_name_raw="boAt Rockerz 255F",
+        product_price_raw=1199.0,
+        review_title="Best bass",
+        review_text="Sound quality and battery backup are wonderful.",
+        rating=5.0,
+        sentiment_label="positive",
+        sentiment_code=2,
+    )
+    assert unlinked.corpus_review_id == "flipkart_corpus_101"
+    assert unlinked.marketplace == "flipkart"
+    assert unlinked.country == "IN"
+    assert unlinked.linkage_status == "UNLINKED_RESEARCH_CORPUS"
+    assert unlinked.sentiment_label == "positive"
+    assert unlinked.sentiment_code == 2
+    assert unlinked.rating == 5.0
+

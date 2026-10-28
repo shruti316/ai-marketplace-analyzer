@@ -93,6 +93,10 @@ CATEGORY_MAPPING_RULES = {
     "security_system": "Electronics",
     "camcorder": "Electronics",
     "tripod": "Electronics",
+    "remote": "Electronics",
+    "remotes": "Electronics",
+    "hard_disk": "Electronics",
+    "hdd": "Electronics",
     "scanners": "Electronics",
     "scanner": "Electronics",
 
@@ -108,8 +112,14 @@ CATEGORY_MAPPING_RULES = {
     "makeup": "Beauty & Personal Care",
     "bath_and_shower": "Beauty & Personal Care",
     "bath_shower": "Beauty & Personal Care",
+    "kajal": "Beauty & Personal Care",
+    "eyeliner": "Beauty & Personal Care",
+    "lipstick": "Beauty & Personal Care",
+    "lotion": "Beauty & Personal Care",
+    "shampoo": "Beauty & Personal Care",
+    "soap": "Beauty & Personal Care",
 
-    # Clothing & Fashion
+    # Clothing & Fashion (including Indian Ethnic Wear & Apparel)
     "fashion": "Clothing & Fashion",
     "clothing": "Clothing & Fashion",
     "shoes": "Clothing & Fashion",
@@ -126,6 +136,55 @@ CATEGORY_MAPPING_RULES = {
     "bags_cases": "Clothing & Fashion",
     "cases_bags": "Clothing & Fashion",
     "briefcases": "Clothing & Fashion",
+    "kurta": "Clothing & Fashion",
+    "kurtas": "Clothing & Fashion",
+    "kurti": "Clothing & Fashion",
+    "kurtis": "Clothing & Fashion",
+    "saree": "Clothing & Fashion",
+    "sarees": "Clothing & Fashion",
+    "sari": "Clothing & Fashion",
+    "lehenga": "Clothing & Fashion",
+    "dupatta": "Clothing & Fashion",
+    "dupattas": "Clothing & Fashion",
+    "sherwani": "Clothing & Fashion",
+    "palazzo": "Clothing & Fashion",
+    "palazzos": "Clothing & Fashion",
+    "churidar": "Clothing & Fashion",
+    "pyjamas": "Clothing & Fashion",
+    "tunic": "Clothing & Fashion",
+    "tunics": "Clothing & Fashion",
+    "blouse": "Clothing & Fashion",
+    "trousers": "Clothing & Fashion",
+    "shorts": "Clothing & Fashion",
+    "ethnic": "Clothing & Fashion",
+    "ethnic_wear": "Clothing & Fashion",
+    "jeans": "Clothing & Fashion",
+    "tshirt": "Clothing & Fashion",
+    "t_shirt": "Clothing & Fashion",
+    "bra": "Clothing & Fashion",
+    "clutch": "Clothing & Fashion",
+    "wallet": "Clothing & Fashion",
+    "wallets": "Clothing & Fashion",
+    "skirt": "Clothing & Fashion",
+    "skirts": "Clothing & Fashion",
+    "top": "Clothing & Fashion",
+    "tops": "Clothing & Fashion",
+    "shrug": "Clothing & Fashion",
+    "shrugs": "Clothing & Fashion",
+    "treggings": "Clothing & Fashion",
+    "leggings": "Clothing & Fashion",
+    "flats": "Clothing & Fashion",
+    "sandals": "Clothing & Fashion",
+    "heels": "Clothing & Fashion",
+    "jacket": "Clothing & Fashion",
+    "jackets": "Clothing & Fashion",
+    "blazer": "Clothing & Fashion",
+    "blazers": "Clothing & Fashion",
+    "suit": "Clothing & Fashion",
+    "suits": "Clothing & Fashion",
+    "stole": "Clothing & Fashion",
+    "shawl": "Clothing & Fashion",
+    "shawls": "Clothing & Fashion",
 
     # Home & Kitchen
     "home": "Home & Kitchen",
@@ -144,6 +203,15 @@ CATEGORY_MAPPING_RULES = {
     "lamps": "Home & Kitchen",
     "air_purifiers": "Home & Kitchen",
     "clocks": "Home & Kitchen",
+    "pillow": "Home & Kitchen",
+    "pillow_cover": "Home & Kitchen",
+    "pillow_covers": "Home & Kitchen",
+    "cushion": "Home & Kitchen",
+    "cushions": "Home & Kitchen",
+    "bedsheet": "Home & Kitchen",
+    "bedsheets": "Home & Kitchen",
+    "curtain": "Home & Kitchen",
+    "curtains": "Home & Kitchen",
 
     # Toys & Games
     "toys": "Toys & Games",
@@ -222,6 +290,19 @@ CATEGORY_MAPPING_RULES = {
     "air_conditioner": "Home Appliances",
     "home_appliances": "Home Appliances",
     "appliances": "Home Appliances",
+    "air_cooler": "Home Appliances",
+    "cooler": "Home Appliances",
+    "coolers": "Home Appliances",
+    "ceiling_fan": "Home Appliances",
+    "fan": "Home Appliances",
+    "fans": "Home Appliances",
+    "electric_kettle": "Home Appliances",
+    "kettle": "Home Appliances",
+    "rice_cooker": "Home Appliances",
+    "water_purifier": "Home Appliances",
+    "chimney": "Home Appliances",
+    "geyser": "Home Appliances",
+    "iron": "Home Appliances",
 
     # Grocery & Household Essentials
     "grocery": "Grocery & Household Essentials",
@@ -294,6 +375,14 @@ class CanonicalProduct:
     field_availability: Dict[str, bool] = field(default_factory=dict)
 
     def __post_init__(self):
+        # Auto-guard against silent geographic/currency mislabeling while preserving backward compatibility
+        indian_marketplaces = {"flipkart", "myntra", "amazon_in", "meesho"}
+        if self.marketplace in indian_marketplaces:
+            if self.country == "US":
+                self.country = "IN"
+            if self.currency == "USD":
+                self.currency = "INR"
+
         # Auto-populate field availability
         self.field_availability = {
             "has_title": bool(self.title and self.title.strip()),
@@ -320,7 +409,7 @@ class CanonicalReview:
     reviewer_id: Optional[str] = None     # Customer / reviewer identifier
     review_title: Optional[str] = None    # Review headline
     review_text: str = ""                 # Review body text
-    rating: float = 0.0                   # Review star rating (1.0 to 5.0)
+    rating: Optional[float] = None        # Review star rating (1.0 to 5.0)
     timestamp: Optional[int] = None       # Unix timestamp in seconds or ms
     review_date: Optional[str] = None     # ISO date string
     verified_purchase: Optional[bool] = None  # Verified buyer flag
@@ -332,7 +421,41 @@ class CanonicalReview:
     def __post_init__(self):
         if not self.review_text:
             self.review_text = ""
-        self.rating = float(self.rating) if self.rating is not None else 0.0
+
+        # Auto-guard against silent geographic mislabeling while preserving backward compatibility
+        indian_marketplaces = {"flipkart", "myntra", "amazon_in", "meesho"}
+        if self.marketplace in indian_marketplaces and self.country == "US":
+            self.country = "IN"
+
+        if self.rating is not None:
+            try:
+                self.rating = float(self.rating)
+            except (ValueError, TypeError):
+                self.rating = None
+
+
+@dataclass
+class UnlinkedReviewRecord:
+    """
+    Standardized unlinked review record for independent NLP research corpus.
+    Used for customer review datasets that do not link to known catalog products.
+    Preserves raw source texts, sentiment labels, and ratings without fabricating
+    synthetic products, users, or seller accounts.
+    """
+    corpus_review_id: str                 # Unique corpus identifier e.g. 'flipkart_corpus_0'
+    marketplace: str                      # Source platform e.g. 'flipkart'
+    country: str = "IN"                   # Storefront country
+    product_name_raw: str = ""            # Raw product name mentioned in review
+    product_price_raw: Optional[float] = None  # Reference price if present in source
+    review_title: Optional[str] = None    # Review headline
+    review_text: str = ""                 # Review body text
+    rating: Optional[float] = None        # Customer star rating (1.0 to 5.0)
+    sentiment_label: Optional[str] = None # Source sentiment label ('positive', 'negative', 'neutral')
+    sentiment_code: Optional[int] = None  # Source numerical sentiment code (2, 0, 1)
+    currency: str = "INR"                 # Source currency
+    language: str = "en"                  # Detected or declared language
+    source_provenance: str = ""           # Origin dataset description
+    linkage_status: str = "UNLINKED_RESEARCH_CORPUS" # Explicitly marks corpus as independent
 
 
 @dataclass

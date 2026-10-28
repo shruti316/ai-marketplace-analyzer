@@ -1,10 +1,12 @@
 """
 scripts/acquire_indian_datasets.py
 ----------------------------------
-Acquires authentic Indian marketplace data for Flipkart and Amazon India,
-verifies columns, enforces sampling limits, and saves clean raw CSVs to:
+Acquires authentic Indian marketplace data for Flipkart, Amazon India,
+and Myntra, verifies columns, enforces sampling limits, and saves clean raw CSVs to:
 - data/raw/flipkart/flipkart_products_raw.csv
+- data/raw/flipkart/flipkart_reviews_raw.csv
 - data/raw/amazon_india/amazon_india_products_raw.csv
+- data/raw/myntra/myntra_products_raw.csv
 """
 
 import os
@@ -15,7 +17,7 @@ import pandas as pd
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 
 
-def acquire_flipkart(target_path: str, max_samples: int = 2500):
+def acquire_flipkart(target_path: str = "data/raw/flipkart/flipkart_products_raw.csv", max_samples: int = 2500):
     os.makedirs(os.path.dirname(target_path), exist_ok=True)
     if os.path.exists(target_path) and os.path.getsize(target_path) > 1000:
         logging.info("Flipkart raw catalog already exists at %s (%d bytes).", target_path, os.path.getsize(target_path))
@@ -70,7 +72,29 @@ def acquire_flipkart(target_path: str, max_samples: int = 2500):
     return False
 
 
-def acquire_amazon_india(target_path: str, max_samples: int = 1500):
+def acquire_flipkart_reviews(target_path: str = "data/raw/flipkart/flipkart_reviews_raw.csv", max_samples: int = 3500):
+    """Acquire genuine Flipkart customer reviews for Indian marketplace items."""
+    os.makedirs(os.path.dirname(target_path), exist_ok=True)
+    if os.path.exists(target_path) and os.path.getsize(target_path) > 1000:
+        logging.info("Flipkart raw reviews already exist at %s (%d bytes).", target_path, os.path.getsize(target_path))
+        return True
+
+    logging.info("Acquiring Flipkart reviews from ml-hub/flipkart-reviews...")
+    try:
+        from datasets import load_dataset
+        ds = load_dataset("ml-hub/flipkart-reviews", split="train")
+        df = ds.to_pandas()
+        if len(df) > max_samples:
+            df = df.sample(n=max_samples, random_state=42)
+        df.to_csv(target_path, index=False)
+        logging.info("Saved %d Flipkart reviews to %s", len(df), target_path)
+        return True
+    except Exception as e:
+        logging.error("Failed to acquire Flipkart reviews: %s", e)
+        return False
+
+
+def acquire_amazon_india(target_path: str = "data/raw/amazon_india/amazon_india_products_raw.csv", max_samples: int = 1500):
     os.makedirs(os.path.dirname(target_path), exist_ok=True)
     if os.path.exists(target_path) and os.path.getsize(target_path) > 1000:
         logging.info("Amazon India raw catalog already exists at %s (%d bytes).", target_path, os.path.getsize(target_path))
@@ -123,7 +147,31 @@ def acquire_amazon_india(target_path: str, max_samples: int = 1500):
     return False
 
 
+def acquire_myntra(target_path: str = "data/raw/myntra/myntra_products_raw.csv", max_samples: int = 1500):
+    """Acquire genuine Myntra catalog records representing Indian fashion, ethnic wear, and apparel."""
+    os.makedirs(os.path.dirname(target_path), exist_ok=True)
+    if os.path.exists(target_path) and os.path.getsize(target_path) > 1000:
+        logging.info("Myntra raw catalog already exists at %s (%d bytes).", target_path, os.path.getsize(target_path))
+        return True
+
+    logging.info("Acquiring Myntra catalog from Gssmc/myntra_dataset...")
+    try:
+        from datasets import load_dataset
+        ds = load_dataset("Gssmc/myntra_dataset", split="train")
+        df = ds.to_pandas()
+        if len(df) > max_samples:
+            df = df.sample(n=max_samples, random_state=42)
+        df.to_csv(target_path, index=False)
+        logging.info("Saved %d Myntra products to %s", len(df), target_path)
+        return True
+    except Exception as e:
+        logging.error("Failed to acquire Myntra dataset: %s", e)
+        return False
+
+
 if __name__ == "__main__":
-    fk_ok = acquire_flipkart("data/raw/flipkart/flipkart_products_raw.csv")
-    amz_ok = acquire_amazon_india("data/raw/amazon_india/amazon_india_products_raw.csv")
-    print(f"Acquisition Summary: Flipkart={fk_ok}, Amazon_India={amz_ok}")
+    fk_ok = acquire_flipkart()
+    fk_rev_ok = acquire_flipkart_reviews()
+    amz_ok = acquire_amazon_india()
+    myn_ok = acquire_myntra()
+    print(f"Acquisition Summary: Flipkart={fk_ok}, Flipkart_Reviews={fk_rev_ok}, Amazon_India={amz_ok}, Myntra={myn_ok}")

@@ -14,6 +14,7 @@ Outputs:
 - data/processed/matched_cross_marketplace_pairs.parquet
 """
 
+import os
 import logging
 import re
 from dataclasses import asdict, dataclass, fields
@@ -21,6 +22,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import pandas as pd
+from src.data.schema import STANDARD_CATEGORIES
 
 logging.basicConfig(
     level=logging.INFO,
@@ -163,8 +165,9 @@ class CrossMarketplaceMatcher:
         clean_m1 = model1 if model1 not in {"none", "unknown", "nan", ""} else None
         clean_m2 = model2 if model2 not in {"none", "unknown", "nan", ""} else None
 
-        # 1. Exact model number match.
+        # 1. Exact model number match (Revision 3: Strong matching evidence, NOT unconditional proof).
         if clean_m1 and clean_m2 and clean_m1 == clean_m2 and len(clean_m1) >= 3:
+            # Check A: Brand agreement or conflict
             if clean_b1 and clean_b2 and clean_b1 != clean_b2:
                 return ProductMatchResult(
                     match_id=f"match_{id1}_{id2}",
@@ -188,6 +191,86 @@ class CrossMarketplaceMatcher:
                     match_decision="REQUIRES_MANUAL_REVIEW",
                 )
 
+            # Check B: Category / Product type conflict
+            cat1 = str(p1.get("category", "")).strip().lower()
+            cat2 = str(p2.get("category", "")).strip().lower()
+            valid_cats = {c.lower() for c in STANDARD_CATEGORIES}
+            if cat1 in valid_cats and cat2 in valid_cats and cat1 != cat2:
+                return ProductMatchResult(
+                    match_id=f"match_{id1}_{id2}",
+                    product_id_1=id1,
+                    marketplace_1=m1,
+                    title_1=title1,
+                    brand_1=clean_b1,
+                    model_1=clean_m1,
+                    product_id_2=id2,
+                    marketplace_2=m2,
+                    title_2=title2,
+                    brand_2=clean_b2,
+                    model_2=clean_m2,
+                    match_method="MODEL_MATCH_CATEGORY_CONFLICT",
+                    confidence_score=0.40,
+                    token_jaccard_similarity=jaccard,
+                    supporting_evidence=(
+                        f"Model matches ('{clean_m1}') but product categories conflict "
+                        f"('{cat1.title()}' vs '{cat2.title()}'). Likely unrelated items."
+                    ),
+                    match_decision="REQUIRES_MANUAL_REVIEW",
+                )
+
+            # Check C: Variant attribute differences (size, color)
+            meta1 = p1.get("metadata_details") if isinstance(p1.get("metadata_details"), dict) else {}
+            meta2 = p2.get("metadata_details") if isinstance(p2.get("metadata_details"), dict) else {}
+            s1 = str(meta1.get("size", "")).strip().lower()
+            s2 = str(meta2.get("size", "")).strip().lower()
+            if s1 and s2 and s1 not in {"none", "nan", ""} and s2 not in {"none", "nan", ""} and s1 != s2:
+                return ProductMatchResult(
+                    match_id=f"match_{id1}_{id2}",
+                    product_id_1=id1,
+                    marketplace_1=m1,
+                    title_1=title1,
+                    brand_1=clean_b1,
+                    model_1=clean_m1,
+                    product_id_2=id2,
+                    marketplace_2=m2,
+                    title_2=title2,
+                    brand_2=clean_b2,
+                    model_2=clean_m2,
+                    match_method="MODEL_MATCH_VARIANT_DIFFERENCE",
+                    confidence_score=0.65,
+                    token_jaccard_similarity=jaccard,
+                    supporting_evidence=(
+                        f"Model matches ('{clean_m1}') but size variants differ "
+                        f"('{s1}' vs '{s2}'). Distinct product variants."
+                    ),
+                    match_decision="REQUIRES_MANUAL_REVIEW",
+                )
+
+            # Check D: Missing brand with low text overlap
+            if (not clean_b1 or not clean_b2) and jaccard < 0.20:
+                return ProductMatchResult(
+                    match_id=f"match_{id1}_{id2}",
+                    product_id_1=id1,
+                    marketplace_1=m1,
+                    title_1=title1,
+                    brand_1=clean_b1,
+                    model_1=clean_m1,
+                    product_id_2=id2,
+                    marketplace_2=m2,
+                    title_2=title2,
+                    brand_2=clean_b2,
+                    model_2=clean_m2,
+                    match_method="MODEL_MATCH_UNVERIFIED_BRAND",
+                    confidence_score=0.60,
+                    token_jaccard_similarity=jaccard,
+                    supporting_evidence=(
+                        f"Model matches ('{clean_m1}') but brand verification is incomplete "
+                        f"with low title overlap ({jaccard:.2f}). Requires manual audit."
+                    ),
+                    match_decision="REQUIRES_MANUAL_REVIEW",
+                )
+
+            # All checks pass: brand agrees, categories do not conflict, variants do not conflict
             return ProductMatchResult(
                 match_id=f"match_{id1}_{id2}",
                 product_id_1=id1,
@@ -205,7 +288,7 @@ class CrossMarketplaceMatcher:
                 token_jaccard_similarity=jaccard,
                 supporting_evidence=(
                     f"Identical manufacturer model number ('{clean_m1}') "
-                    f"across {m1} and {m2}."
+                    f"with brand and category concordance across {m1} and {m2}."
                 ),
                 match_decision="MATCHED",
             )
@@ -353,6 +436,7 @@ def build_cross_marketplace_matches(
         }
 
         matched_for_item = 0
+        audit_for_item = 0
         for _, a_row in df_am_elec.iterrows():
             excluded_ids = {
                 str(a_row.get("canonical_product_id", "")),
@@ -374,19 +458,23 @@ def build_cross_marketplace_matches(
             }
 
             match_res = matcher.evaluate_pair(p_wm, p_am)
-
-            # Collect diverse audit sample across decisions
-            if len(audit_samples) < 100:
-                audit_samples.append(asdict(match_res))
-
-            if match_res.match_decision in {
+            is_qualifying = match_res.match_decision in {
                 "MATCHED",
                 "REQUIRES_MANUAL_REVIEW",
-            }:
+            }
+
+            if is_qualifying:
                 results.append(asdict(match_res))
                 matched_for_item += 1
-                if matched_for_item >= 3:
-                    break
+
+            # Collect diverse audit sample across multiple Walmart products rather than only w_row 0
+            if len(audit_samples) < 100:
+                if is_qualifying or audit_for_item < 1:
+                    audit_samples.append(asdict(match_res))
+                    audit_for_item += 1
+
+            if matched_for_item >= 3:
+                break
 
     # Keep the schema stable even when no pairs qualify.
     result_columns = [field.name for field in fields(ProductMatchResult)]
@@ -497,5 +585,95 @@ def generate_diverse_validation_candidates(
     return df_cand
 
 
+def generate_indian_cross_marketplace_candidates(
+    canonical_products_path: str = "data/processed/canonical_products.parquet",
+    output_csv_path: str = "data/processed/matching_validation_candidates_india.csv",
+    target_count: int = 50,
+) -> pd.DataFrame:
+    """
+    Generates cross-marketplace candidate pairs among Indian marketplace catalogs
+    (Flipkart, Amazon India, Myntra) based on shared brands and token similarity.
+    Adheres strictly to zero-fabrication: candidates are marked REQUIRES_MANUAL_REVIEW
+    with manual_label=None until verified against authoritative ground truth (Revision 3).
+    """
+    if not os.path.exists(canonical_products_path):
+        logging.info("Canonical products file %s not found. Skipping Indian candidate generation.", canonical_products_path)
+        return pd.DataFrame()
+
+    df_p = pd.read_parquet(canonical_products_path)
+    df_india = df_p[df_p["country"] == "IN"].copy()
+    if df_india.empty:
+        return pd.DataFrame()
+
+    df_india["brand_clean"] = df_india["brand"].fillna("").astype(str).str.lower().str.strip()
+
+    df_fk = df_india[df_india["marketplace"] == "flipkart"]
+    df_amz = df_india[df_india["marketplace"] == "amazon_in"]
+    df_myn = df_india[df_india["marketplace"] == "myntra"]
+
+    shared_brands = (set(df_fk["brand_clean"]) | set(df_myn["brand_clean"])) & set(df_amz["brand_clean"])
+    shared_brands -= {"", "generic", "none", "nan", "other", "all"}
+
+    candidates: List[Dict[str, Any]] = []
+    matcher = CrossMarketplaceMatcher()
+
+    for brand in sorted(shared_brands):
+        fk_b = df_fk[df_fk["brand_clean"] == brand]
+        amz_b = df_amz[df_amz["brand_clean"] == brand]
+
+        for _, f_row in fk_b.iterrows():
+            f_tokens = normalize_title_tokens(f_row.get("title", ""))
+            for _, a_row in amz_b.iterrows():
+                a_tokens = normalize_title_tokens(a_row.get("title", ""))
+                sim = calculate_jaccard(f_tokens, a_tokens)
+                if sim >= 0.10:
+                    p1 = {
+                        "canonical_product_id": f_row["canonical_product_id"],
+                        "marketplace": "flipkart",
+                        "title": f_row.get("title", ""),
+                        "brand": f_row.get("brand", ""),
+                        "category": f_row.get("category", ""),
+                        "metadata_details": f_row.get("metadata_details", {}),
+                    }
+                    p2 = {
+                        "canonical_product_id": a_row["canonical_product_id"],
+                        "marketplace": "amazon_in",
+                        "title": a_row.get("title", ""),
+                        "brand": a_row.get("brand", ""),
+                        "category": a_row.get("category", ""),
+                        "metadata_details": a_row.get("metadata_details", {}),
+                    }
+                    res = matcher.evaluate_pair(p1, p2)
+                    candidates.append({
+                        "brand": brand,
+                        "similarity": round(sim, 3),
+                        "product_id_1": f_row["canonical_product_id"],
+                        "marketplace_1": "flipkart",
+                        "title_1": f_row.get("title", ""),
+                        "price_1": f_row.get("price"),
+                        "product_id_2": a_row["canonical_product_id"],
+                        "marketplace_2": "amazon_in",
+                        "title_2": a_row.get("title", ""),
+                        "price_2": a_row.get("price"),
+                        "match_decision": res.match_decision,
+                        "confidence_score": res.confidence_score,
+                        "supporting_evidence": res.supporting_evidence,
+                        "manual_label": None,
+                        "review_notes": "Awaiting domain human verification",
+                    })
+
+    df_cand = pd.DataFrame(candidates)
+    if not df_cand.empty:
+        df_cand = df_cand.sort_values(by="similarity", ascending=False).head(target_count)
+
+    out_file = Path(output_csv_path)
+    out_file.parent.mkdir(parents=True, exist_ok=True)
+    df_cand.to_csv(out_file, index=False)
+    logging.info("Saved %d Indian cross-marketplace candidate pairs to %s", len(df_cand), out_file)
+    return df_cand
+
+
 if __name__ == "__main__":
     build_cross_marketplace_matches()
+    generate_diverse_validation_candidates()
+    generate_indian_cross_marketplace_candidates()

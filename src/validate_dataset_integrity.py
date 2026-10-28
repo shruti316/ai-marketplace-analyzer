@@ -333,6 +333,80 @@ class DatasetValidator:
             "Verified: Train/test split leakage is NOT applicable at this stage because model splits have not yet been materialized. Group-ASIN splitting protocol established for Week 3 modeling.",
         )
 
+    def validate_unlinked_review_corpus(self, path: str = "data/processed/review_corpus_unlinked.parquet", raw_path: str = "data/raw/flipkart/flipkart_reviews_raw.csv"):
+        logging.info("--- Validating Unlinked Review Corpus (Option A) ---")
+        if not os.path.exists(path):
+            self.record("unlinked_corpus_exists", "FAIL", f"Missing file: {path}")
+            return
+
+        df_u = pd.read_parquet(path)
+        self.record("unlinked_corpus_shape", "PASS", f"Contains {len(df_u):,} unlinked customer reviews.")
+
+        # Revision 1: Source-driven row count validation
+        if os.path.exists(raw_path):
+            source_count = len(pd.read_csv(raw_path))
+            if len(df_u) == source_count:
+                self.record("unlinked_corpus_source_count_match", "PASS", f"Corpus row count exactly matches source CSV ({source_count:,} reviews).")
+            else:
+                self.record("unlinked_corpus_source_count_match", "FAIL", f"Corpus count {len(df_u)} != source count {source_count}!")
+
+        # Uniqueness
+        if df_u["corpus_review_id"].is_unique:
+            self.record("unlinked_corpus_pk_unique", "PASS", "corpus_review_id is 100% unique.")
+        else:
+            self.record("unlinked_corpus_pk_unique", "FAIL", "Duplicate corpus_review_id detected!")
+
+        # Linkage status
+        non_unlinked = (df_u["linkage_status"] != "UNLINKED_RESEARCH_CORPUS").sum()
+        if non_unlinked == 0:
+            self.record("unlinked_corpus_linkage_status", "PASS", "All records correctly flagged as UNLINKED_RESEARCH_CORPUS.")
+        else:
+            self.record("unlinked_corpus_linkage_status", "FAIL", f"{non_unlinked} records missing UNLINKED_RESEARCH_CORPUS tag!")
+
+        # Sentiment labels
+        valid_labels = {"positive", "negative", "neutral"}
+        observed_labels = set(df_u["sentiment_label"].dropna().unique())
+        if observed_labels.issubset(valid_labels):
+            self.record("unlinked_corpus_sentiment_validity", "PASS", f"Sentiment labels strictly valid: {observed_labels}")
+        else:
+            self.record("unlinked_corpus_sentiment_validity", "FAIL", f"Invalid sentiment labels found: {observed_labels - valid_labels}")
+
+    def validate_indian_cohort_integrity(self, prod_path: str = "data/processed/canonical_products.parquet"):
+        logging.info("--- Validating Indian Catalog Cohort & Variant Modeling ---")
+        if not os.path.exists(prod_path):
+            return
+
+        df_p = pd.read_parquet(prod_path)
+        india_df = df_p[df_p["country"] == "IN"]
+
+        # Check total Indian products
+        self.record("indian_cohort_total_count", "PASS", f"Total Indian marketplace products: {len(india_df):,} (Amazon IN: {(india_df['marketplace']=='amazon_in').sum()}, Flipkart: {(india_df['marketplace']=='flipkart').sum()}, Myntra: {(india_df['marketplace']=='myntra').sum()})")
+
+        # Zero synthetic products in Flipkart: verify all Flipkart products have genuine source_product_id
+        fk_prods = india_df[india_df["marketplace"] == "flipkart"]
+        synthetic_fk = fk_prods[fk_prods["source_provenance"].str.contains("Reviews Dataset", case=False, na=False)]
+        if len(synthetic_fk) == 0 and len(fk_prods) == 1000:
+            self.record("flipkart_zero_synthetic_products", "PASS", f"All {len(fk_prods):,} Flipkart products are genuine catalog items (0 synthetic reviews-derived products).")
+        else:
+            self.record("flipkart_zero_synthetic_products", "FAIL", f"Found {len(synthetic_fk)} synthetic products in Flipkart catalog!")
+
+        # Myntra full variant preservation (1000 SKUs, 959 styles)
+        myn_prods = india_df[india_df["marketplace"] == "myntra"]
+        if len(myn_prods) == 1000 and myn_prods["parent_product_id"].nunique() == 959:
+            self.record("myntra_variant_preservation", "PASS", "All 1,000 Myntra SKU variants preserved across 959 parent styles.")
+        else:
+            self.record("myntra_variant_preservation", "FAIL", f"Myntra variant counts mismatch: {len(myn_prods)} SKUs, {myn_prods['parent_product_id'].nunique()} parents!")
+
+        # Amazon India price normalization check (Revision 2)
+        amz_in = india_df[india_df["marketplace"] == "amazon_in"]
+        sample_dot = amz_in[amz_in["source_product_id"] == "B00JMELFXQ"]
+        if not sample_dot.empty:
+            meta = sample_dot.iloc[0]["metadata_details"]
+            if meta.get("price_transformation_reason") == "leading_dot_scraper_artifact_normalized":
+                self.record("amazon_india_price_evidence_normalization", "PASS", "Leading-dot price normalization verified with raw value and reason preserved.")
+            else:
+                self.record("amazon_india_price_evidence_normalization", "FAIL", "Leading-dot price normalization missing transformation reason!")
+
     def print_summary(self) -> bool:
         print("\n=========================================================================================")
         print("                        COMPREHENSIVE DATASET INTEGRITY REPORT                          ")
@@ -354,6 +428,8 @@ class DatasetValidator:
 if __name__ == "__main__":
     validator = DatasetValidator()
     validator.validate_canonical_platform()
+    validator.validate_unlinked_review_corpus()
+    validator.validate_indian_cohort_integrity()
     validator.validate_baseline()
     validator.validate_dense_cohort()
     validator.validate_pricing_cohort()

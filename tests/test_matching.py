@@ -222,3 +222,78 @@ def test_builder_does_not_use_amazon_parent_id_as_model_number(tmp_path):
     # claim an exact manufacturer-model match based on the Amazon ID.
     if not results.empty:
         assert not (results["match_method"] == "EXACT_MODEL_MATCH").any()
+
+
+def test_model_matching_prudence_category_conflict():
+    """Revision 3: Exact model agreement across conflicting categories must not be auto-matched."""
+    matcher = CrossMarketplaceMatcher()
+    p1 = {
+        "canonical_product_id": "walmart_elec_1",
+        "marketplace": "walmart",
+        "title": "Electronics Gadget X100",
+        "brand": "BrandX",
+        "category": "Electronics",
+        "modelno": "X100",
+    }
+    p2 = {
+        "canonical_product_id": "flipkart_cloth_2",
+        "marketplace": "flipkart",
+        "title": "Cotton Ethnic Wear Dress X100",
+        "brand": "BrandX",
+        "category": "Clothing & Fashion",
+        "modelno": "X100",
+    }
+    res = matcher.evaluate_pair(p1, p2)
+    assert res.match_decision == "REQUIRES_MANUAL_REVIEW"
+    assert res.match_method == "MODEL_MATCH_CATEGORY_CONFLICT"
+    assert res.confidence_score <= 0.50
+
+
+def test_model_matching_prudence_variant_difference():
+    """Revision 3: Exact model agreement with conflicting variant attributes must be flagged as variant difference."""
+    matcher = CrossMarketplaceMatcher()
+    p1 = {
+        "canonical_product_id": "walmart_size_s",
+        "marketplace": "walmart",
+        "title": "Running Shoes Sprint Pro 500 Size 7",
+        "brand": "SprintCo",
+        "category": "Clothing & Fashion",
+        "modelno": "SP-500",
+        "metadata_details": {"size": "7"},
+    }
+    p2 = {
+        "canonical_product_id": "myntra_size_l",
+        "marketplace": "myntra",
+        "title": "Running Shoes Sprint Pro 500 Size 11",
+        "brand": "SprintCo",
+        "category": "Clothing & Fashion",
+        "modelno": "SP-500",
+        "metadata_details": {"size": "11"},
+    }
+    res = matcher.evaluate_pair(p1, p2)
+    assert res.match_decision == "REQUIRES_MANUAL_REVIEW"
+    assert res.match_method == "MODEL_MATCH_VARIANT_DIFFERENCE"
+    assert res.confidence_score < 0.90
+
+
+def test_model_matching_prudence_unverified_brand_low_similarity():
+    """Revision 3: Exact model agreement with missing brand and low token similarity must be audited."""
+    matcher = CrossMarketplaceMatcher()
+    p1 = {
+        "canonical_product_id": "prod_1",
+        "marketplace": "walmart",
+        "title": "Industrial Precision Measurement Tool M-900",
+        "brand": None,
+        "modelno": "M-900",
+    }
+    p2 = {
+        "canonical_product_id": "prod_2",
+        "marketplace": "amazon",
+        "title": "Heavy Duty Garden Water Hose Adapter M-900",
+        "brand": "HoseMaker",
+        "modelno": "M-900",
+    }
+    res = matcher.evaluate_pair(p1, p2)
+    assert res.match_decision == "REQUIRES_MANUAL_REVIEW"
+    assert res.match_method == "MODEL_MATCH_UNVERIFIED_BRAND"
+
