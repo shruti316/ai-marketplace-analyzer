@@ -1,0 +1,70 @@
+{
+  "dataset_phase": "Production Multimodal Architecture (Part 3 & 4 Master Assignment)",
+  "architecture_version": "v1.0-multimodal-normalized",
+  "created_at": "2026-11-02T22:30:00+05:30",
+  "target_marketplaces": [
+    "amazon_in",
+    "flipkart",
+    "myntra"
+  ],
+  "target_country": "IN",
+  "target_currency": "INR",
+  "foreign_marketplace_records": 0,
+  "record_counts": {
+    "total_products": 3643,
+    "products_by_marketplace": {
+      "amazon_in": 1500,
+      "flipkart": 1143,
+      "myntra": 1000
+    },
+    "products_by_category": {
+      "Clothing & Fashion": 1513,
+      "Beauty & Personal Care": 1180,
+      "Grocery & Household Essentials": 368,
+      "Home & Kitchen": 243,
+      "Electronics": 134,
+      "Other": 127,
+      "Books & Stationery": 27,
+      "Toys & Games": 25,
+      "Industrial & Scientific": 14,
+      "Sports & Outdoors": 12
+    },
+    "valid_price_products": 3623,
+    "products_with_usable_images": 2432,
+    "products_with_linked_reviews": 127,
+    "complete_multimodal_products": 0,
+    "total_reviews": 3500,
+    "linked_reviews_count": 3260,
+    "unlinked_uncertain_reviews_count": 240,
+    "total_images": 5034,
+    "usable_images": 4708,
+    "failed_images": 326,
+    "total_price_observations": 3643,
+    "total_entity_relationships": 8626,
+    "relationship_types": {
+      "HAS_IMAGE": 5034,
+      "HAS_REVIEW": 3260,
+      "IMAGE_EXACT_DUPLICATE_OF": 332
+    }
+  },
+  "data_contracts": {
+    "zero_foreign_records": true,
+    "zero_broken_foreign_keys": true,
+    "zero_orphan_images": true,
+    "zero_orphan_reviews": true,
+    "zero_fabricated_sellers": true,
+    "zero_synthetic_reviews": true,
+    "zero_false_positive_links": true,
+    "multimodal_scientific_truthfulness": true
+  },
+  "artifact_sha256": {
+    "products.parquet": "2c528965c70cb241a0c8ce932242430ae9d23465037d9fbf41707c1cb9c214e3",
+    "reviews.parquet": "a128cec3f3963c5c5b8626ee5e52d29931842358c94ddd07e211fdb2ae59dd31",
+    "images.parquet": "0e3d71e8f2c0f35a7ef11dadef9dc37f1999669c9e6d667289f390a44881519d",
+    "price_observations.parquet": "02e8cba17218f5918085f8b1fc67e6b822e4822c20403dc88f3ec16d523d9ec6",
+    "sellers.parquet": "76c575ea002cf882e6a82cb646623f06abe98e25e53a64691088042a807846d7",
+    "entity_relationships.parquet": "8ae7976b58d2266086276f7525498b082f4832b9e5a771ce1a6947065a31b487",
+    "source_registry.parquet": "21abfe52dd2206c7b0233e0795751338da79c42db8c8d8226988d079318caf43",
+    "complete_multimodal.parquet": "ab8ff3b022699c3e296a3ce8f355bfc2b7f33c44a29844ec31040cc04058d9f2"
+  }
+}

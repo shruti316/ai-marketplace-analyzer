@@ -1,0 +1,179 @@
+{
+  "dataset_name": "Indian Marketplace Trust Intelligence Dataset (Phase 2)",
+  "version": "2.0.0",
+  "phase": "Phase 2 - Indian Dataset Completion & AI Platform Data Foundation",
+  "updated_at": "2026-11-02T14:56:24Z",
+  "currency": "INR",
+  "country": "IN",
+  "target_marketplaces": [
+    "amazon_in",
+    "flipkart",
+    "myntra"
+  ],
+  "ai_platform_contract": {
+    "product_entity_key": "canonical_product_id",
+    "review_foreign_key": "canonical_product_id",
+    "image_foreign_key": "canonical_product_id",
+    "currency_isolation": "INR strictly partitioned; never mixed with USD",
+    "modality_flags": [
+      "price_valid",
+      "has_usable_images",
+      "has_linked_reviews",
+      "is_complete_multimodal"
+    ],
+    "pricing_features_supported": [
+      "selling_price_inr",
+      "mrp_inr",
+      "discount_percentage",
+      "stock_status"
+    ],
+    "cv_features_supported": [
+      "high_res_product_images",
+      "image_dimensions",
+      "sharpness_luminance",
+      "perceptual_dhash"
+    ],
+    "nlp_features_supported": [
+      "review_sentiment_code",
+      "review_title_text",
+      "product_title_description"
+    ]
+  },
+  "summary_counts": {
+    "total_products": 3500,
+    "products_by_marketplace": {
+      "amazon_in": 1500,
+      "flipkart": 1000,
+      "myntra": 1000
+    },
+    "products_with_valid_price": 3480,
+    "products_with_usable_images": 2432,
+    "products_with_linked_reviews": 0,
+    "complete_multimodal_products": 0,
+    "stock_status_distribution": {
+      "IN_STOCK": 3075,
+      "OUT_OF_STOCK": 420,
+      "UNKNOWN": 5
+    },
+    "total_image_records": 5034,
+    "usable_image_records": 4708,
+    "total_review_records": 3500,
+    "linked_review_records": 0,
+    "unlinked_review_records": 3500,
+    "review_provenance_distribution": {
+      "CONFIRMED_FLIPKART": 3260,
+      "UNCERTAIN_INDIAN_MARKETPLACE": 240
+    }
+  },
+  "image_coverage_summary": {
+    "amazon_in": {
+      "products_with_usable_images": 1500,
+      "usable_image_coverage_pct": 100.0,
+      "total_image_records": 1500,
+      "usable_image_records": 1500
+    },
+    "flipkart": {
+      "products_with_usable_images": 932,
+      "usable_image_coverage_pct": 93.2,
+      "total_image_records": 3534,
+      "usable_image_records": 3208
+    },
+    "myntra": {
+      "products_with_usable_images": 0,
+      "usable_image_coverage_pct": 0.0,
+      "total_image_records": 0,
+      "usable_image_records": 0
+    }
+  },
+  "price_statistics_inr": {
+    "amazon_in": {
+      "total_products": 1500,
+      "valid_price_count": 1485,
+      "missing_price_count": 15,
+      "mrp_available_count": 1478,
+      "min_selling_price_inr": 17.0,
+      "median_selling_price_inr": 798.0,
+      "mean_selling_price_inr": 2009.69,
+      "max_selling_price_inr": 9997.0,
+      "mean_discount_percentage": 17.46
+    },
+    "flipkart": {
+      "total_products": 1000,
+      "valid_price_count": 995,
+      "missing_price_count": 5,
+      "mrp_available_count": 995,
+      "min_selling_price_inr": 59.0,
+      "median_selling_price_inr": 550.0,
+      "mean_selling_price_inr": 2120.33,
+      "max_selling_price_inr": 107750.0,
+      "mean_discount_percentage": 39.52
+    },
+    "myntra": {
+      "total_products": 1000,
+      "valid_price_count": 1000,
+      "missing_price_count": 0,
+      "mrp_available_count": 1000,
+      "min_selling_price_inr": 307.0,
+      "median_selling_price_inr": 966.5,
+      "mean_selling_price_inr": 1297.96,
+      "max_selling_price_inr": 9304.0,
+      "mean_discount_percentage": 43.48
+    }
+  },
+  "category_distribution": {
+    "amazon_in": {
+      "Beauty & Personal Care": 1132,
+      "Grocery & Household Essentials": 368
+    },
+    "flipkart": {
+      "Beauty & Personal Care": 46,
+      "Books & Stationery": 27,
+      "Clothing & Fashion": 560,
+      "Electronics": 89,
+      "Home & Kitchen": 142,
+      "Other": 111,
+      "Toys & Games": 25
+    },
+    "myntra": {
+      "Clothing & Fashion": 953,
+      "Electronics": 1,
+      "Home & Kitchen": 30,
+      "Other": 16
+    }
+  },
+  "task_recovery_outcomes": {
+    "task_a_review_linkage": {
+      "audit_status": "EXHAUSTIVE_DETERMINISTIC_AUDIT_COMPLETE",
+      "total_reviews_audited": 3500,
+      "confirmed_flipkart_reviews": 3260,
+      "uncertain_marketplace_reviews": 240,
+      "exact_matches_found": 0,
+      "token_overlap_candidates_evaluated": 21,
+      "rejected_false_positives": 21,
+      "catalog_linked_reviews": 0,
+      "unlinked_corpus_reviews": 3500,
+      "audit_report": "reports/indian_review_matching_audit.md"
+    },
+    "task_b_image_recovery": {
+      "amazon_india_recovery_status": "100% SUCCESS (1,500/1,500 primary high-res images validated)",
+      "flipkart_recovery_status": "3,208 validated usable images covering 932 products",
+      "myntra_audit_status": "Exhaustive scan confirmed 0 image URLs in source catalog",
+      "total_usable_images": 4708,
+      "total_products_with_images": 2432,
+      "image_coverage_pct": 69.49
+    },
+    "task_c_product_completeness": {
+      "mrp_enrichment": "3473 products (99.23% coverage)",
+      "discount_enrichment": "3500 products with calculated discount %",
+      "stock_status_enrichment": "3,500 products with source-verified stock status: {'IN_STOCK': 3075, 'OUT_OF_STOCK': 420, 'UNKNOWN': 5}",
+      "parent_sku_enrichment": "1,000 Myntra parent styles and Amazon ASINs"
+    }
+  },
+  "file_manifest": {
+    "data\\indian_marketplace\\processed\\indian_images.parquet": "f605ae7aa29aba550900aaadd5771fe4193168bffc09412ab5bb4e6c4ac18499",
+    "data\\indian_marketplace\\processed\\indian_reviews.parquet": "cf1a3c7f3a0758bcbefec983355e862b1cb142bfd78abee63d3462c79f52ed62",
+    "data\\indian_marketplace\\processed\\indian_reviews_linked.parquet": "0bcebae7e37734406076c0176f56216030659f4f091cdd777ea0be59e2a3ffa8",
+    "data\\indian_marketplace\\processed\\indian_products.parquet": "a8ce91c897fa6639f2bee06b54fdefbf8524d6de497f9b3a4dcd878732ecc53b",
+    "data\\indian_marketplace\\processed\\indian_complete_multimodal.parquet": "b052def824cfae44dcbb862ca42d49b87cf537a24e8aa90663e2ed8ee79c410b"
+  }
+}

@@ -1,0 +1,110 @@
+{
+  "generation_timestamp": "2026-11-02 07:13:11 UTC",
+  "elapsed_seconds": 23.07,
+  "random_seed": 42,
+  "target_cohort_size": 20000,
+  "actual_cohort_size": 20000,
+  "core_subset_size": 5684,
+  "additions_size": 14316,
+  "disjointness_verified": true,
+  "cohort_role_counts": {
+    "expanded_addition": 14316,
+    "core_5684": 5684
+  },
+  "tier_counts": {
+    "Tier D (Catalog Expansion)": 14316,
+    "Tier C": 4000,
+    "Tier B": 1384,
+    "Tier A": 300
+  },
+  "sub_tier_counts": {
+    "exp_walmart_stratified_price": 9407,
+    "exp_amazon_evidence": 4351,
+    "c3_walmart_price": 1500,
+    "b1_cv_price": 1134,
+    "c1_amazon_in_price": 1000,
+    "c2_myntra_variants": 1000,
+    "c4_amazon_us_reviews": 500,
+    "exp_amazon_in_price": 485,
+    "gold_triple_modality": 300,
+    "b2_bestbuy_reviews": 249,
+    "exp_flipkart_evidence": 73,
+    "b3_nlp_price": 1
+  },
+  "marketplace_distribution": {
+    "walmart": 10907,
+    "amazon": 5359,
+    "amazon_in": 1485,
+    "flipkart": 1000,
+    "myntra": 1000,
+    "bestbuy": 249
+  },
+  "category_distribution": {
+    "Electronics": 7453,
+    "Beauty & Personal Care": 2964,
+    "Clothing & Fashion": 2606,
+    "Other": 2599,
+    "Books & Stationery": 1957,
+    "Home & Kitchen": 1299,
+    "Toys & Games": 754,
+    "Grocery & Household Essentials": 368
+  },
+  "price_coverage": {
+    "canonical_valid_price_universe": 24768,
+    "core_5684_valid_price": 4935,
+    "additions_14316_valid_price": 11526,
+    "final_20000_valid_price": 16461,
+    "unselected_valid_price": 8307,
+    "price_coverage_pct": 66.46
+  },
+  "modality_coverage": {
+    "products_with_reviews": 3627,
+    "canonical_products_with_reviews": 3627,
+    "review_retention_pct": 100.0,
+    "products_with_embeddings": 1647,
+    "canonical_products_with_embeddings": 1647,
+    "embedding_retention_pct": 100.0
+  },
+  "source_files": {
+    "canonical_products": {
+      "path": "data\\processed\\canonical_products.parquet",
+      "sha256": "b0a27e4803d5bf76d025da1abea2045e3920e61b26cf72343c5a0e6465e5cd0e",
+      "rows": 31289
+    },
+    "review_features": {
+      "path": "data\\processed\\product_review_features.parquet",
+      "sha256": "53bfe8d88446c241f41c4006d241da305a894106727f37c31eac6ebc20aff244",
+      "rows": 27789
+    },
+    "cv_features": {
+      "path": "data\\processed\\cv_product_features_expanded.parquet",
+      "sha256": "ec5193486d76771c97ea649d1f8a76a993dd83aa68fa87ce2a431b3f0ad12ffd",
+      "rows": 31289
+    },
+    "core_curated_products_5684": {
+      "path": "data\\curated\\curated_products_5684.parquet",
+      "sha256": "abcdb9e0e729d26113d9781910c614a8f36f1fee5f88aabbe18430666baa9024",
+      "rows": 5684
+    },
+    "core_cohort_membership": {
+      "path": "data\\curated\\cohort_membership.parquet",
+      "sha256": "17ab50e37f5a9313fc44296db41eb4ce3dcab41745fb3de1bbb6b9caa8312d1e",
+      "rows": 5684
+    }
+  },
+  "generated_files": {
+    "curated_products_20000_parquet": {
+      "path": "data\\curated\\curated_products_20000.parquet",
+      "sha256": "b2df7c98b8fb95d66e07727028b7b778e28cca615f376480a26e5c29b1145cc4",
+      "rows": 20000
+    },
+    "cohort_membership_20000_parquet": {
+      "path": "data\\curated\\cohort_membership_20000.parquet",
+      "sha256": "961f992eeebd4df5dd6c0c7ac811e14a5ee0d45797c792caa99fbffe7675b461",
+      "rows": 20000
+    },
+    "cohort_metadata_20000_json": {
+      "path": "data\\curated\\cohort_metadata_20000.json"
+    }
+  }
+}

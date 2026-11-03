@@ -1,0 +1,71 @@
+{
+  "dataset_phase": "Phase 3: Complete Indian Marketplace Review-Product Dataset Expansion",
+  "created_at": "2026-11-02T21:00:00+05:30",
+  "build_duration_seconds": 1.51,
+  "scope": {
+    "target_marketplaces": [
+      "amazon_in",
+      "flipkart",
+      "myntra"
+    ],
+    "target_country": "IN",
+    "target_currency": "INR",
+    "foreign_marketplace_records": 0
+  },
+  "record_counts": {
+    "total_products": 3643,
+    "original_phase2_products": 3500,
+    "recovered_products_added": 143,
+    "products_by_marketplace": {
+      "amazon_in": 1500,
+      "flipkart": 1143,
+      "myntra": 1000
+    },
+    "products_by_category": {
+      "Clothing & Fashion": 1513,
+      "Beauty & Personal Care": 1180,
+      "Grocery & Household Essentials": 368,
+      "Home & Kitchen": 243,
+      "Electronics": 134,
+      "Other": 127,
+      "Books & Stationery": 27,
+      "Toys & Games": 25,
+      "Industrial & Scientific": 14,
+      "Sports & Outdoors": 12
+    },
+    "valid_price_products": 3623,
+    "products_with_usable_images": 2432,
+    "products_with_linked_reviews": 127,
+    "complete_multimodal_products": 0,
+    "total_reviews": 3500,
+    "linked_reviews_count": 3260,
+    "unlinked_uncertain_reviews_count": 240,
+    "reviews_by_provenance": {
+      "CONFIRMED_FLIPKART": 3260,
+      "UNCERTAIN_INDIAN_MARKETPLACE": 240
+    },
+    "review_match_partitions": {
+      "EXACT_MATCH": 3260,
+      "UNMATCHED": 240
+    },
+    "total_images": 5034,
+    "usable_images": 4708,
+    "failed_images": 326
+  },
+  "integrity_checks": {
+    "zero_foreign_records": true,
+    "zero_broken_foreign_keys": true,
+    "zero_orphan_images": true,
+    "zero_orphan_reviews": true,
+    "zero_synthetic_reviews": true,
+    "zero_false_positive_links": true,
+    "multimodal_scientific_truthfulness": true
+  },
+  "artifact_sha256": {
+    "products.parquet": "34f1bc3eb7a13cac4ac11469d99a73d8ef2297868059436e8d8808ec4a26d697",
+    "reviews.parquet": "a7b201eb03a97893fd8bffe07929f2914293caab521070c4260aa6c163c22770",
+    "review_product_matches.parquet": "adce9dd5a0c15d174144fb8f50f9c0540d1502241927f2e7db6ef734e466991c",
+    "images.parquet": "f605ae7aa29aba550900aaadd5771fe4193168bffc09412ab5bb4e6c4ac18499",
+    "complete_multimodal.parquet": "9978a9160105cdc0bf07f11076eef2e95014e04af1bd1d3de937c5d01d6883ff"
+  }
+}

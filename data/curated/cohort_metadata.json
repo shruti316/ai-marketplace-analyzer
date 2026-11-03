@@ -1,0 +1,124 @@
+{
+  "generation_timestamp": "2026-11-02 06:26:29 UTC",
+  "elapsed_seconds": 9.02,
+  "random_seed": 42,
+  "target_cohort_size": 5684,
+  "actual_cohort_size": 5684,
+  "tier_counts": {
+    "Tier A": 300,
+    "Tier B": 1384,
+    "Tier C": 4000
+  },
+  "sub_tier_counts": {
+    "c3_walmart_price": 1500,
+    "b1_cv_price": 1134,
+    "c1_amazon_in_price": 1000,
+    "c2_myntra_variants": 1000,
+    "c4_amazon_us_reviews": 500,
+    "gold_triple_modality": 300,
+    "b2_bestbuy_reviews": 249,
+    "b3_nlp_price": 1
+  },
+  "marketplace_distribution": {
+    "walmart": 1500,
+    "amazon": 1008,
+    "amazon_in": 1000,
+    "myntra": 1000,
+    "flipkart": 927,
+    "bestbuy": 249
+  },
+  "category_distribution": {
+    "Clothing & Fashion": 1626,
+    "Electronics": 1364,
+    "Beauty & Personal Care": 1102,
+    "Other": 462,
+    "Home & Kitchen": 373,
+    "Books & Stationery": 344,
+    "Grocery & Household Essentials": 245,
+    "Toys & Games": 168
+  },
+  "source_files": {
+    "canonical_products": {
+      "path": "data\\processed\\canonical_products.parquet",
+      "sha256": "b0a27e4803d5bf76d025da1abea2045e3920e61b26cf72343c5a0e6465e5cd0e",
+      "rows": 31289
+    },
+    "review_features": {
+      "path": "data\\processed\\product_review_features.parquet",
+      "sha256": "53bfe8d88446c241f41c4006d241da305a894106727f37c31eac6ebc20aff244",
+      "rows": 27789
+    },
+    "cv_features": {
+      "path": "data\\processed\\cv_product_features_expanded.parquet",
+      "sha256": "ec5193486d76771c97ea649d1f8a76a993dd83aa68fa87ce2a431b3f0ad12ffd",
+      "rows": 31289
+    }
+  },
+  "generated_files": {
+    "curated_products_parquet": "data\\curated\\curated_products_5684.parquet",
+    "cohort_membership_parquet": "data\\curated\\cohort_membership.parquet",
+    "cohort_metadata_json": "data\\curated\\cohort_metadata.json"
+  },
+  "sub_tier_details": {
+    "gold_triple_modality": {
+      "count": 300,
+      "criteria": "cv_valid & nlp_valid & price_valid & amazon_us & beauty",
+      "marketplace": "amazon",
+      "category": "Beauty & Personal Care"
+    },
+    "b1_cv_price": {
+      "count": 1134,
+      "criteria": "not_in_A & cv_valid & price_valid",
+      "marketplaces": {
+        "flipkart": 927,
+        "amazon": 207
+      }
+    },
+    "b2_bestbuy_reviews": {
+      "count": 249,
+      "criteria": "not_in_A & marketplace == bestbuy & review_count > 0",
+      "marketplace": "bestbuy"
+    },
+    "b3_nlp_price": {
+      "count": 1,
+      "criteria": "not_in_A & amazon & review_count > 0 & price_valid & not_cv_valid",
+      "canonical_product_id": "amazon_B015WXZSZ6"
+    },
+    "c1_amazon_in_price": {
+      "count": 1000,
+      "criteria": "not_in_AB & marketplace == amazon_in & price_valid & currency == INR",
+      "sampling_method": "deterministic_random_sample (seed 42)"
+    },
+    "c2_myntra_variants": {
+      "count": 1000,
+      "criteria": "not_in_AB & marketplace == myntra & price_valid",
+      "selection_method": "deterministic_all_eligible"
+    },
+    "c3_walmart_price": {
+      "count": 1500,
+      "criteria": "not_in_AB & marketplace == walmart & price_valid",
+      "sampling_method": "deterministic_category_stratified_sampling (seed 42)",
+      "category_allocations": {
+        "Electronics": 887,
+        "Other": 336,
+        "Books & Stationery": 168,
+        "Clothing & Fashion": 58,
+        "Home & Kitchen": 49,
+        "Toys & Games": 1,
+        "Grocery & Household Essentials": 1
+      }
+    },
+    "c4_amazon_us_reviews": {
+      "count": 500,
+      "criteria": "not_in_AB & marketplace == amazon & review_count > 0",
+      "sampling_method": "43 multi-review + 457 category-stratified single-review (seed 42)",
+      "category_allocations": {
+        "Home & Kitchen": 103,
+        "Toys & Games": 101,
+        "Electronics": 103,
+        "Books & Stationery": 97,
+        "Clothing & Fashion": 96
+      }
+    }
+  }
+}

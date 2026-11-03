@@ -1,0 +1,161 @@
+{
+  "dataset_name": "Marketplace Trust Intelligence Dataset",
+  "version": "1.1.0",
+  "certification_status": "CERTIFIED_WITH_LIMITATIONS",
+  "release_state": "FROZEN",
+  "generation_timestamp": "2026-11-03T10:30:00+05:30",
+  "summary_statistics": {
+    "total_products": 6043,
+    "indian_products": 3643,
+    "supplementary_products": 2400,
+    "indian_product_percentage": 60.28,
+    "supplementary_product_percentage": 39.72,
+    "tier_a_complete_multimodal_products": 105,
+    "tier_a_indian_products": 5,
+    "tier_a_supplementary_products": 100,
+    "tier_b_partial_modality_products": 5938,
+    "tier_c_benchmark_reviews": 42126,
+    "total_images": 5554,
+    "usable_images": 5228,
+    "failed_download_audit_images": 326,
+    "total_reviews": 51839,
+    "total_price_observations": 6043,
+    "total_entity_relationships": 62271,
+    "total_cross_modal_evidence": 1889
+  },
+  "tables": {
+    "entities/products.parquet": {
+      "file_path": "data/marketplace_trust_dataset_v1.1/entities/products.parquet",
+      "sha256": "61c145fa71c59718cd5c2dc3950ab86da31fceb4118522a3640ed20ae816f3f5",
+      "file_size_bytes": 1467520,
+      "row_count": 6043,
+      "column_count": 23
+    },
+    "entities/sellers.parquet": {
+      "file_path": "data/marketplace_trust_dataset_v1.1/entities/sellers.parquet",
+      "sha256": "6bc9d6c7f567d49aad28b0b8116f9d38030df0a19d2da13034b3c60810d05f23",
+      "file_size_bytes": 5736,
+      "row_count": 6,
+      "column_count": 7
+    },
+    "evidence/images.parquet": {
+      "file_path": "data/marketplace_trust_dataset_v1.1/evidence/images.parquet",
+      "sha256": "73a67de97b1bb9158a9131317bc65d3015147ac736c4030ff8bc8e9af1f9e655",
+      "file_size_bytes": 1439876,
+      "row_count": 5554,
+      "column_count": 23
+    },
+    "evidence/reviews.parquet": {
+      "file_path": "data/marketplace_trust_dataset_v1.1/evidence/reviews.parquet",
+      "sha256": "813b80bcfc5f36977f5c52d416a86b8384ebe5b9702dbb29223f6e8d0839f816",
+      "file_size_bytes": 13886307,
+      "row_count": 51839,
+      "column_count": 21
+    },
+    "evidence/price_observations.parquet": {
+      "file_path": "data/marketplace_trust_dataset_v1.1/evidence/price_observations.parquet",
+      "sha256": "d37bd952f5824c5fa4e00ffd392b4673fc85e13e2ea323e52a8cd2e09d3d15d4",
+      "file_size_bytes": 331683,
+      "row_count": 6043,
+      "column_count": 16
+    },
+    "evidence_relationships/entity_relationships.parquet": {
+      "file_path": "data/marketplace_trust_dataset_v1.1/evidence_relationships/entity_relationships.parquet",
+      "sha256": "f3dd54647b87c9441b9f172c13d7ae2b0c0eb6d06a7630c361515a96fcacc8b4",
+      "file_size_bytes": 1136035,
+      "row_count": 62271,
+      "column_count": 11
+    },
+    "evidence_relationships/cross_modal_evidence.parquet": {
+      "file_path": "data/marketplace_trust_dataset_v1.1/evidence_relationships/cross_modal_evidence.parquet",
+      "sha256": "70c347975923400eb07924647683065339bb68c8e385884fee4d57814ba8a4d8",
+      "file_size_bytes": 74585,
+      "row_count": 1889,
+      "column_count": 13
+    },
+    "collections/complete_multimodal_core.parquet": {
+      "file_path": "data/marketplace_trust_dataset_v1.1/collections/complete_multimodal_core.parquet",
+      "sha256": "753d1d1eb36c9c04870de2c38e20385de86963afe24af97db20ef80b75795804",
+      "file_size_bytes": 48063,
+      "row_count": 105,
+      "column_count": 23
+    },
+    "collections/partial_modalities.parquet": {
+      "file_path": "data/marketplace_trust_dataset_v1.1/collections/partial_modalities.parquet",
+      "sha256": "3c0bc950defb710771096b44202d9c7ce7140d6f8fb5fd291766c318dc8bc0af",
+      "file_size_bytes": 1435434,
+      "row_count": 5938,
+      "column_count": 23
+    },
+    "collections/isolated_benchmarks/deceptive_opinion_spam.parquet": {
+      "file_path": "data/marketplace_trust_dataset_v1.1/collections/isolated_benchmarks/deceptive_opinion_spam.parquet",
+      "sha256": "eaeceee0a9aa985f509d52ed4a2841a93584265787ec9687be5d7161ae7aaf7c",
+      "file_size_bytes": 751544,
+      "row_count": 1600,
+      "column_count": 5
+    },
+    "collections/isolated_benchmarks/ecommerce_fake_reviews.parquet": {
+      "file_path": "data/marketplace_trust_dataset_v1.1/collections/isolated_benchmarks/ecommerce_fake_reviews.parquet",
+      "sha256": "e0496930c852597f6b24686feb6e8a4ba051e573699a4a9e3ba5a871e9422de8",
+      "file_size_bytes": 8005832,
+      "row_count": 40526,
+      "column_count": 4
+    },
+    "collections/isolated_benchmarks/synthetic_stress_test_cases.parquet": {
+      "file_path": "data/marketplace_trust_dataset_v1.1/collections/isolated_benchmarks/synthetic_stress_test_cases.parquet",
+      "sha256": "6407a4691c9170973dc6c9e0068124673a7b4bc6f245f2b94de5917d3b8df730",
+      "file_size_bytes": 16141,
+      "row_count": 5,
+      "column_count": 21
+    },
+    "evaluation/train_manifest.parquet": {
+      "file_path": "data/marketplace_trust_dataset_v1.1/evaluation/train_manifest.parquet",
+      "sha256": "c3286852c8177c7fc24265124e96dbc483967586e1c4d6738f726136ef6dc2b7",
+      "file_size_bytes": 1054176,
+      "row_count": 4230,
+      "column_count": 23
+    },
+    "evaluation/validation_manifest.parquet": {
+      "file_path": "data/marketplace_trust_dataset_v1.1/evaluation/validation_manifest.parquet",
+      "sha256": "fbc626645be8533923e1661e84e83f0e12571a6cd1bc84447187afe0e63b8f7f",
+      "file_size_bytes": 259178,
+      "row_count": 906,
+      "column_count": 23
+    },
+    "evaluation/test_manifest.parquet": {
+      "file_path": "data/marketplace_trust_dataset_v1.1/evaluation/test_manifest.parquet",
+      "sha256": "9bb753691acd136613c39f9e36e619633fffc6b8b99a8216653b1e5fb09cab87",
+      "file_size_bytes": 274040,
+      "row_count": 907,
+      "column_count": 23
+    },
+    "metadata/source_registry.parquet": {
+      "file_path": "data/marketplace_trust_dataset_v1.1/metadata/source_registry.parquet",
+      "sha256": "d6173fa28818bc1e6299d702a5753d9734136bbf2844944e15f71b011e26cc15",
+      "file_size_bytes": 12334,
+      "row_count": 11,
+      "column_count": 13
+    },
+    "metadata/label_taxonomy.parquet": {
+      "file_path": "data/marketplace_trust_dataset_v1.1/metadata/label_taxonomy.parquet",
+      "sha256": "3d629aae39334edaf69536b4b7d016883fb4db5a74e8a901e36bca4145ef0277",
+      "file_size_bytes": 6454,
+      "row_count": 8,
+      "column_count": 6
+    },
+    "metadata/review_accounting_table.parquet": {
+      "file_path": "data/marketplace_trust_dataset_v1.1/metadata/review_accounting_table.parquet",
+      "sha256": "f6c05eebdde174ca7a2519349b84e607bd220d7c65498f36b8904b38a8c1f425",
+      "file_size_bytes": 7356,
+      "row_count": 5,
+      "column_count": 9
+    },
+    "manifests/image_acquisition_manifest.csv": {
+      "file_path": "data/marketplace_trust_dataset_v1.1/manifests/image_acquisition_manifest.csv",
+      "sha256": "eb13771037b19f715b3674e31549cf76fcd6014ace31b5c72e7bcfdb4882756e",
+      "file_size_bytes": 844394,
+      "row_count": 3091,
+      "column_count": 11
+    }
+  }
+}
