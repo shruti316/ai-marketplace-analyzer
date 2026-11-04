@@ -1,0 +1,183 @@
+{
+  "release_version": "v1.5",
+  "release_status": "FROZEN",
+  "certification_verdict": "CERTIFIED_WITH_LIMITATIONS",
+  "total_products": 6043,
+  "total_reviews": 56697,
+  "total_images": 5554,
+  "total_prices": 6043,
+  "tables": {
+    "collections/complete_multimodal_core.parquet": {
+      "sha256": "eb6263c74ccfe8fc0a1bda8c9fbe5d90c8c75dea9473dadc231519b7c4ec7b67",
+      "size_bytes": 105854
+    },
+    "collections/isolated_benchmarks/deceptive_opinion_spam.parquet": {
+      "sha256": "eaeceee0a9aa985f509d52ed4a2841a93584265787ec9687be5d7161ae7aaf7c",
+      "size_bytes": 751544
+    },
+    "collections/isolated_benchmarks/ecommerce_fake_reviews.parquet": {
+      "sha256": "e0496930c852597f6b24686feb6e8a4ba051e573699a4a9e3ba5a871e9422de8",
+      "size_bytes": 8005832
+    },
+    "collections/isolated_benchmarks/synthetic_stress_test_cases.parquet": {
+      "sha256": "6407a4691c9170973dc6c9e0068124673a7b4bc6f245f2b94de5917d3b8df730",
+      "size_bytes": 16141
+    },
+    "derived_evidence/cross_modal_evidence.parquet": {
+      "sha256": "717a56e1f66e7468c7aee7d5f25845d70b6a201fa5b0bbdb84191b80a25a0492",
+      "size_bytes": 74539
+    },
+    "derived_evidence/image_integrity_features.parquet": {
+      "sha256": "80a686fd129a8b05f81c9327d2b52f9e13f390427c3b29c12d91e017af16e7d3",
+      "size_bytes": 592787
+    },
+    "derived_evidence/price_anomaly_features.parquet": {
+      "sha256": "bf88f1d84ffbe43e77e97e29f2209bd9c5c6bdec72a9ba3deba141245c3e9b56",
+      "size_bytes": 228270
+    },
+    "derived_evidence/review_quality_features.parquet": {
+      "sha256": "68b843b4e1011a7383dbbd39da877c9bbc33c8765d133f46c227878a0fefdae3",
+      "size_bytes": 824450
+    },
+    "entities/products.parquet": {
+      "sha256": "aa3e53751a4cc640bb50601573515a080e98a17761fa8b7d07a9b4f42d1f552d",
+      "size_bytes": 1458916
+    },
+    "entities/product_variants.parquet": {
+      "sha256": "da575023b786636c8e307269be67bc46b93dfd072900a5dcaec6c663077f4cda",
+      "size_bytes": 45502
+    },
+    "entities/sellers.parquet": {
+      "sha256": "6bc9d6c7f567d49aad28b0b8116f9d38030df0a19d2da13034b3c60810d05f23",
+      "size_bytes": 5736
+    },
+    "evaluation/test_manifest.parquet": {
+      "sha256": "b05f0660305900933c86cd15949bed71fec281ffed72446dcb9699f100b6cd7b",
+      "size_bytes": 249460
+    },
+    "evaluation/train_manifest.parquet": {
+      "sha256": "117b47df186b772622a6ba20147796654f199043ed49c0af9d810c013670b089",
+      "size_bytes": 1052063
+    },
+    "evaluation/validation_manifest.parquet": {
+      "sha256": "7f42eefd7544cd0e09bbc43fd7ff7444c06585b41eefd2c6c61168a0be73cade",
+      "size_bytes": 277454
+    },
+    "evaluation/benchmark_manifests/external_benchmark_manifest.parquet": {
+      "sha256": "e5480283a40e100d15d075466b0b70e6cb36d61fa167e45a721a5a7f90a4b508",
+      "size_bytes": 3388
+    },
+    "evaluation/benchmark_manifests/stress_test_manifest.parquet": {
+      "sha256": "c55ff90de0663f9d12d6d72bc2f8f222c016ab42b5cde7e2fd8d02ae1da3a191",
+      "size_bytes": 2922
+    },
+    "evaluation/protocols/protocol_1_product_held_out/test_manifest.parquet": {
+      "sha256": "b05f0660305900933c86cd15949bed71fec281ffed72446dcb9699f100b6cd7b",
+      "size_bytes": 249460
+    },
+    "evaluation/protocols/protocol_1_product_held_out/train_manifest.parquet": {
+      "sha256": "117b47df186b772622a6ba20147796654f199043ed49c0af9d810c013670b089",
+      "size_bytes": 1052063
+    },
+    "evaluation/protocols/protocol_1_product_held_out/validation_manifest.parquet": {
+      "sha256": "7f42eefd7544cd0e09bbc43fd7ff7444c06585b41eefd2c6c61168a0be73cade",
+      "size_bytes": 277454
+    },
+    "evaluation/protocols/protocol_2_variant_family_held_out/test_manifest.parquet": {
+      "sha256": "395ecde00575a1c4f9124178f0f34419a64976a929cf223126ad72d7ab448ed3",
+      "size_bytes": 262997
+    },
+    "evaluation/protocols/protocol_2_variant_family_held_out/train_manifest.parquet": {
+      "sha256": "c502488bb65b69d3382b210ee087ce7472bc6012fc60267b5893accd9a280107",
+      "size_bytes": 1042100
+    },
+    "evaluation/protocols/protocol_2_variant_family_held_out/validation_manifest.parquet": {
+      "sha256": "445981197867fdbc8d2e41bfb0455961cc3e697b00db3c3d644a4a9fc1414d53",
+      "size_bytes": 266181
+    },
+    "evaluation/protocols/protocol_3_reviewer_held_out/test_manifest.parquet": {
+      "sha256": "834abc7c8a5f5b66c7d58c965a0aa5084bf8f063738e5d093311ab69f0e9a02a",
+      "size_bytes": 283221
+    },
+    "evaluation/protocols/protocol_3_reviewer_held_out/train_manifest.parquet": {
+      "sha256": "94088635e266b5ff8e5eb506cbb3dda92d1b56ec76358342d7e14418ff974fc8",
+      "size_bytes": 1005090
+    },
+    "evaluation/protocols/protocol_3_reviewer_held_out/validation_manifest.parquet": {
+      "sha256": "19f0d2310f8c53a43ad1b70077b2de10160b0a6ee17f6d5a6fd3c6b970f550c1",
+      "size_bytes": 292811
+    },
+    "evaluation/protocols/protocol_4_image_cluster_held_out/test_manifest.parquet": {
+      "sha256": "b05f0660305900933c86cd15949bed71fec281ffed72446dcb9699f100b6cd7b",
+      "size_bytes": 249460
+    },
+    "evaluation/protocols/protocol_4_image_cluster_held_out/train_manifest.parquet": {
+      "sha256": "117b47df186b772622a6ba20147796654f199043ed49c0af9d810c013670b089",
+      "size_bytes": 1052063
+    },
+    "evaluation/protocols/protocol_4_image_cluster_held_out/validation_manifest.parquet": {
+      "sha256": "7f42eefd7544cd0e09bbc43fd7ff7444c06585b41eefd2c6c61168a0be73cade",
+      "size_bytes": 277454
+    },
+    "evaluation/protocols/protocol_5_cross_listing_held_out/test_manifest.parquet": {
+      "sha256": "2714aebb967e5cb0e48490563559811c8be7f8bde01284e2ba3c35ac39afac8c",
+      "size_bytes": 262482
+    },
+    "evaluation/protocols/protocol_5_cross_listing_held_out/train_manifest.parquet": {
+      "sha256": "b85fe96955c0a9a749845390d1c3a61a9d5b4a689733ead1f47189b8bfb90c31",
+      "size_bytes": 1046173
+    },
+    "evaluation/protocols/protocol_5_cross_listing_held_out/validation_manifest.parquet": {
+      "sha256": "1ab774280a19490bc16f7dd8b7abae2bc06fa8e3b465790134a3ff3d1a1c4a09",
+      "size_bytes": 269556
+    },
+    "evaluation/protocols/protocol_6_temporal_evaluation/temporal_protocol_specification.json": {
+      "sha256": "2ce6eea3eb318a5b1abbbb1bb2ecde5b3e5ee896a390a8dfa717613b7408f658",
+      "size_bytes": 599
+    },
+    "evidence/fx_conversion_rates.parquet": {
+      "sha256": "2bf59b4a944fa5ca2427d7e42edc15b50be347d3395e4dac59fbb51e1bc88711",
+      "size_bytes": 7704
+    },
+    "evidence/images.parquet": {
+      "sha256": "1e131f0dc8177339329b6bf170501dd27f86485a2d3d6614ebc6f5a890c51c74",
+      "size_bytes": 1441498
+    },
+    "evidence/price_observations.parquet": {
+      "sha256": "d4644a44d4bed1d2f4b98f406b4bf4463f5686f66a90209fafdfe17d83229764",
+      "size_bytes": 335553
+    },
+    "evidence/reviews.parquet": {
+      "sha256": "0978f01dd7c37d4621ff50f82f762565f447eaf5b81263d9fc6ed53395089300",
+      "size_bytes": 15646437
+    },
+    "evidence/seller_observations.parquet": {
+      "sha256": "c2cd45377bd7e418079d26d07c05b01eb22b782036dafe2096ee9f9b07d1ca16",
+      "size_bytes": 8308
+    },
+    "manifests/image_acquisition_manifest.csv": {
+      "sha256": "eb13771037b19f715b3674e31549cf76fcd6014ace31b5c72e7bcfdb4882756e",
+      "size_bytes": 844394
+    },
+    "manifests/matching_audit.parquet": {
+      "sha256": "ead505032c8f3acae940c6f0b12eb8303c95cbdd0b2b318cdaba0ca42cffd5fe",
+      "size_bytes": 7628
+    },
+    "manifests/review_accounting.parquet": {
+      "sha256": "19be1ef33b136abac147593a81bdc02425e8bb3de3e30fa7043ae076de10d256",
+      "size_bytes": 7184
+    },
+    "manifests/source_registry.parquet": {
+      "sha256": "9c2a43448a1b61685daa49ab71eaf1941170e899cd6dae415277bd379a59745f",
+      "size_bytes": 12377
+    },
+    "metadata/drift_baseline_snapshot.json": {
+      "sha256": "eaae677c0ecd0c6e0211dc0e5e2e42d517f4fb8c7cc403eb1f0e95d1a4775b6f",
+      "size_bytes": 1312
+    },
+    "relationships/entity_relationships.parquet": {
+      "sha256": "8d2561cb5f55c9d403b90668c3f194c79b9d6e60ebf55d7d737f9de279da952b",
+      "size_bytes": 1314435
+    }
+  }
+}

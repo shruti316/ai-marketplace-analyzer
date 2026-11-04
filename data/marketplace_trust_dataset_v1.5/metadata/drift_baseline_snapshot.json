@@ -1,0 +1,47 @@
+{
+  "snapshot_version": "v1.5_BASELINE_SNAPSHOT",
+  "observation_timestamp": "2026-11-04T09:30:00+05:30",
+  "marketplace_distribution": {
+    "amazon_in": 0.2482,
+    "flipkart": 0.1891,
+    "walmart": 0.1872,
+    "amazon": 0.1688,
+    "myntra": 0.1655,
+    "bestbuy": 0.0412
+  },
+  "category_distribution": {
+    "Clothing & Fashion": 0.2828,
+    "Beauty & Personal Care": 0.2449,
+    "Electronics": 0.1948,
+    "Home & Kitchen": 0.0688,
+    "Other": 0.0647,
+    "Grocery & Household Essentials": 0.0611,
+    "Books & Stationery": 0.0521,
+    "Toys & Games": 0.0265,
+    "Industrial & Scientific": 0.0023,
+    "Sports & Outdoors": 0.002
+  },
+  "price_distribution_inr": {
+    "count": 5153,
+    "mean": 3503.61,
+    "std": 12399.67,
+    "median": 1049.0,
+    "q25": 549.0,
+    "q75": 2737.26,
+    "missing_rate": 0.1473
+  },
+  "rating_distribution": {
+    "count": 56697,
+    "mean": 4.37,
+    "std": 1.21,
+    "rating_distribution": {
+      "5.0": 0.7119,
+      "4.0": 0.1336,
+      "1.0": 0.0825,
+      "3.0": 0.0461,
+      "2.0": 0.0258
+    }
+  },
+  "image_usability_rate": 0.9413,
+  "monitoring_governance_note": "This snapshot serves as the calibration reference for future crawl monitoring. No temporal drift is claimed from a single static crawl snapshot."
+}

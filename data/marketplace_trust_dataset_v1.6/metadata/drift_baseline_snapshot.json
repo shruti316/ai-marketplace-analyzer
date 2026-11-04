@@ -1,0 +1,35 @@
+{
+  "snapshot_version": "v1.6_BASELINE_SNAPSHOT",
+  "timestamp": "2026-11-04T10:00:00Z",
+  "total_products": 6043,
+  "total_reviews": 56697,
+  "total_images": 5554,
+  "total_prices": 6043,
+  "total_valid_prices": 5153,
+  "marketplace_counts": {
+    "amazon_in": 1500,
+    "flipkart": 1143,
+    "walmart": 1131,
+    "amazon": 1020,
+    "myntra": 1000,
+    "bestbuy": 249
+  },
+  "modality_tier_counts": {
+    "TIER_D_CATALOG": 3105,
+    "TIER_B_VISUAL": 2506,
+    "TIER_A_COMPLETE": 305,
+    "TIER_C_TEXTUAL": 127
+  },
+  "price_distribution_inr": {
+    "mean": 3503.61,
+    "std": 12399.67,
+    "median": 1049.0,
+    "q25": 549.0,
+    "q75": 2737.26
+  },
+  "rating_distribution": {
+    "mean": 4.3666,
+    "std": 1.2123,
+    "median": 5.0
+  }
+}

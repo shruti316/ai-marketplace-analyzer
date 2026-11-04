@@ -1,0 +1,11 @@
+{
+  "protocol_name": "PROTOCOL_6_TEMPORAL_EVALUATION",
+  "feasibility_status": "PROSPECTIVE_ARCHITECTURE_ONLY",
+  "temporal_coverage_audit": {
+    "customer_reviews_with_dates": 56697,
+    "price_observations_temporal_span": "Single-snapshot crawl (2026-10-28 to 2026-11-02)",
+    "longitudinal_price_history_present": false,
+    "decision": "Temporal product-level splitting is deferred to prevent synthetic timestamp fabrication."
+  },
+  "research_specification": "When longitudinal crawls are available, Protocol 6 will partition by observation_timestamp <= T_train < T_val < T_test."
+}

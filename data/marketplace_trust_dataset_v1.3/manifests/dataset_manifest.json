@@ -1,0 +1,233 @@
+{
+  "dataset_name": "Marketplace Trust Intelligence Dataset",
+  "release_version": "v1.3",
+  "release_status": "FROZEN",
+  "release_date": "2026-11-03",
+  "certification_verdict": "CERTIFIED_WITH_LIMITATIONS",
+  "summary_statistics": {
+    "total_products": 6043,
+    "indian_products": 3643,
+    "supplementary_products": 2400,
+    "indian_percentage": 60.28,
+    "total_reviews": 56697,
+    "total_images": 5554,
+    "usable_images": 5228,
+    "price_observations": 6043,
+    "complete_multimodal_products": 305,
+    "indian_complete_multimodal": 5,
+    "supplementary_complete_multimodal": 300,
+    "partial_modality_products": 5738
+  },
+  "tables": {
+    "entities/products.parquet": {
+      "file_name": "products.parquet",
+      "relative_path": "entities/products.parquet",
+      "row_count": 6043,
+      "size_bytes": 1457566,
+      "sha256": "f6a87a337608e078648faa3fa0d52d49b4d65b8cbaa23f04382cdb1333342b3d"
+    },
+    "entities/sellers.parquet": {
+      "file_name": "sellers.parquet",
+      "relative_path": "entities/sellers.parquet",
+      "row_count": 6,
+      "size_bytes": 5736,
+      "sha256": "6bc9d6c7f567d49aad28b0b8116f9d38030df0a19d2da13034b3c60810d05f23"
+    },
+    "entities/product_variants.parquet": {
+      "file_name": "product_variants.parquet",
+      "relative_path": "entities/product_variants.parquet",
+      "row_count": 772,
+      "size_bytes": 45502,
+      "sha256": "da575023b786636c8e307269be67bc46b93dfd072900a5dcaec6c663077f4cda"
+    },
+    "evidence/images.parquet": {
+      "file_name": "images.parquet",
+      "relative_path": "evidence/images.parquet",
+      "row_count": 5554,
+      "size_bytes": 1440878,
+      "sha256": "3303f462ed65ea037a24dd91a75dc49baaede12bfa06b4541e842d3587ddd808"
+    },
+    "evidence/reviews.parquet": {
+      "file_name": "reviews.parquet",
+      "relative_path": "evidence/reviews.parquet",
+      "row_count": 56697,
+      "size_bytes": 15487512,
+      "sha256": "e362abd435701d4c121dd4897ead157c2f4d54c4b4741ccc8751e83dd4a18ecf"
+    },
+    "evidence/price_observations.parquet": {
+      "file_name": "price_observations.parquet",
+      "relative_path": "evidence/price_observations.parquet",
+      "row_count": 6043,
+      "size_bytes": 332461,
+      "sha256": "fb34e081d8f844d8063c453fdb555e29787e50651b1429aa6b6dc3403f1b90e9"
+    },
+    "evidence/seller_observations.parquet": {
+      "file_name": "seller_observations.parquet",
+      "relative_path": "evidence/seller_observations.parquet",
+      "row_count": 6,
+      "size_bytes": 8308,
+      "sha256": "c2cd45377bd7e418079d26d07c05b01eb22b782036dafe2096ee9f9b07d1ca16"
+    },
+    "relationships/entity_relationships.parquet": {
+      "file_name": "entity_relationships.parquet",
+      "relative_path": "relationships/entity_relationships.parquet",
+      "row_count": 67175,
+      "size_bytes": 1314435,
+      "sha256": "8d2561cb5f55c9d403b90668c3f194c79b9d6e60ebf55d7d737f9de279da952b"
+    },
+    "derived_evidence/cross_modal_evidence.parquet": {
+      "file_name": "cross_modal_evidence.parquet",
+      "relative_path": "derived_evidence/cross_modal_evidence.parquet",
+      "row_count": 1889,
+      "size_bytes": 74535,
+      "sha256": "ad734aa0c46d9895432e82b154b418533e8014334ab3debcb041cd26cd8a212a"
+    },
+    "derived_evidence/review_quality_features.parquet": {
+      "file_name": "review_quality_features.parquet",
+      "relative_path": "derived_evidence/review_quality_features.parquet",
+      "row_count": 56697,
+      "size_bytes": 927722,
+      "sha256": "1bef7e1bc925d111a21b4bb9ececd97be770abb7441002e8ad7cb7066b7c233f"
+    },
+    "derived_evidence/image_integrity_features.parquet": {
+      "file_name": "image_integrity_features.parquet",
+      "relative_path": "derived_evidence/image_integrity_features.parquet",
+      "row_count": 5554,
+      "size_bytes": 583255,
+      "sha256": "db133f6b279346735dc8b26a4ebae1b2a9ba42fc4470ed454c01dbdb424dbe17"
+    },
+    "derived_evidence/price_anomaly_features.parquet": {
+      "file_name": "price_anomaly_features.parquet",
+      "relative_path": "derived_evidence/price_anomaly_features.parquet",
+      "row_count": 5153,
+      "size_bytes": 182539,
+      "sha256": "de8a4a14349f2ec885128eee3983ca607874b2e41ad8040c9d76282764d5e0f7"
+    },
+    "collections/complete_multimodal_core.parquet": {
+      "file_name": "complete_multimodal_core.parquet",
+      "relative_path": "collections/complete_multimodal_core.parquet",
+      "row_count": 305,
+      "size_bytes": 105854,
+      "sha256": "eb6263c74ccfe8fc0a1bda8c9fbe5d90c8c75dea9473dadc231519b7c4ec7b67"
+    },
+    "collections/partial_modalities.parquet": {
+      "file_name": "partial_modalities.parquet",
+      "relative_path": "collections/partial_modalities.parquet",
+      "row_count": 5738,
+      "size_bytes": 1365787,
+      "sha256": "5301473eff608f9c568cf4395448961663dbd3b3a8715429e27091f0db96c37f"
+    },
+    "collections/indian_complete_multimodal.parquet": {
+      "file_name": "indian_complete_multimodal.parquet",
+      "relative_path": "collections/indian_complete_multimodal.parquet",
+      "row_count": 5,
+      "size_bytes": 15536,
+      "sha256": "95e572ad90cf445cefa529f0dce6f30426ed92b5e81e50cf9a20572d7a078f94"
+    },
+    "collections/indian_partial_modalities.parquet": {
+      "file_name": "indian_partial_modalities.parquet",
+      "relative_path": "collections/indian_partial_modalities.parquet",
+      "row_count": 3638,
+      "size_bytes": 1103228,
+      "sha256": "0ca56a28e0c0606bd296e4f850c69cd62f72b15cc8d6b4c291c5bf3afbd243a0"
+    },
+    "collections/international_supplementary.parquet": {
+      "file_name": "international_supplementary.parquet",
+      "relative_path": "collections/international_supplementary.parquet",
+      "row_count": 2400,
+      "size_bytes": 363309,
+      "sha256": "b893640a6f0cf0ba964efe021ca17933046ac9de14dcefbbf460f970f3d17772"
+    },
+    "collections/isolated_benchmarks/deceptive_opinion_spam.parquet": {
+      "file_name": "deceptive_opinion_spam.parquet",
+      "relative_path": "collections/isolated_benchmarks/deceptive_opinion_spam.parquet",
+      "row_count": 1600,
+      "size_bytes": 751544,
+      "sha256": "eaeceee0a9aa985f509d52ed4a2841a93584265787ec9687be5d7161ae7aaf7c"
+    },
+    "collections/isolated_benchmarks/ecommerce_fake_reviews.parquet": {
+      "file_name": "ecommerce_fake_reviews.parquet",
+      "relative_path": "collections/isolated_benchmarks/ecommerce_fake_reviews.parquet",
+      "row_count": 40526,
+      "size_bytes": 8005832,
+      "sha256": "e0496930c852597f6b24686feb6e8a4ba051e573699a4a9e3ba5a871e9422de8"
+    },
+    "collections/isolated_benchmarks/synthetic_stress_test_cases.parquet": {
+      "file_name": "synthetic_stress_test_cases.parquet",
+      "relative_path": "collections/isolated_benchmarks/synthetic_stress_test_cases.parquet",
+      "row_count": 5,
+      "size_bytes": 16141,
+      "sha256": "6407a4691c9170973dc6c9e0068124673a7b4bc6f245f2b94de5917d3b8df730"
+    },
+    "evaluation/train_manifest.parquet": {
+      "file_name": "train_manifest.parquet",
+      "relative_path": "evaluation/train_manifest.parquet",
+      "row_count": 4230,
+      "size_bytes": 1038480,
+      "sha256": "d45dee1f2f02bf943c1916f32b0aaf806974d1057332b9850a6566df9a836dc5"
+    },
+    "evaluation/validation_manifest.parquet": {
+      "file_name": "validation_manifest.parquet",
+      "relative_path": "evaluation/validation_manifest.parquet",
+      "row_count": 906,
+      "size_bytes": 266076,
+      "sha256": "7c20ac24f1380c5f0c0d2cc73c040f607f9aafa81b538b2f2abea4efe5465e24"
+    },
+    "evaluation/test_manifest.parquet": {
+      "file_name": "test_manifest.parquet",
+      "relative_path": "evaluation/test_manifest.parquet",
+      "row_count": 907,
+      "size_bytes": 267518,
+      "sha256": "f04e25f250cc2dc04348786d3dabcd303727098709a7a133a9cb525eab09cd76"
+    },
+    "evaluation/benchmark_manifests/external_benchmark_manifest.parquet": {
+      "file_name": "external_benchmark_manifest.parquet",
+      "relative_path": "evaluation/benchmark_manifests/external_benchmark_manifest.parquet",
+      "row_count": 2,
+      "size_bytes": 3388,
+      "sha256": "e5480283a40e100d15d075466b0b70e6cb36d61fa167e45a721a5a7f90a4b508"
+    },
+    "evaluation/benchmark_manifests/stress_test_manifest.parquet": {
+      "file_name": "stress_test_manifest.parquet",
+      "relative_path": "evaluation/benchmark_manifests/stress_test_manifest.parquet",
+      "row_count": 5,
+      "size_bytes": 2922,
+      "sha256": "c55ff90de0663f9d12d6d72bc2f8f222c016ab42b5cde7e2fd8d02ae1da3a191"
+    },
+    "manifests/source_registry.parquet": {
+      "file_name": "source_registry.parquet",
+      "relative_path": "manifests/source_registry.parquet",
+      "row_count": 11,
+      "size_bytes": 12377,
+      "sha256": "9c2a43448a1b61685daa49ab71eaf1941170e899cd6dae415277bd379a59745f"
+    },
+    "manifests/review_accounting.parquet": {
+      "file_name": "review_accounting.parquet",
+      "relative_path": "manifests/review_accounting.parquet",
+      "row_count": 5,
+      "size_bytes": 7184,
+      "sha256": "03fd62aad9e9699d72f4726018a10925220b05331cbba6514f3d70131e81c01a"
+    },
+    "manifests/matching_audit.parquet": {
+      "file_name": "matching_audit.parquet",
+      "relative_path": "manifests/matching_audit.parquet",
+      "row_count": 55,
+      "size_bytes": 7628,
+      "sha256": "ead505032c8f3acae940c6f0b12eb8303c95cbdd0b2b318cdaba0ca42cffd5fe"
+    },
+    "manifests/image_acquisition_manifest.csv": {
+      "file_name": "image_acquisition_manifest.csv",
+      "relative_path": "manifests/image_acquisition_manifest.csv",
+      "row_count": 3091,
+      "size_bytes": 844394,
+      "sha256": "eb13771037b19f715b3674e31549cf76fcd6014ace31b5c72e7bcfdb4882756e"
+    },
+    "metadata/label_taxonomy.parquet": {
+      "file_name": "label_taxonomy.parquet",
+      "relative_path": "metadata/label_taxonomy.parquet",
+      "row_count": 8,
+      "size_bytes": 6501,
+      "sha256": "3e098d089451f762ee93c71fd86bfc8c32a5f83a851df50dc977216cb8cd272d"
+    }
+  }
+}
