@@ -1,0 +1,82 @@
+{
+  "annotations/image_annotations.parquet": {
+    "sha256": "60c67aaac88a2efcf05caa03245f2d7475b697349e037ae83f2b267ed6cb1f48",
+    "size_bytes": 18346
+  },
+  "annotations/listing_annotations.parquet": {
+    "sha256": "22ebe988c0c3746501b9032908efb7fe41ca505f9dc39336980de77428072fbd",
+    "size_bytes": 18418
+  },
+  "annotations/review_annotations.parquet": {
+    "sha256": "cd8c358ade13c1117be392d91f6ad661f7d7162d768ecdd15f889332bb1a1e7a",
+    "size_bytes": 21418
+  },
+  "benchmarks/benchmark_manifest.json": {
+    "sha256": "2ee7a04f147ea12412dafa707e97b9d0d7ec6e39591046ef3915b965a1f04e25",
+    "size_bytes": 383
+  },
+  "benchmarks/test_split.parquet": {
+    "sha256": "a868a5fad6501ab05981e352498e3b1ac53433466ac5fe049361f9866133aac4",
+    "size_bytes": 207612
+  },
+  "benchmarks/train_split.parquet": {
+    "sha256": "e9db92cb8b26dd807dfde701151140009dab81820fb9b99324700726008eea57",
+    "size_bytes": 811713
+  },
+  "benchmarks/validation_split.parquet": {
+    "sha256": "13d11d0e310c2d5a96603feb77e9f6fbd2385a963f5da5f0c4402b1d962805cf",
+    "size_bytes": 205684
+  },
+  "derived_evidence/multimodal_coverage_matrix.parquet": {
+    "sha256": "54d4f153929b3cbee910a011bf072391307e9f3bae6540e0db36fce3ce8c5144",
+    "size_bytes": 226019
+  },
+  "derived_evidence/pricing_features.parquet": {
+    "sha256": "27d53037085c7abdc965f46db70fd1c2d2794c4839e48b0916bdb351eee73b57",
+    "size_bytes": 84564
+  },
+  "derived_evidence/review_features.parquet": {
+    "sha256": "0fdcfe5f5646d181a6acdd9cd78fa4006faefe2398d90a99d359734e2beecba0",
+    "size_bytes": 45810
+  },
+  "derived_evidence/visual_embeddings_resnet18.npz": {
+    "sha256": "d27999ceeb060a566358923e463965f560a42b0bad8a494157808495b95dcc40",
+    "size_bytes": 8145440
+  },
+  "entities/listings.parquet": {
+    "sha256": "c59e2548441694a7969b93ae2e9e03a25e6492bef014c38cf6c6f19e989910ba",
+    "size_bytes": 362913
+  },
+  "entities/products.parquet": {
+    "sha256": "e499bc31af190bda39ec87bd4ad7bcd96629997de93bf89111d3adb2ed98c821",
+    "size_bytes": 1108303
+  },
+  "entities/sellers.parquet": {
+    "sha256": "ce27690acbf0f3e8f833c15f31d1f03cb8013830f832587b44a3abe702cbd6c5",
+    "size_bytes": 8819
+  },
+  "entities/variants.parquet": {
+    "sha256": "c5a1c2a4b49aaf7ea30796887c6fea8c437e6d1904d0f5cb8ed65a926ba93ba4",
+    "size_bytes": 200723
+  },
+  "evidence/images.parquet": {
+    "sha256": "b38c958fb36e39891ef3597a991e47b40dd9c010c96afb7374a20b435fb713a2",
+    "size_bytes": 1377146
+  },
+  "evidence/ocr_evidence.parquet": {
+    "sha256": "b361d92c89d0cf06e7cb3d446eccd8c310ce99210edb62ba53e688b58ba119e0",
+    "size_bytes": 72988
+  },
+  "evidence/price_observations.parquet": {
+    "sha256": "d108792d4824d885313fba2f721d496a278ad91bf49b1735edb4cc0f6cc8043b",
+    "size_bytes": 267225
+  },
+  "evidence/reviews.parquet": {
+    "sha256": "afec24dcedccd05f0d476d85ca601a91585566bb234b752c18d0535997824658",
+    "size_bytes": 649032
+  },
+  "relationships/entity_relationships.parquet": {
+    "sha256": "b2da5a27b6f3ae563ae31b947affae67fe11d458e09dab4de3e2a926ab08d125",
+    "size_bytes": 585903
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "benchmark_name": "Indian_Marketplace_Multimodal_Trust_Benchmark_v1_2",
+  "split_policy": "STRICT_PRODUCT_AND_VARIANT_GROUPED_SPLIT",
+  "leakage_guarantee": "ZERO_INTER_SPLIT_PRODUCT_OR_IMAGE_OVERLAP",
+  "train_products": 2550,
+  "validation_products": 546,
+  "test_products": 547,
+  "total_benchmark_products": 3643,
+  "created_at": "2026-11-05T07:41:03.884139+00:00"
+}
