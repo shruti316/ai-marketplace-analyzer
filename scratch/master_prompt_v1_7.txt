@@ -1,0 +1,1325 @@
+<USER_REQUEST>
+# MASTER ENGINEERING ASSIGNMENT — AI-POWERED MARKETPLACE TRUST INTELLIGENCE PLATFORM
+## Complete Dataset Reconciliation, Expansion, Feature Engineering, Model Readiness, Evaluation and v1.7 Release
+
+**ROLE:** Act as a senior data engineer, machine learning engineer, NLP engineer, computer vision engineer, graph data engineer, data quality auditor and research-oriented ML architect.
+
+**PROJECT:** AI-Based Marketplace Analyzer / AI-Powered Marketplace Trust Intelligence Platform
+
+**PRIMARY OBJECTIVE:** Take the existing project and dataset through a comprehensive, evidence-based engineering cycle. Audit all existing work, resolve every issue that can be resolved with the available data and tools, implement all feasible improvements, run the complete test suite, and produce a reproducible, documented v1.7 release.
+
+This is an execution assignment, not a request for another roadmap.
+
+---
+
+# 1. EXECUTION CONTRACT — READ THIS FIRST
+
+I do not want another cycle in which you only inspect the project, write a list of limitations, suggest improvements and ask me whether to proceed.
+
+You are authorized to:
+
+1. Inspect the entire repository, notebooks, scripts, datasets, configurations, tests, existing releases and reports.
+2. Audit the existing v1.6 dataset against its original engineering requirements and your previous completion report.
+3. Identify inconsistencies between reported results and actual files.
+4. Implement all technically feasible improvements using existing project data.
+5. Create new scripts, notebooks, schemas, feature tables, reports, tests and documentation where necessary.
+6. Reconcile records, improve data quality, build features, strengthen evaluation and improve model readiness.
+7. Use parallel execution for independent tasks where safe.
+8. Run tests, identify failures, fix them and rerun the relevant tests.
+9. Prepare a new, reproducible v1.7 dataset release.
+10. Produce a final engineering report with actual evidence.
+
+**Do not stop after producing an audit or implementation plan. Continue through implementation and verification.**
+
+Do not repeatedly ask me to authorize ordinary coding, analysis, local data processing, testing or documentation.
+
+If an operation is blocked by a genuine external dependency, document it precisely and continue with every other independent task.
+
+Do not use generic statements such as:
+- "More data is required."
+- "This can be improved in the future."
+- "There are limitations."
+- "Further research is recommended."
+
+Instead, identify the exact missing data, affected records, source dependency, technical reason, available workaround, and exact next action.
+
+Do not fabricate data, labels, seller identities, timestamps, product associations, images, reviews, prices, evaluation results or model performance.
+
+**A limitation is not a reason to stop the entire assignment. It is a reason to complete everything else and isolate the genuinely blocked component.**
+
+## Release and safety rules
+
+- Preserve v1.1, v1.2, v1.3, v1.4, v1.5 and v1.6.
+- Treat all existing frozen releases as immutable.
+- Create v1.7 in separate directories.
+- Back up the current project state before modifying anything.
+- Preserve all protected baseline files and their SHA-256 hashes.
+- Do not delete original datasets or intermediate evidence.
+- Do not overwrite existing notebooks or historical reports.
+- Do not commit, push, deploy or publish anything to GitHub without my explicit approval.
+- Do not expose API keys, credentials, tokens or private information in reports.
+
+For external data:
+- First identify legitimate public sources and their licences/terms.
+- You may acquire and use publicly accessible datasets only where their licences and terms clearly permit the intended use.
+- Do not bypass access controls, logins, paywalls, anti-bot systems or platform restrictions.
+- Do not perform prohibited scraping.
+- Do not purchase data or use paid services.
+- Do not download uncertain or unlicensed datasets.
+- If approval or a licence decision is necessary, prepare the source manifest, acquisition adapter and exact requirements, then continue all other work.
+
+---
+
+# 2. CURRENT PROJECT BASELINE — DO NOT IGNORE
+
+The following is the reported v1.6 baseline. Independently verify every figure against the actual files.
+
+| Component | Reported baseline |
+|---|---:|
+| Products | 6,043 |
+| Reviews | 56,697 |
+| Verified images | 5,228 |
+| Valid prices | 5,153 |
+| Missing prices | 890 |
+| Product categories | 10 |
+| Graph nodes | 72,881 |
+| Graph edges | 67,101 |
+| Image embeddings | 5,228 ResNet-18 embeddings |
+| Embedding dimensions | 512 |
+| Dataset validator | 102/102 checks |
+| Full test suite | 316/316 tests |
+| Protected baseline files | 16/16 hashes unchanged |
+| Evaluation protocols | 6 |
+| Unlinked Flipkart reviews | 240 |
+| Flipkart products missing local images despite review/price linkage | 127 |
+
+Reported release status: `CERTIFIED_WITH_LIMITATIONS`.
+
+Reported source distribution:
+
+| Marketplace | Products | Reviews | Images | Valid prices |
+|---|---:|---:|---:|---:|
+| Amazon India | 1,500 | 159 linked | 1,500 | 1,485 |
+| Flipkart | 1,143 | 3,260 linked + 240 unlinked | 3,208 images across 932 products | 1,138 |
+| Myntra | 1,000 | Not established | 0 | 1,000 |
+| Amazon US | 1,020 | 8,073 | 520 | 399 |
+| BestBuy | 249 | 44,965 | 0 | 0 |
+| Walmart | 1,131 | Not established | 0 | 1,131 |
+
+Reported Indian product inventory: 3,643 products, approximately 60.3% of all products.
+
+However, Indian review representation is only approximately 3,659 out of 56,697 reviews, or 6.45%, using the currently reported linked and unlinked Indian review counts.
+
+BestBuy contributes approximately 79.3% of all reviews. BestBuy and Amazon US together contribute the overwhelming majority of review records.
+
+This means that product representation and review representation are substantially different. Do not describe this dataset as balanced or representative of the Indian marketplace without evidence.
+
+Reported four-tier distribution:
+
+| Tier | Products |
+|---|---:|
+| A | 305 |
+| B | 2,506 |
+| C | 127 |
+| D | 3,105 |
+| Total | 6,043 |
+
+The reported Indian tier distribution is:
+- Tier A: 5
+- Tier B: 2,407
+- Tier C: 127
+- Tier D: 1,104
+
+The US/supplementary tier distribution is:
+- Tier A: 300
+- Tier B: 99
+- Tier C: 0
+- Tier D: 2,001
+
+**Important:** Verify the actual tier definitions against the original assignment. Do not assume the current tier implementation is correct. The four-tier definitions must be consistent, mutually exclusive where intended, and supported by record-level evidence.
+
+Other reported findings:
+- 3,490 Amazon India reviews were previously identified as unlinked. The v1.6 report does not adequately reconcile these against the 159 linked reviews.
+- 240 Flipkart reviews remain unlinked/quarantined.
+- Individual seller IDs are 100% null.
+- Six platform-level aggregate seller entities exist; these are not individual sellers.
+- Price history infrastructure exists, but actual longitudinal observations are not established.
+- No marketplace reviews are labelled CONFIRMED_FRAUD.
+- The Ott deception benchmark is isolated and must not be represented as marketplace fraud ground truth.
+- Language annotations report English, Hinglish/Latinized Indic and unknown. Native Indic script coverage is not demonstrated.
+- ResNet-18 image embeddings exist, but additional model comparisons are not sufficiently demonstrated.
+- Transformer, IndicBERT, CLIP, Node2Vec, GCN/RGCN and advanced graph model claims must be verified rather than assumed.
+- The NLP benchmark uses rating-derived sentiment labels, not fraud labels.
+- The reported NLP training/evaluation population does not account for every review record. Investigate the excluded records and class imbalance.
+
+All reported metrics and counts are provisional until independently reproduced.
+
+---
+
+# 3. PHASE ONE — COMPLETE REPOSITORY AND RELEASE AUDIT
+
+Inspect the entire project, including:
+
+- All notebooks.
+- Raw and processed datasets.
+- Existing release directories.
+- Data pipelines.
+- Python scripts and utilities.
+- Model files and checkpoints.
+- Graph construction code.
+- Feature tables.
+- Dataset schemas.
+- Validation scripts.
+- Test suites.
+- Documentation.
+- Previous audit and certification reports.
+- Git status and protected files.
+
+Create a complete inventory.
+
+For every existing component, record:
+- What it does.
+- Where it is stored.
+- Whether it actually works.
+- Whether it is used by the current pipeline.
+- Whether it has tests.
+- Whether its output can be reproduced.
+- Whether its reported claims match the actual implementation.
+
+Compare the original assignment, v1.5 report, v1.6 assignment and v1.6 completion report.
+
+Create a discrepancy register.
+
+Do not duplicate existing work unnecessarily. Reuse correct implementations, fix incomplete ones and replace unreliable implementations only in the new release.
+
+---
+
+# 4. PHASE TWO — MASTER PRODUCT AND REVIEW RECONCILIATION
+
+This is one of the highest-priority tasks.
+
+## 4.1 Product reconciliation
+
+Reconcile all 6,043 products.
+
+Check:
+- Unique product IDs.
+- Duplicate product IDs.
+- Duplicate product rows.
+- Marketplace-specific identifiers.
+- Canonical product IDs.
+- Product title consistency.
+- Brand normalization.
+- Category consistency.
+- Product variant information.
+- Product URL provenance.
+- Source marketplace.
+- Missing fields.
+- Invalid values.
+- Cross-marketplace product matches.
+
+Create a canonical product registry.
+
+## 4.2 Cross-marketplace entity resolution
+
+Build a reliable product entity-resolution pipeline.
+
+Use available:
+- Product titles.
+- Brand names.
+- Model numbers.
+- Product specifications.
+- Category.
+- Images and image hashes.
+- Existing product identifiers.
+- Variant information.
+
+Implement:
+- Exact matching.
+- Normalized title matching.
+- Brand/model matching.
+- Fuzzy text matching.
+- Image-based similarity where possible.
+- Confidence scoring.
+- Duplicate and variant detection.
+- Match evidence.
+- Manual-review/quarantine status for uncertain matches.
+
+Do not merge different variants simply because their titles are similar.
+
+Preserve:
+- Original marketplace product IDs.
+- Canonical product ID.
+- Match confidence.
+- Matching method.
+- Source records.
+- Review status.
+
+Create a cross-listing and variant-family feature table.
+
+---
+
+# 5. PHASE THREE — REVIEW RECONCILIATION AND INDIAN REVIEW REPRESENTATION
+
+This is a critical dataset weakness.
+
+## 5.1 Account for every review
+
+Reconcile all 56,697 reported reviews.
+
+Every review must have a documented status:
+- Linked to a verified product.
+- Unlinked.
+- Duplicate.
+- Invalid.
+- Quarantined.
+- Excluded for a documented reason.
+
+Create a complete review reconciliation report.
+
+## 5.2 Resolve the Amazon India discrepancy
+
+Investigate the previously reported 3,490 unlinked Amazon India reviews.
+
+The v1.6 report states only 159 linked Amazon India reviews.
+
+Determine:
+- Whether the 3,490 reviews still exist.
+- Which source file contains them.
+- Whether they were excluded.
+- Whether their product IDs are missing.
+- Whether their IDs can be recovered through reliable matching.
+- Whether they were duplicates or invalid.
+- Whether the reported 159 linked reviews refer to a different subset.
+
+Do not silently discard or invent links.
+
+Produce a record-level accounting table.
+
+## 5.3 Resolve Flipkart's 240 unlinked reviews
+
+Attempt reliable matching using existing identifiers and product metadata.
+
+If matching is uncertain, quarantine the review instead of forcing a match.
+
+Report exact resolution counts.
+
+## 5.4 Indian review coverage
+
+Produce:
+- Indian products by marketplace.
+- Indian reviews by marketplace.
+- Linked Indian reviews.
+- Unlinked Indian reviews.
+- Reviews per product.
+- Reviews per category.
+- Reviews by language.
+- Reviews by rating.
+- Reviews by time period, if timestamps exist.
+
+Explicitly compare:
+- Indian product share.
+- Indian review share.
+- US product share.
+- US review share.
+
+Investigate the substantial representation imbalance.
+
+Do not claim the dataset is representative of Indian marketplace review behaviour merely because 60.3% of products are Indian.
+
+## 5.5 Review metadata and behaviour features
+
+Where source fields exist, engineer:
+- Reviewer identifier, with privacy-safe handling.
+- Verified purchase.
+- Review timestamp.
+- Helpful votes.
+- Review title.
+- Review body.
+- Rating.
+- Product association.
+- Review length.
+- Reviewer activity.
+- Review frequency.
+- Rating patterns.
+- Repeated review text.
+- Review bursts.
+- Temporal concentration.
+- Similarity to other reviews.
+- Rating-text disagreement.
+- Suspicious review clusters.
+
+If fields are unavailable, document the missing field and do not synthesize it.
+
+---
+
+# 6. PHASE FOUR — PRODUCT IMAGE COMPLETION AND COMPUTER VISION
+
+## 6.1 Resolve the 127 Flipkart image targets
+
+The 127 Flipkart products with linked reviews and valid prices but no local images are a specific acquisition target.
+
+Inspect the existing image target manifest and acquisition adapter.
+
+For every target:
+- Check whether an existing source image is available.
+- Check whether a reliable original image URL exists.
+- Check whether an image can be obtained through permitted sources.
+- Verify product association.
+- Validate file format and integrity.
+- Record provenance and licence/permission information.
+- Generate image hashes.
+- Reject unrelated or corrupted images.
+
+Do not use generic category images or images of similar-looking products to fill gaps.
+
+If images cannot legitimately be acquired, preserve the exact missing target list and mark the products accordingly.
+
+Do not claim Tier A completion until image verification succeeds.
+
+## 6.2 Image integrity and feature extraction
+
+Audit all 5,228 existing images.
+
+Check:
+- File existence.
+- Decoding.
+- Dimensions.
+- Format.
+- File size.
+- Corruption.
+- Exact duplicates.
+- Perceptual duplicates.
+- Image-to-product association.
+- Source provenance.
+- Missing images.
+- Multiple images per product.
+- Image reuse across products.
+
+Implement:
+- SHA-256 hashes.
+- Perceptual hashes.
+- Image similarity.
+- Duplicate image clusters.
+- Image quality indicators.
+- Image embedding extraction.
+- Image-to-product matching confidence.
+
+## 6.3 Computer vision model comparison
+
+Audit existing ResNet-18 embeddings.
+
+Where the environment and model availability permit, implement:
+- ResNet-18 embeddings.
+- ResNet-50 embeddings.
+- CLIP image embeddings.
+- Image similarity comparisons.
+- Duplicate detection.
+- Visual product similarity.
+- Image-text consistency features.
+
+Use pretrained models appropriately. Do not claim fine-tuning unless it actually occurs.
+
+Record:
+- Model name.
+- Model version.
+- Preprocessing.
+- Embedding dimensions.
+- Input image count.
+- Failed image count.
+- Output path.
+- Runtime.
+- Reproducibility.
+
+Do not download enormous models or dependencies without checking available disk space, memory and runtime. Use reasonable batch processing.
+
+## 6.4 Image-text consistency
+
+Compare product images with:
+- Product titles.
+- Brand.
+- Product category.
+- Available specifications.
+- Review text where meaningful.
+
+Create explainable image-text consistency signals.
+
+Do not treat a low similarity score as proof of fraud.
+
+---
+
+# 7. PHASE FIVE — NLP AND REVIEW INTELLIGENCE
+
+Audit and extend the existing NLP pipeline.
+
+The project should support multiple distinct tasks, not one misleading general-purpose classifier.
+
+## 7.1 Text preprocessing
+
+Implement and validate:
+- Unicode normalization.
+- HTML removal.
+- Whitespace normalization.
+- Language-aware cleaning.
+- Duplicate text detection.
+- Empty review handling.
+- Tokenization.
+- Word and character counts.
+- Stopword handling where appropriate.
+- Negation preservation.
+- Emoji handling.
+- Romanized text preservation.
+- Language identification with confidence.
+
+Preserve original review text.
+
+Never destroy source evidence through preprocessing.
+
+## 7.2 Language coverage
+
+Current v1.6 annotations report English, Hinglish/Latinized Indic and unknown.
+
+Audit this classification.
+
+Distinguish:
+- English.
+- Hinglish.
+- Romanized Hindi.
+- Devanagari Hindi.
+- Bengali.
+- Tamil.
+- Telugu.
+- Marathi.
+- Other Indic languages.
+- Mixed-language reviews.
+- Unknown/undetermined.
+
+Do not classify every Latin-script review as English.
+
+Evaluate language detection on a manually inspected sample.
+
+Report confidence, precision where measurable, and uncertain cases.
+
+If native Indic script data is unavailable, prepare a licensed-source acquisition manifest and language-ready pipeline.
+
+Do not claim native Indic support without evidence.
+
+## 7.3 Sentiment analysis
+
+Reproduce existing rating-derived sentiment benchmarks.
+
+Existing reported labels:
+- Rating >= 4: positive.
+- Rating <= 2: negative.
+
+Investigate:
+- Neutral ratings.
+- Missing ratings.
+- Excluded records.
+- Train/test population.
+- Class imbalance.
+- Duplicate leakage.
+- Product leakage.
+- Reviewer leakage.
+
+Evaluate:
+- TF-IDF + Logistic Regression.
+- Multinomial Naive Bayes.
+- Additional appropriate baselines.
+- Sentence-transformer representations where feasible.
+- Pretrained transformer models where feasible.
+
+Keep rating-derived sentiment explicitly separate from fraud detection.
+
+## 7.4 Aspect-based sentiment analysis
+
+Build an aspect-based sentiment pipeline for aspects supported by the data, such as:
+- Product quality.
+- Price/value.
+- Packaging.
+- Delivery.
+- Durability.
+- Performance.
+- Design.
+- Battery.
+- Fit/comfort.
+- Customer service.
+
+Use category-aware aspect extraction where useful.
+
+Produce:
+- Aspect.
+- Sentiment.
+- Evidence text.
+- Confidence.
+- Product association.
+- Review association.
+
+Do not invent aspects or labels.
+
+Distinguish rule-based, pretrained, weakly supervised and human-validated outputs.
+
+## 7.5 Review similarity and manipulation signals
+
+Implement:
+- Exact duplicate review detection.
+- Near-duplicate detection.
+- TF-IDF similarity.
+- Semantic similarity where feasible.
+- Repeated phrase detection.
+- Rating-text discordance.
+- Reviewer burst signals.
+- Review timing clusters.
+- Product-level review similarity.
+- Cross-product review similarity.
+
+Produce interpretable evidence rather than an unsupported fraud label.
+
+## 7.6 Ott benchmark isolation
+
+Keep the Ott deceptive opinion spam benchmark isolated.
+
+It may be used for a separate deceptive-review research experiment.
+
+It must not be merged into marketplace product records or represented as marketplace fraud ground truth.
+
+Report domain transfer limitations.
+
+---
+
+# 8. PHASE SIX — PRICE INTELLIGENCE
+
+The reported dataset has 5,153 valid prices and 890 missing prices.
+
+## 8.1 Price data audit
+
+Validate:
+- Currency.
+- Numeric parsing.
+- Decimal precision.
+- Selling price.
+- MRP/list price.
+- Discount.
+- Coupon information.
+- Shipping costs.
+- Product variants.
+- Marketplace.
+- Stock/availability.
+- Price source.
+- Timestamp.
+- Missingness.
+
+Do not treat different currencies as directly comparable.
+
+Do not infer a real selling price from a product's title or description.
+
+## 8.2 Price feature engineering
+
+Implement:
+- Price normalization.
+- Currency-aware comparisons.
+- Category-aware price distributions.
+- Product-level price comparisons.
+- Marketplace price differences.
+- Discount percentages where both MRP and selling price are known.
+- Price anomaly scores.
+- Robust outlier detection.
+- Price confidence.
+- Missingness indicators.
+
+Use appropriate category/brand/variant controls.
+
+Do not compare incompatible product variants.
+
+## 8.3 Temporal price intelligence
+
+The existing schema and baseline batch do not establish historical price observations.
+
+Implement a reproducible snapshot architecture.
+
+Where permitted and technically available:
+- Capture genuine new price observations.
+- Record exact observation timestamps.
+- Preserve source and collection method.
+- Store price history separately from current price.
+- Calculate price changes.
+- Calculate volatility.
+- Calculate discount changes.
+- Detect abnormal price movement.
+
+Never fabricate historical prices or timestamps.
+
+If genuine historical data cannot be acquired, finish the temporal infrastructure and clearly mark the feature as awaiting genuine future snapshots.
+
+---
+
+# 9. PHASE SEVEN — SELLER INTELLIGENCE
+
+The current seller data is inadequate for individual seller analysis.
+
+Reported:
+- Individual seller IDs: 100% null.
+- Six aggregate marketplace/platform seller entities.
+
+These aggregate entities are not real individual sellers.
+
+Investigate all available source fields for:
+- Seller ID.
+- Seller name.
+- Seller rating.
+- Seller location.
+- Seller URL.
+- Fulfilment information.
+- Marketplace identity.
+- Product-seller association.
+- Seller review history.
+
+If genuine seller identifiers exist, implement:
+- Marketplace-scoped seller identity.
+- Seller-product relationships.
+- Seller-level metrics.
+- Seller consistency.
+- Seller rating patterns.
+- Seller product portfolio.
+- Seller-level price anomalies.
+- Seller review behaviour where supported.
+
+Never fabricate GSTIN, CIN, company identity, seller names or seller associations.
+
+Do not merge sellers across marketplaces without evidence.
+
+If seller IDs do not exist in the source data, finish the schema, entity architecture, validation and acquisition requirements. Mark individual seller intelligence as awaiting source data.
+
+Do not claim seller-level fraud detection without actual seller identities and suitable evidence.
+
+---
+
+# 10. PHASE EIGHT — GRAPH INTELLIGENCE
+
+Audit the reported graph:
+- 72,881 nodes.
+- 67,101 edges.
+
+Reported edge types:
+- HAS_REVIEW.
+- HAS_IMAGE.
+- HAS_PRICE.
+- DUPLICATE_OF.
+
+Verify all node and edge counts directly.
+
+Build a documented graph schema supporting, where evidence exists:
+- Product.
+- Review.
+- Image.
+- Price observation.
+- Marketplace.
+- Brand.
+- Category.
+- Seller.
+- Reviewer.
+- Canonical product.
+- Variant family.
+- Duplicate cluster.
+
+Potential relationships:
+- HAS_REVIEW.
+- HAS_IMAGE.
+- HAS_PRICE.
+- SOLD_ON.
+- BELONGS_TO_CATEGORY.
+- HAS_BRAND.
+- SOLD_BY.
+- REVIEWED_BY.
+- SAME_PRODUCT_AS.
+- VARIANT_OF.
+- DUPLICATE_OF.
+- SIMILAR_REVIEW_TO.
+- SIMILAR_IMAGE_TO.
+- PRICE_OBSERVED_AT.
+
+Only create edges supported by source evidence or explicitly labelled algorithmic similarity.
+
+Record edge provenance and confidence.
+
+Calculate:
+- Node counts by type.
+- Edge counts by type.
+- Degree distributions.
+- Connected components.
+- Isolated nodes.
+- Clustering coefficients where appropriate.
+- Duplicate clusters.
+- Cross-marketplace connections.
+- Seller connections where available.
+- Graph coverage.
+
+Evaluate graph-derived features for usefulness and leakage.
+
+Where justified and feasible, test:
+- Node2Vec.
+- Graph embeddings.
+- Graph-based anomaly signals.
+- GCN/RGCN baselines.
+
+Do not force graph neural networks into the project simply to claim their presence. If the graph does not support a defensible training objective, finish the graph feature engineering and document why model training is not valid.
+
+---
+
+# 11. PHASE NINE — FRAUD TAXONOMY AND WEAK SUPERVISION
+
+The dataset currently has no confirmed marketplace fraud labels.
+
+This must be handled correctly.
+
+Create a clear taxonomy separating:
+
+1. CONFIRMED_FRAUD.
+2. SUSPECTED_MANIPULATION.
+3. SUSPICIOUS_REVIEW_PATTERN.
+4. DUPLICATE_REVIEW_SIGNAL.
+5. REVIEW_QUALITY_ANOMALY.
+6. PRICE_ANOMALY.
+7. IMAGE_MISMATCH_SIGNAL.
+8. SELLER_RISK_SIGNAL.
+9. INSUFFICIENT_EVIDENCE.
+10. NO_OBSERVED_SIGNAL.
+
+Do not assign CONFIRMED_FRAUD unless supported by reliable external evidence or verified adjudication.
+
+Build weak-supervision rules where appropriate.
+
+For each signal, preserve:
+- Rule or model name.
+- Evidence.
+- Confidence.
+- Source.
+- Timestamp.
+- Affected entity.
+- Reason.
+- Limitations.
+
+Keep suspicion scores distinct from actual fraud labels.
+
+Do not train a supervised marketplace fraud classifier using sentiment labels, Ott benchmark labels, or self-generated fusion scores.
+
+The project must be honest about the difference between:
+- Sentiment classification.
+- Deceptive-review benchmark classification.
+- Marketplace anomaly detection.
+- Marketplace fraud classification.
+
+---
+
+# 12. PHASE TEN — MULTIMODAL TRUST INTELLIGENCE
+
+The final system should integrate available evidence from:
+
+1. Product metadata.
+2. Reviews and NLP.
+3. Product images and computer vision.
+4. Price intelligence.
+5. Seller information, where available.
+6. Graph relationships.
+7. Marketplace and category context.
+
+Build or audit the explainable fusion architecture.
+
+Requirements:
+- Each signal must have traceable provenance.
+- Each modality must have a defined contribution.
+- Missing modalities must reduce confidence or produce an explicit insufficient-evidence state.
+- Missing information must never automatically increase fraud risk.
+- A single anomaly must not automatically mean fraud.
+- Avoid double-counting correlated signals.
+- Do not use target leakage.
+- Do not create a target from the same features used to predict it.
+- Do not present an unsupervised evidence score as a validated fraud probability.
+
+Produce:
+- Overall evidence score.
+- Component-level scores.
+- Confidence.
+- Available modalities.
+- Missing modalities.
+- Evidence explanations.
+- Risk factors.
+- Counter-evidence where available.
+- Data quality indicators.
+- Insufficient-evidence status.
+
+Test modality ablations:
+- Text only.
+- Image only.
+- Price only.
+- Graph only.
+- Text + image.
+- Text + price.
+- Image + price.
+- Full available fusion.
+
+Evaluate performance and calibration only where a defensible target exists.
+
+---
+
+# 13. PHASE ELEVEN — EVALUATION AND GENERALIZATION
+
+The existing six evaluation protocols must be audited and reproduced:
+
+1. Product-held-out.
+2. Variant-family-held-out.
+3. Reviewer-held-out.
+4. Image-cluster-held-out.
+5. Cross-listing-held-out.
+6. Temporal prospective evaluation, only where genuine timestamps and observations support it.
+
+Add the following evaluation views wherever the data supports them:
+
+- Indian-marketplace-only.
+- US-marketplace-only.
+- Marketplace-specific.
+- Category-specific.
+- Language-specific.
+- Modality-availability-specific.
+- Missing-data subgroup.
+- Cross-marketplace generalization.
+- Product-family generalization.
+- Class-imbalance sensitivity.
+
+For each applicable model report:
+- Accuracy.
+- Precision.
+- Recall.
+- F1.
+- Macro F1.
+- Balanced accuracy.
+- ROC-AUC.
+- PR-AUC.
+- Confusion matrix.
+- Calibration.
+- Confidence intervals where feasible.
+- Train/test sizes.
+- Class distribution.
+- Split methodology.
+- Leakage checks.
+
+Use appropriate metrics for the actual task.
+
+Do not report accuracy alone.
+
+Re-run every metric. Do not copy previously reported results without reproduction.
+
+Explicitly identify:
+- Data leakage.
+- Duplicate leakage.
+- Product-family leakage.
+- Reviewer leakage.
+- Marketplace leakage.
+- Temporal leakage.
+- Label leakage.
+- Domain shift.
+
+A strong score on rating-derived sentiment is not proof of marketplace fraud detection.
+
+---
+
+# 14. PHASE TWELVE — MISSINGNESS, BIAS AND REPRESENTATIVENESS
+
+Build a complete missing-data and dataset-bias analysis.
+
+Investigate:
+- Missing price by marketplace.
+- Missing image by marketplace.
+- Missing review by marketplace.
+- Missing seller identity.
+- Missing timestamps.
+- Missing language.
+- Missing product metadata.
+- Missing category.
+- Missing brand.
+- Missing variants.
+- Missing review metadata.
+
+Determine whether missingness is random or systematically associated with:
+- Marketplace.
+- Category.
+- Product price.
+- Product popularity.
+- Review availability.
+- Data source.
+- Language.
+- Collection method.
+
+Assess:
+- Indian versus US representation.
+- Marketplace concentration.
+- Category imbalance.
+- Review-count imbalance.
+- Language imbalance.
+- Image coverage imbalance.
+- Price coverage imbalance.
+- Tier distribution.
+
+Produce an explicit dataset representativeness report.
+
+Do not make broad claims about the entire Indian e-commerce market from a limited set of marketplace sources.
+
+---
+
+# 15. PHASE THIRTEEN — DATASET ARCHITECTURE AND REPRODUCIBILITY
+
+Create a clean v1.7 architecture with appropriate separation of:
+
+- Raw source data.
+- Immutable source snapshots.
+- Cleaned data.
+- Canonical entities.
+- Feature tables.
+- Image assets.
+- Embeddings.
+- Graph data.
+- Labels.
+- Evaluation splits.
+- Model artifacts.
+- Reports.
+- Provenance.
+- Validation outputs.
+
+Use versioned schemas.
+
+Every processed record should have a traceable relationship to its source record.
+
+Add:
+- Data dictionaries.
+- Feature dictionaries.
+- Source manifests.
+- Licence manifests.
+- Processing manifests.
+- Model manifests.
+- Dataset version metadata.
+- Reproducibility instructions.
+- SHA-256 manifests.
+- Data lineage.
+- Record-count reconciliation.
+- Validation logs.
+
+Make pipelines deterministic where practical.
+
+Use fixed random seeds where appropriate.
+
+Avoid unnecessary duplication of large data files.
+
+Do not silently change existing source records.
+
+---
+
+# 16. PHASE FOURTEEN — AUTOMATED QUALITY ASSURANCE
+
+Create or improve a comprehensive validation suite.
+
+Validate:
+
+### Data integrity
+- Unique primary keys.
+- Foreign key integrity.
+- Valid data types.
+- Valid numeric ranges.
+- Valid currency codes.
+- Valid timestamps.
+- No impossible negative prices.
+- No malformed image records.
+- No invalid review associations.
+
+### Entity integrity
+- Canonical product uniqueness.
+- Variant consistency.
+- Marketplace identity preservation.
+- Seller identity correctness.
+- Review-to-product consistency.
+- Image-to-product consistency.
+
+### Feature integrity
+- Correct feature calculations.
+- No accidental target leakage.
+- No invalid embeddings.
+- No duplicate graph edges.
+- No unsupported graph relationships.
+- Correct missing-value semantics.
+
+### Evaluation integrity
+- No train/test overlap where prohibited.
+- No product leakage.
+- No reviewer leakage.
+- No image-cluster leakage.
+- No target leakage.
+- Reproducible metrics.
+
+### Release integrity
+- Correct record counts.
+- Correct schemas.
+- All expected files present.
+- All hashes generated.
+- Protected files unchanged.
+- Release documentation complete.
+
+Run:
+1. Dataset validators.
+2. Unit tests.
+3. Integration tests.
+4. Pipeline tests.
+5. Full pytest suite.
+6. Release certification checks.
+
+Fix all failures that can be fixed safely.
+
+Do not weaken tests or remove assertions simply to obtain a passing result.
+
+---
+
+# 17. PHASE FIFTEEN — FINAL PRODUCT CAPABILITIES
+
+The final architecture should be ready to support these marketplace trust intelligence capabilities:
+
+1. Product authenticity and trust signals.
+2. Suspicious review detection signals.
+3. Duplicate and manipulated review patterns.
+4. Review similarity analysis.
+5. Aspect-based sentiment analysis.
+6. Rating-text disagreement.
+7. Product image duplicate detection.
+8. Image-text consistency.
+9. Cross-marketplace product matching.
+10. Product variant identification.
+11. Price anomaly detection.
+12. Price comparison across marketplaces.
+13. Temporal price intelligence when real snapshots exist.
+14. Seller intelligence when real seller identities exist.
+15. Reviewer behaviour analysis when reliable identifiers exist.
+16. Fraud relationship graph.
+17. Explainable multimodal evidence fusion.
+18. Category-aware product intelligence.
+19. Marketplace-specific trust analysis.
+20. Model and data drift monitoring.
+21. Evidence-grounded product comparison reports.
+22. Intelligent product recommendations, where sufficient product and user preference data exists.
+
+Do not claim a capability is production-ready merely because a placeholder, schema or function exists.
+
+For each capability, classify it as:
+- Implemented and verified.
+- Implemented but not independently verified.
+- Partially implemented.
+- Ready for genuine external data.
+- Blocked by a specific dependency.
+- Not applicable.
+
+---
+
+# 18. PHASE SIXTEEN — FINAL RELEASE AND CERTIFICATION
+
+Create a new release:
+
+`marketplace_trust_dataset_v1.7`
+
+Do not modify v1.6.
+
+The v1.7 release should contain:
+- Final reconciled product table.
+- Final reconciled review table.
+- Image manifest.
+- Price table and price history architecture.
+- Seller table, if supported.
+- Canonical product registry.
+- Cross-listing and variant mapping.
+- NLP features.
+- Computer vision features.
+- Graph nodes and edges.
+- Fraud/anomaly evidence signals.
+- Evaluation splits.
+- Model outputs.
+- Feature dictionaries.
+- Data dictionary.
+- Source and licence manifests.
+- Validation reports.
+- Certification report.
+- Reproducibility instructions.
+- Known dependency register.
+
+Create a release manifest with:
+- Version.
+- Creation date.
+- Source versions.
+- Record counts.
+- File paths.
+- File hashes.
+- Schema versions.
+- Pipeline versions.
+- Test results.
+- Known data dependencies.
+
+The final release must be reproducible.
+
+A dataset can be complete in its engineering and accounting even when certain source modalities are unavailable. Do not confuse 100% record accounting with 100% modality coverage.
+
+---
+
+# 19. FINAL EXECUTION RULE — DO NOT COME BACK WITH ANOTHER GENERIC LIMITATIONS REPORT
+
+Execute all phases in dependency order.
+
+Parallelize safe independent work.
+
+Use checkpoints so work can be recovered if an operation fails.
+
+For every issue:
+1. Investigate.
+2. Determine the root cause.
+3. Implement the available solution.
+4. Test it.
+5. Document the evidence.
+6. Continue.
+
+If one task is blocked, continue all other tasks.
+
+Do not stop because:
+- A source field is missing.
+- A model is unavailable.
+- A dataset is incomplete.
+- A download is not authorized.
+- A benchmark is unsuitable.
+- A particular feature cannot be trained.
+
+Instead, finish the infrastructure, tests, available features, acquisition manifests and documentation for that component.
+
+Only request my intervention if a specific action genuinely requires my credentials, legal approval, payment, account access, or an explicit authorization that cannot safely be inferred.
+
+Do not repeatedly ask me to choose between obvious engineering improvements. Use sound engineering judgment and the requirements in this assignment.
+
+---
+
+# 20. REQUIRED FINAL RESPONSE — EVIDENCE, NOT MARKETING
+
+When execution is complete, produce one consolidated final report containing:
+
+## A. Executive summary
+- What was actually completed.
+- What materially improved from v1.6.
+- Whether v1.7 passed certification.
+
+## B. Before-and-after comparison
+Compare v1.6 and v1.7:
+- Products.
+- Reviews.
+- Linked/unlinked reviews.
+- Images.
+- Prices.
+- Indian coverage.
+- Tier counts.
+- Graph counts.
+- Feature counts.
+- Models.
+- Evaluation protocols.
+- Test results.
+
+## C. Gap-resolution matrix
+
+For every issue identified in this assignment, provide:
+- Original issue.
+- Root cause.
+- Action taken.
+- Final status.
+- Evidence file path.
+- Validation command or test.
+- Remaining dependency, if any.
+
+Use only these statuses:
+
+- COMPLETED_AND_VERIFIED
+- IMPLEMENTED_NOT_INDEPENDENTLY_VERIFIED
+- PARTIALLY_COMPLETED
+- READY_FOR_EXTERNAL_DATA
+- BLOCKED_BY_SPECIFIC_DEPENDENCY
+- NOT_STARTED
+- NOT_APPLICABLE
+
+## D. Exact Indian marketplace assessment
+Report:
+- Indian product coverage.
+- Indian review coverage.
+- Indian multimodal coverage.
+- Marketplace distribution.
+- Category distribution.
+- Language coverage.
+- Missingness.
+- Remaining representativeness issues.
+
+## E. Model evaluation
+Report actual reproduced metrics, dataset sizes, split methodology, class distributions and leakage checks.
+
+## F. Technical deliverables
+List every new or modified:
+- Script.
+- Notebook.
+- Dataset.
+- Feature table.
+- Model.
+- Schema.
+- Test.
+- Report.
+- Manifest.
+
+## G. Certification
+Report:
+- Validator results.
+- Full pytest results.
+- Protected baseline hash results.
+- Dataset reconciliation results.
+- Release integrity.
+- Reproducibility status.
+
+## H. Remaining dependencies
+Only list issues that are genuinely impossible to resolve using available data, legitimate sources, and current permissions.
+
+For every dependency, specify:
+- Exact missing field or resource.
+- Exact number of affected records.
+- Why it cannot be resolved.
+- What is already prepared.
+- What specific input or permission would resolve it.
+
+Do not use vague future-improvement suggestions.
+
+## I. Final engineering verdict
+
+Give an honest verdict on:
+- Dataset quality.
+- Indian marketplace readiness.
+- Multimodal readiness.
+- NLP readiness.
+- Computer vision readiness.
+- Graph readiness.
+- Seller intelligence readiness.
+- Temporal price intelligence readiness.
+- Fraud detection readiness.
+- Research and academic defensibility.
+- Future deployment readiness.
+
+Do not award arbitrary A+ grades. Base every assessment on evidence.
+
+---
+
+# FINAL INSTRUCTION
+
+I want the strongest technically defensible version of this project, not a report that merely looks impressive.
+
+Do not inflate numbers. Do not invent data. Do not hide missing records. Do not misrepresent sentiment as fraud. Do not treat platform-level aggregates as individual sellers. Do not call a static price schema historical intelligence. Do not call an embedding a trained model. Do not call an unverified feature production-ready.
+
+**Complete every feasible task in this execution cycle. Preserve historical releases. Build v1.7. Test it. Verify it. Document it.**
+
+The goal is to leave the project in a state where we can confidently move from dataset engineering into the final marketplace analyzer modelling, application integration and deployment stages — without discovering basic reconciliation and data-quality problems later.
+
+Start by inspecting the repository and existing v1.6 artifacts. Then execute the assignment. Do not return only a plan.
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-11-04T11:21:01+05:30.
+</ADDITIONAL_METADATA>
