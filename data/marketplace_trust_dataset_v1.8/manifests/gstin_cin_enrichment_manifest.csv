@@ -1,0 +1,7 @@
+seller_id,marketplace,display_name,target_registry,acquisition_status,reason
+SELLER_AGG_AMAZON_IN,amazon_in,Amazon Seller Services Private Limited (Amazon.in),GST_PORTAL_INDIA,BLOCKED_EXTERNAL,Merchant GSTIN / CIN public verification requires authenticated GST API credentials.
+SELLER_AGG_FLIPKART,flipkart,Flipkart Internet Private Limited (Flipkart.com),GST_PORTAL_INDIA,BLOCKED_EXTERNAL,Merchant GSTIN / CIN public verification requires authenticated GST API credentials.
+SELLER_AGG_MYNTRA,myntra,Myntra Designs Private Limited (Myntra.com),GST_PORTAL_INDIA,BLOCKED_EXTERNAL,Merchant GSTIN / CIN public verification requires authenticated GST API credentials.
+SELLER_AGG_AMAZON_US,amazon,Amazon.com Services LLC (Amazon US),IRS_EIN_USA,BLOCKED_EXTERNAL,Merchant GSTIN / CIN public verification requires authenticated GST API credentials.
+SELLER_AGG_BESTBUY,bestbuy,"Best Buy Co., Inc. (BestBuy.com)",IRS_EIN_USA,BLOCKED_EXTERNAL,Merchant GSTIN / CIN public verification requires authenticated GST API credentials.
+SELLER_AGG_WALMART,walmart,Walmart Inc. (Walmart.com),IRS_EIN_USA,BLOCKED_EXTERNAL,Merchant GSTIN / CIN public verification requires authenticated GST API credentials.

@@ -1,0 +1,6 @@
+target_id,marketplace,category,target_script,target_language,source_filter,acquisition_status,policy_reason
+INDIC_TGT_HINDI_01,Amazon India,Electronics & Mobiles,DEVANAGARI,Hindi,review_language=hi_IN,BLOCKED_EXTERNAL,Outbound live scraping blocked in sandbox; requires authenticated affiliate API egress.
+INDIC_TGT_TAMIL_01,Flipkart,Home Appliances,TAMIL,Tamil,ui_language=ta,BLOCKED_EXTERNAL,Outbound live scraping blocked in sandbox; requires authenticated affiliate API egress.
+INDIC_TGT_BENGALI_01,Flipkart,Fashion & Apparel,BENGALI,Bengali,ui_language=bn,BLOCKED_EXTERNAL,Outbound live scraping blocked in sandbox; requires authenticated affiliate API egress.
+INDIC_TGT_TELUGU_01,Amazon India,Consumer Goods,TELUGU,Telugu,review_language=te_IN,BLOCKED_EXTERNAL,Outbound live scraping blocked in sandbox; requires authenticated affiliate API egress.
+INDIC_TGT_MARATHI_01,Amazon India,Kitchen & Dining,DEVANAGARI,Marathi,review_language=mr_IN,BLOCKED_EXTERNAL,Outbound live scraping blocked in sandbox; requires authenticated affiliate API egress.

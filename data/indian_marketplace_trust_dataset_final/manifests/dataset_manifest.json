@@ -1,0 +1,136 @@
+{
+  "dataset_name": "Indian Marketplace Multimodal Trust Intelligence Dataset",
+  "version": "FINAL_FROZEN_INDIAN_CORE",
+  "release_timestamp": "2026-11-04T16:00:00Z",
+  "certification_verdict": "CERTIFIED_INDIAN_MULTIMODAL_RELEASE",
+  "geographic_scope": "India (100% Domestic Marketplaces)",
+  "marketplaces": [
+    "Amazon India (amazon.in)",
+    "Flipkart (flipkart.com)",
+    "Myntra (myntra.com)"
+  ],
+  "currency": "INR (Indian Rupee)",
+  "entity_counts": {
+    "total_indian_products": 3643,
+    "amazon_india_products": 1500,
+    "flipkart_products": 1143,
+    "myntra_products": 1000,
+    "total_indian_reviews": 3659,
+    "total_indian_physical_images": 4708,
+    "total_indian_valid_prices": 3623,
+    "tier_a_complete_multimodal": 5,
+    "tier_b_review_rich": 127,
+    "tier_c_image_rich": 2427,
+    "tier_d_catalog_sparse": 1084
+  },
+  "tables": {
+    "collections/tier_a_complete_multimodal.parquet": {
+      "record_count": 5,
+      "column_count": 26,
+      "file_size_bytes": 17575,
+      "sha256": "7ddd0c943400bbff136b1a1ffde92d6517b2176326bbc0515e8245123363f564"
+    },
+    "collections/tier_b_review_rich.parquet": {
+      "record_count": 127,
+      "column_count": 26,
+      "file_size_bytes": 49820,
+      "sha256": "e285a823868b07f701786d58488b39ee49d540ddff777fadcd68e6c70b5e7cc4"
+    },
+    "collections/tier_c_image_rich.parquet": {
+      "record_count": 2427,
+      "column_count": 26,
+      "file_size_bytes": 821329,
+      "sha256": "d46226b01621b4f723447dde32fa5c77bc87c0606e5f9f480a402d765674e0d0"
+    },
+    "collections/tier_d_catalog_sparse.parquet": {
+      "record_count": 1084,
+      "column_count": 26,
+      "file_size_bytes": 271789,
+      "sha256": "7db479ab49bfe110b8ede542d9d04e406550894f79b9585d7c72274158976b16"
+    },
+    "derived_evidence/aspect_sentiment_features.parquet": {
+      "record_count": 3419,
+      "column_count": 19,
+      "file_size_bytes": 47955,
+      "sha256": "01770400f14e315b8bfdbbef359cedc5b933543f832224ba1ad63963352b897f"
+    },
+    "derived_evidence/graph_features.parquet": {
+      "record_count": 3643,
+      "column_count": 9,
+      "file_size_bytes": 59851,
+      "sha256": "5e803d3b6aa5d333eff9889adfdfb684298784572dd0003e67067f950a876da4"
+    },
+    "derived_evidence/image_integrity_features.parquet": {
+      "record_count": 5034,
+      "column_count": 32,
+      "file_size_bytes": 1328693,
+      "sha256": "c7b6e2b05624aa75c0ba14b9e3a4944e7c36faaedaf2e8a714eb86833eb3b27f"
+    },
+    "derived_evidence/price_anomaly_features.parquet": {
+      "record_count": 3643,
+      "column_count": 23,
+      "file_size_bytes": 235469,
+      "sha256": "911d19af65ac909c9e402ab2d76e044e3b76569a39a8d0fc1f43d28992f84823"
+    },
+    "derived_evidence/review_behavioral_features.parquet": {
+      "record_count": 3659,
+      "column_count": 30,
+      "file_size_bytes": 182930,
+      "sha256": "5c35adf3129092a44cb0a893d238aa858c868c6673c3c21a59af686b9dc1a169"
+    },
+    "entities/canonical_product_registry.parquet": {
+      "record_count": 3643,
+      "column_count": 31,
+      "file_size_bytes": 1149288,
+      "sha256": "cf862971925d59b434a9ba118eee5e6f4aad8b4564acd615c72e0fd3d4b40075"
+    },
+    "entities/product_variants.parquet": {
+      "record_count": 720,
+      "column_count": 10,
+      "file_size_bytes": 56196,
+      "sha256": "9f34093377b1660dad58992ce6b3441118b3b0f87f826228c6f58b0e372427a1"
+    },
+    "entities/products.parquet": {
+      "record_count": 3643,
+      "column_count": 26,
+      "file_size_bytes": 1106735,
+      "sha256": "eedc04bfdfbd0170c9e1358483a5b5d00fde07277c5d60c6781f47052092099e"
+    },
+    "entities/sellers.parquet": {
+      "record_count": 3,
+      "column_count": 12,
+      "file_size_bytes": 8819,
+      "sha256": "ce27690acbf0f3e8f833c15f31d1f03cb8013830f832587b44a3abe702cbd6c5"
+    },
+    "evidence/images.parquet": {
+      "record_count": 5034,
+      "column_count": 24,
+      "file_size_bytes": 1298926,
+      "sha256": "e5467516c6bb592857c92f90abef0297c3afeb071953e0d183ddc00534eb7a4b"
+    },
+    "evidence/price_observations.parquet": {
+      "record_count": 3643,
+      "column_count": 23,
+      "file_size_bytes": 256537,
+      "sha256": "1d3b0383c405f78504b02c2d7726347915f40b90bfd04c129c8fbf4635ec9bd4"
+    },
+    "evidence/reviews.parquet": {
+      "record_count": 3659,
+      "column_count": 26,
+      "file_size_bytes": 426538,
+      "sha256": "94a55ad61f7ed181f10074c054297d8edd4d46386bb56c5a3dc9c3f8996023c9"
+    },
+    "relationships/cross_marketplace_matches.parquet": {
+      "record_count": 30,
+      "column_count": 14,
+      "file_size_bytes": 13425,
+      "sha256": "560042dcb258e6d84b6c289e607f0e99ce93b300ff99c52474126abba525e02f"
+    },
+    "relationships/entity_relationships.parquet": {
+      "record_count": 11750,
+      "column_count": 11,
+      "file_size_bytes": 383935,
+      "sha256": "cd0aa8e72b31e1a6fee8e872e056b014144a2ec75fd28f2b07368c2f2e0d8c79"
+    }
+  }
+}

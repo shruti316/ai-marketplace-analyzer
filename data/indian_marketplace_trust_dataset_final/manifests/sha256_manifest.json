@@ -1,0 +1,20 @@
+{
+  "collections/tier_a_complete_multimodal.parquet": "7ddd0c943400bbff136b1a1ffde92d6517b2176326bbc0515e8245123363f564",
+  "collections/tier_b_review_rich.parquet": "e285a823868b07f701786d58488b39ee49d540ddff777fadcd68e6c70b5e7cc4",
+  "collections/tier_c_image_rich.parquet": "d46226b01621b4f723447dde32fa5c77bc87c0606e5f9f480a402d765674e0d0",
+  "collections/tier_d_catalog_sparse.parquet": "7db479ab49bfe110b8ede542d9d04e406550894f79b9585d7c72274158976b16",
+  "derived_evidence/aspect_sentiment_features.parquet": "01770400f14e315b8bfdbbef359cedc5b933543f832224ba1ad63963352b897f",
+  "derived_evidence/graph_features.parquet": "5e803d3b6aa5d333eff9889adfdfb684298784572dd0003e67067f950a876da4",
+  "derived_evidence/image_integrity_features.parquet": "c7b6e2b05624aa75c0ba14b9e3a4944e7c36faaedaf2e8a714eb86833eb3b27f",
+  "derived_evidence/price_anomaly_features.parquet": "911d19af65ac909c9e402ab2d76e044e3b76569a39a8d0fc1f43d28992f84823",
+  "derived_evidence/review_behavioral_features.parquet": "5c35adf3129092a44cb0a893d238aa858c868c6673c3c21a59af686b9dc1a169",
+  "entities/canonical_product_registry.parquet": "cf862971925d59b434a9ba118eee5e6f4aad8b4564acd615c72e0fd3d4b40075",
+  "entities/product_variants.parquet": "9f34093377b1660dad58992ce6b3441118b3b0f87f826228c6f58b0e372427a1",
+  "entities/products.parquet": "eedc04bfdfbd0170c9e1358483a5b5d00fde07277c5d60c6781f47052092099e",
+  "entities/sellers.parquet": "ce27690acbf0f3e8f833c15f31d1f03cb8013830f832587b44a3abe702cbd6c5",
+  "evidence/images.parquet": "e5467516c6bb592857c92f90abef0297c3afeb071953e0d183ddc00534eb7a4b",
+  "evidence/price_observations.parquet": "1d3b0383c405f78504b02c2d7726347915f40b90bfd04c129c8fbf4635ec9bd4",
+  "evidence/reviews.parquet": "94a55ad61f7ed181f10074c054297d8edd4d46386bb56c5a3dc9c3f8996023c9",
+  "relationships/cross_marketplace_matches.parquet": "560042dcb258e6d84b6c289e607f0e99ce93b300ff99c52474126abba525e02f",
+  "relationships/entity_relationships.parquet": "cd0aa8e72b31e1a6fee8e872e056b014144a2ec75fd28f2b07368c2f2e0d8c79"
+}

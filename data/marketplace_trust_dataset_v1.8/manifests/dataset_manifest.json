@@ -1,0 +1,356 @@
+{
+  "dataset_name": "Marketplace Trust Intelligence Dataset",
+  "version": "v1.8_CERTIFIED",
+  "release_timestamp": "2026-11-04T15:00:00Z",
+  "certification_verdict": "CERTIFIED_WITH_LIMITATIONS",
+  "entity_counts": {
+    "products": 6043,
+    "reviews": 56697,
+    "usable_images": 5228,
+    "valid_prices": 5153,
+    "missing_prices": 890,
+    "graph_nodes": 72903,
+    "graph_edges": 87954,
+    "tier_a_complete": 305,
+    "tier_b_visual": 2506,
+    "tier_c_textual": 127,
+    "tier_d_catalog": 3105,
+    "indian_products": 3643,
+    "indian_products_share": "60.28%",
+    "indian_reviews": 3659,
+    "indian_reviews_share": "6.45%"
+  },
+  "v1_8_new_deliverables": {
+    "source_reconciliation_table": "manifests/source_reconciliation_table.parquet",
+    "flipkart_image_recovery_manifest": "manifests/flipkart_127_image_manifest.csv",
+    "native_indic_collection_manifest": "manifests/native_indic_review_collection_manifest.csv",
+    "standardized_500_sku_sampling_manifest": "manifests/standardized_500_sku_sampling_manifest.csv",
+    "gstin_cin_enrichment_manifest": "manifests/gstin_cin_enrichment_manifest.csv"
+  },
+  "tables": {
+    "collections/complete_multimodal_core.parquet": {
+      "record_count": 305,
+      "column_count": 23,
+      "file_size_bytes": 105854,
+      "sha256": "eb6263c74ccfe8fc0a1bda8c9fbe5d90c8c75dea9473dadc231519b7c4ec7b67"
+    },
+    "collections/isolated_benchmarks/deceptive_opinion_spam.parquet": {
+      "record_count": 1600,
+      "column_count": 5,
+      "file_size_bytes": 751544,
+      "sha256": "eaeceee0a9aa985f509d52ed4a2841a93584265787ec9687be5d7161ae7aaf7c"
+    },
+    "collections/isolated_benchmarks/ecommerce_fake_reviews.parquet": {
+      "record_count": 40526,
+      "column_count": 4,
+      "file_size_bytes": 8005832,
+      "sha256": "e0496930c852597f6b24686feb6e8a4ba051e573699a4a9e3ba5a871e9422de8"
+    },
+    "collections/isolated_benchmarks/synthetic_stress_test_cases.parquet": {
+      "record_count": 5,
+      "column_count": 21,
+      "file_size_bytes": 16141,
+      "sha256": "6407a4691c9170973dc6c9e0068124673a7b4bc6f245f2b94de5917d3b8df730"
+    },
+    "collections/tier_a_complete_multimodal.parquet": {
+      "record_count": 305,
+      "column_count": 31,
+      "file_size_bytes": 134871,
+      "sha256": "f9b845fc1217985201c5ed484222020d6c79ad2f32768468ea3470dfffbe3afd"
+    },
+    "collections/tier_b_visual_products.parquet": {
+      "record_count": 2506,
+      "column_count": 31,
+      "file_size_bytes": 925926,
+      "sha256": "da4bf18687453a110813eba3f4da2f36c04a7e028237828611829b1649389c6f"
+    },
+    "collections/tier_c_textual_products.parquet": {
+      "record_count": 127,
+      "column_count": 31,
+      "file_size_bytes": 60824,
+      "sha256": "0d64add915014a296690d12b2ac8eb4e80e250b6c4958d78177186a5b324faa0"
+    },
+    "collections/tier_d_catalog_products.parquet": {
+      "record_count": 3105,
+      "column_count": 31,
+      "file_size_bytes": 560080,
+      "sha256": "b06a60b4818dc8ef2531de48d4976a22e873de36d9f8615296670eab04856e8d"
+    },
+    "derived_evidence/aspect_sentiment_features.parquet": {
+      "record_count": 56697,
+      "column_count": 19,
+      "file_size_bytes": 608862,
+      "sha256": "1d43197abc3ce93e6e0b5908dd78a596e788ad15d940b4e2bcd13c0bace936b6"
+    },
+    "derived_evidence/cross_modal_evidence.parquet": {
+      "record_count": 6043,
+      "column_count": 18,
+      "file_size_bytes": 94854,
+      "sha256": "5a7d5adedbb55408e3516c3104ccaec304e3cc70b6865dbb050d0d31f19f8df3"
+    },
+    "derived_evidence/fraud_taxonomy_annotations.parquet": {
+      "record_count": 56697,
+      "column_count": 8,
+      "file_size_bytes": 509433,
+      "sha256": "ef01ca934c1767f74bbc6702aa31bd96fde46797b5e7d3f37af745502b26ebff"
+    },
+    "derived_evidence/graph_features.parquet": {
+      "record_count": 6043,
+      "column_count": 9,
+      "file_size_bytes": 88223,
+      "sha256": "7499cfd2784ff50961f0517e17b19efcde411cffef0f8e6648509e3c2a17c985"
+    },
+    "derived_evidence/image_integrity_features.parquet": {
+      "record_count": 5554,
+      "column_count": 32,
+      "file_size_bytes": 1472568,
+      "sha256": "43e3cbb1c585c8323df57879d2d20d9ed0e0e86bf3ee67a5de14a8e2a9bb6f91"
+    },
+    "derived_evidence/language_annotations.parquet": {
+      "record_count": 56697,
+      "column_count": 10,
+      "file_size_bytes": 659309,
+      "sha256": "8d0a50280e1cdddf4d353f1de4b6c03fe961506fb5cfcc2591e608a7e6a7a084"
+    },
+    "derived_evidence/price_anomaly_features.parquet": {
+      "record_count": 6043,
+      "column_count": 23,
+      "file_size_bytes": 349861,
+      "sha256": "ccc5bab11cbe00757d67a62d10d64eb67e00b9963be42a59d953d332bed94336"
+    },
+    "derived_evidence/review_behavioral_features.parquet": {
+      "record_count": 56697,
+      "column_count": 30,
+      "file_size_bytes": 3632516,
+      "sha256": "78ba5bc382e94392b34e96c9adbeda61ad203fddceab9601c3a024183dbc51d0"
+    },
+    "derived_evidence/seller_intelligence.parquet": {
+      "record_count": 6043,
+      "column_count": 15,
+      "file_size_bytes": 153671,
+      "sha256": "23141e127e4962dd1e8c7ce7da45b9d2a6acb6cb788f56f2b02606ab5fcbd324"
+    },
+    "derived_evidence/visual_embeddings_metadata.parquet": {
+      "record_count": 5228,
+      "column_count": 10,
+      "file_size_bytes": 209643,
+      "sha256": "719d31a5763052abb807b8c71bf9f455262f8111e79cdcb830835c574c9c8ae2"
+    },
+    "entities/canonical_product_registry.parquet": {
+      "record_count": 6043,
+      "column_count": 31,
+      "file_size_bytes": 1616848,
+      "sha256": "b8230d1c324ac8a9aec139b7dec737ac2d69fb27d214507933b767eb7cb77930"
+    },
+    "entities/product_variants.parquet": {
+      "record_count": 772,
+      "column_count": 10,
+      "file_size_bytes": 61476,
+      "sha256": "359d9899907868262d0fb75bb6b579cd748e19639e48a5dd809ef6ffe12580bb"
+    },
+    "entities/products.parquet": {
+      "record_count": 6043,
+      "column_count": 25,
+      "file_size_bytes": 1459228,
+      "sha256": "65be009257c8aa6037da16c56fcdeb62361be9fa5fb1bade4ab7e1caee2d7d64"
+    },
+    "entities/sellers.parquet": {
+      "record_count": 6,
+      "column_count": 12,
+      "file_size_bytes": 9256,
+      "sha256": "a8e61f99c76b1eaea1cf6b56ec280f6f08a50d0e523fc15a7c8820480e58a1a9"
+    },
+    "evaluation/benchmark_manifests/external_benchmark_manifest.parquet": {
+      "record_count": 2,
+      "column_count": 4,
+      "file_size_bytes": 3388,
+      "sha256": "e5480283a40e100d15d075466b0b70e6cb36d61fa167e45a721a5a7f90a4b508"
+    },
+    "evaluation/benchmark_manifests/stress_test_manifest.parquet": {
+      "record_count": 5,
+      "column_count": 3,
+      "file_size_bytes": 2922,
+      "sha256": "c55ff90de0663f9d12d6d72bc2f8f222c016ab42b5cde7e2fd8d02ae1da3a191"
+    },
+    "evaluation/protocols/protocol_1_product_held_out/test_manifest.parquet": {
+      "record_count": 907,
+      "column_count": 25,
+      "file_size_bytes": 249460,
+      "sha256": "b05f0660305900933c86cd15949bed71fec281ffed72446dcb9699f100b6cd7b"
+    },
+    "evaluation/protocols/protocol_1_product_held_out/train_manifest.parquet": {
+      "record_count": 4230,
+      "column_count": 25,
+      "file_size_bytes": 1052063,
+      "sha256": "117b47df186b772622a6ba20147796654f199043ed49c0af9d810c013670b089"
+    },
+    "evaluation/protocols/protocol_1_product_held_out/validation_manifest.parquet": {
+      "record_count": 906,
+      "column_count": 25,
+      "file_size_bytes": 277454,
+      "sha256": "7f42eefd7544cd0e09bbc43fd7ff7444c06585b41eefd2c6c61168a0be73cade"
+    },
+    "evaluation/protocols/protocol_2_variant_family_held_out/test_manifest.parquet": {
+      "record_count": 907,
+      "column_count": 25,
+      "file_size_bytes": 262997,
+      "sha256": "395ecde00575a1c4f9124178f0f34419a64976a929cf223126ad72d7ab448ed3"
+    },
+    "evaluation/protocols/protocol_2_variant_family_held_out/train_manifest.parquet": {
+      "record_count": 4230,
+      "column_count": 25,
+      "file_size_bytes": 1042100,
+      "sha256": "c502488bb65b69d3382b210ee087ce7472bc6012fc60267b5893accd9a280107"
+    },
+    "evaluation/protocols/protocol_2_variant_family_held_out/validation_manifest.parquet": {
+      "record_count": 906,
+      "column_count": 25,
+      "file_size_bytes": 266181,
+      "sha256": "445981197867fdbc8d2e41bfb0455961cc3e697b00db3c3d644a4a9fc1414d53"
+    },
+    "evaluation/protocols/protocol_3_reviewer_held_out/test_manifest.parquet": {
+      "record_count": 907,
+      "column_count": 25,
+      "file_size_bytes": 283221,
+      "sha256": "834abc7c8a5f5b66c7d58c965a0aa5084bf8f063738e5d093311ab69f0e9a02a"
+    },
+    "evaluation/protocols/protocol_3_reviewer_held_out/train_manifest.parquet": {
+      "record_count": 4230,
+      "column_count": 25,
+      "file_size_bytes": 1005090,
+      "sha256": "94088635e266b5ff8e5eb506cbb3dda92d1b56ec76358342d7e14418ff974fc8"
+    },
+    "evaluation/protocols/protocol_3_reviewer_held_out/validation_manifest.parquet": {
+      "record_count": 906,
+      "column_count": 25,
+      "file_size_bytes": 292811,
+      "sha256": "19f0d2310f8c53a43ad1b70077b2de10160b0a6ee17f6d5a6fd3c6b970f550c1"
+    },
+    "evaluation/protocols/protocol_4_image_cluster_held_out/test_manifest.parquet": {
+      "record_count": 907,
+      "column_count": 25,
+      "file_size_bytes": 249460,
+      "sha256": "b05f0660305900933c86cd15949bed71fec281ffed72446dcb9699f100b6cd7b"
+    },
+    "evaluation/protocols/protocol_4_image_cluster_held_out/train_manifest.parquet": {
+      "record_count": 4230,
+      "column_count": 25,
+      "file_size_bytes": 1052063,
+      "sha256": "117b47df186b772622a6ba20147796654f199043ed49c0af9d810c013670b089"
+    },
+    "evaluation/protocols/protocol_4_image_cluster_held_out/validation_manifest.parquet": {
+      "record_count": 906,
+      "column_count": 25,
+      "file_size_bytes": 277454,
+      "sha256": "7f42eefd7544cd0e09bbc43fd7ff7444c06585b41eefd2c6c61168a0be73cade"
+    },
+    "evaluation/protocols/protocol_5_cross_listing_held_out/test_manifest.parquet": {
+      "record_count": 907,
+      "column_count": 25,
+      "file_size_bytes": 262482,
+      "sha256": "2714aebb967e5cb0e48490563559811c8be7f8bde01284e2ba3c35ac39afac8c"
+    },
+    "evaluation/protocols/protocol_5_cross_listing_held_out/train_manifest.parquet": {
+      "record_count": 4230,
+      "column_count": 25,
+      "file_size_bytes": 1046173,
+      "sha256": "b85fe96955c0a9a749845390d1c3a61a9d5b4a689733ead1f47189b8bfb90c31"
+    },
+    "evaluation/protocols/protocol_5_cross_listing_held_out/validation_manifest.parquet": {
+      "record_count": 906,
+      "column_count": 25,
+      "file_size_bytes": 269556,
+      "sha256": "1ab774280a19490bc16f7dd8b7abae2bc06fa8e3b465790134a3ff3d1a1c4a09"
+    },
+    "evaluation/test_manifest.parquet": {
+      "record_count": 907,
+      "column_count": 25,
+      "file_size_bytes": 249460,
+      "sha256": "b05f0660305900933c86cd15949bed71fec281ffed72446dcb9699f100b6cd7b"
+    },
+    "evaluation/train_manifest.parquet": {
+      "record_count": 4230,
+      "column_count": 25,
+      "file_size_bytes": 1052063,
+      "sha256": "117b47df186b772622a6ba20147796654f199043ed49c0af9d810c013670b089"
+    },
+    "evaluation/validation_manifest.parquet": {
+      "record_count": 906,
+      "column_count": 25,
+      "file_size_bytes": 277454,
+      "sha256": "7f42eefd7544cd0e09bbc43fd7ff7444c06585b41eefd2c6c61168a0be73cade"
+    },
+    "evidence/fx_conversion_rates.parquet": {
+      "record_count": 9,
+      "column_count": 11,
+      "file_size_bytes": 7704,
+      "sha256": "2bf59b4a944fa5ca2427d7e42edc15b50be347d3395e4dac59fbb51e1bc88711"
+    },
+    "evidence/images.parquet": {
+      "record_count": 5554,
+      "column_count": 24,
+      "file_size_bytes": 1441548,
+      "sha256": "6ed2de71ae71fc2e9f300c01c5b9898d67c9ce80a327fe7991da352a2d28a614"
+    },
+    "evidence/price_observations.parquet": {
+      "record_count": 6043,
+      "column_count": 23,
+      "file_size_bytes": 396427,
+      "sha256": "123cfea9382b85557b2823fdbf8a118273f2b580c4487c80b01939d1bb3c07fd"
+    },
+    "evidence/reviews.parquet": {
+      "record_count": 56697,
+      "column_count": 26,
+      "file_size_bytes": 15646527,
+      "sha256": "0f84201087d9f67cfb26c34f1d38dc978821c974f101917dcc70d746a9b59ceb"
+    },
+    "evidence/seller_observations.parquet": {
+      "record_count": 6,
+      "column_count": 12,
+      "file_size_bytes": 8921,
+      "sha256": "714bc9acfdac228cc233f6f9ab839a636d02763712ad6ce317c5fc54c76f41b8"
+    },
+    "manifests/matching_audit.parquet": {
+      "record_count": 55,
+      "column_count": 8,
+      "file_size_bytes": 7628,
+      "sha256": "ead505032c8f3acae940c6f0b12eb8303c95cbdd0b2b318cdaba0ca42cffd5fe"
+    },
+    "manifests/review_accounting.parquet": {
+      "record_count": 5,
+      "column_count": 9,
+      "file_size_bytes": 6589,
+      "sha256": "51ed5615aaf0c5f170132028ca5c69e0e58f294dadff05d4e38cd5b3c9feb53e"
+    },
+    "manifests/source_reconciliation_table.parquet": {
+      "record_count": 18,
+      "column_count": 10,
+      "file_size_bytes": 8165,
+      "sha256": "eefc30f1efa5d08a34099ab14bcbc901d5c9143dc699782c02ef30065996e57a"
+    },
+    "manifests/source_registry.parquet": {
+      "record_count": 11,
+      "column_count": 13,
+      "file_size_bytes": 12377,
+      "sha256": "9c2a43448a1b61685daa49ab71eaf1941170e899cd6dae415277bd379a59745f"
+    },
+    "relationships/cross_marketplace_matches.parquet": {
+      "record_count": 30,
+      "column_count": 14,
+      "file_size_bytes": 13425,
+      "sha256": "560042dcb258e6d84b6c289e607f0e99ce93b300ff99c52474126abba525e02f"
+    },
+    "relationships/entity_relationships.parquet": {
+      "record_count": 67175,
+      "column_count": 11,
+      "file_size_bytes": 1314435,
+      "sha256": "8d2561cb5f55c9d403b90668c3f194c79b9d6e60ebf55d7d737f9de279da952b"
+    },
+    "relationships/product_variants.parquet": {
+      "record_count": 772,
+      "column_count": 10,
+      "file_size_bytes": 61476,
+      "sha256": "359d9899907868262d0fb75bb6b579cd748e19639e48a5dd809ef6ffe12580bb"
+    }
+  }
+}
