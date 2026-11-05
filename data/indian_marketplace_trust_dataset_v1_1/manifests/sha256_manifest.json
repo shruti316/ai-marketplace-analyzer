@@ -1,0 +1,62 @@
+{
+  "derived_evidence/aspect_sentiment_features.parquet": {
+    "sha256": "01770400f14e315b8bfdbbef359cedc5b933543f832224ba1ad63963352b897f",
+    "size_bytes": 47955
+  },
+  "derived_evidence/image_integrity_features.parquet": {
+    "sha256": "c7b6e2b05624aa75c0ba14b9e3a4944e7c36faaedaf2e8a714eb86833eb3b27f",
+    "size_bytes": 1328693
+  },
+  "derived_evidence/multimodal_coverage_matrix.parquet": {
+    "sha256": "fa8aee5c2b1d09ee63269fd048670eab037ff376489563064c30ec256d659e98",
+    "size_bytes": 224815
+  },
+  "derived_evidence/price_anomaly_features.parquet": {
+    "sha256": "911d19af65ac909c9e402ab2d76e044e3b76569a39a8d0fc1f43d28992f84823",
+    "size_bytes": 235469
+  },
+  "derived_evidence/review_behavioral_features.parquet": {
+    "sha256": "1391696ea507006d58f8a6b1e17b41dff2252b3db9d1a536838bbca3cbb4b44e",
+    "size_bytes": 182944
+  },
+  "derived_evidence/visual_embeddings_resnet18.npz": {
+    "sha256": "d27999ceeb060a566358923e463965f560a42b0bad8a494157808495b95dcc40",
+    "size_bytes": 8145440
+  },
+  "entities/canonical_product_registry.parquet": {
+    "sha256": "222ffcce27a58d856d9774317355f7d368776e75452de348ac0b1e774454c9c2",
+    "size_bytes": 1149279
+  },
+  "entities/products.parquet": {
+    "sha256": "0171e1976328e7fc8bd6027248fd37bb3cc43963e9c65a24474ac127e3733714",
+    "size_bytes": 1105570
+  },
+  "entities/sellers.parquet": {
+    "sha256": "ce27690acbf0f3e8f833c15f31d1f03cb8013830f832587b44a3abe702cbd6c5",
+    "size_bytes": 8819
+  },
+  "evidence/images.parquet": {
+    "sha256": "e5467516c6bb592857c92f90abef0297c3afeb071953e0d183ddc00534eb7a4b",
+    "size_bytes": 1298926
+  },
+  "evidence/price_observations.parquet": {
+    "sha256": "1d3b0383c405f78504b02c2d7726347915f40b90bfd04c129c8fbf4635ec9bd4",
+    "size_bytes": 256537
+  },
+  "evidence/reviews.parquet": {
+    "sha256": "4ef64f374d77cf103889c3eec88a2b99624cb0a51c9edf68e7c6f842f0637b90",
+    "size_bytes": 426896
+  },
+  "relationships/cross_marketplace_matches.parquet": {
+    "sha256": "560042dcb258e6d84b6c289e607f0e99ce93b300ff99c52474126abba525e02f",
+    "size_bytes": 13425
+  },
+  "relationships/entity_relationships.parquet": {
+    "sha256": "19c6f609cc87c31ee7cb967800f316c8b6df2b3970d1e5e2b0146a1b233badc6",
+    "size_bytes": 319826
+  },
+  "relationships/product_variants.parquet": {
+    "sha256": "9f34093377b1660dad58992ce6b3441118b3b0f87f826228c6f58b0e372427a1",
+    "size_bytes": 56196
+  }
+}

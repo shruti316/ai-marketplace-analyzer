@@ -1,0 +1,37 @@
+{
+  "dataset_name": "Indian-First Multimodal Marketplace Trust Dataset",
+  "dataset_version": "v1.1",
+  "release_tag": "INDIAN_MULTIMODAL_v1_1_ENRICHED",
+  "source_baseline": "data/indian_marketplace_trust_dataset_final/",
+  "creation_timestamp": "2026-11-05T06:00:00Z",
+  "geographic_domain": "India (Domestic Marketplaces)",
+  "currency": "INR (100%)",
+  "catalog_summary": {
+    "total_products": 3643,
+    "amazon_india_products": 1500,
+    "flipkart_products": 1143,
+    "myntra_products": 1000
+  },
+  "modality_metrics": {
+    "total_customer_reviews": 3659,
+    "linked_reviews": 3659,
+    "unlinked_reviews": 0,
+    "products_with_reviews": 148,
+    "physical_images_on_disk": 4708,
+    "products_with_usable_images": 2432,
+    "valid_inr_prices": 3623,
+    "products_with_valid_price": 3623,
+    "resnet18_embeddings_count": 4708,
+    "graph_edges_total": 11990
+  },
+  "coverage_tiers": {
+    "Tier A (Complete Multimodal)": 5,
+    "Tier B (3 Core Modalities)": 2550,
+    "Tier C (2 Core Modalities)": 1088,
+    "Tier D (Metadata-Only / Sparse)": 0
+  },
+  "governed_blocked_dependencies": {
+    "flipkart_127_image_manifest": "manifests/flipkart_127_image_manifest_v1_8.csv",
+    "blocked_status": "BLOCKED_EXTERNAL (Network egress disabled in sandbox)"
+  }
+}

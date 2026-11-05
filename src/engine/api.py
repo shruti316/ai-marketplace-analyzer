@@ -39,10 +39,16 @@ class MarketplaceTrustAPI:
     Provides clean, production-ready interfaces for application integration.
     """
 
-    def __init__(self, v17_dir: Optional[Path] = None) -> None:
+    def __init__(self, dataset_dir: Optional[Path] = None, v17_dir: Optional[Path] = None) -> None:
         self.project_root = Path(__file__).resolve().parents[2]
-        self.v17_dir = v17_dir or (self.project_root / "data" / "marketplace_trust_dataset_v1.7")
+        resolved_dir = dataset_dir or v17_dir
+        if resolved_dir is None:
+            # Default to v1.7 if existing integration tests expect historical items, or v1.1
+            v11_path = self.project_root / "data" / "indian_marketplace_trust_dataset_v1_1"
+            v17_path = self.project_root / "data" / "marketplace_trust_dataset_v1.7"
+            resolved_dir = v17_path if v17_path.exists() else v11_path
 
+        self.v17_dir = resolved_dir
         logger.info(f"Initializing MarketplaceTrustAPI with dataset at: {self.v17_dir}")
         self.trust_engine = MarketplaceTrustEngine(self.v17_dir)
         self.matching_service = CrossMarketplaceMatchingService(self.v17_dir)
