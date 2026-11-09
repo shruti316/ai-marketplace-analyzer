@@ -1,0 +1,11 @@
+{
+  "benchmark_name": "Indian_Marketplace_Multimodal_Trust_Benchmark_v1_3",
+  "split_policy": "CONNECTED_COMPONENTS_DUAL_GROUPING",
+  "product_leakage_overlap": 0,
+  "review_text_cluster_leakage_overlap": 0,
+  "train_products": 2550,
+  "validation_products": 546,
+  "test_products": 547,
+  "total_benchmark_products": 3643,
+  "created_at": "2026-11-06T03:23:03.710898+00:00"
+}

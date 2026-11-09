@@ -1,0 +1,122 @@
+{
+  "annotations/annotation_guidelines.md": {
+    "sha256": "ac6dc70f0abf8ca3e0b2114bdcd4eb365a79913111d379cbac7f40da034d5eb9",
+    "size_bytes": 1369
+  },
+  "annotations/image_annotations.parquet": {
+    "sha256": "b5f62461dcb4e80965adc14b92d893d2597b261b386c720d43a5d5cfad67a196",
+    "size_bytes": 18131
+  },
+  "annotations/listing_annotations.parquet": {
+    "sha256": "3e30a300f7f3a2bffedc6f61bb093e44a42bc1aacdb9815fe1911196aa189600",
+    "size_bytes": 18331
+  },
+  "annotations/review_human_annotations.parquet": {
+    "sha256": "40a82f639805982e32c7284be0f8b33c9c5f030b7c1f492076de79ee56bbe5f9",
+    "size_bytes": 18886
+  },
+  "annotations/review_silver_annotations.parquet": {
+    "sha256": "2938d11a5cbddfb9e6bbdfb7ce7f5b8a43968c09caf23549decc6fed71d4da5e",
+    "size_bytes": 22171
+  },
+  "benchmarks/benchmark_manifest.json": {
+    "sha256": "91a7d6b3b8107a7a55e104e9e8dc48829a9ba98b0bf6e79ff08b086f2b958264",
+    "size_bytes": 386
+  },
+  "benchmarks/test_split.parquet": {
+    "sha256": "5ee1752f375ad9d05c46894fe4ef52b32c31f18a09930462aeb47cd5df562806",
+    "size_bytes": 211716
+  },
+  "benchmarks/train_split.parquet": {
+    "sha256": "260b7bddaeeca9e3d28bc3bc30fe99d3b159e2ae2c7ea008a3480de954edccb3",
+    "size_bytes": 816183
+  },
+  "benchmarks/validation_split.parquet": {
+    "sha256": "7b86ae76befe0cc3017fdc705f174b3468756a8c2517fb2ef6fd52670968d436",
+    "size_bytes": 196699
+  },
+  "derived_evidence/multimodal_coverage_matrix.parquet": {
+    "sha256": "fe6a56504c6b3cfe0e44b555eef2a235c5960a549bcb26a1f92d2dc0dea90627",
+    "size_bytes": 229345
+  },
+  "derived_evidence/pricing_features.parquet": {
+    "sha256": "87f678e124b103b45cb807b5093226fa8fe211317026368bbc1c21d95818ac35",
+    "size_bytes": 113135
+  },
+  "derived_evidence/review_features.parquet": {
+    "sha256": "0fdcfe5f5646d181a6acdd9cd78fa4006faefe2398d90a99d359734e2beecba0",
+    "size_bytes": 45810
+  },
+  "derived_evidence/seller_features.parquet": {
+    "sha256": "db5b6356f97405b07c70bd9bcbf1c039103f0e2b486d7a79e9c33fa2d6a01815",
+    "size_bytes": 6510
+  },
+  "derived_evidence/visual_embeddings_resnet18.npz": {
+    "sha256": "d27999ceeb060a566358923e463965f560a42b0bad8a494157808495b95dcc40",
+    "size_bytes": 8145440
+  },
+  "entities/listings.parquet": {
+    "sha256": "8bb0aac41eb8f6e010b9387736bc7627921ef57bc65c346ece420462a2740e44",
+    "size_bytes": 363533
+  },
+  "entities/platforms.parquet": {
+    "sha256": "9c2437da72994376e1edd05ae491ebad384b87b80f971f06cc0d1046262dcde9",
+    "size_bytes": 7310
+  },
+  "entities/products.parquet": {
+    "sha256": "186161c523d2991051bb608db3c6210905d4e55420b67fd7034478811ae75379",
+    "size_bytes": 1108936
+  },
+  "entities/sellers.parquet": {
+    "sha256": "aeeea9fe70b9624f7cf1069e8ad13694cce573a4ddb19d5b7efc7a94b57da7dd",
+    "size_bytes": 9609
+  },
+  "entities/variants.parquet": {
+    "sha256": "24a7df37e765d9d8699eb97e86a0e4adff6bdaac79ee2f2de924ada09d790856",
+    "size_bytes": 574987
+  },
+  "evidence/images.parquet": {
+    "sha256": "357b567512648dbd38288b7ae03177f14ef0fd6f090868db835bd83a309740f8",
+    "size_bytes": 1377769
+  },
+  "evidence/ocr_evidence.parquet": {
+    "sha256": "dc6df184774e9b748ab569403c46db1598415954eadc0ed877c1a3b373cfda3d",
+    "size_bytes": 87443
+  },
+  "evidence/price_observations.parquet": {
+    "sha256": "450ccd5038d421d580074e59840029df454f4ca0721951f9711f7933b667c583",
+    "size_bytes": 268556
+  },
+  "evidence/reviews.parquet": {
+    "sha256": "2ee789b0732541d33378ae1226d3fce4d26f7a12d2fb623364bdfe06a3b62f75",
+    "size_bytes": 650956
+  },
+  "manifests/dataset_manifest.json": {
+    "sha256": "c841e35c70f19a89e2aa7483b1b1660eecce042b20fc6a5426d7aab3d53f1335",
+    "size_bytes": 1677
+  },
+  "relationships/entity_relationships.parquet": {
+    "sha256": "ea13b8bf2933dee38115e10658fb2d710b932b4b00fbdf8c20194c5f8203ade7",
+    "size_bytes": 690081
+  },
+  "reports/certification_report.md": {
+    "sha256": "8e06fa7eb69c4973c93b7a11987c4a961e9d290cec9d59017c072d260ad24da3",
+    "size_bytes": 6702
+  },
+  "reports/coverage_report.md": {
+    "sha256": "c336c4bea7e3fb80e70249183fd739d91322a1a990d6b87e24aa1f4a603f3291",
+    "size_bytes": 1674
+  },
+  "reports/dataset_quality_report.md": {
+    "sha256": "d099121f8aa83637bbc44b1d441b3d28860e6182e30ba2e36c4e5d8379835f74",
+    "size_bytes": 2366
+  },
+  "reports/known_limitations.md": {
+    "sha256": "0a4c3ccfaa6273ddd671d86c2e1e358c541a582768444aceef4b3345271facd9",
+    "size_bytes": 1742
+  },
+  "reports/provenance_report.md": {
+    "sha256": "f0135ed1d804ca3593ffa9c3f13afecc71af467eb8129b85dcd6d57fef250678",
+    "size_bytes": 2270
+  }
+}

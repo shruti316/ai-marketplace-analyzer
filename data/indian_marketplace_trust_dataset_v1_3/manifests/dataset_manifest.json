@@ -1,0 +1,44 @@
+{
+  "dataset_name": "Indian Marketplace Trust Intelligence Dataset",
+  "release_version": "v1.3_ENHANCED_RESEARCH_READY",
+  "release_timestamp": "2026-11-06T03:23:09.620396+00:00",
+  "summary_metrics": {
+    "canonical_products": 3643,
+    "marketplace_listings": 3643,
+    "product_variants": 3643,
+    "platforms": 3,
+    "sellers": 3,
+    "usable_images": 4708,
+    "resnet18_embeddings": 4708,
+    "linked_reviews": 3659,
+    "price_observations": 3667,
+    "ocr_proxy_records": 1000,
+    "graph_edges": 26586,
+    "silver_review_annotations": 600,
+    "human_review_annotations": 50,
+    "multi_class_listing_annotations": 250,
+    "multi_class_image_annotations": 250
+  },
+  "coverage_tiers": {
+    "Tier B": 2570,
+    "Tier C": 1068,
+    "Tier A": 5
+  },
+  "remediation_status": {
+    "seller_relationship_retyped": "HOSTED_ON_PLATFORM (0 misleading SOLD_BY platform edges)",
+    "product_variants_standard_eliminated": "100% of 'Standard' placeholders eliminated; factual attributes populated",
+    "ocr_provenance_reclassified": "TITLE_TOKEN_PROXY (transparent metadata proxy)",
+    "review_annotations_reclassified": "SILVER_HEURISTIC_PIPELINE (0.70 confidence) separated from human annotations",
+    "listing_image_annotations_multiclass": "Balanced multi-class benchmarks including negative/anomaly cases",
+    "leakage_eliminated": "Connected-components dual grouping: 0 product overlap, 0 duplicate text cluster overlap"
+  },
+  "governance": {
+    "synthetic_fabrication": false,
+    "immutable_baselines_preserved": [
+      "v1.0",
+      "v1.1",
+      "v1.2"
+    ],
+    "licensing": "PERMITTED_RESEARCH_BENCHMARK"
+  }
+}

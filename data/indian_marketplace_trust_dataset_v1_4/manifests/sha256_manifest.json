@@ -1,0 +1,162 @@
+{
+  "annotations/annotation_guidelines.md": {
+    "sha256": "a67f2685a7aa9a726cfa02d087727c0341beeb27aeaea2361f5581fc58b5b92d",
+    "size_bytes": 1301
+  },
+  "annotations/human_annotation_pending_tasks.parquet": {
+    "sha256": "6f24085e3d9159f4f3beb26c6bf2ab11f8470daed47cfa627a766c15fa94a259",
+    "size_bytes": 37433
+  },
+  "annotations/image_annotations.parquet": {
+    "sha256": "4e54217828368a37aff977e8b3dca21b9a70db2a37e9863a4fae83808eb0ed76",
+    "size_bytes": 18158
+  },
+  "annotations/listing_annotations.parquet": {
+    "sha256": "6d94e31eecc9108ea78354e8a2c1d0a2b0b412b6e1be21768cbe197d67bde86c",
+    "size_bytes": 18321
+  },
+  "annotations/review_human_annotations.parquet": {
+    "sha256": "98db5119582589a02fcf414e904020a365dca2fc34487c0f39f66bf3f67f586f",
+    "size_bytes": 24187
+  },
+  "annotations/review_silver_annotations.parquet": {
+    "sha256": "2938d11a5cbddfb9e6bbdfb7ce7f5b8a43968c09caf23549decc6fed71d4da5e",
+    "size_bytes": 22171
+  },
+  "benchmarks/benchmark_manifest.json": {
+    "sha256": "850ff6929eadc638ba24965c2a96537f43088bc07bec56c546d9963ad8cd2b1f",
+    "size_bytes": 433
+  },
+  "benchmarks/test_split.parquet": {
+    "sha256": "2175f9f62e2c2b7ddd843acbfbd0dc4c9560ec94a5050cde15688977451aabed",
+    "size_bytes": 208282
+  },
+  "benchmarks/train_split.parquet": {
+    "sha256": "674a43abb07af0cba3aa8ce8b6ed10f3dfea640610c1ad68e62250b8ed97dd73",
+    "size_bytes": 825298
+  },
+  "benchmarks/validation_split.parquet": {
+    "sha256": "d0fddffae6ec058dbace6c8c046b4820a39531be098d545f1a5a98df4a655ae8",
+    "size_bytes": 218002
+  },
+  "derived_evidence/multimodal_coverage_matrix.parquet": {
+    "sha256": "1c87d598d29d54255909ea7d74f315566fb867dd08cb4711dd0ecb72bf492796",
+    "size_bytes": 258543
+  },
+  "derived_evidence/pricing_features.parquet": {
+    "sha256": "87f678e124b103b45cb807b5093226fa8fe211317026368bbc1c21d95818ac35",
+    "size_bytes": 113135
+  },
+  "derived_evidence/review_features.parquet": {
+    "sha256": "0fdcfe5f5646d181a6acdd9cd78fa4006faefe2398d90a99d359734e2beecba0",
+    "size_bytes": 45810
+  },
+  "derived_evidence/seller_features.parquet": {
+    "sha256": "db5b6356f97405b07c70bd9bcbf1c039103f0e2b486d7a79e9c33fa2d6a01815",
+    "size_bytes": 6510
+  },
+  "derived_evidence/visual_embeddings_resnet18.npz": {
+    "sha256": "d27999ceeb060a566358923e463965f560a42b0bad8a494157808495b95dcc40",
+    "size_bytes": 8145440
+  },
+  "entities/brands.parquet": {
+    "sha256": "0d29379948fd298ecd561bd612d0533daddadb44992cb96c81b3eaf2ea490a0d",
+    "size_bytes": 74103
+  },
+  "entities/listings.parquet": {
+    "sha256": "a1e48406ebe9318357a9186b7a2c47473ca730e6def599f0234983039717e192",
+    "size_bytes": 392935
+  },
+  "entities/platforms.parquet": {
+    "sha256": "9c2437da72994376e1edd05ae491ebad384b87b80f971f06cc0d1046262dcde9",
+    "size_bytes": 7310
+  },
+  "entities/products.parquet": {
+    "sha256": "85083d2863482274c59c4f8081618cf89083123b13c449c0e64479000cd9dd74",
+    "size_bytes": 1137770
+  },
+  "entities/sellers.parquet": {
+    "sha256": "fea2feee41750557247cd5b0e314ff0e7637bfaeb11b8726cae898e82c226895",
+    "size_bytes": 9906
+  },
+  "entities/variants.parquet": {
+    "sha256": "6edaa1e315f7fbc04fb5858e1bb816b8620d18ad6562347f508a7836dfe59fe5",
+    "size_bytes": 610496
+  },
+  "evidence/images.parquet": {
+    "sha256": "357b567512648dbd38288b7ae03177f14ef0fd6f090868db835bd83a309740f8",
+    "size_bytes": 1377769
+  },
+  "evidence/ocr_evidence.parquet": {
+    "sha256": "4db167a3b6fece224078da99201561a9ebf1e45881dab8e4017eccb62ce7efdf",
+    "size_bytes": 11747
+  },
+  "evidence/price_observations.parquet": {
+    "sha256": "450ccd5038d421d580074e59840029df454f4ca0721951f9711f7933b667c583",
+    "size_bytes": 268556
+  },
+  "evidence/reviews.parquet": {
+    "sha256": "2ee789b0732541d33378ae1226d3fce4d26f7a12d2fb623364bdfe06a3b62f75",
+    "size_bytes": 650956
+  },
+  "evidence/title_token_packaging_proxy.parquet": {
+    "sha256": "a19c99bb73e9149814f08da279bbaea927ce80aebaa3216a6024b71b3a8cb9b6",
+    "size_bytes": 100319
+  },
+  "manifests/dataset_manifest.json": {
+    "sha256": "02698d62ddd942774d38050e3326ccd42cfc33c786a59b00b61562cdc5513ba2",
+    "size_bytes": 2069
+  },
+  "relationships/entity_relationships.parquet": {
+    "sha256": "2cfe7cda565a2dbca9a20cd9b53d19685b3b9c285826c9473408cb34094aafe3",
+    "size_bytes": 768060
+  },
+  "reports/benchmark_leakage_report.md": {
+    "sha256": "bf49b476755bfefd77df4c6f97db1904258941efb56a2730ea1063cfc7a20543",
+    "size_bytes": 904
+  },
+  "reports/certification_report.md": {
+    "sha256": "5671ad28751c8e9f5113139f921321fbb84217206da382ab95eb31952d21e995",
+    "size_bytes": 7874
+  },
+  "reports/coverage_report.md": {
+    "sha256": "3b510f59de05f142580de651bb0052fcb3f860ce4551bb0d3625ea0178b29820",
+    "size_bytes": 815
+  },
+  "reports/dataset_quality_report.md": {
+    "sha256": "476d880927f39f1ddd56e67acb32d5ff7daa2794ef874e1e3fb7e9587eba049a",
+    "size_bytes": 1129
+  },
+  "reports/graph_integrity_report.md": {
+    "sha256": "b306c03604c8797ce864b177bafa6ac0ff99fb28bd808f2083628d3c98cec32f",
+    "size_bytes": 1008
+  },
+  "reports/historical_pricing_report.md": {
+    "sha256": "56ae8aaadf3dd0346d5c31e771231e8922d3a35ed6a68924dfbdc67667bbb2d9",
+    "size_bytes": 1286
+  },
+  "reports/known_limitations.md": {
+    "sha256": "cac6f935f8eef6bc7a6026559b94895565f57feddb128ee53bfd1b018a1a22b3",
+    "size_bytes": 1965
+  },
+  "reports/multilingual_coverage_report.md": {
+    "sha256": "45afa72e0e72a90de28747e80f4287f3e38fb2892d78c5f5a633befcb2dec629",
+    "size_bytes": 972
+  },
+  "reports/ocr_processing_report.md": {
+    "sha256": "33ea84a18e5ed3ccd40ab1cb5150d12a5a37547e5e8de2635e2a2906a87fd7f8",
+    "size_bytes": 1450
+  },
+  "reports/provenance_report.md": {
+    "sha256": "4138ee54b224ba731ab274723e2dc5e1123fa0a271b553fca8dd3d381e05dcf3",
+    "size_bytes": 900
+  },
+  "reports/seller_identity_audit.md": {
+    "sha256": "3d2aae78784ed208f41dbc7e80eb5d6988b865fa095c67039323d043ce212d6b",
+    "size_bytes": 2043
+  },
+  "reports/variant_hierarchy_audit.md": {
+    "sha256": "5e925b9458f0284e37561374eacb9281e8e91f4ae869373f96bad30e3c98fbbb",
+    "size_bytes": 1304
+  }
+}
