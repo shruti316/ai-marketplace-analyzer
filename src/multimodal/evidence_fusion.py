@@ -206,9 +206,52 @@ class MultimodalEvidenceFusionEngine:
         logger.info(f"Processing {len(self.pricing_features_df)} pricing features for atomic evidence...")
         for _, p in self.pricing_features_df.iterrows():
             pid = str(p["canonical_product_id"])
-            is_outlier = p.get("is_price_outlier", False)
-            robust_z = p.get("robust_z_score", 0.0)
+            is_outlier = bool(p.get("is_price_outlier", False))
+            is_extreme = bool(p.get("is_extreme_price_outlier", False))
+            is_disc_anomaly = bool(p.get("is_discount_anomaly", False))
+            selling_exceeds = bool(p.get("selling_exceeds_mrp", False))
+            robust_z = p.get("robust_z_score", p.get("price_robust_zscore", 0.0))
+            disc_pct = p.get("discount_percentage", 0.0)
 
+            # Selling price exceeds MRP
+            if selling_exceeds:
+                records.append({
+                    "evidence_id": f"ev_price_mrp_{pid}",
+                    "entity_id": pid,
+                    "canonical_product_id": pid,
+                    "listing_id": None,
+                    "evidence_modality": "PRICING",
+                    "evidence_type": "MRP_INCONSISTENCY",
+                    "evidence_signal_name": "SELLING_EXCEEDS_DECLARED_MRP_SIGNAL",
+                    "signal_value": f"Selling exceeds MRP (disc: {disc_pct}%)",
+                    "signal_severity": "HIGH",
+                    "detection_method": "MRP_CONSISTENCY_AUDIT",
+                    "confidence": 1.0,
+                    "modality_available": True,
+                    "provenance": "PRICING_INTELLIGENCE_CORRIDOR",
+                    "timestamp": now_ts,
+                })
+
+            # Extreme discount anomaly
+            if is_disc_anomaly:
+                records.append({
+                    "evidence_id": f"ev_price_disc_{pid}",
+                    "entity_id": pid,
+                    "canonical_product_id": pid,
+                    "listing_id": None,
+                    "evidence_modality": "PRICING",
+                    "evidence_type": "PRICE_DISCOUNT_ANOMALY",
+                    "evidence_signal_name": "EXTREME_DISCOUNT_OUTLIER_SIGNAL",
+                    "signal_value": f"Discount: {disc_pct}% >= 90%",
+                    "signal_severity": "HIGH",
+                    "detection_method": "DISCOUNT_CORRIDOR_AUDIT",
+                    "confidence": 0.95,
+                    "modality_available": True,
+                    "provenance": "PRICING_INTELLIGENCE_CORRIDOR",
+                    "timestamp": now_ts,
+                })
+
+            # Price corridor outlier
             if is_outlier:
                 records.append({
                     "evidence_id": f"ev_price_out_{pid}",
@@ -216,12 +259,12 @@ class MultimodalEvidenceFusionEngine:
                     "canonical_product_id": pid,
                     "listing_id": None,
                     "evidence_modality": "PRICING",
-                    "evidence_type": "PRICE_OUTLIER",
-                    "evidence_signal_name": "PRICE_ANOMALY_SIGNAL",
+                    "evidence_type": "PRICE_CORRIDOR_OUTLIER",
+                    "evidence_signal_name": "PRICE_ROBUST_ZSCORE_ANOMALY" if is_extreme else "PRICE_ANOMALY_SIGNAL",
                     "signal_value": str(round(robust_z, 2)) if pd.notna(robust_z) else "OUTLIER",
-                    "signal_severity": "MEDIUM",
+                    "signal_severity": "HIGH" if is_extreme else "MEDIUM",
                     "detection_method": "ROBUST_Z_SCORE_CORRIDOR",
-                    "confidence": 0.88,
+                    "confidence": 0.92 if is_extreme else 0.85,
                     "modality_available": True,
                     "provenance": "PRICING_INTELLIGENCE_CORRIDOR",
                     "timestamp": now_ts,
@@ -274,6 +317,14 @@ class MultimodalEvidenceFusionEngine:
         # Precompute pricing metrics
         pricing_map = self.pricing_features_df.set_index("canonical_product_id").to_dict(orient="index")
 
+        # Precompute seller mapping from listings
+        listing_seller_map = {}
+        listing_seller_status_map = {}
+        if "seller_id" in self.listings_df.columns:
+            for pid, grp in self.listings_df.groupby("canonical_product_id"):
+                listing_seller_map[pid] = grp["seller_id"].iloc[0]
+                listing_seller_status_map[pid] = grp.get("seller_resolution_status", pd.Series(["UNRESOLVED_PLATFORM_AGGREGATE"])).iloc[0]
+
         summary_records: List[Dict[str, Any]] = []
 
         for idx, row in prods.iterrows():
@@ -286,7 +337,7 @@ class MultimodalEvidenceFusionEngine:
             i_count = img_counts.get(pid, 0)
 
             p_info = pricing_map.get(pid, {})
-            p_obs_count = p_info.get("observation_count", 1)
+            p_obs_count = p_info.get("historical_observations_count", p_info.get("observation_count", 1))
             is_price_outlier = bool(p_info.get("is_price_outlier", False))
 
             # Missing Modality Status
@@ -328,10 +379,30 @@ class MultimodalEvidenceFusionEngine:
                 has_img_risk = False
                 img_risk_signal = "NOT_EVALUATED_MODALITY_UNAVAILABLE"
 
-            # Pricing signals
+            # Pricing signals (only evaluated if modality is AVAILABLE)
+            sp_val = p_info.get("observed_price_inr", None)
+            mrp_val = p_info.get("mrp_inr", None)
+            disc_val = p_info.get("discount_percentage", 0.0)
+            corridor_src = p_info.get("corridor_source", "SUBCATEGORY_BENCHMARK_CORRIDOR")
+            rob_z = p_info.get("robust_z_score", p_info.get("price_robust_zscore", 0.0))
+            c_low = p_info.get("corridor_lower_inr", None)
+            c_high = p_info.get("corridor_upper_inr", None)
+            is_ext_out = bool(p_info.get("is_extreme_price_outlier", False))
+            is_disc_anom = bool(p_info.get("is_discount_anomaly", False))
+            sell_exceeds = bool(p_info.get("selling_exceeds_mrp", False))
+
             if modality_status["price_modality_status"] == "AVAILABLE":
-                has_price_risk = is_price_outlier
-                price_risk_signal = "PRICE_CORRIDOR_ANOMALY" if is_price_outlier else "WITHIN_EXPECTED_CORRIDOR"
+                has_price_risk = is_price_outlier or sell_exceeds or is_disc_anom
+                if sell_exceeds:
+                    price_risk_signal = "SELLING_EXCEEDS_DECLARED_MRP_SIGNAL"
+                elif is_disc_anom:
+                    price_risk_signal = "EXTREME_DISCOUNT_OUTLIER_SIGNAL"
+                elif is_ext_out:
+                    price_risk_signal = "EXTREME_PRICE_CORRIDOR_OUTLIER"
+                elif is_price_outlier:
+                    price_risk_signal = "MODERATE_PRICE_CORRIDOR_OUTLIER"
+                else:
+                    price_risk_signal = "WITHIN_EXPECTED_CORRIDOR"
             else:
                 has_price_risk = False
                 price_risk_signal = "NOT_EVALUATED_MODALITY_UNAVAILABLE"
@@ -380,14 +451,27 @@ class MultimodalEvidenceFusionEngine:
                 "cross_product_reuse_image_count": reuse_count,
                 "exact_duplicate_image_count": exact_dup_count,
                 "image_risk_signal": img_risk_signal,
-                # Pricing Signals
+                # Pricing Signals & Corridors
                 "price_observation_count": p_obs_count,
+                "observed_price_inr": sp_val,
+                "mrp_inr": mrp_val,
+                "discount_percentage": disc_val,
+                "corridor_source": corridor_src,
+                "price_robust_zscore": rob_z,
+                "corridor_lower_inr": c_low,
+                "corridor_upper_inr": c_high,
                 "is_price_outlier": is_price_outlier,
+                "is_extreme_price_outlier": is_ext_out,
+                "is_discount_anomaly": is_disc_anom,
+                "selling_exceeds_mrp": sell_exceeds,
                 "price_risk_signal": price_risk_signal,
+                # Seller Governance Linkage
+                "seller_id": listing_seller_map.get(pid, "SELLER_UNRESOLVED_THIRD_PARTY"),
+                "seller_resolution_status": listing_seller_status_map.get(pid, "UNRESOLVED_PLATFORM_AGGREGATE"),
                 # Explainable Assessment
                 "active_risk_flag_count": active_risk_flags,
                 "provisional_risk_tier": risk_tier,
-                "assessment_framework": "EXPLAINABLE_MULTIMODAL_EVIDENCE_V1_5",
+                "assessment_framework": "EXPLAINABLE_MULTIMODAL_EVIDENCE_V1_6",
             }
             summary_records.append(rec)
 
