@@ -37,7 +37,7 @@ class UnifiedEvidenceEngine:
 
     def __init__(self, dataset_dir: Optional[Path] = None):
         self.project_root = Path(__file__).resolve().parents[2]
-        self.dataset_dir = dataset_dir or (self.project_root / "data" / "indian_marketplace_trust_dataset_v1_6")
+        self.dataset_dir = dataset_dir or (self.project_root / "data" / "indian_marketplace_trust_dataset_v1_7")
 
         logger.info(f"Initializing Unified Evidence Engine from: {self.dataset_dir}")
         self._load_tables()

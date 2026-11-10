@@ -1,8 +1,8 @@
 {
   "dataset_name": "Indian Marketplace Trust Dataset",
   "version": "v1.7",
-  "release_title": "Milestone 6: Final Multimodal Trust Intelligence Engine Release",
-  "release_date": "2026-11-10T12:45:50.448498+00:00",
+  "release_title": "Milestone 7: Multimodal Scientific Strengthening and Finalisation Release",
+  "release_date": "2026-11-10T14:52:15.382817+00:00",
   "architecture_milestones": [
     "Milestone 1 \u2014 Independent Baseline Audit & Remediation Framework",
     "Milestone 2 \u2014 Product, Brand, Seller and Variant Finalization",
@@ -11,7 +11,7 @@
     "Milestone 5 \u2014 Advanced Pricing & Seller Intelligence",
     "Milestone 6 \u2014 Final Multimodal Trust Intelligence Engine"
   ],
-  "total_files": 152,
+  "total_files": 170,
   "files": {
     "annotations/annotation_guidelines.md": {
       "sha256": "a67f2685a7aa9a726cfa02d087727c0341beeb27aeaea2361f5581fc58b5b92d",
@@ -42,20 +42,20 @@
       "size_bytes": 22171
     },
     "benchmarks/benchmark_manifest.json": {
-      "sha256": "850ff6929eadc638ba24965c2a96537f43088bc07bec56c546d9963ad8cd2b1f",
-      "size_bytes": 433
+      "sha256": "a6c32fbb74732068dd708fff70dac1ed89572f3adebed9f32c162c13999320b3",
+      "size_bytes": 597
     },
     "benchmarks/test_split.parquet": {
-      "sha256": "2175f9f62e2c2b7ddd843acbfbd0dc4c9560ec94a5050cde15688977451aabed",
-      "size_bytes": 208282
+      "sha256": "1eb5514b0ea2120de6dfd3b0c1b81eb709a07e10bf9f315f2783fd0d2f386b53",
+      "size_bytes": 220250
     },
     "benchmarks/train_split.parquet": {
-      "sha256": "674a43abb07af0cba3aa8ce8b6ed10f3dfea640610c1ad68e62250b8ed97dd73",
-      "size_bytes": 825298
+      "sha256": "e06daa2ccb97e78850296028369d5b1de58b96e7ae44c9a4351d56f04f58f191",
+      "size_bytes": 797378
     },
     "benchmarks/validation_split.parquet": {
-      "sha256": "d0fddffae6ec058dbace6c8c046b4820a39531be098d545f1a5a98df4a655ae8",
-      "size_bytes": 218002
+      "sha256": "05d42f508ac04e1b558687e4a029a154a2615a0a883d56b8af770331f8514196",
+      "size_bytes": 218183
     },
     "derived_evidence/image_clusters.parquet": {
       "sha256": "cb950e5aa1f80a351b3d8a114eedba4c9332fc660608c25bb9452f27a321cb04",
@@ -70,8 +70,8 @@
       "size_bytes": 100504
     },
     "derived_evidence/image_text_consistency.parquet": {
-      "sha256": "f44f0001e4dba83db2b63a313e5d3dda79e61cfe4daf6dfd977daa21f3b66b75",
-      "size_bytes": 7501
+      "sha256": "31f60cfb9fb2816643859731edff86dd514f6534c493b66e26861a66d7e20688",
+      "size_bytes": 20082
     },
     "derived_evidence/multimodal_coverage_matrix.parquet": {
       "sha256": "ac1dfe57f0588be910fc6779ba085e50bdcb85a33dfd5d6ccc57bde06e1ee9c1",
@@ -162,8 +162,8 @@
       "size_bytes": 1377769
     },
     "evidence/ocr_evidence.parquet": {
-      "sha256": "ec28ace9456b80e764c3b2d13192410c01c80a0482770901f9620e6e2e12036c",
-      "size_bytes": 14435
+      "sha256": "16b114811f2ca359479c39041ef7542c224f935b806792b1bf895080fa6aadae",
+      "size_bytes": 35418
     },
     "evidence/price_observations.parquet": {
       "sha256": "450ccd5038d421d580074e59840029df454f4ca0721951f9711f7933b667c583",
@@ -305,6 +305,14 @@
       "sha256": "476d880927f39f1ddd56e67acb32d5ff7daa2794ef874e1e3fb7e9587eba049a",
       "size_bytes": 1129
     },
+    "reports/dataset_readiness_metrics.json": {
+      "sha256": "f8e467e6b501e0db33aaa551ad4cd126b30cacfcfac74de44b97da6db91a77ee",
+      "size_bytes": 4837
+    },
+    "reports/dataset_readiness_report.md": {
+      "sha256": "a76c1ca459e7ba0d2ee726f8354ee140c4767adce78f5ecc3d755907a6194d7c",
+      "size_bytes": 5376
+    },
     "reports/dataset_source_provenance_report.md": {
       "sha256": "539aaf40a2b8bf6283d30c687c2f3d2f1b1d542e9861a204eff2d12c8086a63c",
       "size_bytes": 6637
@@ -329,6 +337,10 @@
       "sha256": "e6345ef2c4a69e713dcb74e241b731b15963a30b0cf907901d0e2d925fd2984d",
       "size_bytes": 8128
     },
+    "reports/deployment_readiness_report.md": {
+      "sha256": "d421655f88c34d44166fd6be542f87f0b32493441d91f935fae5677294b2f7c2",
+      "size_bytes": 3686
+    },
     "reports/evaluation_split_manifests_report.md": {
       "sha256": "d07ea72653c306c83370d7a907066c7e88307fc2e7a231bb819ccc2ab5faa298",
       "size_bytes": 2570
@@ -344,6 +356,10 @@
     "reports/external_dependencies_and_blocked_tasks_v1.8.md": {
       "sha256": "dce1568c237af07ceb9e83e96b182e49e6fc2a9b978ee3621996c8e6c15cc2b5",
       "size_bytes": 3478
+    },
+    "reports/false_alarm_validation_results.json": {
+      "sha256": "45410f5c6f4e2f213a08ff23da7e676173222f33dcc37c7a9aa70b4aaafe0c60",
+      "size_bytes": 2480
     },
     "reports/final_certification_report.md": {
       "sha256": "a6008f5fc80aa403fcd654f2620682279533a5d75da2e32ad4af14535d2702fa",
@@ -457,9 +473,21 @@
       "sha256": "e9e6781ccad5c3b7d5a217df126f49d4b7f4c1f29aef6e42155037649a1b54e6",
       "size_bytes": 1876
     },
+    "reports/label_audit_results.json": {
+      "sha256": "069c4f23086fce9c9309f693793e669805ce9d9524b7835359e13fa4b5f947bb",
+      "size_bytes": 3848
+    },
+    "reports/label_provenance_and_quality_report.md": {
+      "sha256": "d7dcb7d319abeb130f75567ac838b3daa031fa662c446c31b08a78a819d0431e",
+      "size_bytes": 4371
+    },
     "reports/leakage_audit_report.md": {
       "sha256": "dc6e3f7311027be51deb8a9b4fc9f09c40207b3268f7537f547f0a0c68605ed0",
       "size_bytes": 2570
+    },
+    "reports/leakage_validation_report.md": {
+      "sha256": "c5cc4c537863985be098177a84799089e7982f0c57c2f989358df3b13c4bdaac",
+      "size_bytes": 3085
     },
     "reports/marketplace_category_coverage.md": {
       "sha256": "1c280b0d41b465f1b9c012948f0257cb6f686a35fc91c96fd3c17f4794f640fd",
@@ -481,6 +509,10 @@
       "sha256": "0589f4573e8027cb8069614c13eabc0783f9663adabfeb6865c7a0a528d10add",
       "size_bytes": 7704
     },
+    "reports/model_benchmark_report.md": {
+      "sha256": "d76072d720792ba27b6bd8aa94bc3219d4b72f94a6ae1a4d257b369d89527c8c",
+      "size_bytes": 2582
+    },
     "reports/model_readiness_report.md": {
       "sha256": "0431bba6c2f42a0b86d695d7e66f187449645b284aa7159ebc74eb8b5976102b",
       "size_bytes": 4976
@@ -500,6 +532,14 @@
     "reports/multimodal_evidence_schema.md": {
       "sha256": "53c1185e604fcfff914b5bafbac173709f6029b80480ba381818b09121b4223f",
       "size_bytes": 5848
+    },
+    "reports/multimodal_fusion_methodology.md": {
+      "sha256": "998d112d1db6b055163e5d39bd848ba5ba42e809933266cd9f55145ddc00ebd5",
+      "size_bytes": 2477
+    },
+    "reports/multimodal_model_evaluation.json": {
+      "sha256": "ee400fa67266bc94b94b15db418aaf6b1d46d17e611902898ac829724da9c40f",
+      "size_bytes": 4392
     },
     "reports/nlp_audit_report.md": {
       "sha256": "88631b6f1b9504e73a9a4733267ae7c09371e158938207a65092967e51c3fd49",
@@ -528,6 +568,10 @@
     "reports/phase3_validation_report.md": {
       "sha256": "c43d541d504f3d31faf499e2bc95a212a3df638b4d95e9f78987735b3de97383",
       "size_bytes": 7467
+    },
+    "reports/prediction_target_specification.md": {
+      "sha256": "016c3f9a52fd3a3541015250eb0c07fb44675abcf5c5f4d9a1dbeb77d26d9ff3",
+      "size_bytes": 4706
     },
     "reports/price_and_temporal_evidence_report.md": {
       "sha256": "d218b9e76d6c917fc8e639e0f4c303abb4d119e6792e62de84403df9f7d8bd5b",
@@ -568,6 +612,10 @@
     "reports/schema_documentation_v1.8.md": {
       "sha256": "28ec7642e531056fa7bdfab770c44e445b07d1b72178d919889058494840c0ee",
       "size_bytes": 4846
+    },
+    "reports/scientific_evaluation_report.md": {
+      "sha256": "5013fc13db47b051c112d80cf33b0712db9e8e8cd137446a0975c72f61b3010d",
+      "size_bytes": 3983
     },
     "reports/seller_identity_audit.md": {
       "sha256": "4496ed53afea0b816fd3055e3df5d78dc07a32faec699a62f1d640d50f3a83af",
@@ -620,6 +668,30 @@
     "reports/variant_hierarchy_audit.md": {
       "sha256": "5e925b9458f0284e37561374eacb9281e8e91f4ae869373f96bad30e3c98fbbb",
       "size_bytes": 1304
+    },
+    "reports/workstream1_label_quality_report.md": {
+      "sha256": "12e5a706bd8c8d9de72e86f9b95a0c30a4a8d33df136f1f8eb9e75b82f25d512",
+      "size_bytes": 8015
+    },
+    "reports/workstream2_false_alarm_validation.md": {
+      "sha256": "942727017fd5d489d324718c95fb2cef28948ef0bbb1eb871491dc87e1dcbc24",
+      "size_bytes": 5968
+    },
+    "reports/workstream3_ocr_integration_report.md": {
+      "sha256": "0da19b236f646fe44be9efea1ea793ae802d1ec5e528e911fab12527ae6a1c33",
+      "size_bytes": 5947
+    },
+    "reports/workstream4_clip_integration_report.md": {
+      "sha256": "83131601fd074c39973f29c8b9d1e55eaadfedef4463713c2a17ae8a045c94c3",
+      "size_bytes": 5483
+    },
+    "reports/workstream5_dataset_readiness_report.md": {
+      "sha256": "78f97654205c97192bdebe21244a0415156674b66b3178dafb5c2a963356a62c",
+      "size_bytes": 8800
+    },
+    "reports/workstream6_multimodal_model_report.md": {
+      "sha256": "98d04eff29f2cdb04bdba8120ec1d20c0a302183b099bb37ee34559a353efc09",
+      "size_bytes": 7627
     }
   },
   "specifications": {

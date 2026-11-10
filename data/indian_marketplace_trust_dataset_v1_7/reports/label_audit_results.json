@@ -1,0 +1,187 @@
+{
+  "provenance_breakdown": {
+    "gold_tier_2_provisional": {
+      "count": 100,
+      "genuine": 83,
+      "suspicious": 17,
+      "positive_rate": 0.17
+    },
+    "silver_tier_3_heuristic": {
+      "count": 600,
+      "genuine": 368,
+      "suspicious": 232,
+      "positive_rate": 0.3867
+    },
+    "pending_annotation_queue": {
+      "total_records": 500,
+      "status": {
+        "PENDING_HUMAN_EVALUATION": 500
+      },
+      "marketplaces": {
+        "flipkart": 477,
+        "amazon_in": 23
+      },
+      "rating_distribution": {
+        "5.0": 288,
+        "4.0": 100,
+        "1.0": 60,
+        "3.0": 35,
+        "2.0": 17
+      },
+      "text_character_stats": {
+        "mean": 67.1,
+        "min": 2,
+        "max": 620
+      }
+    }
+  },
+  "regime_A_silver_train_gold_test": {
+    "description": "Trained solely on 600 Silver heuristic records; evaluated purely on 100 Gold human annotations.",
+    "majority_baseline": {
+      "accuracy": 0.83,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1_score": 0.0,
+      "pr_auc": 0.17,
+      "roc_auc": 0.5,
+      "confusion_matrix": [
+        [
+          83,
+          0
+        ],
+        [
+          17,
+          0
+        ]
+      ],
+      "support": 100,
+      "positives": 17
+    },
+    "logistic_regression": {
+      "accuracy": 0.53,
+      "precision": 0.0312,
+      "recall": 0.0588,
+      "f1_score": 0.0408,
+      "pr_auc": 0.1219,
+      "roc_auc": 0.2977,
+      "confusion_matrix": [
+        [
+          52,
+          31
+        ],
+        [
+          16,
+          1
+        ]
+      ],
+      "support": 100,
+      "positives": 17
+    },
+    "random_forest": {
+      "accuracy": 0.54,
+      "precision": 0.0857,
+      "recall": 0.1765,
+      "f1_score": 0.1154,
+      "pr_auc": 0.1439,
+      "roc_auc": 0.3625,
+      "confusion_matrix": [
+        [
+          51,
+          32
+        ],
+        [
+          14,
+          3
+        ]
+      ],
+      "support": 100,
+      "positives": 17
+    }
+  },
+  "regime_B_gold_only_5fold_cv": {
+    "description": "5-Fold Stratified Cross-Validation strictly on 100 Gold human annotations.",
+    "logistic_regression": {
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "pr_auc": 1.0,
+      "roc_auc": 1.0,
+      "confusion_matrix": [
+        [
+          83,
+          0
+        ],
+        [
+          0,
+          17
+        ]
+      ],
+      "support": 100,
+      "positives": 17
+    },
+    "random_forest": {
+      "accuracy": 0.99,
+      "precision": 1.0,
+      "recall": 0.9412,
+      "f1_score": 0.9697,
+      "pr_auc": 0.9967,
+      "roc_auc": 0.9993,
+      "confusion_matrix": [
+        [
+          83,
+          0
+        ],
+        [
+          1,
+          16
+        ]
+      ],
+      "support": 100,
+      "positives": 17
+    }
+  },
+  "regime_C_silver_plus_gold_train_gold_test": {
+    "description": "Trained on 600 Silver + 70 Gold records; evaluated on held-out 30 Gold records.",
+    "logistic_regression": {
+      "accuracy": 0.6,
+      "precision": 0.1111,
+      "recall": 0.2,
+      "f1_score": 0.1429,
+      "pr_auc": 0.164,
+      "roc_auc": 0.432,
+      "confusion_matrix": [
+        [
+          17,
+          8
+        ],
+        [
+          4,
+          1
+        ]
+      ],
+      "support": 30,
+      "positives": 5
+    },
+    "random_forest": {
+      "accuracy": 0.5,
+      "precision": 0.0833,
+      "recall": 0.2,
+      "f1_score": 0.1176,
+      "pr_auc": 0.1876,
+      "roc_auc": 0.488,
+      "confusion_matrix": [
+        [
+          14,
+          11
+        ],
+        [
+          4,
+          1
+        ]
+      ],
+      "support": 30,
+      "positives": 5
+    }
+  }
+}

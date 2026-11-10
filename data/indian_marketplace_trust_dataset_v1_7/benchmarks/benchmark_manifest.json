@@ -1,12 +1,17 @@
 {
-  "benchmark_name": "Indian_Marketplace_Multimodal_Trust_Benchmark_v1_4",
-  "split_policy": "CONNECTED_COMPONENTS_DUAL_GROUPING_WITH_VARIANTS",
-  "product_leakage_overlap": 0,
-  "variant_leakage_overlap": 0,
-  "review_text_cluster_leakage_overlap": 0,
+  "benchmark_name": "Indian_Marketplace_Multimodal_Trust_Benchmark_v1_7_Certified",
+  "split_policy": "CONNECTED_COMPONENTS_MULTIMODAL_DECONTAMINATED",
+  "grouping_criteria": [
+    "parent_child_variant_hierarchy",
+    "exact_review_duplicate_clusters",
+    "exact_image_sha256_duplicates",
+    "perceptual_image_dhash_duplicates",
+    "resnet18_visual_similarity_gte_0_95"
+  ],
   "train_products": 2550,
   "validation_products": 546,
   "test_products": 547,
   "total_benchmark_products": 3643,
-  "created_at": "2026-11-06T04:03:06.126189+00:00"
+  "product_leakage_overlap": 0,
+  "created_at": "2026-11-10T13:13:48.620601+00:00"
 }
