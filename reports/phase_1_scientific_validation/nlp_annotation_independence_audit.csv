@@ -1,0 +1,13 @@
+metric,value
+Total Gold Annotations,100
+Verified Genuine Reviews,83
+Suspicious Reviews,16
+Verified Deceptive Reviews,1
+Genuine Rating Range,"[3.0, 5.0]"
+Suspicious/Deceptive Rating Range,"[1.0, 2.0]"
+Genuine Reviews with Rating <= 2,0
+Suspicious/Deceptive Reviews with Rating >= 3,0
+Suspicious Reviews with is_negative_sentiment_only=True,16
+Genuine Reviews with is_negative_sentiment_only=True,0
+Unique Annotator Count,1
+Inter-Annotator Cohen's Kappa,"None (NaN, single annotator)"

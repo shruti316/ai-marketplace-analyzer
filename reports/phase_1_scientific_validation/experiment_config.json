@@ -1,0 +1,39 @@
+{
+  "phase": "Phase 1 - Scientific Validation, Target Leakage Audit & NLP Evaluation Correction",
+  "timestamp": 1794323543.8708842,
+  "python_version": "3.11.9 (tags/v3.11.9:de54cf5, Apr  2 2024, 10:12:12) [MSC v.1938 64 bit (AMD64)]",
+  "random_seeds": {
+    "split_seed": 42,
+    "model_seed": 42
+  },
+  "dataset_baseline": {
+    "version": "v1.7",
+    "path": "C:\\Users\\shruti\\Desktop\\project\\ai-based-marketplace-analyzer\\data\\indian_marketplace_trust_dataset_v1_7",
+    "canonical_products": 3643,
+    "connected_components": 3397,
+    "gold_reviews": 100,
+    "silver_reviews": 600,
+    "pending_annotation_queue": 500
+  },
+  "multimodal_audit": {
+    "target": "is_elevated_risk (overall_risk_tier == 'ELEVATED_MULTIMODAL_ANOMALY')",
+    "target_nature": "PROXY_RULE_DERIVED_TIER",
+    "cross_validation_strategy": "StratifiedGroupKFold(n_splits=5, groups=connected_components)",
+    "leaked_features_removed": [
+      "is_price_outlier",
+      "is_extreme_price_outlier",
+      "is_discount_anomaly",
+      "cv_has_cross_catalog_reuse"
+    ],
+    "ensemble_purged_components": [
+      "active_anomaly_modality_count / 3.0"
+    ],
+    "clean_feature_count": 19
+  },
+  "nlp_audit": {
+    "leakage_root_cause": "Deterministic star rating separation (genuine >= 3.0, suspicious <= 2.0)",
+    "cross_validation_strategy": "StratifiedGroupKFold(n_splits=5, groups=canonical_product_id)",
+    "feature_engineering": "Pure text TF-IDF (300 features, fold-local fit) without rating or discordance",
+    "single_deceptive_sample_status": "UNESTIMABLE_SAMPLE_SIZE_ONE (N=1 deceptive sample merged into binary class)"
+  }
+}

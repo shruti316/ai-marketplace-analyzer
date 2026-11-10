@@ -1,0 +1,25 @@
+feature,raw_source,target_dependency,leakage_risk,decision
+price_inr,price_observations.parquet,None (Raw observation),SAFE,RETAIN
+discount_percentage,price_observations.parquet,None (Continuous ratio),SAFE,RETAIN
+robust_z_score,pricing_features.parquet,Corridor distance (Continuous),SAFE,RETAIN
+is_price_outlier,pricing_features.parquet,Direct input to has_price_risk and active_anomaly_modality_count,DIRECT_LEAKAGE,EXCLUDE_FROM_CLEAN_MODEL
+is_extreme_price_outlier,pricing_features.parquet,Direct input to has_price_risk,DIRECT_LEAKAGE,EXCLUDE_FROM_CLEAN_MODEL
+is_discount_anomaly,pricing_features.parquet,Direct input to has_price_risk,DIRECT_LEAKAGE,EXCLUDE_FROM_CLEAN_MODEL
+has_reviews,reviews.parquet,Modality availability condition,SAFE,RETAIN
+review_count,reviews.parquet,Continuous count,SAFE,RETAIN
+nlp_mean_rating,reviews.parquet,Continuous rating,SAFE,RETAIN
+nlp_mean_sentiment,review_nlp_features.parquet,Continuous sentiment polarity,SAFE,RETAIN
+nlp_max_discordance,review_nlp_features.parquet,Threshold > 0.5 triggers has_rev_risk,REQUIRES_INVESTIGATION,RETAIN_AS_CONTINUOUS_ONLY
+nlp_has_duplicate,review_nlp_features.parquet,Duplicate count >= 3 triggers has_rev_risk,REQUIRES_INVESTIGATION,RETAIN_AS_RAW_INDICATOR
+has_images,images.parquet,Modality availability condition,SAFE,RETAIN
+image_count,images.parquet,Continuous image observation count,SAFE,RETAIN
+cv_has_duplicate_hash,image_intelligence_features.parquet,Perceptual dHash collision,SAFE,RETAIN
+cv_has_cross_catalog_reuse,image_similarity_pairs.parquet,Direct input to has_img_risk (reuse_count > 0),DIRECT_LEAKAGE,EXCLUDE_FROM_CLEAN_MODEL
+ocr_observed,ocr_evidence.parquet,Packaging OCR observation status,SAFE,RETAIN
+ocr_word_count,ocr_evidence.parquet,Text density count,SAFE,RETAIN
+ocr_brand_verified,ocr_evidence.parquet,Deterministic packaging brand match,SAFE,RETAIN
+clip_observed,image_text_consistency.parquet,Vision-language evaluation status,SAFE,RETAIN
+clip_cosine_similarity,image_text_consistency.parquet,Continuous cosine similarity,SAFE,RETAIN
+clip_is_discordant,image_text_consistency.parquet,Threshold similarity < 0.16,SAFE,RETAIN
+graph_degree,graph_edges.parquet,Entity relational connectivity,SAFE,RETAIN
+heur_prob_all (in late ensemble),active_anomaly_modality_count,Exact linear scaling of active_anomaly_modality_count / 3.0,POST_OUTCOME_INFORMATION,STRICTLY_PURGE_FROM_ENSEMBLE

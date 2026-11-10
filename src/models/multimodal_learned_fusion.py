@@ -228,6 +228,36 @@ class MultimodalLearnedFusion:
         "graph_degree",
     ]
 
+    # Clean non-circular features (purged of circular anomaly flags: is_price_outlier, cv_has_cross_catalog_reuse, etc.)
+    FEATURE_COLS_CLEAN = [
+        "price_inr",
+        "discount_percentage",
+        "robust_z_score",
+        "has_reviews",
+        "review_count",
+        "nlp_mean_rating",
+        "nlp_mean_sentiment",
+        "nlp_max_discordance",
+        "nlp_has_duplicate",
+        "has_images",
+        "image_count",
+        "cv_has_duplicate_hash",
+        "ocr_observed",
+        "ocr_word_count",
+        "ocr_brand_verified",
+        "clip_observed",
+        "clip_cosine_similarity",
+        "clip_is_discordant",
+        "graph_degree",
+    ]
+
+    LEAKED_CIRCULAR_COLS = [
+        "is_price_outlier",
+        "is_extreme_price_outlier",
+        "is_discount_anomaly",
+        "cv_has_cross_catalog_reuse",
+    ]
+
     def __init__(self, dataset_dir: Path = DATASET_DIR):
         self.dataset_dir = Path(dataset_dir)
         self.extractor = MultimodalFeatureExtractor(dataset_dir)

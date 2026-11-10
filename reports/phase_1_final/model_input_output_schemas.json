@@ -1,0 +1,113 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ModelInputOutputSchemas",
+  "description": "Standardized input and output schemas for all trust intelligence models.",
+  "definitions": {
+    "MultimodalProductFeatureVector_19D": {
+      "type": "array",
+      "items": { "type": "number" },
+      "minItems": 19,
+      "maxItems": 19,
+      "description": "19 clean non-circular tabular features extracted by MultimodalFeatureExtractor.",
+      "feature_order": [
+        "price_inr",
+        "discount_percentage",
+        "robust_z_score",
+        "has_reviews",
+        "review_count",
+        "nlp_mean_rating",
+        "nlp_mean_sentiment",
+        "nlp_max_discordance",
+        "nlp_has_duplicate",
+        "has_images",
+        "image_count",
+        "cv_has_duplicate_hash",
+        "ocr_observed",
+        "ocr_word_count",
+        "ocr_brand_verified",
+        "clip_observed",
+        "clip_cosine_similarity",
+        "clip_is_discordant",
+        "graph_degree"
+      ]
+    },
+    "MultimodalRiskProbabilityOutput": {
+      "type": "object",
+      "required": ["risk_probability", "predicted_class", "surrogate_tier", "model_role"],
+      "properties": {
+        "risk_probability": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "predicted_class": { "type": "integer", "enum": [0, 1] },
+        "surrogate_tier": { "type": "string", "enum": ["ELEVATED_RISK_SURROGATE", "BASELINE_RISK_SURROGATE"] },
+        "model_role": { "type": "string", "enum": ["CONTINUOUS_ANOMALY_RANKING_SURROGATE"] }
+      }
+    },
+    "ImageTextPairInput": {
+      "type": "object",
+      "required": ["image_path", "listing_title"],
+      "properties": {
+        "image_path": { "type": "string" },
+        "listing_title": { "type": "string", "minLength": 1 }
+      }
+    },
+    "CosineSimilarityOutput": {
+      "type": "object",
+      "required": ["cosine_similarity", "alignment_status", "is_discordant"],
+      "properties": {
+        "cosine_similarity": { "type": "number", "minimum": -1.0, "maximum": 1.0 },
+        "alignment_status": {
+          "type": "string",
+          "enum": ["HIGH_VISUAL_TEXT_ALIGNMENT", "MODERATE_ALIGNMENT", "DISCORDANT_ANOMALY"]
+        },
+        "is_discordant": { "type": "boolean" }
+      }
+    },
+    "RawReviewTextInput": {
+      "type": "object",
+      "required": ["review_text"],
+      "properties": {
+        "review_text": { "type": "string", "minLength": 1 }
+      }
+    },
+    "BinaryDeceptionProbabilityOutput": {
+      "type": "object",
+      "required": ["deception_probability", "predicted_authenticity"],
+      "properties": {
+        "deception_probability": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "predicted_authenticity": { "type": "string", "enum": ["GENUINE", "SUSPICIOUS_OR_DECEPTIVE"] }
+      }
+    },
+    "DeterministicTrustAssessmentOutput": {
+      "type": "object",
+      "required": [
+        "canonical_product_id",
+        "overall_risk_tier",
+        "available_core_modalities_count",
+        "active_anomaly_modality_count",
+        "modality_breakdown",
+        "positive_evidence",
+        "negative_evidence",
+        "missing_modalities",
+        "recommendation_summary"
+      ],
+      "properties": {
+        "canonical_product_id": { "type": "string" },
+        "overall_risk_tier": {
+          "type": "string",
+          "enum": [
+            "CONSISTENT_VERIFIED_ALIGNMENT",
+            "MODERATE_SINGLE_MODALITY_ANOMALY",
+            "ELEVATED_MULTIMODAL_ANOMALY",
+            "UNASSESSED_SPARSE_DATA"
+          ]
+        },
+        "available_core_modalities_count": { "type": "integer", "minimum": 0, "maximum": 3 },
+        "active_anomaly_modality_count": { "type": "integer", "minimum": 0, "maximum": 5 },
+        "modality_breakdown": { "type": "object" },
+        "positive_evidence": { "type": "array", "items": { "type": "string" } },
+        "negative_evidence": { "type": "array", "items": { "type": "string" } },
+        "missing_modalities": { "type": "array", "items": { "type": "string" } },
+        "recommendation_summary": { "type": "string" }
+      }
+    }
+  }
+}

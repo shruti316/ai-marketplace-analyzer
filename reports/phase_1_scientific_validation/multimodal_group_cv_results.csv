@@ -1,0 +1,8 @@
+model_name,feature_set,cv_split_type,accuracy,balanced_accuracy,precision,recall,f1_score,macro_f1,weighted_f1,pr_auc,roc_auc,support,positives,negatives
+Majority Baseline,None,StratifiedGroupKFold (Component-Aware),0.9577,0.5,0.0,0.0,0.0,0.4892,0.937,0.0423,0.5,3643,154,3489
+Deterministic Rule Engine (Baseline),Heuristic Modality Anomaly Flags,StratifiedGroupKFold (Component-Aware),0.9997,0.9999,0.9935,1.0,0.9968,0.9983,0.9997,0.994,0.9999,3643,154,3489
+Early Fusion Logistic Regression (Leaked),All 23 Features (With Circular Anomaly Flags),StratifiedGroupKFold (Component-Aware),0.8062,0.8678,0.1714,0.9351,0.2897,0.5888,0.8625,0.159,0.8735,3643,154,3489
+Early Fusion Random Forest (Leaked),All 23 Features (With Circular Anomaly Flags),StratifiedGroupKFold (Component-Aware),0.955,0.6258,0.4457,0.2662,0.3333,0.655,0.9495,0.3747,0.9282,3643,154,3489
+Early Fusion Logistic Regression (Clean),"Clean 19 Features (Raw Observations Only, No Leaked Flags)",StratifiedGroupKFold (Component-Aware),0.8166,0.7025,0.1286,0.5779,0.2104,0.5533,0.8673,0.1279,0.7454,3643,154,3489
+Early Fusion Random Forest (Clean),"Clean 19 Features (Raw Observations Only, No Leaked Flags)",StratifiedGroupKFold (Component-Aware),0.941,0.5533,0.198,0.1299,0.1569,0.5631,0.9351,0.1707,0.7512,3643,154,3489
+Late Fusion Ensemble (Clean Purged),Clean LR (0.4) + Clean RF (0.6) [Target Purged],StratifiedGroupKFold (Component-Aware),0.9256,0.5856,0.1803,0.2143,0.1958,0.5784,0.9287,0.2079,0.7596,3643,154,3489

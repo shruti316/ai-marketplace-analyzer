@@ -1,0 +1,72 @@
+{
+  "manifest_version": "2.0.0",
+  "generated_at": "2026-11-10T21:31:00+05:30",
+  "dataset_baseline": "Indian Marketplace Trust Dataset v1.7",
+  "artifacts": {
+    "multimodal_fusion_model.joblib": {
+      "file_path": "models/multimodal_fusion_model.joblib",
+      "model_architecture": "Early_Fusion_Random_Forest_with_Late_Ensemble",
+      "size_bytes": 2230895,
+      "sha256": "16d705185ab2c6cbf4a93bbd892cfd9ea707bcfa4503d5a97e5e79023863a21d",
+      "framework": "scikit-learn 1.4+",
+      "input_schema_ref": "MultimodalProductFeatureVector_19D",
+      "output_schema_ref": "MultimodalRiskProbabilityOutput",
+      "target_registry_id": "TARGET_DEPRECATED_ELEVATED_RISK_SURROGATE",
+      "operational_role": "CONTINUOUS_ANOMALY_RANKING_SURROGATE",
+      "verification_status": "CERTIFIED_SURROGATE_RANKER",
+      "limitations": "Trained to approximate rule elevation; not an independent legal fraud detector."
+    },
+    "hotel_review_baseline.joblib": {
+      "file_path": "models/hotel_review_baseline.joblib",
+      "model_architecture": "TFIDF_LogisticRegression_HotelDomainTransfer",
+      "size_bytes": 140612,
+      "sha256": "0a2ffac183657816b1b818d16a17dbb3d54acfe0b1f68a642dd4c083aa7b186a",
+      "framework": "scikit-learn 1.4+",
+      "input_schema_ref": "RawReviewTextInput",
+      "output_schema_ref": "BinaryDeceptionProbabilityOutput",
+      "target_registry_id": "TARGET_REVIEW_AUTHENTICITY",
+      "operational_role": "OUT_OF_DOMAIN_SYNTHETIC_BASELINE",
+      "verification_status": "HISTORICAL_TRANSFER_BASELINE",
+      "limitations": "Domain transfer from hospitality reviews; exhibits substantial vocabulary gap on Indian e-commerce."
+    },
+    "clip_vit_b32_vision_language": {
+      "file_path": "HuggingFace: openai/clip-vit-base-patch32",
+      "model_architecture": "CLIP ViT-B/32 Zero-Shot Multimodal Encoder",
+      "size_bytes": 605000000,
+      "sha256": "EXTERNAL_HF_PRETRAINED_CHECKPOINT",
+      "framework": "PyTorch / Transformers 5.22+",
+      "input_schema_ref": "ImageTextPairInput",
+      "output_schema_ref": "CosineSimilarityOutput",
+      "target_registry_id": "TARGET_IMAGE_LISTING_CONSISTENCY",
+      "operational_role": "ZERO_SHOT_TEXT_IMAGE_ALIGNMENT",
+      "verification_status": "BENCHMARKED_ON_100_CATALOG_PRODUCTS",
+      "limitations": "Zero-shot transfer; lower sensitivity on vernacular Indian brand terms."
+    },
+    "resnet18_visual_embeddings": {
+      "file_path": "PyTorch Hub: torchvision.models.resnet18",
+      "model_architecture": "Centered ResNet-18 Image Feature Extractor (512-D)",
+      "size_bytes": 46800000,
+      "sha256": "EXTERNAL_TORCHVISION_CHECKPOINT",
+      "framework": "PyTorch / Torchvision 0.16+",
+      "input_schema_ref": "NormalizedImageTensor_224x224",
+      "output_schema_ref": "NormalizedFeatureVector_512D",
+      "target_registry_id": "TARGET_IMAGE_RELATIONSHIP",
+      "operational_role": "VISUAL_DUPLICATE_RETRIEVAL",
+      "verification_status": "VALIDATED_COSINE_095_RETRIEVAL",
+      "limitations": "Detects visual similarity; cannot distinguish authorized manufacturer stock photos from unauthorized reuse."
+    },
+    "winrt_packaging_ocr": {
+      "file_path": "System Binary: Windows.Media.Ocr / winocr 0.0.15",
+      "model_architecture": "Native Windows WinRT Physical Optical Character Recognition",
+      "size_bytes": 0,
+      "sha256": "SYSTEM_NATIVE_DYNAMIC_LIBRARY",
+      "framework": "WinRT Native OCR API",
+      "input_schema_ref": "RawPackagingImageFile",
+      "output_schema_ref": "OCRTextAndBoundingBoxesOutput",
+      "target_registry_id": "TARGET_PRODUCT_LISTING_CONSISTENCY",
+      "operational_role": "PHYSICAL_PACKAGING_TEXT_EXTRACTION",
+      "verification_status": "VALIDATED_ON_100_PACKAGING_IMAGES",
+      "limitations": "Requires Latin typography; does not detect non-Latin scripts or low-contrast curved text."
+    }
+  }
+}

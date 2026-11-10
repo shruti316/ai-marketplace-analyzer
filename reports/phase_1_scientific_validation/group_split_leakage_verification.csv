@@ -1,0 +1,6 @@
+fold,train_products,test_products,train_components,test_components,component_leakage_count,product_leakage_count,review_duplicate_cluster_leakage,image_sha256_leakage,image_dhash_leakage,resnet_high_sim_pair_leakage,leakage_safe_certified
+1,2916,727,2792,605,0,0,0,0,0,0,True
+2,2911,732,2707,690,0,0,0,0,0,0,True
+3,2915,728,2699,698,0,0,0,0,0,0,True
+4,2915,728,2695,702,0,0,0,0,0,0,True
+5,2915,728,2695,702,0,0,0,0,0,0,True

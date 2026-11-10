@@ -1,0 +1,4 @@
+canonical_product_id,status_code,overall_risk_tier,available_core_modalities_count,active_anomaly_modality_count,zero_penalty_invariant_satisfied,engine_latency_ms,rest_dispatch_latency_ms
+amazon_in_B000CSH3YG,200,MODERATE_SINGLE_MODALITY_ANOMALY,3,1,True,10.15,14.38
+amazon_in_B000052YQN,200,LOW_OBSERVED_ANOMALY,2,0,True,0.52,1.75
+flipkart_BRAE4A6UCHSWTURJ,200,UNASSESSED_SPARSE_DATA,1,0,True,0.65,1.01

@@ -117,21 +117,36 @@ class ReviewDeceptionClassifier:
         logger.info(f"Loaded {len(labeled_df)} total labeled reviews. Class balance: {labeled_df['label'].value_counts().to_dict()}")
         return labeled_df
 
-    def extract_features(self, df: pd.DataFrame, is_train: bool = False) -> np.ndarray:
-        """Extracts combined TF-IDF and engineered tabular features."""
+    def extract_features(
+        self, df: pd.DataFrame, is_train: bool = False, include_rating: bool = True, text_only: bool = False
+    ) -> np.ndarray:
+        """Extracts text TF-IDF and engineered tabular features.
+
+        CRITICAL LEAKAGE GUARD: In provisional Gold reviews, `rating` perfectly separates
+        classes (all genuine >= 3.0, all suspicious <= 2.0). Set `include_rating=False`
+        or `text_only=True` to evaluate true NLP text generalization without star-rating leakage.
+        """
         texts = df["review_text"].fillna("").tolist()
         if is_train:
             text_vecs = self.vectorizer.fit_transform(texts).toarray()
         else:
             text_vecs = self.vectorizer.transform(texts).toarray()
 
-        numeric_cols = ["rating", "char_length", "sentiment_score", "rating_discordance_score", "is_exact_duplicate"]
+        if text_only:
+            return text_vecs
+
+        if include_rating:
+            numeric_cols = ["rating", "char_length", "sentiment_score", "rating_discordance_score", "is_exact_duplicate"]
+        else:
+            numeric_cols = ["char_length", "sentiment_score", "is_exact_duplicate"]
+
         for c in numeric_cols:
             if c not in df.columns:
                 df[c] = 0.0
-        num_vecs = df[numeric_cols].fillna(0.0).values
+        num_vecs = df[numeric_cols].fillna(0.0).to_numpy(dtype=float, copy=True)
         # Normalize char length
-        num_vecs[:, 1] = num_vecs[:, 1] / 500.0
+        len_idx = 1 if include_rating else 0
+        num_vecs[:, len_idx] = num_vecs[:, len_idx] / 500.0
 
         return np.hstack([text_vecs, num_vecs])
 
