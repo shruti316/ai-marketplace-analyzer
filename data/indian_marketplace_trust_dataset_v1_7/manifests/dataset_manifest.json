@@ -1,0 +1,646 @@
+{
+  "dataset_name": "Indian Marketplace Trust Dataset",
+  "version": "v1.7",
+  "release_title": "Milestone 6: Final Multimodal Trust Intelligence Engine Release",
+  "release_date": "2026-11-10T12:45:50.448498+00:00",
+  "architecture_milestones": [
+    "Milestone 1 \u2014 Independent Baseline Audit & Remediation Framework",
+    "Milestone 2 \u2014 Product, Brand, Seller and Variant Finalization",
+    "Milestone 3 \u2014 Review NLP, Duplicate Detection & Hinglish Normalization",
+    "Milestone 4 \u2014 Computer Vision, ResNet-18 Embeddings & Image Reuse Intelligence",
+    "Milestone 5 \u2014 Advanced Pricing & Seller Intelligence",
+    "Milestone 6 \u2014 Final Multimodal Trust Intelligence Engine"
+  ],
+  "total_files": 152,
+  "files": {
+    "annotations/annotation_guidelines.md": {
+      "sha256": "a67f2685a7aa9a726cfa02d087727c0341beeb27aeaea2361f5581fc58b5b92d",
+      "size_bytes": 1301
+    },
+    "annotations/annotation_task_queue_v1_5.json": {
+      "sha256": "84297c9f9d59ca6909a916c0ba8262ab48faffbda8c24667327a02f9029cb080",
+      "size_bytes": 748667
+    },
+    "annotations/human_annotation_pending_tasks.parquet": {
+      "sha256": "6f24085e3d9159f4f3beb26c6bf2ab11f8470daed47cfa627a766c15fa94a259",
+      "size_bytes": 37433
+    },
+    "annotations/image_annotations.parquet": {
+      "sha256": "4e54217828368a37aff977e8b3dca21b9a70db2a37e9863a4fae83808eb0ed76",
+      "size_bytes": 18158
+    },
+    "annotations/listing_annotations.parquet": {
+      "sha256": "6d94e31eecc9108ea78354e8a2c1d0a2b0b412b6e1be21768cbe197d67bde86c",
+      "size_bytes": 18321
+    },
+    "annotations/review_human_annotations.parquet": {
+      "sha256": "83b462dff2bd27b288a38c951019a00b31d3d43e58ebfaf862714dbe83c857b1",
+      "size_bytes": 27120
+    },
+    "annotations/review_silver_annotations.parquet": {
+      "sha256": "2938d11a5cbddfb9e6bbdfb7ce7f5b8a43968c09caf23549decc6fed71d4da5e",
+      "size_bytes": 22171
+    },
+    "benchmarks/benchmark_manifest.json": {
+      "sha256": "850ff6929eadc638ba24965c2a96537f43088bc07bec56c546d9963ad8cd2b1f",
+      "size_bytes": 433
+    },
+    "benchmarks/test_split.parquet": {
+      "sha256": "2175f9f62e2c2b7ddd843acbfbd0dc4c9560ec94a5050cde15688977451aabed",
+      "size_bytes": 208282
+    },
+    "benchmarks/train_split.parquet": {
+      "sha256": "674a43abb07af0cba3aa8ce8b6ed10f3dfea640610c1ad68e62250b8ed97dd73",
+      "size_bytes": 825298
+    },
+    "benchmarks/validation_split.parquet": {
+      "sha256": "d0fddffae6ec058dbace6c8c046b4820a39531be098d545f1a5a98df4a655ae8",
+      "size_bytes": 218002
+    },
+    "derived_evidence/image_clusters.parquet": {
+      "sha256": "cb950e5aa1f80a351b3d8a114eedba4c9332fc660608c25bb9452f27a321cb04",
+      "size_bytes": 25864
+    },
+    "derived_evidence/image_intelligence_features.parquet": {
+      "sha256": "47869772c5be8886c14bddf9103e977d5a4363f6662d8e1e4c245fe6333fc6d8",
+      "size_bytes": 614179
+    },
+    "derived_evidence/image_similarity_pairs.parquet": {
+      "sha256": "e32c1b8979e7be8e253d22db91dafce16abf823691b677576ccd09a1e8988ee9",
+      "size_bytes": 100504
+    },
+    "derived_evidence/image_text_consistency.parquet": {
+      "sha256": "f44f0001e4dba83db2b63a313e5d3dda79e61cfe4daf6dfd977daa21f3b66b75",
+      "size_bytes": 7501
+    },
+    "derived_evidence/multimodal_coverage_matrix.parquet": {
+      "sha256": "ac1dfe57f0588be910fc6779ba085e50bdcb85a33dfd5d6ccc57bde06e1ee9c1",
+      "size_bytes": 258643
+    },
+    "derived_evidence/multimodal_evidence_records.parquet": {
+      "sha256": "d16fc8ea25f45564bc00dac9944bc2678037394c52b1c92f2e1097f40918b5b9",
+      "size_bytes": 132221
+    },
+    "derived_evidence/pricing_brand_benchmarks.parquet": {
+      "sha256": "31101b17af85fe43a54d32d42bdd9ff79f0c11ab5fc0c4d1be25b64e168242dd",
+      "size_bytes": 65224
+    },
+    "derived_evidence/pricing_category_benchmarks.parquet": {
+      "sha256": "5e67bc1d54d4e7b5eed21ad598b62f6b3ae414faf5a16742e0c167a7b1775549",
+      "size_bytes": 24352
+    },
+    "derived_evidence/pricing_features.parquet": {
+      "sha256": "616cb9c483385a2fac81db3bad748922b21cd0299ecddf1b8cc29ab1728f71cb",
+      "size_bytes": 173187
+    },
+    "derived_evidence/pricing_marketplace_benchmarks.parquet": {
+      "sha256": "9b1d9d3aa104efa78c7988e3c8e51bd91d381ca1fa5ea3b27cdcbe221af5dade",
+      "size_bytes": 6361
+    },
+    "derived_evidence/product_multimodal_summary.parquet": {
+      "sha256": "11ebc6c50c6fff8d8ed51ece8d4c45b29f2877d76559385b8a0657d8cb7c8a63",
+      "size_bytes": 158435
+    },
+    "derived_evidence/review_features.parquet": {
+      "sha256": "9945693e2d8de515a9b0c08604703833ff62e2e16f4d02a23fdc832d1e217e45",
+      "size_bytes": 50814
+    },
+    "derived_evidence/review_nlp_features.parquet": {
+      "sha256": "291b813cb8c0d4893f10b86a1aae77bdefbcbd25d7f9dab67591fa168d0d93d8",
+      "size_bytes": 355375
+    },
+    "derived_evidence/review_similarity_clusters.parquet": {
+      "sha256": "9fe00ada299c1bd3a70659b36815396cc2b88a3f2fa590e1953b02fb2475e677",
+      "size_bytes": 13867
+    },
+    "derived_evidence/seller_features.parquet": {
+      "sha256": "8893c33429e39e0bd8117d7c29dbab728d7668942bb2491f596c74b4ca3e4c32",
+      "size_bytes": 14794
+    },
+    "derived_evidence/trust_assessments_listings.parquet": {
+      "sha256": "1d5687c0d4f1e6998d5ac50a7c6b9fdf6ab84245b5b86388bf1acd1535906951",
+      "size_bytes": 339491
+    },
+    "derived_evidence/trust_assessments_products.parquet": {
+      "sha256": "04362f4f416da0a8a4234e7b34a9be79eb403e2cc0bdc64516dd0faffd893268",
+      "size_bytes": 118764
+    },
+    "derived_evidence/trust_assessments_sellers.parquet": {
+      "sha256": "32c69cf668badfde973d7cdd933198ed6212f0902e25332647b72567017d518d",
+      "size_bytes": 9571
+    },
+    "derived_evidence/visual_embeddings_resnet18.npz": {
+      "sha256": "d27999ceeb060a566358923e463965f560a42b0bad8a494157808495b95dcc40",
+      "size_bytes": 8145440
+    },
+    "entities/brands.parquet": {
+      "sha256": "0d29379948fd298ecd561bd612d0533daddadb44992cb96c81b3eaf2ea490a0d",
+      "size_bytes": 74103
+    },
+    "entities/listings.parquet": {
+      "sha256": "81660040e6019b0ee95365ee2d9cee912596fc43f4daaf4508766709fb38d38d",
+      "size_bytes": 395666
+    },
+    "entities/platforms.parquet": {
+      "sha256": "9c2437da72994376e1edd05ae491ebad384b87b80f971f06cc0d1046262dcde9",
+      "size_bytes": 7310
+    },
+    "entities/products.parquet": {
+      "sha256": "85083d2863482274c59c4f8081618cf89083123b13c449c0e64479000cd9dd74",
+      "size_bytes": 1137770
+    },
+    "entities/sellers.parquet": {
+      "sha256": "4767bf4c393c8c72b95e0191d163384164a30d099213ceefdb03804d8bf4f4a1",
+      "size_bytes": 13994
+    },
+    "entities/variants.parquet": {
+      "sha256": "6edaa1e315f7fbc04fb5858e1bb816b8620d18ad6562347f508a7836dfe59fe5",
+      "size_bytes": 610496
+    },
+    "evidence/images.parquet": {
+      "sha256": "357b567512648dbd38288b7ae03177f14ef0fd6f090868db835bd83a309740f8",
+      "size_bytes": 1377769
+    },
+    "evidence/ocr_evidence.parquet": {
+      "sha256": "ec28ace9456b80e764c3b2d13192410c01c80a0482770901f9620e6e2e12036c",
+      "size_bytes": 14435
+    },
+    "evidence/price_observations.parquet": {
+      "sha256": "450ccd5038d421d580074e59840029df454f4ca0721951f9711f7933b667c583",
+      "size_bytes": 268556
+    },
+    "evidence/reviews.parquet": {
+      "sha256": "2ee789b0732541d33378ae1226d3fce4d26f7a12d2fb623364bdfe06a3b62f75",
+      "size_bytes": 650956
+    },
+    "evidence/title_token_packaging_proxy.parquet": {
+      "sha256": "a19c99bb73e9149814f08da279bbaea927ce80aebaa3216a6024b71b3a8cb9b6",
+      "size_bytes": 100319
+    },
+    "relationships/entity_relationships.parquet": {
+      "sha256": "3b6d82b38fa904e306f3747973d710d2f26149e352608ca72e66683a9be49694",
+      "size_bytes": 1018503
+    },
+    "reports/advanced_pricing_intelligence_report.md": {
+      "sha256": "e135d0787893dafa93703b9cc33c039b71254a78b5d9040e5fd80d33f972cde3",
+      "size_bytes": 6936
+    },
+    "reports/annotation_provenance_report.md": {
+      "sha256": "7a17a2a1f507796abca33be3751b7416f0c92efda6333a5103c3b6153ef50422",
+      "size_bytes": 6947
+    },
+    "reports/benchmark_and_evaluation_report.md": {
+      "sha256": "7b8ec6f397a349c47125869cb1303777c0b83fe6b1e75819d52accd3f95be674",
+      "size_bytes": 6170
+    },
+    "reports/benchmark_and_label_semantics_report.md": {
+      "sha256": "82b913d8ce41a13951b7903fa948fd541808c7ef491855c8a4ec20dd9a152d47",
+      "size_bytes": 3385
+    },
+    "reports/benchmark_leakage_report.md": {
+      "sha256": "bf49b476755bfefd77df4c6f97db1904258941efb56a2730ea1063cfc7a20543",
+      "size_bytes": 904
+    },
+    "reports/category_and_marketplace_distribution_report.md": {
+      "sha256": "54621ad873886f15a9aa0ec2d474271aa1c75d957aa58fab90cfee55a79e3a56",
+      "size_bytes": 2387
+    },
+    "reports/certification_report.md": {
+      "sha256": "5671ad28751c8e9f5113139f921321fbb84217206da382ab95eb31952d21e995",
+      "size_bytes": 7874
+    },
+    "reports/cohort_criteria_clarification.md": {
+      "sha256": "21f2922db95a39b3f453f9106037959f8900cba310ec287f4342e7a95d86c78e",
+      "size_bytes": 13558
+    },
+    "reports/coverage_and_limitations_v1_5.md": {
+      "sha256": "5c40f6eb6c3ae04f89e63476f29e302e27e3efbbc2180e221353762648497ebd",
+      "size_bytes": 4764
+    },
+    "reports/coverage_and_limitations_v1_6.md": {
+      "sha256": "7d3359549d3fbd6f2f4fe90607fb547a7f8c8fdf71687595c76416a49899409b",
+      "size_bytes": 6272
+    },
+    "reports/coverage_report.md": {
+      "sha256": "3b510f59de05f142580de651bb0052fcb3f860ce4551bb0d3625ea0178b29820",
+      "size_bytes": 815
+    },
+    "reports/cross_marketplace_matching_v1.8.md": {
+      "sha256": "0bbca8799c00864c65317662b5af8a79adb6db598500e5abbd03aaa508793d87",
+      "size_bytes": 3355
+    },
+    "reports/cross_modal_evidence_report.md": {
+      "sha256": "38fa1924cf5b1c5d7a07106ebb70475e826039cb07a6ae41011cdc8d55906aab",
+      "size_bytes": 3232
+    },
+    "reports/curated_cohort_validation.md": {
+      "sha256": "1553afd04ec8468218395aa49a6c732126b807cb05ffc7497e5ffc15f00a3847",
+      "size_bytes": 15778
+    },
+    "reports/cv_expansion_report.md": {
+      "sha256": "8025fbdb33b15c44a3fc262f7422438e276c32f8ce51b43c51efcbe7a02d8199",
+      "size_bytes": 12476
+    },
+    "reports/data_dictionary.md": {
+      "sha256": "37523fa80135f7f1f9ddc8a1b9af6ebea4ca7e8cfe0adc2b1ee3aba3813925e5",
+      "size_bytes": 8254
+    },
+    "reports/data_foundation_completion_report.md": {
+      "sha256": "eb5210363734a8d266b4ddb31e290c27d21b0a280e8cbdb371ecd69c822628a2",
+      "size_bytes": 23933
+    },
+    "reports/data_leakage_and_bias_report.md": {
+      "sha256": "59edaec2b68841b6c0261f9402ee266ba1a26c1eded275dfbded242fe9434f12",
+      "size_bytes": 5964
+    },
+    "reports/data_quality_scorecard.md": {
+      "sha256": "73a8f42236ec004d2179ae7beaf2db68d5bbcece907b7b063033ed428ac1bf09",
+      "size_bytes": 3086
+    },
+    "reports/data_repair_and_validation_report.md": {
+      "sha256": "0594863729364ed4d9c6bae9d249eaa593ff0f330c8e9201786afcebfe27cc02",
+      "size_bytes": 17794
+    },
+    "reports/dataset_audit_and_migration_report.md": {
+      "sha256": "baae844b65f601e6c987568725370f087ecd83356d1a1e7474fcdedaf9d0125b",
+      "size_bytes": 15802
+    },
+    "reports/dataset_certification_v1.8.md": {
+      "sha256": "50dfd8d40da378a76f0b4172bcb336d5df1685337f79220bd627efacfceb61ad",
+      "size_bytes": 3660
+    },
+    "reports/dataset_data_dictionary.md": {
+      "sha256": "7ce2771db20c8ac77f98ddc571c1250c200f8ab250da875368e859bde7689a32",
+      "size_bytes": 12009
+    },
+    "reports/dataset_freeze_certification.md": {
+      "sha256": "3de3b886519e560e8f1cd00601747f603bc9a3acb107f4531e6ad4cab2a8f6fd",
+      "size_bytes": 5127
+    },
+    "reports/dataset_gap_analysis.md": {
+      "sha256": "3b280a8d0ce583f7098b0a8803f8f410e9ae76ab312b58df7881cf65e8f9765a",
+      "size_bytes": 7339
+    },
+    "reports/dataset_inventory.md": {
+      "sha256": "57f298c6a42cbc876421220a226722cd7166709a2a464abd0ad0f8c74a3985d0",
+      "size_bytes": 8290
+    },
+    "reports/dataset_inventory_report.md": {
+      "sha256": "b7720d01e54d58838443635fa12b7006688338ebc52b391aefc438c8ccb495ee",
+      "size_bytes": 8732
+    },
+    "reports/dataset_limitations.md": {
+      "sha256": "0df7d75fba3d1f0ce05cc8c1c3f2d121259bd4a0df06794546747b9afda2feb0",
+      "size_bytes": 5650
+    },
+    "reports/dataset_migration_and_integration_report.md": {
+      "sha256": "09f756fa4e52621dd9de29709d84cd4c2038c90356147591a723d30834f9063b",
+      "size_bytes": 8816
+    },
+    "reports/dataset_provenance_and_quality_audit.md": {
+      "sha256": "09f26f93bc7b46819513473b733c408fc7d8d7a43d267d6073661e7171997030",
+      "size_bytes": 19900
+    },
+    "reports/dataset_quality_report.md": {
+      "sha256": "476d880927f39f1ddd56e67acb32d5ff7daa2794ef874e1e3fb7e9587eba049a",
+      "size_bytes": 1129
+    },
+    "reports/dataset_source_provenance_report.md": {
+      "sha256": "539aaf40a2b8bf6283d30c687c2f3d2f1b1d542e9861a204eff2d12c8086a63c",
+      "size_bytes": 6637
+    },
+    "reports/dataset_source_reconciliation_v1.8.md": {
+      "sha256": "7e6ef8dc3334eba0a431d81d73a78b31792ca57ba7f63c8fb1ba8b1222539b4e",
+      "size_bytes": 6396
+    },
+    "reports/dataset_v1_5_data_dictionary.md": {
+      "sha256": "161619356285d28000149b2866b3f259317583b881591e55c1e9d71c54b615c2",
+      "size_bytes": 12132
+    },
+    "reports/dataset_v1_6_data_dictionary.md": {
+      "sha256": "09070c3311f7ea0306e14b60590e8ce8bc05ac627628327fa07845ec42a86ddb",
+      "size_bytes": 17213
+    },
+    "reports/dataset_v1_7_data_dictionary.md": {
+      "sha256": "6d83812d699df9bb06333de1866f145be2e0b0e66c6d1dc13fc4f16ddeea7842",
+      "size_bytes": 8052
+    },
+    "reports/dataset_validation_report.md": {
+      "sha256": "e6345ef2c4a69e713dcb74e241b731b15963a30b0cf907901d0e2d925fd2984d",
+      "size_bytes": 8128
+    },
+    "reports/evaluation_split_manifests_report.md": {
+      "sha256": "d07ea72653c306c83370d7a907066c7e88307fc2e7a231bb819ccc2ab5faa298",
+      "size_bytes": 2570
+    },
+    "reports/evidence_provenance_report.md": {
+      "sha256": "7e7baa4cf77891370c1834a57fab53ecb1800a4cf94617904f62376b6256840f",
+      "size_bytes": 5684
+    },
+    "reports/expanded_cohort_20000_validation.md": {
+      "sha256": "fabc82089c4cf99f399015a628939fcce271de4c08d6b4497798de6d6f870a7d",
+      "size_bytes": 17562
+    },
+    "reports/external_dependencies_and_blocked_tasks_v1.8.md": {
+      "sha256": "dce1568c237af07ceb9e83e96b182e49e6fc2a9b978ee3621996c8e6c15cc2b5",
+      "size_bytes": 3478
+    },
+    "reports/final_certification_report.md": {
+      "sha256": "a6008f5fc80aa403fcd654f2620682279533a5d75da2e32ad4af14535d2702fa",
+      "size_bytes": 3262
+    },
+    "reports/final_dataset_baseline_audit.md": {
+      "sha256": "ad213ba4e6f26c461f74f6392d51a94fa87ffdbafc3cce7f647b0fae61ff7f82",
+      "size_bytes": 12032
+    },
+    "reports/final_implementation_status.md": {
+      "sha256": "3e7f2b8cf7be318c6d011febe752223ec286328d842d01e9504d94e2b217da3e",
+      "size_bytes": 14792
+    },
+    "reports/final_indian_multimodal_dataset_certification.md": {
+      "sha256": "9e47f402a8d991922b6a1a1b4ec016a51570726a766100e216adfcd763e0ebbe",
+      "size_bytes": 4018
+    },
+    "reports/final_readiness_audit.md": {
+      "sha256": "8c2ac499b6f10a060b91df3dd5bbc07e88d5236abc352638e8cebcd47de72cb3",
+      "size_bytes": 23715
+    },
+    "reports/fraud_annotation_readiness_v1.8.md": {
+      "sha256": "f97fc2215f365fa22b4300f8616e40a9f61b9c279e3a18799fd02c9c70aa45f5",
+      "size_bytes": 3458
+    },
+    "reports/graph_integrity_report.md": {
+      "sha256": "b306c03604c8797ce864b177bafa6ac0ff99fb28bd808f2083628d3c98cec32f",
+      "size_bytes": 1008
+    },
+    "reports/graph_reconciliation_v1.8.md": {
+      "sha256": "a616c465734d21e45443382241588bc1550103197070237744f713687e1e932f",
+      "size_bytes": 2864
+    },
+    "reports/graph_relationship_intelligence_report.md": {
+      "sha256": "cfaeb80ccd32f6f03afa54bd61017f1985486400dded4f3596eeea2bf72fd33e",
+      "size_bytes": 6404
+    },
+    "reports/historical_pricing_report.md": {
+      "sha256": "56ae8aaadf3dd0346d5c31e771231e8922d3a35ed6a68924dfbdc67667bbb2d9",
+      "size_bytes": 1286
+    },
+    "reports/image_integrity_and_duplicate_report.md": {
+      "sha256": "7a344f57e5e1a26a536375abeae43f35974b87f276a72c8d41b815d6e6815ee4",
+      "size_bytes": 3039
+    },
+    "reports/image_intelligence_report.md": {
+      "sha256": "88bfc0ffb99e789b7dc9eb9f3a47270460c0b5164be9a0443abccdcbe42abd55",
+      "size_bytes": 5612
+    },
+    "reports/indian_dataset_build_report.md": {
+      "sha256": "9733506a9f5d7ad45032920706befb244dfbb393d4b5910816b9469306f13e37",
+      "size_bytes": 32421
+    },
+    "reports/indian_dataset_validation_report.md": {
+      "sha256": "33c8061ebeb9521e4047d0544ce61787472f43f0837ea0a7fd056349d935ac1f",
+      "size_bytes": 12278
+    },
+    "reports/indian_marketplace_dataset_strategy.md": {
+      "sha256": "0c47a6d5690f5f9bbe0ef09e51907f6dba8525da7a4ea51dd7e6ba2c932cf4ff",
+      "size_bytes": 10103
+    },
+    "reports/indian_marketplace_trust_dataset_v1_1_certification.md": {
+      "sha256": "fac38ed8e7f1e0489683fc3881a1ae8ee3727c105085497b35084ddecd5ce573",
+      "size_bytes": 7290
+    },
+    "reports/indian_marketplace_trust_dataset_v1_1_verification.md": {
+      "sha256": "8e2495d416921c5dcf79676bb910bd7800f5c28f998c0f7ce3008694aef75f53",
+      "size_bytes": 12388
+    },
+    "reports/indian_marketplace_trust_dataset_v1_2_certification.md": {
+      "sha256": "ddb1bad51e2cbfcff62ce528b0544d10b34600a34534c82347d78e7d26ea6c63",
+      "size_bytes": 13459
+    },
+    "reports/indian_marketplace_trust_dataset_v1_2_deep_audit.md": {
+      "sha256": "5c1acf14d45f143b15a120319a6cba8ad0e56ff137102b0895c38a1aaf3b0a2c",
+      "size_bytes": 21146
+    },
+    "reports/indian_marketplace_trust_dataset_v1_3_certification.md": {
+      "sha256": "8e06fa7eb69c4973c93b7a11987c4a961e9d290cec9d59017c072d260ad24da3",
+      "size_bytes": 6702
+    },
+    "reports/indian_marketplace_trust_dataset_v1_4_certification.md": {
+      "sha256": "5671ad28751c8e9f5113139f921321fbb84217206da382ab95eb31952d21e995",
+      "size_bytes": 7874
+    },
+    "reports/indian_marketplace_trust_dataset_v1_4_independent_audit.md": {
+      "sha256": "9f22eb06205415430f684cbe8ca97ba27ec72952bb76859a3d5580eaa9f64afb",
+      "size_bytes": 9657
+    },
+    "reports/indian_multimodal_coverage_report.md": {
+      "sha256": "1ec424e42bf5e921b935cc1ca29fabbdc391e6aa2690412fe9338be116f7f0bd",
+      "size_bytes": 5224
+    },
+    "reports/indian_multimodal_coverage_v1.8.md": {
+      "sha256": "505ad4e3ea6b52fb37ed5ea2dc34f55c50663625b80d5108e0b66b8c147e66cc",
+      "size_bytes": 3309
+    },
+    "reports/indian_review_matching_audit.md": {
+      "sha256": "eb8a15c76619e961675d7c15f1ea5610b15b12e70afb2afd6db86217a47ef71a",
+      "size_bytes": 9392
+    },
+    "reports/indic_language_coverage_v1.8.md": {
+      "sha256": "c8258cf5471b9b5b8838547ef0146eeb41cb54895257f940c75907d6252173e8",
+      "size_bytes": 3450
+    },
+    "reports/known_limitations.md": {
+      "sha256": "cac6f935f8eef6bc7a6026559b94895565f57feddb128ee53bfd1b018a1a22b3",
+      "size_bytes": 1965
+    },
+    "reports/known_limitations_report.md": {
+      "sha256": "e9e6781ccad5c3b7d5a217df126f49d4b7f4c1f29aef6e42155037649a1b54e6",
+      "size_bytes": 1876
+    },
+    "reports/leakage_audit_report.md": {
+      "sha256": "dc6e3f7311027be51deb8a9b4fc9f09c40207b3268f7537f547f0a0c68605ed0",
+      "size_bytes": 2570
+    },
+    "reports/marketplace_category_coverage.md": {
+      "sha256": "1c280b0d41b465f1b9c012948f0257cb6f686a35fc91c96fd3c17f4794f640fd",
+      "size_bytes": 8194
+    },
+    "reports/migration_guide_v1.7_to_v1.8.md": {
+      "sha256": "2dade48cffaf569a50813207353c037b34da936952027e9c238ab9061d226524",
+      "size_bytes": 3711
+    },
+    "reports/milestone_3_4_implementation_report.md": {
+      "sha256": "18a6e69a2d73931126d8368bdd26dbddeee4dc2f0fb0736badac02b3e0f01b2e",
+      "size_bytes": 13311
+    },
+    "reports/milestone_5_implementation_report.md": {
+      "sha256": "877264aa88caff2709c35b5dfac08a92a712fbac36a710def0375c9c049238c2",
+      "size_bytes": 7039
+    },
+    "reports/milestone_6_implementation_report.md": {
+      "sha256": "0589f4573e8027cb8069614c13eabc0783f9663adabfeb6865c7a0a528d10add",
+      "size_bytes": 7704
+    },
+    "reports/model_readiness_report.md": {
+      "sha256": "0431bba6c2f42a0b86d695d7e66f187449645b284aa7159ebc74eb8b5976102b",
+      "size_bytes": 4976
+    },
+    "reports/multilingual_coverage_report.md": {
+      "sha256": "45afa72e0e72a90de28747e80f4287f3e38fb2892d78c5f5a633befcb2dec629",
+      "size_bytes": 972
+    },
+    "reports/multimodal_coverage_report.md": {
+      "sha256": "763b565f13f1cebebc1441b54d3fd9731b66ea564c7412a47960a57d1bd7bf85",
+      "size_bytes": 7135
+    },
+    "reports/multimodal_dataset_completion_report.md": {
+      "sha256": "7f2fff990d48dffc0f7c6b6488fe0f6e6796bc267b5925808331e7786de34adf",
+      "size_bytes": 13760
+    },
+    "reports/multimodal_evidence_schema.md": {
+      "sha256": "53c1185e604fcfff914b5bafbac173709f6029b80480ba381818b09121b4223f",
+      "size_bytes": 5848
+    },
+    "reports/nlp_audit_report.md": {
+      "sha256": "88631b6f1b9504e73a9a4733267ae7c09371e158938207a65092967e51c3fd49",
+      "size_bytes": 20039
+    },
+    "reports/ocr_capability_report.md": {
+      "sha256": "f733cb53464778f0851ea05b04abafb276d82f5666de86479e75303de1e26085",
+      "size_bytes": 4720
+    },
+    "reports/ocr_processing_report.md": {
+      "sha256": "33ea84a18e5ed3ccd40ab1cb5150d12a5a37547e5e8de2635e2a2906a87fd7f8",
+      "size_bytes": 1450
+    },
+    "reports/phase2_indian_dataset_completion.md": {
+      "sha256": "c0f297764372216261c6bdd3b9b3bafc663beedfcb9ab22925e4ebd74de834ce",
+      "size_bytes": 15484
+    },
+    "reports/phase3_indian_dataset_expansion.md": {
+      "sha256": "bea5670e5fb564e0ef32b8bc3445eedb73f89bc752feb0ca082725b3e5da8eb2",
+      "size_bytes": 12431
+    },
+    "reports/phase3_review_matching_report.md": {
+      "sha256": "8648c3bab2b64d494e5a13e2cc9d6f00009c48e3bcb1bfe8c18b686d8ad3f71d",
+      "size_bytes": 10922
+    },
+    "reports/phase3_validation_report.md": {
+      "sha256": "c43d541d504f3d31faf499e2bc95a212a3df638b4d95e9f78987735b3de97383",
+      "size_bytes": 7467
+    },
+    "reports/price_and_temporal_evidence_report.md": {
+      "sha256": "d218b9e76d6c917fc8e639e0f4c303abb4d119e6792e62de84403df9f7d8bd5b",
+      "size_bytes": 2090
+    },
+    "reports/pricing_cohort_evaluation.md": {
+      "sha256": "cc60054d43a562dd5c41fb1ee04fa159552394e6e2fba3d96bf744e0effa749d",
+      "size_bytes": 15225
+    },
+    "reports/product_coverage_audit.md": {
+      "sha256": "11531b808b156e15f906005d284006c1be5d3fd31251074354d0eda667bac893",
+      "size_bytes": 24588
+    },
+    "reports/product_identity_validation_report.md": {
+      "sha256": "b3df0ecc30a6bcd6c6e04e5f312236c525e16234d2d19adbe880cff3996a9eeb",
+      "size_bytes": 2702
+    },
+    "reports/provenance_report.md": {
+      "sha256": "4138ee54b224ba731ab274723e2dc5e1123fa0a271b553fca8dd3d381e05dcf3",
+      "size_bytes": 900
+    },
+    "reports/review_nlp_quality_report.md": {
+      "sha256": "d842cf6217736ec8e4d75423a07005c1f0a09f4dab004b074d77957a5e2d7ae2",
+      "size_bytes": 6177
+    },
+    "reports/review_quality_report.md": {
+      "sha256": "b4cb5d5681c7e5051d3411847a6ccf17456c1f606b0f8c1e0f7cf48b1714dee4",
+      "size_bytes": 2753
+    },
+    "reports/review_reconciliation_report.md": {
+      "sha256": "61c8bafbe18e588c3fcbdcb11c09ad0b8ac608681846c8763f0e8f3246423ac1",
+      "size_bytes": 5524
+    },
+    "reports/risk_methodology_report.md": {
+      "sha256": "03ce663b8b12578813e72cc0b232a3b756d2b6e8b00481a5aaaaa9454dc07c16",
+      "size_bytes": 6006
+    },
+    "reports/schema_documentation_v1.8.md": {
+      "sha256": "28ec7642e531056fa7bdfab770c44e445b07d1b72178d919889058494840c0ee",
+      "size_bytes": 4846
+    },
+    "reports/seller_identity_audit.md": {
+      "sha256": "4496ed53afea0b816fd3055e3df5d78dc07a32faec699a62f1d640d50f3a83af",
+      "size_bytes": 7513
+    },
+    "reports/seller_identity_coverage_v1.8.md": {
+      "sha256": "fc4fe3a0dd27e91eb7bfc4091d4d5389c37714a194012ee2b8f113c550227a6d",
+      "size_bytes": 3016
+    },
+    "reports/seller_intelligence_availability_report.md": {
+      "sha256": "8c91577f75b938700d5582526977756c62bb1fa91ade8a5798d2e6ee92ff8ad5",
+      "size_bytes": 3246
+    },
+    "reports/source_provenance_registry.md": {
+      "sha256": "65dde241e697cdea0e9203f90e9d71b940a916901d61beb1631bccf678e8d5d0",
+      "size_bytes": 7402
+    },
+    "reports/supplementary_marketplace_coverage_report.md": {
+      "sha256": "9e4de1cf17749d27109af943b743364c7cedcd8d31546cfcb90734bbad2d30b2",
+      "size_bytes": 3039
+    },
+    "reports/temporal_pricing_readiness_v1.8.md": {
+      "sha256": "2fa993fede5fd35ff6c7f7c1c98394c7c84a2304383146621b9df2e877bd6dad",
+      "size_bytes": 2038
+    },
+    "reports/trust_engine_architecture_report.md": {
+      "sha256": "dce3899f7c0dfaf0943da48e50c7419a25e4fd9f5054fe702037c447fffdef5c",
+      "size_bytes": 8228
+    },
+    "reports/v1_4_implementation_plan.md": {
+      "sha256": "78e57ff836a48213ed14f650327088fcb987f5ab9dd3c0948fea076db4ceef55",
+      "size_bytes": 23871
+    },
+    "reports/v1_5_release_reconciliation.md": {
+      "sha256": "48e204c2fb619ad12a11b86e60b0a04c74dae2e15e9ad468402f71b53d5a88a6",
+      "size_bytes": 10756
+    },
+    "reports/v1_5_targeted_validation_report.md": {
+      "sha256": "48738c6983b0a9fbe5eaade2d639ffee9b6a3428b7a9fe1819bb1e9dfd187b12",
+      "size_bytes": 13648
+    },
+    "reports/v1_6_targeted_semantic_validation.md": {
+      "sha256": "52bd53280f0819166cffdd6ed37b267be4ef2b90d6127aa52fd6b330248f1ab9",
+      "size_bytes": 17115
+    },
+    "reports/v1_7_targeted_validation_report.md": {
+      "sha256": "def0a94034d876701d36a9683acc5a1c40fb066373e22649c8790d1473a32af1",
+      "size_bytes": 4504
+    },
+    "reports/variant_hierarchy_audit.md": {
+      "sha256": "5e925b9458f0284e37561374eacb9281e8e91f4ae869373f96bad30e3c98fbbb",
+      "size_bytes": 1304
+    }
+  },
+  "specifications": {
+    "canonical_products": 3643,
+    "marketplace_listings": 3643,
+    "customer_reviews": 3659,
+    "physical_images": 4708,
+    "resnet18_embeddings": "4708 x 512",
+    "price_observations": 3667,
+    "human_review_annotations": 100,
+    "silver_review_annotations": 600,
+    "pending_review_tasks": 500,
+    "image_annotations": 250,
+    "listing_annotations": 250,
+    "certified_sellers": 4,
+    "platform_aggregate_sellers": 3,
+    "unresolved_third_party_pool": 1,
+    "graph_relationships": 41372,
+    "atomic_multimodal_evidence_records": 6064,
+    "product_trust_assessments": 3643,
+    "listing_trust_assessments": 3643,
+    "seller_trust_assessments": 4
+  }
+}
