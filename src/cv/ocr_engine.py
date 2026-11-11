@@ -9,17 +9,181 @@ from dataclasses import asdict, dataclass
 import json
 import logging
 from pathlib import Path
+import re
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
+import unicodedata
 
 import numpy as np
 import pandas as pd
-from PIL import Image
+from PIL import Image, ImageFilter, ImageOps
 
 logger = logging.getLogger(__name__)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DATASET_DIR = PROJECT_ROOT / "data" / "indian_marketplace_trust_dataset_v1_7"
+
+
+class PackagingImagePreprocessor:
+    """Preprocesses packaging images to optimize OCR optical character recognition."""
+
+    @staticmethod
+    def enhance_for_ocr(img: Image.Image) -> Image.Image:
+        """
+        Converts to grayscale, applies dynamic auto-contrast stretching to mitigate packaging glare,
+        and applies an unsharp mask filter for crisp character boundaries.
+        """
+        gray = img.convert("L")
+        # Auto-contrast cuts off outlier reflections/glare
+        contrast_enhanced = ImageOps.autocontrast(gray, cutoff=2)
+        # Unsharp mask sharpens small print text (batch numbers, ingredients, net weight)
+        sharpened = contrast_enhanced.filter(ImageFilter.UnsharpMask(radius=1.5, percent=140, threshold=2))
+        return sharpened.convert("RGB")
+
+
+class PackagingIdentifierExtractor:
+    """Extracts statutory Indian packaging identifiers: Net Quantity, MRP, and Batch/Mfg codes."""
+
+    # Regex patterns for Indian e-commerce & packaging standards (Legal Metrology Act)
+    MRP_PATTERN = re.compile(r"(?:m\.?r\.?p\.?|max(?:imum)?\s*retail\s*price|price|rs\.?|inr|₹)\s*[:.]?\s*(\d+(?:[.,]\d{2})?)", re.IGNORECASE)
+    NET_QTY_PATTERN = re.compile(r"\b(\d+(?:\.\d+)?\s*(?:ml|g|kg|l|tablets|capsules|pcs|pieces|pack|n|units))\b", re.IGNORECASE)
+    BATCH_PATTERN = re.compile(r"\b(?:b(?:atch)?\.?\s*no\.?|lot\s*no\.?|mfg\.?\s*date|exp\.?\s*date)\s*[:.]?\s*([a-z0-9/\-]+)", re.IGNORECASE)
+
+    @classmethod
+    def extract_identifiers(cls, text: str) -> Dict[str, Any]:
+        """Extracts structured packaging metadata from raw OCR output."""
+        if not text or not text.strip():
+            return {"mrp_detected": None, "net_quantity": None, "batch_code": None}
+
+        clean = unicodedata.normalize("NFC", text)
+
+        # 1. MRP
+        mrp_val = None
+        mrp_match = cls.MRP_PATTERN.search(clean)
+        if mrp_match:
+            try:
+                mrp_str = mrp_match.group(1).replace(",", "")
+                mrp_val = float(mrp_str)
+            except ValueError:
+                mrp_val = None
+
+        # 2. Net Quantity
+        net_qty = None
+        qty_match = cls.NET_QTY_PATTERN.search(clean)
+        if qty_match:
+            net_qty = qty_match.group(1).strip()
+
+        # 3. Batch / Mfg Code
+        batch_code = None
+        batch_match = cls.BATCH_PATTERN.search(clean)
+        if batch_match:
+            batch_code = batch_match.group(1).strip()
+
+        return {
+            "mrp_detected": mrp_val,
+            "net_quantity": net_qty,
+            "batch_code": batch_code,
+        }
+
+
+class PackagingBrandMatcher:
+    """Evaluates brand presence on packaging with fuzzy phonetic and orthographic matching."""
+
+    @staticmethod
+    def normalize_text(text: str) -> str:
+        """Strips punctuation, normalizes Unicode NFC, and lowercases."""
+        norm = unicodedata.normalize("NFC", text).lower()
+        return re.sub(r"[^\w\s]", "", norm)
+
+    @staticmethod
+    def token_similarity(tok1: str, tok2: str) -> float:
+        """Normalized Levenshtein similarity between two tokens."""
+        if tok1 == tok2:
+            return 1.0
+        len1, len2 = len(tok1), len(tok2)
+        if len1 == 0 or len2 == 0:
+            return 0.0
+
+        # Dynamic programming Levenshtein distance
+        dp = np.zeros((len1 + 1, len2 + 1), dtype=int)
+        for i in range(len1 + 1):
+            dp[i, 0] = i
+        for j in range(len2 + 1):
+            dp[0, j] = j
+
+        for i in range(1, len1 + 1):
+            for j in range(1, len2 + 1):
+                cost = 0 if tok1[i - 1] == tok2[j - 1] else 1
+                dp[i, j] = min(
+                    dp[i - 1, j] + 1,       # deletion
+                    dp[i, j - 1] + 1,       # insertion
+                    dp[i - 1, j - 1] + cost # substitution
+                )
+        dist = dp[len1, len2]
+        return 1.0 - (dist / max(len1, len2))
+
+    @classmethod
+    def match_brand(cls, canonical_brand: Optional[str], detected_text: str, word_count: int) -> Tuple[str, List[str], float]:
+        """
+        Matches declared brand tokens against packaging text using exact + fuzzy logic.
+        Returns: (brand_alignment_status, matched_tokens, brand_confidence)
+        """
+        if not canonical_brand or not isinstance(canonical_brand, str) or not canonical_brand.strip():
+            return "NO_BRAND_SUPPLIED", [], 0.0
+
+        clean_brand = cls.normalize_text(canonical_brand)
+        clean_text = cls.normalize_text(detected_text)
+        text_tokens = clean_text.split()
+
+        # Check spaceless concatenation (e.g. Mamaearth vs Mama Earth, NoiseFit vs Noise Fit)
+        spaceless_brand = clean_brand.replace(" ", "")
+        spaceless_text = clean_text.replace(" ", "")
+        if spaceless_brand and spaceless_brand in spaceless_text:
+            return "BRAND_VERIFIED_ON_PACKAGING", [canonical_brand], 1.0
+
+        brand_parts = [t for t in clean_brand.split() if len(t) >= 2]
+        if not brand_parts:
+            return "NO_BRAND_SUPPLIED", [], 0.0
+
+        matched_tokens = []
+        token_sims = []
+
+        for bp in brand_parts:
+            # 1. Exact token or substring match
+            if bp in text_tokens or bp in clean_text:
+                matched_tokens.append(bp)
+                token_sims.append(1.0)
+            else:
+                # 2. Fuzzy match against words of similar length (±2 chars)
+                best_sim = 0.0
+                best_match = None
+                for tt in text_tokens:
+                    if abs(len(tt) - len(bp)) <= 2:
+                        sim = cls.token_similarity(bp, tt)
+                        if sim > best_sim:
+                            best_sim = sim
+                            best_match = tt
+                if best_sim >= 0.80 and best_match:
+                    matched_tokens.append(f"{bp}~{best_match}")
+                    token_sims.append(best_sim)
+
+        match_ratio = len(matched_tokens) / len(brand_parts)
+        avg_confidence = float(np.mean(token_sims)) if token_sims else 0.0
+
+        if match_ratio >= 1.0 or clean_brand in clean_text:
+            alignment = "BRAND_VERIFIED_ON_PACKAGING"
+            conf = max(0.90, avg_confidence)
+        elif len(matched_tokens) > 0:
+            alignment = "BRAND_PARTIALLY_DETECTED"
+            conf = max(0.65, avg_confidence * 0.8)
+        elif word_count > 5:
+            alignment = "BRAND_NOT_OBSERVED_ON_PACKAGING"
+            conf = 0.80
+        else:
+            alignment = "INSUFFICIENT_PACKAGING_TEXT"
+            conf = 0.50
+
+        return alignment, matched_tokens, conf
 
 
 @dataclass
@@ -82,9 +246,9 @@ class PhysicalOCREngine:
                 logger.info("Neither winocr nor pytesseract is available; OCR will return neutral status.")
 
     def extract_text_from_image(
-        self, image_path: Path, canonical_brand: Optional[str] = None
+        self, image_path: Path, canonical_brand: Optional[str] = None, preprocess: bool = True
     ) -> Dict[str, Any]:
-        """Extracts text and bounding boxes from a single physical image."""
+        """Extracts text, bounding boxes, and statutory identifiers from a single physical image."""
         t0 = time.time()
         p = Path(image_path)
         if not p.is_absolute():
@@ -97,10 +261,14 @@ class PhysicalOCREngine:
                 "words": [],
                 "confidence": 0.0,
                 "engine": self.engine_name,
-                "engine_version": "1.0.0",
+                "engine_version": "1.1.0",
                 "detected_language": "en",
                 "brand_tokens_detected": [],
                 "brand_alignment_status": "IMAGE_FILE_NOT_FOUND",
+                "brand_confidence": 0.0,
+                "extracted_mrp": None,
+                "extracted_net_quantity": None,
+                "extracted_batch_code": None,
                 "processing_status": "FILE_NOT_FOUND",
                 "failure_reason": f"File does not exist: {p}",
                 "processing_latency_ms": (time.time() - t0) * 1000,
@@ -113,10 +281,14 @@ class PhysicalOCREngine:
                 "words": [],
                 "confidence": 0.0,
                 "engine": "none",
-                "engine_version": "1.0.0",
+                "engine_version": "1.1.0",
                 "detected_language": "en",
                 "brand_tokens_detected": [],
                 "brand_alignment_status": "OCR_UNAVAILABLE_ON_PLATFORM",
+                "brand_confidence": 0.0,
+                "extracted_mrp": None,
+                "extracted_net_quantity": None,
+                "extracted_batch_code": None,
                 "processing_status": "UNSUPPORTED_PLATFORM",
                 "failure_reason": "No supported OCR engine (winocr or pytesseract) available on host environment.",
                 "processing_latency_ms": (time.time() - t0) * 1000,
@@ -124,6 +296,9 @@ class PhysicalOCREngine:
 
         try:
             pil_img = Image.open(p).convert("RGB")
+            if preprocess:
+                pil_img = PackagingImagePreprocessor.enhance_for_ocr(pil_img)
+
             words: List[Dict[str, Any]] = []
             detected_text = ""
             engine_label = self.engine_name
@@ -171,25 +346,15 @@ class PhysicalOCREngine:
                 word_count = 0
                 confidence = 0.0
 
-            # Evaluate Brand Tokens
-            brand_tokens = []
-            alignment = "NO_BRAND_SUPPLIED"
-            if canonical_brand is not None and isinstance(canonical_brand, str) and canonical_brand.strip():
-                clean_brand = canonical_brand.strip().lower()
-                clean_text = detected_text.lower()
-                # Check brand tokens in OCR text
-                brand_parts = [t for t in clean_brand.split() if len(t) > 2]
-                matched_parts = [t for t in brand_parts if t in clean_text]
-                brand_tokens = matched_parts
+            # Evaluate Brand Tokens via fuzzy & exact matcher
+            alignment, brand_tokens, brand_conf = PackagingBrandMatcher.match_brand(
+                canonical_brand=canonical_brand,
+                detected_text=detected_text,
+                word_count=word_count,
+            )
 
-                if clean_brand in clean_text or (len(brand_parts) > 0 and len(matched_parts) == len(brand_parts)):
-                    alignment = "BRAND_VERIFIED_ON_PACKAGING"
-                elif len(matched_parts) > 0:
-                    alignment = "BRAND_PARTIALLY_DETECTED"
-                elif word_count > 5:
-                    alignment = "BRAND_NOT_OBSERVED_ON_PACKAGING"
-                else:
-                    alignment = "INSUFFICIENT_PACKAGING_TEXT"
+            # Extract statutory identifiers (MRP, Net Qty, Batch)
+            identifiers = PackagingIdentifierExtractor.extract_identifiers(detected_text)
 
             status = "SUCCESS" if word_count > 0 else "NO_TEXT_DETECTED"
 
@@ -199,10 +364,14 @@ class PhysicalOCREngine:
                 "words": words,
                 "confidence": confidence,
                 "engine": engine_label,
-                "engine_version": "1.0.0",
+                "engine_version": "1.1.0",
                 "detected_language": "en",
                 "brand_tokens_detected": brand_tokens,
                 "brand_alignment_status": alignment,
+                "brand_confidence": brand_conf,
+                "extracted_mrp": identifiers.get("mrp_detected"),
+                "extracted_net_quantity": identifiers.get("net_quantity"),
+                "extracted_batch_code": identifiers.get("batch_code"),
                 "processing_status": status,
                 "failure_reason": None,
                 "processing_latency_ms": round((time.time() - t0) * 1000, 2),

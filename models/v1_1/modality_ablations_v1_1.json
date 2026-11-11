@@ -1,0 +1,79 @@
+{
+  "Full_Multimodal_V1_1": {
+    "mean_roc_auc": 0.9993,
+    "mean_pr_auc": 0.9909,
+    "raw_brier_score": 0.0024,
+    "calibrated_brier_score": 0.0019,
+    "features_count": 16
+  },
+  "Ablation_Drop_Pricing": {
+    "mean_roc_auc": 0.9957,
+    "mean_pr_auc": 0.9441,
+    "raw_brier_score": 0.0055,
+    "calibrated_brier_score": 0.0071,
+    "features_count": 13
+  },
+  "Ablation_Drop_Review": {
+    "mean_roc_auc": 0.9935,
+    "mean_pr_auc": 0.9845,
+    "raw_brier_score": 0.0027,
+    "calibrated_brier_score": 0.0025,
+    "features_count": 12
+  },
+  "Ablation_Drop_Vision": {
+    "mean_roc_auc": 0.9831,
+    "mean_pr_auc": 0.7964,
+    "raw_brier_score": 0.02,
+    "calibrated_brier_score": 0.0166,
+    "features_count": 12
+  },
+  "Ablation_Drop_CLIP": {
+    "mean_roc_auc": 0.9994,
+    "mean_pr_auc": 0.9907,
+    "raw_brier_score": 0.0026,
+    "calibrated_brier_score": 0.0021,
+    "features_count": 13
+  },
+  "Ablation_Drop_Graph": {
+    "mean_roc_auc": 0.9993,
+    "mean_pr_auc": 0.989,
+    "raw_brier_score": 0.0029,
+    "calibrated_brier_score": 0.0017,
+    "features_count": 14
+  },
+  "Unimodal_Graph_Only": {
+    "mean_roc_auc": 0.9838,
+    "mean_pr_auc": 0.8799,
+    "raw_brier_score": 0.0112,
+    "calibrated_brier_score": 0.0122,
+    "features_count": 2
+  },
+  "Unimodal_Vision_Only": {
+    "mean_roc_auc": 0.9747,
+    "mean_pr_auc": 0.8947,
+    "raw_brier_score": 0.0049,
+    "calibrated_brier_score": 0.0049,
+    "features_count": 4
+  },
+  "Unimodal_Pricing_Only": {
+    "mean_roc_auc": 0.7073,
+    "mean_pr_auc": 0.2202,
+    "raw_brier_score": 0.0371,
+    "calibrated_brier_score": 0.045,
+    "features_count": 3
+  },
+  "Unimodal_Review_Only": {
+    "mean_roc_auc": 0.5109,
+    "mean_pr_auc": 0.0507,
+    "raw_brier_score": 0.0417,
+    "calibrated_brier_score": 0.0437,
+    "features_count": 4
+  },
+  "Unimodal_CLIP_Only": {
+    "mean_roc_auc": 0.696,
+    "mean_pr_auc": 0.1273,
+    "raw_brier_score": 0.0397,
+    "calibrated_brier_score": 0.0488,
+    "features_count": 3
+  }
+}

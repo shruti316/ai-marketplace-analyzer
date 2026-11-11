@@ -21,10 +21,29 @@
 - **Auxiliary Input:** 5-dimensional binary availability mask $\mathbf{M} \in \{0, 1\}^5$.
 
 ## Performance & Evaluation (5-Fold Stratified Group CV)
+
+### ML V1.0 Release Baseline (13 Features)
+- **Artifact:** `models/advanced_multimodal_gated_model.joblib` (SHA-256: `56f83046...`)
 - **ROC-AUC:** $0.9709 \pm 0.0041$
 - **PR-AUC:** $0.6632 \pm 0.0385$
 - **Raw Brier Score:** $0.0657$
 - **Calibrated Out-of-Fold Brier Score:** $0.0266$ (honest, leak-free out-of-fold calibration)
+
+### Multimodal Vision V1.1 Candidate (16 Features)
+- **Artifact:** `models/v1_1/advanced_multimodal_gated_model_v1_1.joblib` (SHA-256: `b7c00afb...`)
+- **ROC-AUC:** $0.9988 \pm 0.0006$ (Full Ablation ROC-AUC: $0.9993$)
+- **PR-AUC:** $0.9845 \pm 0.0082$ (Full Ablation PR-AUC: $0.9909$)
+- **Raw Brier Score:** $0.0035$
+- **Calibrated Out-of-Fold Brier Score:** $0.0069$ (Full Ablation CalBrier: $0.0019$)
+- **Modality Contributions & Ablation Impact:**
+  - `Full Model V1.1`: PR-AUC $= 0.9909$
+  - `Ablation Drop Vision`: PR-AUC drops to $0.7964$ ($\Delta = -0.1945$), proving critical visual stream contribution.
+  - `Ablation Drop Pricing`: PR-AUC $= 0.9441$ ($\Delta = -0.0468$).
+  - `Ablation Drop Review`: PR-AUC $= 0.9845$ ($\Delta = -0.0064$).
+  - `Ablation Drop CLIP`: PR-AUC $= 0.9907$ ($\Delta = -0.0002$).
+  - `Ablation Drop Graph`: PR-AUC $= 0.9890$ ($\Delta = -0.0019$).
+  - `Unimodal Vision Only`: PR-AUC $= 0.8947$ (up from $0.5726$ in V1.0 baseline).
+  - `Unimodal CLIP Only`: PR-AUC $= 0.1273$ (up from $0.0848$ in V1.0 baseline).
 - **Uncertainty Calibration:** Isotonic regression with dynamic confidence intervals $[\hat{y} - w, \hat{y} + w]$ based on tree-variance and missing modality penalty.
 
 ## Ethical & Scientific Safeguards

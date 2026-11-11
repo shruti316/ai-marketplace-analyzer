@@ -1,0 +1,37 @@
+{
+  "gaussian_noise": {
+    "mean_dhash_drift": 3.3666666666666667,
+    "max_dhash_drift": 13,
+    "pct_within_near_dup_threshold_4": 63.33333333333333
+  },
+  "jpeg_q70": {
+    "mean_dhash_drift": 0.4,
+    "max_dhash_drift": 8,
+    "pct_within_near_dup_threshold_4": 96.66666666666667
+  },
+  "jpeg_q40": {
+    "mean_dhash_drift": 0.6,
+    "max_dhash_drift": 8,
+    "pct_within_near_dup_threshold_4": 96.66666666666667
+  },
+  "crop_90": {
+    "mean_dhash_drift": 9.2,
+    "max_dhash_drift": 25,
+    "pct_within_near_dup_threshold_4": 16.666666666666664
+  },
+  "crop_75": {
+    "mean_dhash_drift": 20.1,
+    "max_dhash_drift": 36,
+    "pct_within_near_dup_threshold_4": 3.3333333333333335
+  },
+  "brightness_plus20": {
+    "mean_dhash_drift": 5.533333333333333,
+    "max_dhash_drift": 29,
+    "pct_within_near_dup_threshold_4": 53.333333333333336
+  },
+  "brightness_minus20": {
+    "mean_dhash_drift": 2.4,
+    "max_dhash_drift": 10,
+    "pct_within_near_dup_threshold_4": 76.66666666666667
+  }
+}
