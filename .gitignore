@@ -52,3 +52,7 @@ data/archive/
 # Local audit artifacts
 /audit_model_fields.py
 /project_inventory.csv
+
+# Model training staging & backup artifacts
+models/staging/
+*.bak_*

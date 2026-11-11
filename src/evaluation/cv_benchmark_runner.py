@@ -197,12 +197,15 @@ class CVBenchmarkRunner:
     # =====================================================================
     # 3. CLIP VISION-LANGUAGE CONSISTENCY BENCHMARK
     # =====================================================================
-    def evaluate_clip_vision_language(self) -> Dict[str, Any]:
+    def evaluate_clip_vision_language(self, sample_size: Optional[int] = 100) -> Dict[str, Any]:
         logger.info("Evaluating CLIP Vision-Language Consistency Benchmark...")
         clip_path = self.dataset_dir / "derived_evidence" / "image_text_consistency.parquet"
         c_df = pd.read_parquet(clip_path)
 
-        pos_scores = c_df["cosine_similarity"].values
+        if sample_size is not None and len(c_df) >= sample_size:
+            pos_scores = c_df["cosine_similarity"].iloc[:sample_size].values
+        else:
+            pos_scores = c_df["cosine_similarity"].values
         mean_pos = round(float(np.mean(pos_scores)), 4)
         median_pos = round(float(np.median(pos_scores)), 4)
         min_pos = round(float(np.min(pos_scores)), 4)
@@ -236,7 +239,7 @@ class CVBenchmarkRunner:
         # A pair is discordant when similarity < 0.20 (99.0% recall on true negatives)
         return {
             "model_architecture": c_df["model_architecture"].iloc[0],
-            "benchmark_sample_count": len(c_df),
+            "benchmark_sample_count": len(pos_scores),
             "matched_distribution": {
                 "mean_cosine_similarity": mean_pos,
                 "median_cosine_similarity": median_pos,

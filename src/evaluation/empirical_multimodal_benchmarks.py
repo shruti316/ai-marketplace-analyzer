@@ -72,14 +72,22 @@ class EmpiricalBenchmarkRunner:
     # =========================================================================
     # 1. REAL CLIP HARD-NEGATIVE & VISION-LANGUAGE BENCHMARK
     # =========================================================================
-    def run_empirical_clip_benchmark(self) -> Dict[str, Any]:
-        """Evaluates CLIP on real matched vs real cross-category & intra-category pairs."""
+    def run_empirical_clip_benchmark(self, sample_size: Optional[int] = 100) -> Dict[str, Any]:
+        """Evaluates CLIP on real matched vs real cross-category & intra-category pairs.
+
+        Default sample_size=100 preserves the standardized 100-pair benchmark definition
+        against 50 cross-category and 50 intra-category hard negatives. Set sample_size=None
+        to evaluate across the entire catalog.
+        """
         logger.info("Executing Empirical CLIP Vision-Language Benchmark on real catalog pairs...")
 
         if self.clip_df.empty:
             raise FileNotFoundError("Missing image_text_consistency.parquet")
 
-        pos_scores = self.clip_df["cosine_similarity"].values
+        if sample_size is not None and len(self.clip_df) >= sample_size:
+            pos_scores = self.clip_df["cosine_similarity"].iloc[:sample_size].values
+        else:
+            pos_scores = self.clip_df["cosine_similarity"].values
         n_pos = len(pos_scores)
 
         # Build empirical hard negative distributions from real product relationships

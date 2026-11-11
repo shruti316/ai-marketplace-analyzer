@@ -45,8 +45,10 @@ class RobustStatsCalculator:
         if mad == 0.0:
             mad = float(np.std(arr)) if np.std(arr) > 0 else 1.0
 
-        corridor_lower = max(0.0, float(q1 - 1.5 * iqr))
-        corridor_upper = float(q3 + 1.5 * iqr)
+        # Effective IQR fence prevents zero-width corridor collapse on uniform prices
+        iqr_effective = max(iqr, 0.10 * med) if med > 0 else (iqr if iqr > 0 else 1.0)
+        corridor_lower = max(0.0, float(q1 - 1.5 * iqr_effective))
+        corridor_upper = float(q3 + 1.5 * iqr_effective)
 
         return {
             "count": len(valid),

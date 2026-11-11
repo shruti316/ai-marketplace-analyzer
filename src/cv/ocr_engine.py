@@ -50,18 +50,36 @@ class OCRResult:
 
 
 class PhysicalOCREngine:
-    """Production Physical OCR engine executing native Windows WinRT OCR."""
+    """Production Physical OCR engine executing native Windows WinRT OCR with cross-platform fallbacks."""
 
     def __init__(self, dataset_dir: Path = DATASET_DIR):
         self.dataset_dir = Path(dataset_dir)
         self._winocr_available = False
+        self._tesseract_available = False
+        self.engine_name = "unavailable"
+
+        # 1. Try Windows native WinRT OCR
         try:
             import winocr
             self._winocr = winocr
             self._winocr_available = True
+            self.engine_name = "winocr-winrt"
             logger.info("winocr (Windows WinRT OCR) initialized successfully.")
-        except ImportError:
-            logger.warning("winocr not installed in environment.")
+        except (ImportError, Exception):
+            pass
+
+        # 2. Try cross-platform Tesseract OCR if winocr unavailable
+        if not self._winocr_available:
+            try:
+                import pytesseract
+                # Probe tesseract executable
+                pytesseract.get_tesseract_version()
+                self._pytesseract = pytesseract
+                self._tesseract_available = True
+                self.engine_name = "pytesseract"
+                logger.info("pytesseract initialized successfully as fallback OCR engine.")
+            except (ImportError, Exception):
+                logger.info("Neither winocr nor pytesseract is available; OCR will return neutral status.")
 
     def extract_text_from_image(
         self, image_path: Path, canonical_brand: Optional[str] = None
@@ -78,8 +96,8 @@ class PhysicalOCREngine:
                 "word_count": 0,
                 "words": [],
                 "confidence": 0.0,
-                "engine": "winocr",
-                "engine_version": "0.0.15",
+                "engine": self.engine_name,
+                "engine_version": "1.0.0",
                 "detected_language": "en",
                 "brand_tokens_detected": [],
                 "brand_alignment_status": "IMAGE_FILE_NOT_FOUND",
@@ -88,44 +106,70 @@ class PhysicalOCREngine:
                 "processing_latency_ms": (time.time() - t0) * 1000,
             }
 
-        if not self._winocr_available:
+        if not self._winocr_available and not self._tesseract_available:
             return {
                 "detected_text": "",
                 "word_count": 0,
                 "words": [],
                 "confidence": 0.0,
-                "engine": "winocr",
-                "engine_version": "0.0.15",
+                "engine": "none",
+                "engine_version": "1.0.0",
                 "detected_language": "en",
                 "brand_tokens_detected": [],
-                "brand_alignment_status": "ENGINE_UNAVAILABLE",
-                "processing_status": "BLOCKED_DEPENDENCY",
-                "failure_reason": "winocr library unavailable",
+                "brand_alignment_status": "OCR_UNAVAILABLE_ON_PLATFORM",
+                "processing_status": "UNSUPPORTED_PLATFORM",
+                "failure_reason": "No supported OCR engine (winocr or pytesseract) available on host environment.",
                 "processing_latency_ms": (time.time() - t0) * 1000,
             }
 
         try:
             pil_img = Image.open(p).convert("RGB")
-            # Execute native WinRT OCR
-            res = self._winocr.recognize_pil_sync(pil_img, "en")
-
-            detected_text = res.get("text", "").strip()
-            lines = res.get("lines", [])
             words: List[Dict[str, Any]] = []
+            detected_text = ""
+            engine_label = self.engine_name
 
-            for line in lines:
-                for w in line.get("words", []):
-                    box = w.get("bounding_rect", {})
-                    words.append({
-                        "text": w.get("text", ""),
-                        "x": box.get("x", 0.0),
-                        "y": box.get("y", 0.0),
-                        "w": box.get("width", 0.0),
-                        "h": box.get("height", 0.0),
-                    })
+            if self._winocr_available:
+                # Execute native WinRT OCR
+                res = self._winocr.recognize_pil_sync(pil_img, "en")
+                detected_text = res.get("text", "").strip()
+                lines = res.get("lines", [])
 
-            word_count = len(words)
-            confidence = 0.95 if word_count > 0 else 0.0
+                for line in lines:
+                    for w in line.get("words", []):
+                        box = w.get("bounding_rect", {})
+                        words.append({
+                            "text": w.get("text", ""),
+                            "x": box.get("x", 0.0),
+                            "y": box.get("y", 0.0),
+                            "w": box.get("width", 0.0),
+                            "h": box.get("height", 0.0),
+                        })
+                word_count = len(words)
+                confidence = 0.95 if word_count > 0 else 0.0
+                engine_label = "winocr-winrt"
+
+            elif self._tesseract_available:
+                # Execute cross-platform Tesseract
+                data = self._pytesseract.image_to_data(pil_img, output_type=self._pytesseract.Output.DICT)
+                toks = []
+                for i in range(len(data.get("text", []))):
+                    txt = str(data["text"][i]).strip()
+                    if txt:
+                        toks.append(txt)
+                        words.append({
+                            "text": txt,
+                            "x": float(data["left"][i]),
+                            "y": float(data["top"][i]),
+                            "w": float(data["width"][i]),
+                            "h": float(data["height"][i]),
+                        })
+                detected_text = " ".join(toks).strip()
+                word_count = len(words)
+                confidence = 0.90 if word_count > 0 else 0.0
+                engine_label = "pytesseract"
+            else:
+                word_count = 0
+                confidence = 0.0
 
             # Evaluate Brand Tokens
             brand_tokens = []
@@ -154,8 +198,8 @@ class PhysicalOCREngine:
                 "word_count": word_count,
                 "words": words,
                 "confidence": confidence,
-                "engine": "winocr-winrt",
-                "engine_version": "0.0.15",
+                "engine": engine_label,
+                "engine_version": "1.0.0",
                 "detected_language": "en",
                 "brand_tokens_detected": brand_tokens,
                 "brand_alignment_status": alignment,

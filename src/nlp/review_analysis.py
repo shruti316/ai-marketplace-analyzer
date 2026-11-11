@@ -15,7 +15,9 @@ Analyzes:
 
 import logging
 import re
-from typing import Dict, Any, List, Optional
+import string
+from typing import Dict, Any, List, Optional, Set
+import unicodedata
 import numpy as np
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -31,34 +33,83 @@ except ImportError:
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 
+# Common Indian marketplace Hinglish polar colloquialisms
+_HINGLISH_POS_WORDS = {
+    "paisa vasool", "badiya", "badhiya", "mast", "shandar", "zabarjast", "jabardast",
+    "asli", "sahi", "bahut accha", "bohot accha", "zabardast"
+}
+_HINGLISH_NEG_WORDS = {
+    "kharab", "khrab", "bekar", "bekaar", "dhokha", "nakli", "ganda", "bakwas",
+    "kachra", "loot", "ghatiya", "waste", "fraud", "scam"
+}
+
+
+def normalize_text_nfc(text: str) -> str:
+    """Performs Unicode NFC normalization and strips excessive whitespace."""
+    if not text or not str(text).strip():
+        return ""
+    return unicodedata.normalize("NFC", str(text).strip())
+
+
+def normalize_text_for_dedup(text: str) -> str:
+    """Strips punctuation, lowercases, and normalizes for robust duplicate detection."""
+    t = normalize_text_nfc(text).lower()
+    t = re.sub(r"[^\w\s]", "", t)
+    return re.sub(r"\s+", " ", t).strip()
+
+
+def compute_shingle_jaccard(s1: str, s2: str, k: int = 3) -> float:
+    """Computes k-gram shingle Jaccard similarity between two normalized strings."""
+    if not s1 or not s2:
+        return 0.0
+    if s1 == s2:
+        return 1.0
+    if len(s1) < k or len(s2) < k:
+        return 1.0 if s1 == s2 else 0.0
+    shingles1: Set[str] = {s1[i:i+k] for i in range(len(s1) - k + 1)}
+    shingles2: Set[str] = {s2[i:i+k] for i in range(len(s2) - k + 1)}
+    inter = len(shingles1.intersection(shingles2))
+    union = len(shingles1.union(shingles2))
+    return float(inter / union) if union > 0 else 0.0
+
 
 def get_sentiment_compound(text: str) -> float:
     """
     Computes sentiment polarity compound score (-1.0 to +1.0).
-    Uses VADER if available; otherwise falls back to a deterministic polarity lexicon.
-    Returns 0.0 for empty or whitespace-only text.
+    Uses VADER if available, augmented with Hinglish e-commerce colloquialisms.
+    Falls back to a deterministic polarity lexicon if VADER is unavailable.
     """
     if text is None or not str(text).strip():
         return 0.0
 
+    normalized_text = normalize_text_nfc(text)
+    t_lower = normalized_text.lower()
+
+    base_score = 0.0
     if _HAS_VADER and _vader:
-        return float(_vader.polarity_scores(str(text))["compound"])
+        base_score = float(_vader.polarity_scores(normalized_text)["compound"])
+    else:
+        # Fallback polarity lexicon
+        pos_words = {"great", "good", "love", "excellent", "best", "perfect", "amazing", "happy", "wonderful", "authentic"}
+        neg_words = {"terrible", "bad", "horrible", "worst", "fake", "broken", "scam", "cheap", "damaged", "awful", "waste"}
+        tokens = re.findall(r"\b\w+\b", t_lower)
+        if tokens:
+            pos_count = sum(1 for t in tokens if t in pos_words)
+            neg_count = sum(1 for t in tokens if t in neg_words)
+            total = pos_count + neg_count
+            if total > 0:
+                base_score = float((pos_count - neg_count) / total)
 
-    # Fallback heuristic polarity lexicon if VADER is unavailable
-    text_lower = str(text).lower()
-    pos_words = {"great", "good", "love", "excellent", "best", "perfect", "amazing", "happy", "wonderful", "authentic"}
-    neg_words = {"terrible", "bad", "horrible", "worst", "fake", "broken", "scam", "cheap", "damaged", "awful", "waste"}
+    # Hinglish adjustment if VADER scored text neutral or near-neutral
+    if -0.20 <= base_score <= 0.20:
+        pos_hits = sum(1 for hp in _HINGLISH_POS_WORDS if hp in t_lower)
+        neg_hits = sum(1 for hn in _HINGLISH_NEG_WORDS if hn in t_lower)
+        if pos_hits > neg_hits:
+            base_score = 0.55
+        elif neg_hits > pos_hits:
+            base_score = -0.55
 
-    tokens = re.findall(r"\b\w+\b", text_lower)
-    if not tokens:
-        return 0.0
-    pos_count = sum(1 for t in tokens if t in pos_words)
-    neg_count = sum(1 for t in tokens if t in neg_words)
-
-    total = pos_count + neg_count
-    if total == 0:
-        return 0.0
-    return float((pos_count - neg_count) / total)
+    return round(float(np.clip(base_score, -1.0, 1.0)), 4)
 
 
 def classify_rating_sentiment(rating: float) -> str:
@@ -175,17 +226,43 @@ class ProductReviewAnalyzer:
         verified_series = df_product_reviews["verified_purchase"].dropna() if "verified_purchase" in df_product_reviews.columns else pd.Series(dtype=bool)
         verified_ratio = round(float(verified_series.mean()), 2) if not verified_series.empty else None
 
-        # 1. Intra-Product Review Similarity
+        # 1. Intra-Product Review Similarity & Multi-Tier Deduplication
         non_empty_texts = [t for t in str_texts if len(t) >= 4]
         max_sim = 0.0
         similar_pairs_count = 0
         exact_duplicate_count = len(str_texts) - len(set(str_texts))
 
+        # Normalized deduplication (strips casing, punctuation, and whitespace)
+        norm_texts = [normalize_text_for_dedup(t) for t in str_texts if len(t) >= 4]
+        norm_duplicate_count = len(norm_texts) - len(set(norm_texts))
+
+        # Near-duplicate 3-gram shingling (Jaccard >= 0.85)
+        near_duplicate_pairs = 0
+        if len(norm_texts) >= 2:
+            shingle_eval = norm_texts if len(norm_texts) <= 150 else norm_texts[:150]
+            for i in range(len(shingle_eval)):
+                for j in range(i + 1, len(shingle_eval)):
+                    if shingle_eval[i] != shingle_eval[j] and len(shingle_eval[i]) >= 15 and len(shingle_eval[j]) >= 15:
+                        if compute_shingle_jaccard(shingle_eval[i], shingle_eval[j], k=3) >= 0.85:
+                            near_duplicate_pairs += 1
+
         if len(non_empty_texts) >= 2:
             try:
+                # Mitigate false positives by downweighting repeated product title tokens
+                product_title_words: Set[str] = set()
+                if "product_title" in df_product_reviews.columns:
+                    for pt in df_product_reviews["product_title"].dropna().astype(str):
+                        product_title_words.update(re.findall(r"\b[a-zA-Z]{3,}\b", pt.lower()))
+                elif "listing_title" in df_product_reviews.columns:
+                    for lt in df_product_reviews["listing_title"].dropna().astype(str):
+                        product_title_words.update(re.findall(r"\b[a-zA-Z]{3,}\b", lt.lower()))
+
+                from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
+                combined_stops = list(ENGLISH_STOP_WORDS.union(list(product_title_words)[:50]))
+
                 # Cap max texts for quadratic pairwise calculation to avoid O(N^2) memory bottlenecks
                 eval_texts = non_empty_texts if len(non_empty_texts) <= 200 else non_empty_texts[:200]
-                vec = TfidfVectorizer(stop_words="english", ngram_range=(1, 2), min_df=1, max_features=1000)
+                vec = TfidfVectorizer(stop_words=combined_stops, ngram_range=(1, 2), min_df=1, max_features=1000)
                 tfidf_mat = vec.fit_transform(eval_texts)
                 sim_matrix = np.clip(cosine_similarity(tfidf_mat), 0.0, 1.0)
 
@@ -220,6 +297,8 @@ class ProductReviewAnalyzer:
             evidence_flags.append(f"REPETITIVE_REVIEW_CLUSTER (pairs >= {self.similarity_threshold}: {similar_pairs_count})")
         if exact_duplicate_count > 0:
             evidence_flags.append(f"EXACT_DUPLICATE_REVIEWS ({exact_duplicate_count})")
+        if near_duplicate_pairs > 0:
+            evidence_flags.append(f"NEAR_DUPLICATE_REVIEWS ({near_duplicate_pairs})")
         if disagreement_ratio >= 0.25:
             evidence_flags.append(f"ELEVATED_SENTIMENT_DISCORDANCE ({round(disagreement_ratio*100)}%)")
         if verified_ratio is not None and verified_ratio < 0.20 and n_reviews >= 5:
@@ -231,6 +310,7 @@ class ProductReviewAnalyzer:
             f"Analyzed {n_reviews} customer reviews (avg {avg_rating} stars). "
             f"Verified purchase ratio: {round(verified_ratio*100) if verified_ratio is not None else 'N/A'}%. "
             f"Max review text similarity: {round(max_sim, 2)}. "
+            f"Exact duplicates: {exact_duplicate_count}, near duplicates: {near_duplicate_pairs}. "
             f"Polar sentiment-rating discordance: {round(disagreement_ratio*100)}% ({disagreement_count}/{n_reviews})."
         )
         if empty_count > 0:
@@ -246,6 +326,7 @@ class ProductReviewAnalyzer:
             "max_similarity_score": round(max_sim, 2),
             "repetitive_review_pairs": similar_pairs_count,
             "exact_duplicate_reviews": exact_duplicate_count,
+            "near_duplicate_reviews": near_duplicate_pairs,
             "sentiment_disagreement_count": disagreement_count,
             "sentiment_disagreement_ratio": disagreement_ratio,
             "evidence_flags": evidence_flags,

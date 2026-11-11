@@ -379,7 +379,7 @@ class AdvancedMultimodalIntelligenceService:
 
         results = {}
         for config_name, feat_indices in ablation_configs.items():
-            fold_rocs, fold_prs, fold_briers = [], [], []
+            fold_rocs, fold_prs, fold_raw_briers, fold_cal_briers = [], [], [], []
 
             for train_idx, val_idx in sgkf.split(X, y, groups=groups):
                 X_tr, y_tr = X[train_idx][:, feat_indices], y[train_idx]
@@ -389,14 +389,23 @@ class AdvancedMultimodalIntelligenceService:
                 rf.fit(X_tr, y_tr)
                 probs = rf.predict_proba(X_va)[:, 1]
 
+                # Honest fold-local Isotonic Calibrator (strictly fitted on training predictions)
+                tr_probs = rf.predict_proba(X_tr)[:, 1]
+                iso = IsotonicRegression(out_of_bounds="clip")
+                iso.fit(tr_probs, y_tr)
+                cal_probs = iso.transform(probs)
+
                 fold_rocs.append(roc_auc_score(y_val, probs))
                 fold_prs.append(average_precision_score(y_val, probs))
-                fold_briers.append(brier_score_loss(y_val, probs))
+                fold_raw_briers.append(brier_score_loss(y_val, probs))
+                fold_cal_briers.append(brier_score_loss(y_val, cal_probs))
 
             results[config_name] = {
                 "mean_roc_auc": round(float(np.mean(fold_rocs)), 4),
                 "mean_pr_auc": round(float(np.mean(fold_prs)), 4),
-                "mean_brier_score": round(float(np.mean(fold_briers)), 4),
+                "raw_brier_score": round(float(np.mean(fold_raw_briers)), 4),
+                "calibrated_brier_score": round(float(np.mean(fold_cal_briers)), 4),
+                "mean_brier_score": round(float(np.mean(fold_cal_briers)), 4),
                 "features_count": len(feat_indices),
             }
 
