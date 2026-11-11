@@ -414,7 +414,9 @@ class AdvancedMultimodalIntelligenceService:
 
     def assess_product_multimodal(self, canonical_product_id: str) -> MultimodalPredictionOutput:
         """Executes calibrated multimodal inference with uncertainty bounds."""
-        X, y, masks, feats, p_ids = self.pipeline.build_feature_matrix()
+        if not hasattr(self, "_cached_matrix") or self._cached_matrix is None:
+            self._cached_matrix = self.pipeline.build_feature_matrix()
+        X, y, masks, feats, p_ids = self._cached_matrix
         if canonical_product_id not in p_ids:
             raise KeyError(f"Product '{canonical_product_id}' not found.")
 
