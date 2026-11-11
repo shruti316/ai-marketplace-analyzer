@@ -120,8 +120,8 @@ print(f"Risk Score: {assessment['calibrated_risk_probability']:.4f}")
 print(f"Confidence Interval: {assessment['confidence_interval']}")
 
 # Multi-product comparison
-comparison = engine.compare_products(["amazon_in_B000052YQN", "flipkart_FURFGV8GUGUGTGYH"])
-print(f"Recommended Winner: {comparison['winner_product_id']}")
+comparison = engine.compare_products(["amazon_in_B000052YQN", "amazon_in_B0000E3QL7"])
+print(f"Recommended Product: {comparison['recommended_product_id']}")
 ```
 
 ### Master REST API Server:
