@@ -2,11 +2,22 @@
 __pycache__/
 *.py[cod]
 *.pyo
+*.pyd
 
 # Virtual environment
 .venv/
 venv/
 env/
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Logs & temporary files
+*.log
+*.tmp
+scratch/
 
 # Jupyter
 .ipynb_checkpoints/
@@ -18,8 +29,17 @@ env/
 # OS files
 .DS_Store
 Thumbs.db
+desktop.ini
 
-# Large/raw datasets
+# Phase 3 Backend Preparation (Node.js / Build outputs)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+dist/
+build/
+
+# Large/raw datasets (Local caches)
 data/raw/
 
 # Generated processed datasets
@@ -28,7 +48,6 @@ data/processed/
 # Temporary/intermediate data
 data/interim/
 data/archive/
-scratch/
 
 # Local audit artifacts
 /audit_model_fields.py
