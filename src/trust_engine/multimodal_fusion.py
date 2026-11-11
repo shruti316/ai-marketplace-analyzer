@@ -17,6 +17,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 from src.trust_engine.contracts import (
     EvidenceModality,
     ModalityAssessment,
+    ModalityStatus,
     RiskTier,
     UnifiedEvidenceItem,
 )
@@ -55,6 +56,8 @@ class MultimodalFusionEngine:
                 evidence_count=0,
                 corroborating_evidence_ids=[],
                 limitations="Review modality absent; unassessed under Zero-Penalty Invariant.",
+                modality_status=ModalityStatus.UNAVAILABLE,
+                status_reason="No customer reviews observed in catalog crawl (Zero-Penalty Invariant applied).",
             )
 
         # De-duplicate correlated signals
@@ -88,6 +91,8 @@ class MultimodalFusionEngine:
             evidence_count=len(rev_items),
             corroborating_evidence_ids=corroborating_ids,
             limitations="Rule-based ABSA and MD5 hashing; lacks transformer context.",
+            modality_status=ModalityStatus.OBSERVED,
+            status_reason="Customer reviews processed and audited for sentiment and duplication.",
         )
 
     @classmethod
@@ -106,6 +111,8 @@ class MultimodalFusionEngine:
                 evidence_count=0,
                 corroborating_evidence_ids=[],
                 limitations="Image modality absent; unassessed under Zero-Penalty Invariant.",
+                modality_status=ModalityStatus.UNAVAILABLE,
+                status_reason="No hero image asset available in catalog crawl (Zero-Penalty Invariant applied).",
             )
 
         reuse_items = [it for it in img_items if it.evidence_type == "CROSS_PRODUCT_IMAGE_REUSE"]
@@ -129,6 +136,8 @@ class MultimodalFusionEngine:
             evidence_count=len(img_items),
             corroborating_evidence_ids=corroborating_ids,
             limitations="Centered ResNet-18 embeddings; does not assert malicious stock photo intent.",
+            modality_status=ModalityStatus.OBSERVED,
+            status_reason="Hero image verified and evaluated for cross-product visual reuse.",
         )
 
     @classmethod
@@ -147,6 +156,8 @@ class MultimodalFusionEngine:
                 evidence_count=0,
                 corroborating_evidence_ids=[],
                 limitations="Price modality absent.",
+                modality_status=ModalityStatus.UNAVAILABLE,
+                status_reason="No pricing observation available in catalog crawl.",
             )
 
         corridor_outliers = [it for it in p_items if it.evidence_type == "PRICE_CORRIDOR_OUTLIER"]
@@ -181,6 +192,8 @@ class MultimodalFusionEngine:
             evidence_count=len(p_items),
             corroborating_evidence_ids=corroborating_ids,
             limitations="Statistical dispersion; does not constitute legal proof of deceptive pricing.",
+            modality_status=ModalityStatus.OBSERVED,
+            status_reason="Observed price evaluated against subcategory corridor and declared MRP.",
         )
 
     @classmethod
@@ -199,6 +212,8 @@ class MultimodalFusionEngine:
             evidence_count=len(s_items),
             corroborating_evidence_ids=[it.evidence_id for it in s_items],
             limitations="Upstream crawl omitted merchant tax IDs; no individual seller risk claims asserted.",
+            modality_status=ModalityStatus.OBSERVED,
+            status_reason="Platform aggregate merchant fulfillment routing verified.",
         )
 
     @classmethod
@@ -226,7 +241,55 @@ class MultimodalFusionEngine:
             evidence_count=len(g_items),
             corroborating_evidence_ids=[it.evidence_id for it in shared_edges],
             limitations="Bipartite graph edge; indicates visual reuse rather than proven merchant collusion.",
+            modality_status=ModalityStatus.OBSERVED if g_items else ModalityStatus.UNAVAILABLE,
+            status_reason="Graph topology and entity relationships evaluated for shared assets.",
         )
+
+    @classmethod
+    def analyze_cross_modal_correlation(
+        cls,
+        evidence_items: List[UnifiedEvidenceItem],
+    ) -> Tuple[List[Dict[str, Any]], int]:
+        """
+        Analyzes cross-modal correlation across evidence items to distinguish
+        distinct physical events from multi-view representations of the same event.
+        Returns:
+            (correlated_findings, independent_corroboration_count)
+        """
+        # Group active anomaly evidence items by (evidence_event_id, correlation_group_id)
+        event_modality_map = defaultdict(set)
+        active_modalities = set()
+
+        for item in evidence_items:
+            mod_name = item.evidence_modality.value if hasattr(item.evidence_modality, "value") else str(item.evidence_modality)
+            if item.signal_severity in {"MEDIUM", "HIGH"}:
+                active_modalities.add(mod_name)
+                if item.evidence_event_id and item.correlation_group_id:
+                    event_modality_map[(item.evidence_event_id, item.correlation_group_id)].add(mod_name)
+
+        correlated_findings: List[Dict[str, Any]] = []
+        subsumed_modalities = set()
+
+        for (event_id, corr_grp), mods in event_modality_map.items():
+            if len(mods) > 1:
+                sorted_mods = sorted(list(mods))
+                correlated_findings.append({
+                    "event_id": event_id,
+                    "correlation_group_id": corr_grp,
+                    "modalities": sorted_mods,
+                    "is_single_physical_event": True,
+                    "explanation": (
+                        f"Modalities {sorted_mods} both observe the same physical event ({event_id}). "
+                        "This finding represents multiple views of a single asset link, not independent cross-modal corroboration."
+                    ),
+                })
+                # Modalities beyond the primary one are multi-views of the same event
+                for m in sorted_mods[1:]:
+                    subsumed_modalities.add(m)
+
+        # Independent physical corroboration count
+        independent_count = max(0, len(active_modalities) - len(subsumed_modalities))
+        return correlated_findings, independent_count
 
     @classmethod
     def fuse_assessments(

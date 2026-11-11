@@ -11,11 +11,19 @@ from src.trust_engine.contracts import (
     EvidenceNature,
     ListingTrustAssessment,
     ModalityAssessment,
+    ModalityStatus,
     ProductComparisonResult,
     ProductTrustAssessment,
     RiskTier,
     SellerTrustAssessment,
     UnifiedEvidenceItem,
+    VisualDuplicateCategory,
+    VisualEvidenceDetail,
+)
+from src.trust_engine.marketplace_policy import (
+    MarketplaceDecisionPolicy,
+    MarketplacePolicyConfig,
+    ThresholdValidationStatus,
 )
 from src.trust_engine.evidence_engine import UnifiedEvidenceEngine
 from src.trust_engine.graph_intelligence import GraphIntelligenceService
@@ -40,4 +48,10 @@ __all__ = [
     "EvidenceModality",
     "EvidenceNature",
     "RiskTier",
+    "ModalityStatus",
+    "VisualDuplicateCategory",
+    "VisualEvidenceDetail",
+    "MarketplaceDecisionPolicy",
+    "MarketplacePolicyConfig",
+    "ThresholdValidationStatus",
 ]

@@ -21,6 +21,7 @@ import pandas as pd
 from src.trust_engine.contracts import (
     EvidenceModality,
     EvidenceNature,
+    ModalityStatus,
     UnifiedEvidenceItem,
 )
 
@@ -70,6 +71,14 @@ class UnifiedEvidenceEngine:
         self.image_feat_df = pd.read_parquet(derived_dir / "image_intelligence_features.parquet")
         self.image_pairs_df = pd.read_parquet(derived_dir / "image_similarity_pairs.parquet")
 
+        # CLIP alignment
+        clip_v1_1_path = derived_dir / "image_text_consistency_v1_1.parquet"
+        if clip_v1_1_path.exists():
+            self.clip_df = pd.read_parquet(clip_v1_1_path)
+        else:
+            clip_v1_0_path = derived_dir / "image_text_consistency.parquet"
+            self.clip_df = pd.read_parquet(clip_v1_0_path) if clip_v1_0_path.exists() else pd.DataFrame()
+
         # Graph Relationships
         self.relationships_df = pd.read_parquet(rel_dir / "entity_relationships.parquet")
 
@@ -79,6 +88,11 @@ class UnifiedEvidenceEngine:
         self.pricing_by_product = self.pricing_features_df.set_index("canonical_product_id").to_dict(orient="index")
         self.sellers_by_id = self.sellers_df.set_index("seller_id").to_dict(orient="index")
         self.seller_feats_by_id = self.seller_features_df.set_index("seller_id").to_dict(orient="index")
+        self.clip_by_product = (
+            self.clip_df.set_index("canonical_product_id").to_dict(orient="index")
+            if (not self.clip_df.empty and "canonical_product_id" in self.clip_df.columns)
+            else {}
+        )
 
         self.listings_by_product = defaultdict(list)
         for r in self.listings_df.to_dict("records"):
@@ -97,6 +111,18 @@ class UnifiedEvidenceEngine:
         for r in self.relationships_df.to_dict("records"):
             self.graph_outbound[r["source_entity_id"]].append(r)
             self.graph_inbound[r["target_entity_id"]].append(r)
+
+        # Index visual clusters and peers for event-level provenance
+        self.product_to_visual_cluster = {}
+        self.cluster_to_products = defaultdict(list)
+        for r in self.image_feat_df.to_dict("records"):
+            cid = r.get("visual_cluster_id")
+            pid = r.get("canonical_product_id")
+            if cid and pd.notna(cid) and pid:
+                cid_str = str(cid)
+                self.product_to_visual_cluster[pid] = cid_str
+                if pid not in self.cluster_to_products[cid_str]:
+                    self.cluster_to_products[cid_str].append(pid)
 
         logger.info("Dataset tables and indexed lookups successfully loaded.")
 
@@ -264,10 +290,15 @@ class UnifiedEvidenceEngine:
                     timestamp=now_ts,
                     modality_available=True,
                     evidence_limitations="Physical resolution varies across catalog crawl years.",
+                    source_reference=f"CATALOG_IMAGE_ASSET:{iid}",
+                    modality_status=ModalityStatus.OBSERVED,
                 ))
 
                 # Cross-product reuse heuristic / model signal
                 if is_reuse:
+                    cluster_str = self.product_to_visual_cluster.get(canonical_product_id) or str(img.get("visual_cluster_id", "CLUSTER_SHARED"))
+                    event_id = f"EVENT_VISUAL_REUSE_{cluster_str}"
+                    peers = [p for p in self.cluster_to_products.get(cluster_str, []) if p != canonical_product_id]
                     evidence_items.append(UnifiedEvidenceItem(
                         evidence_id=f"ev_img_reuse_{iid}",
                         entity_id=iid,
@@ -276,7 +307,7 @@ class UnifiedEvidenceEngine:
                         evidence_modality=EvidenceModality.IMAGE_CV,
                         evidence_type="CROSS_PRODUCT_IMAGE_REUSE",
                         evidence_nature=EvidenceNature.MODEL_PREDICTION,
-                        observed_value=f"Visual Cluster: {img.get('visual_cluster_id', 'none')}",
+                        observed_value=f"Visual Cluster: {cluster_str}",
                         signal_severity="MEDIUM",
                         detection_method="RESNET18_CENTERED_COSINE_SIMILARITY",
                         confidence=0.95,
@@ -285,6 +316,11 @@ class UnifiedEvidenceEngine:
                         timestamp=now_ts,
                         modality_available=True,
                         evidence_limitations="Authorized OEM distributors may legitimately share stock hero images.",
+                        evidence_event_id=event_id,
+                        correlation_group_id="CORR_CROSS_PRODUCT_IMAGE_ASSET",
+                        related_product_ids=peers,
+                        source_reference=f"DERIVED_EVIDENCE_IMAGE_INTELLIGENCE:{iid}",
+                        modality_status=ModalityStatus.OBSERVED,
                     ))
         else:
             evidence_items.append(UnifiedEvidenceItem(
@@ -304,6 +340,8 @@ class UnifiedEvidenceEngine:
                 timestamp=now_ts,
                 modality_available=False,
                 evidence_limitations="Absence of image incurs zero penalty under Zero-Penalty Invariant.",
+                source_reference="CATALOG_METADATA_EMPTY",
+                modality_status=ModalityStatus.UNAVAILABLE,
             ))
 
         # ------------------------------------------------------------------
@@ -446,6 +484,8 @@ class UnifiedEvidenceEngine:
             for edge in shared_img_edges:
                 peer_id = edge["target_entity_id"] if edge["source_entity_id"] == canonical_product_id else edge["source_entity_id"]
                 score = float(edge.get("relationship_confidence", 0.95))
+                cluster_str = self.product_to_visual_cluster.get(canonical_product_id) or self.product_to_visual_cluster.get(peer_id) or "CLUSTER_SHARED"
+                event_id = f"EVENT_VISUAL_REUSE_{cluster_str}"
                 evidence_items.append(UnifiedEvidenceItem(
                     evidence_id=f"ev_graph_shared_img_{canonical_product_id}_{peer_id}",
                     entity_id=edge["relationship_id"],
@@ -463,6 +503,11 @@ class UnifiedEvidenceEngine:
                     timestamp=now_ts,
                     modality_available=True,
                     evidence_limitations="Graph edge indicates identical visual asset; does not assert malicious collusion.",
+                    evidence_event_id=event_id,
+                    correlation_group_id="CORR_CROSS_PRODUCT_IMAGE_ASSET",
+                    related_product_ids=[peer_id],
+                    source_reference=f"ENTITY_RELATIONSHIPS:{edge['relationship_id']}",
+                    modality_status=ModalityStatus.OBSERVED,
                 ))
 
         # ------------------------------------------------------------------
@@ -485,6 +530,8 @@ class UnifiedEvidenceEngine:
             timestamp=now_ts,
             modality_available=False,
             evidence_limitations="Physical OCR text safely blocked to avoid synthetic fabrication.",
+            source_reference="SYSTEM_ENVIRONMENT:OFFLINE_SANDBOX",
+            modality_status=ModalityStatus.PROCESSING_FAILED,
         ))
 
         return evidence_items

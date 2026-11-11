@@ -196,6 +196,39 @@ class WordBox:
 
 
 @dataclass
+class OCRConfidenceRecord:
+    """Field-level OCR extraction confidence and validation breakdown."""
+    overall_text_confidence: float
+    mrp_detected: Optional[float]
+    mrp_confidence: float
+    net_quantity: Optional[str]
+    net_quantity_confidence: float
+    batch_code: Optional[str]
+    batch_code_confidence: float
+    brand_alignment_status: str
+    brand_match_confidence: float
+    processing_status: str  # OBSERVED, NO_TEXT_DETECTED, OFFLINE_DEPENDENCY_ABSENT, FILE_NOT_FOUND, PROCESSING_FAILED
+    failure_reason: Optional[str] = None
+    zero_penalty_applied: bool = True  # Strict Zero-Penalty guarantee: OCR absence/failure never inflates risk
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "overall_text_confidence": round(self.overall_text_confidence, 4),
+            "mrp_detected": self.mrp_detected,
+            "mrp_confidence": round(self.mrp_confidence, 4),
+            "net_quantity": self.net_quantity,
+            "net_quantity_confidence": round(self.net_quantity_confidence, 4),
+            "batch_code": self.batch_code,
+            "batch_code_confidence": round(self.batch_code_confidence, 4),
+            "brand_alignment_status": self.brand_alignment_status,
+            "brand_match_confidence": round(self.brand_match_confidence, 4),
+            "processing_status": self.processing_status,
+            "failure_reason": self.failure_reason,
+            "zero_penalty_applied": self.zero_penalty_applied,
+        }
+
+
+@dataclass
 class OCRResult:
     image_id: str
     canonical_product_id: str
@@ -245,6 +278,48 @@ class PhysicalOCREngine:
             except (ImportError, Exception):
                 logger.info("Neither winocr nor pytesseract is available; OCR will return neutral status.")
 
+    @staticmethod
+    def build_confidence_record(raw_result: Dict[str, Any]) -> OCRConfidenceRecord:
+        """Builds strongly-typed OCRConfidenceRecord from raw extraction dictionary."""
+        status = raw_result.get("processing_status", "UNKNOWN")
+        if status == "SUCCESS":
+            std_status = "OBSERVED"
+        elif status in {"UNSUPPORTED_PLATFORM", "OFFLINE_DEPENDENCY_ABSENT"}:
+            std_status = "OFFLINE_DEPENDENCY_ABSENT"
+        elif status == "FILE_NOT_FOUND":
+            std_status = "FILE_NOT_FOUND"
+        elif status == "NO_TEXT_DETECTED":
+            std_status = "NO_TEXT_DETECTED"
+        else:
+            std_status = "PROCESSING_FAILED"
+
+        mrp_val = raw_result.get("extracted_mrp")
+        mrp_conf = 0.95 if mrp_val is not None and mrp_val > 0 else 0.0
+
+        qty_val = raw_result.get("extracted_net_quantity")
+        qty_conf = 0.90 if qty_val is not None else 0.0
+
+        batch_val = raw_result.get("extracted_batch_code")
+        batch_conf = 0.85 if batch_val is not None else 0.0
+
+        brand_conf = float(raw_result.get("brand_confidence", 0.0))
+        text_conf = float(raw_result.get("confidence", 0.0))
+
+        return OCRConfidenceRecord(
+            overall_text_confidence=text_conf,
+            mrp_detected=mrp_val,
+            mrp_confidence=mrp_conf,
+            net_quantity=qty_val,
+            net_quantity_confidence=qty_conf,
+            batch_code=batch_val,
+            batch_code_confidence=batch_conf,
+            brand_alignment_status=str(raw_result.get("brand_alignment_status", "UNKNOWN")),
+            brand_match_confidence=brand_conf,
+            processing_status=std_status,
+            failure_reason=raw_result.get("failure_reason"),
+            zero_penalty_applied=True,
+        )
+
     def extract_text_from_image(
         self, image_path: Path, canonical_brand: Optional[str] = None, preprocess: bool = True
     ) -> Dict[str, Any]:
@@ -255,7 +330,7 @@ class PhysicalOCREngine:
             p = PROJECT_ROOT / p
 
         if not p.exists():
-            return {
+            res = {
                 "detected_text": "",
                 "word_count": 0,
                 "words": [],
@@ -273,9 +348,11 @@ class PhysicalOCREngine:
                 "failure_reason": f"File does not exist: {p}",
                 "processing_latency_ms": (time.time() - t0) * 1000,
             }
+            res["confidence_record"] = self.build_confidence_record(res).to_dict()
+            return res
 
         if not self._winocr_available and not self._tesseract_available:
-            return {
+            res = {
                 "detected_text": "",
                 "word_count": 0,
                 "words": [],
@@ -293,6 +370,8 @@ class PhysicalOCREngine:
                 "failure_reason": "No supported OCR engine (winocr or pytesseract) available on host environment.",
                 "processing_latency_ms": (time.time() - t0) * 1000,
             }
+            res["confidence_record"] = self.build_confidence_record(res).to_dict()
+            return res
 
         try:
             pil_img = Image.open(p).convert("RGB")
@@ -358,7 +437,7 @@ class PhysicalOCREngine:
 
             status = "SUCCESS" if word_count > 0 else "NO_TEXT_DETECTED"
 
-            return {
+            res = {
                 "detected_text": detected_text,
                 "word_count": word_count,
                 "words": words,
@@ -376,10 +455,12 @@ class PhysicalOCREngine:
                 "failure_reason": None,
                 "processing_latency_ms": round((time.time() - t0) * 1000, 2),
             }
+            res["confidence_record"] = self.build_confidence_record(res).to_dict()
+            return res
 
         except Exception as e:
             logger.error(f"OCR processing failed for {p}: {e}")
-            return {
+            res = {
                 "detected_text": "",
                 "word_count": 0,
                 "words": [],
@@ -393,6 +474,8 @@ class PhysicalOCREngine:
                 "failure_reason": str(e),
                 "processing_latency_ms": round((time.time() - t0) * 1000, 2),
             }
+            res["confidence_record"] = self.build_confidence_record(res).to_dict()
+            return res
 
     def process_dataset_cohort(self, limit: int = 100) -> pd.DataFrame:
         """Processes the 100 packaging image cohort and persists evidence."""

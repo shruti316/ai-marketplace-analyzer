@@ -29,6 +29,59 @@ class EvidenceModality(str, Enum):
     OCR = "OCR"
 
 
+class ModalityStatus(str, Enum):
+    """Operational availability status of a platform modality."""
+    OBSERVED = "OBSERVED"                      # Valid observations present and processed
+    UNAVAILABLE = "UNAVAILABLE"                # Data absent in catalog crawl (0 reviews, 0 images)
+    PROCESSING_FAILED = "PROCESSING_FAILED"    # Data present but processing/dependency failed
+    NOT_APPLICABLE = "NOT_APPLICABLE"          # Not applicable to this category/entity
+
+
+class VisualDuplicateCategory(str, Enum):
+    """6-tier visual duplicate taxonomy for marketplace image relationships."""
+    EXACT_DUPLICATE = "EXACT_DUPLICATE"                    # Bit-identical or dHash == 0
+    NEAR_DUPLICATE_LIGHTING = "NEAR_DUPLICATE_LIGHTING"    # Luminance/contrast shift, dHash <= 4
+    NEAR_DUPLICATE_CROP = "NEAR_DUPLICATE_CROP"            # Bounding box crop / aspect ratio shift
+    NEAR_DUPLICATE_ROTATION = "NEAR_DUPLICATE_ROTATION"    # Transposition / orientation variant
+    BRAND_CATALOG_HERO = "BRAND_CATALOG_HERO"              # Brand catalog stock photography across SKUs
+    DISTINCT = "DISTINCT"                                  # Independent visual assets
+
+
+@dataclass
+class VisualEvidenceDetail:
+    """Structured visual evidence explanation record (sanitized, no local host paths)."""
+    canonical_product_id: str
+    visual_asset_id: str
+    duplicate_category: VisualDuplicateCategory
+    clip_cosine_similarity: Optional[float] = None
+    clip_category_zscore: Optional[float] = None
+    is_category_discordant: bool = False
+    is_white_background: bool = True
+    blur_score: float = 0.0
+    contrast_std: float = 0.0
+    is_suitable_for_inference: bool = True
+    shared_product_ids: List[str] = field(default_factory=list)
+    sanitized_image_ref: str = ""
+    explanation: str = ""
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "canonical_product_id": self.canonical_product_id,
+            "visual_asset_id": self.visual_asset_id,
+            "duplicate_category": self.duplicate_category.value if isinstance(self.duplicate_category, Enum) else self.duplicate_category,
+            "clip_cosine_similarity": round(self.clip_cosine_similarity, 4) if self.clip_cosine_similarity is not None else None,
+            "clip_category_zscore": round(self.clip_category_zscore, 3) if self.clip_category_zscore is not None else None,
+            "is_category_discordant": self.is_category_discordant,
+            "is_white_background": self.is_white_background,
+            "blur_score": round(self.blur_score, 2),
+            "contrast_std": round(self.contrast_std, 2),
+            "is_suitable_for_inference": self.is_suitable_for_inference,
+            "shared_product_ids": self.shared_product_ids,
+            "sanitized_image_ref": self.sanitized_image_ref,
+            "explanation": self.explanation,
+        }
+
+
 class RiskTier(str, Enum):
     """Explainable risk tiers. Strictly avoids uncalibrated pseudo-probabilities."""
     UNASSESSED_SPARSE_DATA = "UNASSESSED_SPARSE_DATA"
@@ -56,6 +109,12 @@ class UnifiedEvidenceItem:
     timestamp: Optional[str]
     modality_available: bool
     evidence_limitations: str
+    # V1.1 Provenance, Correlation & Deduplication fields
+    evidence_event_id: Optional[str] = None
+    correlation_group_id: Optional[str] = None
+    related_product_ids: List[str] = field(default_factory=list)
+    source_reference: Optional[str] = None
+    modality_status: ModalityStatus = ModalityStatus.OBSERVED
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -75,6 +134,11 @@ class UnifiedEvidenceItem:
             "timestamp": self.timestamp,
             "modality_available": self.modality_available,
             "evidence_limitations": self.evidence_limitations,
+            "evidence_event_id": self.evidence_event_id,
+            "correlation_group_id": self.correlation_group_id,
+            "related_product_ids": self.related_product_ids,
+            "source_reference": self.source_reference,
+            "modality_status": self.modality_status.value if isinstance(self.modality_status, Enum) else self.modality_status,
         }
 
 
@@ -89,6 +153,9 @@ class ModalityAssessment:
     evidence_count: int
     corroborating_evidence_ids: List[str] = field(default_factory=list)
     limitations: str = ""
+    # V1.1 Transparency enhancements
+    modality_status: ModalityStatus = ModalityStatus.OBSERVED
+    status_reason: str = ""
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -100,6 +167,8 @@ class ModalityAssessment:
             "evidence_count": self.evidence_count,
             "corroborating_evidence_ids": self.corroborating_evidence_ids,
             "limitations": self.limitations,
+            "modality_status": self.modality_status.value if isinstance(self.modality_status, Enum) else self.modality_status,
+            "status_reason": self.status_reason,
         }
 
 
@@ -121,6 +190,10 @@ class ProductTrustAssessment:
     assessment_limitations: List[str]
     recommendation_summary: str
     assessment_framework: str = "EXPLAINABLE_MULTIMODAL_TRUST_ENGINE_V1_7"
+    # V1.1 Provenance & Deduplication fields
+    correlated_findings: List[Dict[str, Any]] = field(default_factory=list)
+    independent_corroboration_count: int = 0
+    visual_evidence_detail: Optional[VisualEvidenceDetail] = None
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -139,6 +212,9 @@ class ProductTrustAssessment:
             "assessment_limitations": self.assessment_limitations,
             "recommendation_summary": self.recommendation_summary,
             "assessment_framework": self.assessment_framework,
+            "correlated_findings": self.correlated_findings,
+            "independent_corroboration_count": self.independent_corroboration_count,
+            "visual_evidence_detail": self.visual_evidence_detail.to_dict() if self.visual_evidence_detail else None,
         }
 
 

@@ -70,6 +70,8 @@ class ExplainableReportGenerator:
                 "overall_risk_tier": asmt.overall_risk_tier.value,
                 "available_core_modalities_count": asmt.available_core_modalities_count,
                 "active_anomaly_modality_count": asmt.active_anomaly_modality_count,
+                "independent_corroboration_count": asmt.independent_corroboration_count,
+                "correlated_findings": asmt.correlated_findings,
                 "recommendation_summary": asmt.recommendation_summary,
                 "assessment_framework": asmt.assessment_framework,
             },
@@ -84,6 +86,7 @@ class ExplainableReportGenerator:
             "section_7_image_evidence": [
                 it.to_dict() for it in evidence_items if it.evidence_modality == EvidenceModality.IMAGE_CV
             ],
+            "section_7_visual_detail": asmt.visual_evidence_detail.to_dict() if asmt.visual_evidence_detail else None,
             "section_8_price_evidence": [
                 it.to_dict() for it in evidence_items if it.evidence_modality == EvidenceModality.PRICING
             ],
@@ -198,6 +201,12 @@ class ExplainableReportGenerator:
             "## 7. Supporting Image Evidence",
         ])
         img_ev = rep["section_7_image_evidence"]
+        vis_det = rep.get("section_7_visual_detail")
+        if vis_det:
+            md_lines.append(f"- **Visual Duplicate Taxonomy:** `{vis_det['duplicate_category']}` ({vis_det['explanation']})")
+            md_lines.append(f"- **Sanitized Asset Reference:** `{vis_det['sanitized_image_ref']}`")
+            if vis_det['clip_cosine_similarity'] is not None:
+                md_lines.append(f"- **CLIP Semantic Alignment:** cosine={vis_det['clip_cosine_similarity']:.4f} (discordant: {vis_det['is_category_discordant']})")
         if img_ev:
             for it in img_ev:
                 md_lines.append(f"- **[{it['evidence_type']}]** ({it['evidence_nature']}): `{it['observed_value']}` | *Method:* {it['detection_method']}")
