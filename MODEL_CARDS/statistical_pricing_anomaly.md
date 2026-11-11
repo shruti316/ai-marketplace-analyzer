@@ -2,7 +2,7 @@
 
 ## Model Details
 - **Model Name:** Non-Parametric Robust Pricing Corridor Analyzer
-- **Model Version:** 1.2.0
+- **Model Version:** 1.2.1 (ML V1.0 Release Freeze)
 - **Model Type:** Median Absolute Deviation (MAD) robust z-score estimator + dispersion tracker
 - **Frameworks:** Python 3.11, SciPy, NumPy, Pandas
 - **Artifact:** Derived price corridor tables in `pricing_derived.parquet`
@@ -10,10 +10,12 @@
 ## Intended Use
 - Detect predatory discount inflation (fictitious MRPs showing artificial $80\%+$ markdowns).
 - Identify price volatility and unauthorized grey-market sellers through cross-seller dispersion metrics.
+- Prevent zero-width corridor collapse on identical pricing clusters via effective IQR floor clamping ($\max(\text{IQR}, 0.10 \times \text{median})$).
 
 ## Evaluation & Metrics
 - **Corridor Outlier Detection Margin:** Flags prices with $|z_{\text{MAD}}| \ge 3.0$.
 - **Dispersion Threshold:** Cross-seller price dispersion $> 0.60$.
+- **Statutory Invariant:** 0 MRP violations (selling price $\le$ declared statutory MRP).
 - **Ablation Performance:** Unimodal ROC-AUC $0.6828$, PR-AUC $0.1657$. Provides stable continuous signals when fused into the multimodal network.
 
 ## Limitations

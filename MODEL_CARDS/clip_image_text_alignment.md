@@ -2,17 +2,18 @@
 
 ## Model Details
 - **Model Name:** CLIP ViT-B/32 Cross-Modal Consistency Engine
-- **Model Version:** 1.2.0
+- **Model Version:** 1.3.0 (ML V1.0 Release Freeze)
 - **Model Type:** Pretrained Contrastive Vision-Language Dual Encoder (OpenAI ViT-B/32)
 - **Frameworks:** PyTorch 2.1+, HuggingFace Transformers, NumPy
-- **Artifact:** Zero-shot cross-modal embeddings cached in `image_text_consistency.parquet`
+- **Artifact:** Zero-shot cross-modal embeddings cached in `image_text_consistency.parquet` (expanded across all 2,432 products with usable images on disk)
 
 ## Intended Use
 - Detect semantic divergence between product hero images and declared listing titles (e.g., face cream image paired with audio headphone title).
 - Flag cross-modal discordance where cosine similarity falls below the empirical catalog threshold ($0.20$).
 
 ## Evaluation & Empirical Benchmarks
-- **Negative Sample Methodology:** 100 authentic empirical catalog pairs (50 cross-category mismatches, 50 intra-category hard negatives).
+- **Catalog Coverage:** 2,432 catalog products with images on disk processed through batch inference.
+- **Negative Sample Methodology:** 100 authentic empirical catalog benchmark pairs (50 cross-category mismatches, 50 intra-category hard negatives).
 - **Matched Pair Cosine Mean:** $0.3389 \pm 0.0412$
 - **Hard-Negative Cosine Mean:** $0.1850 \pm 0.0380$
 - **Empirical Separation Margin:** $+0.1824$

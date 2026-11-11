@@ -1,0 +1,99 @@
+{
+  "timestamp": "2026-11-11T07:40:52.845462+00:00",
+  "seed": 42,
+  "dry_run": true,
+  "promote": false,
+  "stages_completed": [
+    "stage_1_environment_check",
+    "stage_2_dataset_manifest_audit",
+    "stage_3_feature_matrix_assembly",
+    "stage_5_ablation_benchmarking",
+    "stage_6_inference_smoke_tests"
+  ],
+  "metrics": {
+    "catalog_products": 3643,
+    "positive_target_count": 154,
+    "ablations": {
+      "Full_Multimodal_Gated_Model": {
+        "mean_roc_auc": 0.9743,
+        "mean_pr_auc": 0.6883,
+        "raw_brier_score": 0.0745,
+        "calibrated_brier_score": 0.0228,
+        "mean_brier_score": 0.0228,
+        "features_count": 13
+      },
+      "Pricing_Only": {
+        "mean_roc_auc": 0.6828,
+        "mean_pr_auc": 0.1657,
+        "raw_brier_score": 0.1629,
+        "calibrated_brier_score": 0.041,
+        "mean_brier_score": 0.041,
+        "features_count": 3
+      },
+      "Review_NLP_Only": {
+        "mean_roc_auc": 0.5074,
+        "mean_pr_auc": 0.0571,
+        "raw_brier_score": 0.2355,
+        "calibrated_brier_score": 0.0429,
+        "mean_brier_score": 0.0429,
+        "features_count": 4
+      },
+      "Vision_Only": {
+        "mean_roc_auc": 0.7656,
+        "mean_pr_auc": 0.1887,
+        "raw_brier_score": 0.173,
+        "calibrated_brier_score": 0.0369,
+        "mean_brier_score": 0.0369,
+        "features_count": 2
+      },
+      "CLIP_Only": {
+        "mean_roc_auc": 0.5022,
+        "mean_pr_auc": 0.0425,
+        "raw_brier_score": 0.25,
+        "calibrated_brier_score": 0.0405,
+        "mean_brier_score": 0.0405,
+        "features_count": 2
+      },
+      "Graph_Only": {
+        "mean_roc_auc": 0.9755,
+        "mean_pr_auc": 0.717,
+        "raw_brier_score": 0.0709,
+        "calibrated_brier_score": 0.0188,
+        "mean_brier_score": 0.0188,
+        "features_count": 2
+      },
+      "Ablation_Drop_Pricing": {
+        "mean_roc_auc": 0.9772,
+        "mean_pr_auc": 0.7253,
+        "raw_brier_score": 0.0723,
+        "calibrated_brier_score": 0.0188,
+        "mean_brier_score": 0.0188,
+        "features_count": 10
+      },
+      "Ablation_Drop_Review": {
+        "mean_roc_auc": 0.9712,
+        "mean_pr_auc": 0.7221,
+        "raw_brier_score": 0.0663,
+        "calibrated_brier_score": 0.0205,
+        "mean_brier_score": 0.0205,
+        "features_count": 9
+      },
+      "Ablation_Drop_Vision": {
+        "mean_roc_auc": 0.9617,
+        "mean_pr_auc": 0.5556,
+        "raw_brier_score": 0.0935,
+        "calibrated_brier_score": 0.0264,
+        "mean_brier_score": 0.0264,
+        "features_count": 11
+      },
+      "Ablation_Drop_Graph": {
+        "mean_roc_auc": 0.8517,
+        "mean_pr_auc": 0.333,
+        "raw_brier_score": 0.1182,
+        "calibrated_brier_score": 0.0357,
+        "mean_brier_score": 0.0357,
+        "features_count": 11
+      }
+    }
+  }
+}

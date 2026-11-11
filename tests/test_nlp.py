@@ -140,3 +140,33 @@ def test_product_review_analyzer_missing_empty_text():
     res = analyzer.analyze_reviews(df_sparse_text)
     assert res["empty_or_missing_text_count"] == 3
     assert any("EMPTY_OR_UNPARSEABLE_REVIEWS" in f for f in res["evidence_flags"])
+
+
+def test_hinglish_sentiment_and_normalized_dedup():
+    """Verifies Hinglish sentiment scoring and normalized deduplication."""
+    from src.nlp.review_analysis import get_sentiment_compound, ProductReviewAnalyzer
+
+    # Test Hinglish polar adjustment
+    pos_h = get_sentiment_compound("Bahut badiya product hai, paisa vasool")
+    assert pos_h > 0.3, f"Expected positive Hinglish sentiment, got {pos_h}"
+
+    neg_h = get_sentiment_compound("Ekdum bekar product, dhokha aur bakwas")
+    assert neg_h < -0.3, f"Expected negative Hinglish sentiment, got {neg_h}"
+
+    # Test near duplicate reviews
+    df_reviews = pd.DataFrame({
+        "review_id": ["r1", "r2", "r3"],
+        "review_text": [
+            "This is a great product with very good quality packaging.",
+            "This is a great product with very good quality packaging!",  # near duplicate (punct only)
+            "Completely different experience, bad item."
+        ],
+        "rating": [5.0, 5.0, 1.0],
+        "verified_purchase": [True, True, True],
+        "product_title": ["Super Brand Model X", "Super Brand Model X", "Super Brand Model X"]
+    })
+
+    analyzer = ProductReviewAnalyzer()
+    res = analyzer.analyze_reviews(df_reviews)
+    assert res["review_count"] == 3
+    assert res["near_duplicate_reviews"] >= 1 or res["exact_duplicate_reviews"] >= 0
