@@ -91,3 +91,17 @@ class TrustIntelligenceEngine:
     def get_entity_subgraph(self, entity_id: str, depth: int = 1) -> Dict[str, Any]:
         """Extracts local egocentric graph around entity_id."""
         return self.graph_service.get_entity_subgraph(entity_id, depth=depth)
+
+    def assess_product_learned_multimodal(self, canonical_product_id: str) -> Dict[str, Any]:
+        """Performs advanced gated multimodal inference with calibrated confidence."""
+        if not hasattr(self, "_advanced_multimodal_service") or self._advanced_multimodal_service is None:
+            from src.models.advanced_multimodal_fusion import AdvancedMultimodalIntelligenceService
+            self._advanced_multimodal_service = AdvancedMultimodalIntelligenceService(self.evidence_engine.dataset_dir)
+        return self._advanced_multimodal_service.assess_product_multimodal(canonical_product_id).to_dict()
+
+    def get_modality_ablations(self) -> Dict[str, Any]:
+        """Returns empirical leave-one-out modality ablation metrics."""
+        if not hasattr(self, "_advanced_multimodal_service") or self._advanced_multimodal_service is None:
+            from src.models.advanced_multimodal_fusion import AdvancedMultimodalIntelligenceService
+            self._advanced_multimodal_service = AdvancedMultimodalIntelligenceService(self.evidence_engine.dataset_dir)
+        return self._advanced_multimodal_service.evaluate_modality_ablations()

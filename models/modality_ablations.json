@@ -1,0 +1,62 @@
+{
+  "Full_Multimodal_Gated_Model": {
+    "mean_roc_auc": 0.9732,
+    "mean_pr_auc": 0.6846,
+    "mean_brier_score": 0.0753,
+    "features_count": 13
+  },
+  "Pricing_Only": {
+    "mean_roc_auc": 0.6828,
+    "mean_pr_auc": 0.1657,
+    "mean_brier_score": 0.1629,
+    "features_count": 3
+  },
+  "Review_NLP_Only": {
+    "mean_roc_auc": 0.5074,
+    "mean_pr_auc": 0.0571,
+    "mean_brier_score": 0.2355,
+    "features_count": 4
+  },
+  "Vision_Only": {
+    "mean_roc_auc": 0.7656,
+    "mean_pr_auc": 0.1887,
+    "mean_brier_score": 0.173,
+    "features_count": 2
+  },
+  "CLIP_Only": {
+    "mean_roc_auc": 0.4986,
+    "mean_pr_auc": 0.0423,
+    "mean_brier_score": 0.246,
+    "features_count": 2
+  },
+  "Graph_Only": {
+    "mean_roc_auc": 0.9755,
+    "mean_pr_auc": 0.717,
+    "mean_brier_score": 0.0709,
+    "features_count": 2
+  },
+  "Ablation_Drop_Pricing": {
+    "mean_roc_auc": 0.9768,
+    "mean_pr_auc": 0.7176,
+    "mean_brier_score": 0.0724,
+    "features_count": 10
+  },
+  "Ablation_Drop_Review": {
+    "mean_roc_auc": 0.9719,
+    "mean_pr_auc": 0.7206,
+    "mean_brier_score": 0.0664,
+    "features_count": 9
+  },
+  "Ablation_Drop_Vision": {
+    "mean_roc_auc": 0.9607,
+    "mean_pr_auc": 0.5726,
+    "mean_brier_score": 0.0937,
+    "features_count": 11
+  },
+  "Ablation_Drop_Graph": {
+    "mean_roc_auc": 0.8483,
+    "mean_pr_auc": 0.3363,
+    "mean_brier_score": 0.118,
+    "features_count": 11
+  }
+}

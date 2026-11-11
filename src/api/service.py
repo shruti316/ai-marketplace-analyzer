@@ -56,6 +56,12 @@ class TrustIntelligenceDispatcher:
                 }
 
             # 2. Product Trust Assessment
+            elif clean_path.startswith("/api/v1/products/") and clean_path.endswith("/learned-multimodal"):
+                pid = clean_path.split("/")[4]
+                if pid not in self.engine.evidence_engine.products_df["canonical_product_id"].values:
+                    return 404, {"error": True, "status_code": 404, "message": f"Product '{pid}' not found in catalog."}
+                return 200, self.engine.assess_product_learned_multimodal(pid)
+
             elif clean_path.startswith("/api/v1/products/") and clean_path.endswith("/trust-assessment"):
                 pid = clean_path.split("/")[4]
                 if pid not in self.engine.evidence_engine.products_df["canonical_product_id"].values:
@@ -95,6 +101,10 @@ class TrustIntelligenceDispatcher:
                     return 404, {"error": True, "status_code": 404, "message": f"Seller '{sid}' not found in catalog."}
                 return 200, self.engine.assess_seller(sid)
 
+            # 7. Modality Ablation Studies
+            elif clean_path in ["/api/v1/ablations", "/ablations"]:
+                return 200, self.engine.get_modality_ablations()
+
             return 404, {"error": True, "status_code": 404, "message": f"Endpoint '{clean_path}' not found."}
 
         elif method == "POST":
@@ -133,6 +143,10 @@ class TrustIntelligenceDispatcher:
                     "zero_penalty_invariant_applied": core_count < 2,
                     "timestamp": time.time(),
                 }
+
+            # 7. Modality Ablation Studies
+            elif clean_path in ["/api/v1/ablations", "/ablations"]:
+                return 200, self.engine.get_modality_ablations()
 
             return 404, {"error": True, "status_code": 404, "message": f"Endpoint '{clean_path}' not found."}
 

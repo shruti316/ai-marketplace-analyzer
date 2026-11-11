@@ -1,83 +1,105 @@
-# AI-Powered Marketplace Trust Intelligence Platform
+# AI-Powered Indian Marketplace Trust Intelligence Platform
 
-An explainable, multimodal marketplace intelligence platform designed to analyze product listings, category-relative pricing, customer review patterns, and packaging visual signals across multiple categories and marketplaces.
-
----
-
-## 1. Project Scope & Architecture
-
-The platform assesses marketplace listings using multiple evidence sources and provides explainable, evidence-grounded risk signals, comparisons, and product intelligence.
-
-### Multi-Category Support:
-- **Electronics & Accessories** (Audio, Cameras, Computers, Cell Phones & Accessories)
-- **Beauty & Personal Care** (Cosmetics, Hair Care, Skin Care)
-- **Clothing, Shoes & Fashion** (Apparel, Footwear, Accessories)
-- **Home & Kitchen** (Appliances, Dining, Décor, Storage)
-- **Books & Stationery** (Books, Office Products)
-- **Toys & Games** (Board Games, Puzzles, Collectibles)
-
-### Multi-Marketplace Support:
-- **Amazon** (Full review text, star ratings, helpful votes, CloudFront image URLs)
-- **Walmart** (Product catalog listings, categories, model numbers, brands, prices)
-- **BestBuy** (Customer reviews, verified purchases, star ratings, submission dates)
+An explainable, evidence-grounded multimodal marketplace intelligence and trust evaluation platform designed for Indian e-commerce ecosystems (**Amazon India**, **Flipkart**, and **Myntra**).
 
 ---
 
-## 2. Core Intelligence Features
+## 1. Executive Overview & Multimodal Architecture
 
-1. **Category-Relative Price Anomaly Detection:** Robust statistics (Median, IQR, Tukey fences, MAD robust Z-scores) computed per category cohort to distinguish price dumping and price gouging.
-2. **Review Repetition & Similarity:** TF-IDF n-gram vectorization and cosine similarity ($\ge 0.80$) to surface copy-paste review clusters within the same listing.
-3. **Sentiment & Rating Discordance:** VADER sentiment polarity compared against star ratings to identify anomalous positive text with 1★ ratings or negative complaints with 5★ ratings.
-4. **Writing Style & Stylometry:** Evaluation of excessive capitalization, exclamation mark bursts, and repetitive punctuation.
-5. **Multimodal Visual & Packaging Consistency:** Cryptographic SHA-256 and perceptual dHash image hashing paired with native WinRT OCR text extraction to verify packaging-to-listing consistency.
-6. **Cautious Seller Modeling:** Strict isolation of brand display names from verified merchant account tokens.
-7. **Explainable Risk Engine:** Modular evidence synthesis producing risk tiers (LOW, MODERATE, ELEVATED, HIGH), confidence scores (0.0 to 1.0), and auditable evidence findings.
+The platform combines five heterogeneous modality evidence streams into a **Gated Multimodal Fusion Engine** with Modality Dropout ($p=0.25$) and Isotonic Probability Calibration:
 
----
+1. **Statistical Pricing Intelligence:** Non-parametric Median Absolute Deviation (MAD) robust z-scores, discount percentage distributions, and cross-seller price dispersion across 3,667 price observations.
+2. **Review NLP Intelligence:** VADER sentiment-rating discordance, verified purchase ratios, and 3-gram text duplicate shingling across 3,659 customer reviews.
+3. **Computer Vision Intelligence:** ResNet-18 512-dimensional visual embeddings, 64-bit dHash perceptual hashing, and SHA-256 bitwise duplicate detection across 4,708 catalog images (mAP: **$0.972$**).
+4. **Cross-Modal Vision-Language Alignment:** OpenAI CLIP ViT-B/32 cosine similarity evaluated against 100 empirical hard-negative catalog pairs (ROC-AUC: **$0.9962$**, Separation Margin: **$+0.1824$**).
+5. **Graph Network Intelligence:** Heterogeneous entity relationship graph across 41,372 edges connecting products, listings, brands, and sellers (PageRank, degree centrality, connected component isolation).
 
-## 3. Directory Layout
-
-```text
-ai-based-marketplace-analyzer/
-├── data/
-│   ├── dataset_manifest.json          → Machine-readable provenance and capability manifest
-│   ├── raw/                           → Immutable source data (Amazon, Walmart, BestBuy, Benchmarks, Images)
-│   ├── interim/                       → Relational dense cohorts, pricing cohort, image manifest
-│   └── processed/                     → Canonical products, reviews, and images
-├── docs/                              → Data dictionary, leakage guidelines, dataset selection
-├── notebooks/                         → Structured exploratory and experimental notebooks (01 to 04)
-├── reports/                           → Generated dataset audit and validation reports
-├── src/
-│   ├── data/                          → Canonical schema, acquisition, and normalization pipeline
-│   ├── features/                      → Category-relative pricing anomaly detection
-│   ├── nlp/                           → Review similarity, sentiment discordance, stylometry
-│   ├── vision/                        → Cryptographic & perceptual hashing, WinRT OCR consistency
-│   ├── risk/                          → Explainable multimodal risk scoring engine
-│   └── utils/                         → Reliable DNS fallback & download utilities
-├── tests/                             → Automated unit and integration test suite
-└── run_tests.py                       → Deterministic test runner
+```
+ +-----------------------------------------------------------------------------------------------+
+ |                              RAW EVIDENCE MODALITY STREAMS                                    |
+ |      Pricing (3D)  |  Review NLP (4D)  |  Vision (2D)  |  CLIP (2D)  |  Graph (2D)            |
+ +-----------------------------------------------------------------------------------------------+
+                                                |
+                                                v
+ +-----------------------------------------------------------------------------------------------+
+ |                 EXPLICIT MODALITY AVAILABILITY MASK  M in {0, 1}^5                             |
+ |                 Strict Zero-Penalty Invariant: Missing Modality (m_k = 0) -> 0.0              |
+ +-----------------------------------------------------------------------------------------------+
+                                                |
+                                                v
+ +-----------------------------------------------------------------------------------------------+
+ |                        GATED MULTIMODAL FUSION & MODDROP (p=0.25)                             |
+ |                     Non-Linear Ensemble with Isotonic Probability Calibration                 |
+ +-----------------------------------------------------------------------------------------------+
+                                                |
+                                                v
+ +-----------------------------------------------------------------------------------------------+
+ |                                  MULTI-TASK PREDICTION HEADS                                  |
+ |  Master Continuous Anomaly Score | Review Manipulation | Visual Duplicate | Price Corridor    |
+ +-----------------------------------------------------------------------------------------------+
+                                                |
+                                                v
+ +-----------------------------------------------------------------------------------------------+
+ |                            EPISTEMIC UNCERTAINTY QUANTIFICATION                               |
+ |                  Calibrated Confidence Interval: [max(0, P - w), min(1, P + w)]               |
+ |                  Dynamic Expansion: w = 0.05 + 0.10 * (5 - K_active) / 5                      |
+ +-----------------------------------------------------------------------------------------------+
 ```
 
 ---
 
-## 4. Execution Commands
+## 2. Empirical Benchmark & Ablation Highlights
 
-### Run Automated Tests
-```powershell
-.\.venv\Scripts\python.exe run_tests.py
+Evaluated across all 3,643 canonical catalog products using 5-fold Stratified Group Cross-Validation (`StratifiedGroupKFold`):
+
+| Configuration | Modalities Included | Features | Mean ROC-AUC | Mean PR-AUC | Mean Brier Score | Status |
+|:---|:---|:---:|:---:|:---:|:---:|:---:|
+| **Full Multimodal Gated Model** | **All 5 Streams** | **13** | **$0.9732$** | **$0.6846$** | **$0.0753$** | **Certified Baseline** |
+| **Pricing Only** | Pricing | 3 | $0.6828$ | $0.1657$ | $0.1629$ | Unimodal Baseline |
+| **Review NLP Only** | Review NLP | 4 | $0.5074$ | $0.0571$ | $0.2355$ | Unimodal Baseline |
+| **Vision Only** | Vision (ResNet-18 + dHash) | 2 | $0.7656$ | $0.1887$ | $0.1730$ | Unimodal Baseline |
+| **CLIP Only** | Vision-Language Alignment | 2 | $0.4986$ | $0.0423$ | $0.2460$ | Unimodal Baseline |
+| **Graph Only** | Graph Topology (PageRank + Degree) | 2 | $0.9755$ | $0.7170$ | $0.0709$ | Structural Backbone |
+| **Ablation: Drop Vision** | Pricing, Review, CLIP, Graph | 11 | $0.9607$ | $0.5726$ | $0.0937$ | $-16.4\%$ PR-AUC Drop |
+| **Ablation: Drop Graph** | Pricing, Review, Vision, CLIP | 11 | $0.8483$ | $0.3363$ | $0.1180$ | **$-50.9\%$ PR-AUC Collapse** |
+
+---
+
+## 3. Scientific Safeguards & Ethical Governance
+
+1. **Zero-Penalty Invariant:** Missing modalities are represented as neutral nulls ($m_k = 0$) and do not artificially trigger anomaly penalties.
+2. **Dynamic Epistemic Uncertainty:** Outputs include calibrated confidence intervals that dynamically expand when evidence is sparse ($w \in [\pm 0.05, \pm 0.15]$).
+3. **Strict Target Separation:** Observable statistical anomalies are strictly differentiated from confirmed legal fraud verdicts.
+4. **Blocked Models:**
+   - `Track 2 Gold Review Classifier`: Marked **BLOCKED — HUMAN ANNOTATION REQUIRED** due to sample sparsity (100 reviews).
+   - `Supervised Product Fraud Classifier`: Marked **BLOCKED — EXTERNAL DATA REQUIRED** due to lack of certified external enforcement data.
+
+---
+
+## 4. REST API & Inference Quickstart
+
+### In-Process Python SDK:
+```python
+from src.trust_engine.api_service import TrustIntelligenceEngine
+
+engine = TrustIntelligenceEngine()
+assessment = engine.assess_product_learned_multimodal("amazon_in_B000052YQN")
+print(assessment)
 ```
 
-### Run Dataset Integrity Validation
-```powershell
-.\.venv\Scripts\python.exe -m src.validate_dataset_integrity
-```
+### REST Endpoints:
+- `GET /api/v1/products/{product_id}/learned-multimodal`: Returns calibrated anomaly score, confidence interval, and multi-task heads.
+- `GET /api/v1/ablations`: Returns 5-fold cross-validated modality ablation metrics.
+- `GET /health`: Returns service health, dataset version (`v1.7`), and catalog entity statistics.
 
-### Rebuild Canonical Datasets
-```powershell
-.\.venv\Scripts\python.exe -m src.data.pipeline
-```
+---
 
-### Regenerate Dataset Manifest
-```powershell
-.\.venv\Scripts\python.exe -m src.generate_dataset_manifest
+## 5. Running Tests
+
+```bash
+# Run advanced multimodal test suite
+.venv\Scripts\python.exe -m pytest tests/test_advanced_multimodal_intelligence.py -v
+
+# Run full system regression test suite
+.venv\Scripts\python.exe -m pytest tests/
 ```
