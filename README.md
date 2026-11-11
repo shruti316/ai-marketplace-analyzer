@@ -4,7 +4,18 @@ An explainable, evidence-grounded multimodal marketplace intelligence and trust 
 
 ---
 
-## 1. Executive Overview & Multimodal Architecture
+## 1. Documentation Index
+
+- [System Architecture & Multimodal Data Flow](docs/architecture.md) — Mathematical foundations, 5-stream feature pipeline, and Zero-Penalty Invariant.
+- [Developer Setup & Testing Guide](docs/development.md) — Local environment configuration, test suite commands, and VS Code setup.
+- [ML Integration & API Contract](docs/ml-integration.md) — Python SDK, REST API endpoints, JSON schemas, and UI presentation policy.
+- [Production Model Cards](MODEL_CARDS/) — Technical specifications for the Gated Multimodal Fusion Engine and domain models.
+- [Phase 2 Scientific Evaluations](reports/phase_2_multimodal/) — Cross-validation ablations, calibration reports, and benchmark metrics.
+- [Backend Audit & Gap Analysis](reports/backend_audit/) — Phase 2 Stage 0 architecture proposals and system gaps.
+
+---
+
+## 2. Executive Overview & Multimodal Architecture
 
 The platform combines five heterogeneous modality evidence streams into a **Gated Multimodal Fusion Engine** with Modality Dropout ($p=0.25$) and Isotonic Probability Calibration:
 
@@ -48,7 +59,7 @@ The platform combines five heterogeneous modality evidence streams into a **Gate
 
 ---
 
-## 2. Empirical Benchmark & Ablation Highlights
+## 3. Empirical Benchmark & Ablation Highlights
 
 Evaluated across all 3,643 canonical catalog products using 5-fold Stratified Group Cross-Validation (`StratifiedGroupKFold`):
 
@@ -65,41 +76,69 @@ Evaluated across all 3,643 canonical catalog products using 5-fold Stratified Gr
 
 ---
 
-## 3. Scientific Safeguards & Ethical Governance
+## 4. Repository Structure
+
+```
+ai-based-marketplace-analyzer/
+├── .vscode/               # Portable workspace editor settings & extensions
+├── data/                  # Frozen catalog datasets & benchmarks
+├── docs/                  # System architecture, developer guides & API contracts
+├── manifests/             # Benchmark verification & split manifests
+├── models/                # Trained model artifacts & calibrators
+├── MODEL_CARDS/           # Production model cards for all active models
+├── notebooks/             # Exploratory analysis & evaluation notebooks
+├── reports/               # Archived audit findings & Phase 2 evaluations
+├── scripts/               # Training, evaluation & verification CLI tools
+├── src/                   # Active Python source code
+└── tests/                 # 534 unit, integration, and regression tests
+```
+
+---
+
+## 5. Scientific Safeguards & Ethical Governance
 
 1. **Zero-Penalty Invariant:** Missing modalities are represented as neutral nulls ($m_k = 0$) and do not artificially trigger anomaly penalties.
 2. **Dynamic Epistemic Uncertainty:** Outputs include calibrated confidence intervals that dynamically expand when evidence is sparse ($w \in [\pm 0.05, \pm 0.15]$).
-3. **Strict Target Separation:** Observable statistical anomalies are strictly differentiated from confirmed legal fraud verdicts.
+3. **Strict Target Separation:** Observable statistical anomalies are strictly differentiated from confirmed legal fraud verdicts. The model predicts a proxy target (`active_anomalies >= 2`), not verified counterfeits.
 4. **Blocked Models:**
    - `Track 2 Gold Review Classifier`: Marked **BLOCKED — HUMAN ANNOTATION REQUIRED** due to sample sparsity (100 reviews).
    - `Supervised Product Fraud Classifier`: Marked **BLOCKED — EXTERNAL DATA REQUIRED** due to lack of certified external enforcement data.
 
 ---
 
-## 4. REST API & Inference Quickstart
+## 6. Quickstart: Inference & Comparison
 
 ### In-Process Python SDK:
 ```python
 from src.trust_engine.api_service import TrustIntelligenceEngine
 
 engine = TrustIntelligenceEngine()
+
+# Single-product multimodal assessment
 assessment = engine.assess_product_learned_multimodal("amazon_in_B000052YQN")
-print(assessment)
+print(f"Risk Score: {assessment['calibrated_risk_probability']:.4f}")
+print(f"Confidence Interval: {assessment['confidence_interval']}")
+
+# Multi-product comparison
+comparison = engine.compare_products(["amazon_in_B000052YQN", "flipkart_FURFGV8GUGUGTGYH"])
+print(f"Recommended Winner: {comparison['winner_product_id']}")
 ```
 
-### REST Endpoints:
-- `GET /api/v1/products/{product_id}/learned-multimodal`: Returns calibrated anomaly score, confidence interval, and multi-task heads.
-- `GET /api/v1/ablations`: Returns 5-fold cross-validated modality ablation metrics.
-- `GET /health`: Returns service health, dataset version (`v1.7`), and catalog entity statistics.
+### Master REST API Server:
+```powershell
+python -m src.api.service
+```
+- `GET /api/v1/health`: Service health and catalog stats.
+- `GET /api/v1/products/{product_id}/learned-multimodal`: Calibrated anomaly score, confidence interval, and multi-task heads.
+- `POST /api/v1/products/compare`: Multi-product trust comparison.
+- `GET /api/v1/ablations`: Modality ablation metrics.
 
 ---
 
-## 5. Running Tests
+## 7. Running Tests
 
-```bash
-# Run advanced multimodal test suite
-.venv\Scripts\python.exe -m pytest tests/test_advanced_multimodal_intelligence.py -v
+Execute the full regression test suite:
 
-# Run full system regression test suite
-.venv\Scripts\python.exe -m pytest tests/
+```powershell
+python -m pytest tests/ -q
 ```
