@@ -13,8 +13,10 @@ Preserves the 5-stream binary availability mask M in {0, 1}^5 and Zero-Penalty I
 m_k = 0 ==> x_gated,k = 0
 """
 
+import json
 import logging
 from pathlib import Path
+import time
 from typing import Any, Dict, List, Optional, Tuple
 
 import joblib
@@ -269,3 +271,105 @@ class GatedMultimodalFusionModelV1_1(BaseEstimator, ClassifierMixin):
         """Binary risk prediction at threshold 0.50."""
         probs = self.predict_proba(X)[:, 1]
         return (probs >= 0.50).astype(int)
+
+
+class MultimodalIntelligenceServiceV1_1:
+    """Production inference service for Multimodal Vision V1.1."""
+
+    MODEL_ARTIFACT_PATH = PROJECT_ROOT / "models" / "v1_1" / "advanced_multimodal_gated_model_v1_1.joblib"
+    ABLATIONS_PATH = PROJECT_ROOT / "models" / "v1_1" / "modality_ablations_v1_1.json"
+
+    def __init__(self, dataset_dir: Optional[Path] = None):
+        self.dataset_dir = dataset_dir or DATASET_DIR
+        self.pipeline = MultimodalFeaturePipelineV1_1(self.dataset_dir)
+        self.model: Optional[GatedMultimodalFusionModelV1_1] = None
+        self.feature_names: List[str] = []
+        self._load_model()
+        self._X: Optional[np.ndarray] = None
+        self._y: Optional[np.ndarray] = None
+        self._masks: Optional[np.ndarray] = None
+        self._p_ids: Optional[List[str]] = None
+
+    def _load_model(self) -> None:
+        if self.MODEL_ARTIFACT_PATH.exists():
+            state = joblib.load(self.MODEL_ARTIFACT_PATH)
+            self.model = state["model"]
+            self.feature_names = state["feature_names"]
+            logger.info(f"Loaded Multimodal Vision V1.1 model from: {self.MODEL_ARTIFACT_PATH}")
+        else:
+            raise FileNotFoundError(f"V1.1 model artifact not found at {self.MODEL_ARTIFACT_PATH}")
+
+    def _ensure_data_cached(self) -> None:
+        if self._X is None:
+            self._X, self._y, self._masks, _, self._p_ids = self.pipeline.build_feature_matrix()
+
+    def assess_product_multimodal(self, canonical_product_id: str) -> Dict[str, Any]:
+        self._ensure_data_cached()
+        if self._p_ids is None or canonical_product_id not in self._p_ids:
+            raise ValueError(f"Product ID '{canonical_product_id}' not found in catalog.")
+
+        idx = self._p_ids.index(canonical_product_id)
+        x_vec = self._X[idx:idx+1]
+        m_vec = self._masks[idx]
+
+        probs = self.model.predict_proba(x_vec)[0]
+        risk_prob = float(probs[1])
+        active_mods = int(np.sum(m_vec))
+
+        # Heuristic missing-modality uncertainty interval
+        uncertainty_half_width = 0.05 + 0.10 * (5 - active_mods) / 5.0
+        ci_lower = max(0.0, risk_prob - uncertainty_half_width)
+        ci_upper = min(1.0, risk_prob + uncertainty_half_width)
+
+        # Modality contributions
+        contributions = {
+            "pricing": float(abs(x_vec[0, 2]) * m_vec[0]),
+            "review": float(abs(x_vec[0, 5]) * m_vec[1]),
+            "vision": float(x_vec[0, 8] * m_vec[2]),
+            "clip": float(x_vec[0, 13] * m_vec[3]),
+            "graph": float(x_vec[0, 14] * m_vec[4]),
+        }
+
+        # Multi-task heads
+        task_heads = {
+            "review_manipulation_risk": round(float(x_vec[0, 6] * 0.7 + x_vec[0, 5] * 0.3), 4),
+            "visual_duplicate_risk": round(float(x_vec[0, 8]), 4),
+            "price_corridor_risk": round(float(abs(x_vec[0, 2])), 4),
+            "cross_modal_discordance_risk": round(float(x_vec[0, 13]), 4),
+        }
+
+        if active_mods < 2:
+            tier = "UNASSESSED_SPARSE_DATA"
+        elif risk_prob >= 0.65:
+            tier = "ELEVATED_MULTIMODAL_ANOMALY"
+        elif risk_prob >= 0.35:
+            tier = "MODERATE_SINGLE_MODALITY_ANOMALY"
+        else:
+            tier = "LOW_OBSERVED_ANOMALY"
+
+        return {
+            "canonical_product_id": canonical_product_id,
+            "continuous_anomaly_score": round(risk_prob, 4),
+            "calibrated_risk_probability": round(risk_prob, 4),
+            "confidence_interval": [round(ci_lower, 4), round(ci_upper, 4)],
+            "predicted_risk_tier": tier,
+            "modality_availability": {
+                "pricing": bool(m_vec[0]),
+                "review": bool(m_vec[1]),
+                "image": bool(m_vec[2]),
+                "clip": bool(m_vec[3]),
+                "graph": bool(m_vec[4]),
+            },
+            "active_modalities_count": active_mods,
+            "modality_contributions": contributions,
+            "multi_task_risk_heads": task_heads,
+            "zero_penalty_invariant_applied": True,
+            "model_version": "1.1.0",
+            "assessment_timestamp": time.time(),
+        }
+
+    def evaluate_modality_ablations(self) -> Dict[str, Any]:
+        if self.ABLATIONS_PATH.exists():
+            with open(self.ABLATIONS_PATH, "r", encoding="utf-8") as f:
+                return json.load(f)
+        raise FileNotFoundError(f"Ablations cache not found at {self.ABLATIONS_PATH}")

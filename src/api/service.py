@@ -60,7 +60,8 @@ class TrustIntelligenceDispatcher:
                 pid = clean_path.split("/")[4]
                 if pid not in self.engine.evidence_engine.products_df["canonical_product_id"].values:
                     return 404, {"error": True, "status_code": 404, "message": f"Product '{pid}' not found in catalog."}
-                return 200, self.engine.assess_product_learned_multimodal(pid)
+                version = q.get("version", ["v1.0"])[0]
+                return 200, self.engine.assess_product_learned_multimodal(pid, version=version)
 
             elif clean_path.startswith("/api/v1/products/") and clean_path.endswith("/trust-assessment"):
                 pid = clean_path.split("/")[4]
@@ -103,7 +104,8 @@ class TrustIntelligenceDispatcher:
 
             # 7. Modality Ablation Studies
             elif clean_path in ["/api/v1/ablations", "/ablations"]:
-                return 200, self.engine.get_modality_ablations()
+                version = q.get("version", ["v1.0"])[0]
+                return 200, self.engine.get_modality_ablations(version=version)
 
             return 404, {"error": True, "status_code": 404, "message": f"Endpoint '{clean_path}' not found."}
 
@@ -146,7 +148,8 @@ class TrustIntelligenceDispatcher:
 
             # 7. Modality Ablation Studies
             elif clean_path in ["/api/v1/ablations", "/ablations"]:
-                return 200, self.engine.get_modality_ablations()
+                version = q.get("version", ["v1.0"])[0]
+                return 200, self.engine.get_modality_ablations(version=version)
 
             return 404, {"error": True, "status_code": 404, "message": f"Endpoint '{clean_path}' not found."}
 
