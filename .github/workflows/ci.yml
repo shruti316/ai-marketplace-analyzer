@@ -1,0 +1,49 @@
+name: ML CI & Invariant Verification
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        python-version: ["3.11"]
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Verify Model Artifact Checksums
+        shell: powershell
+        run: |
+          $v1_0 = (Get-FileHash models/advanced_multimodal_gated_model.joblib -Algorithm SHA256).Hash
+          $v1_1 = (Get-FileHash models/v1_1/advanced_multimodal_gated_model_v1_1.joblib -Algorithm SHA256).Hash
+          if ($v1_0 -ne "56F8304670C524B12A43F5BDE17D7AC6BF5E4EC16651079ED6BF246E141F9374") {
+              Write-Error "V1.0 Model Checksum Mismatch!"
+              exit 1
+          }
+          if ($v1_1 -ne "B7C00AFBCB54F5B05BBB8094746A7B3135DC01DA008EA3C1F0B7E49FC4F58564") {
+              Write-Error "V1.1 Model Checksum Mismatch!"
+              exit 1
+          }
+          Write-Host "Model checksums successfully verified."
+
+      - name: Execute Full Automated Test Suite
+        shell: powershell
+        run: |
+          python -m pytest tests/ -q --durations=10
