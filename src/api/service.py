@@ -7,6 +7,7 @@ error handling, health checks, and in-memory test dispatching using standard Pyt
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 import logging
+import os
 from pathlib import Path
 import sys
 import threading
@@ -83,26 +84,40 @@ class TrustIntelligenceDispatcher:
                 if pid not in self.engine.evidence_engine.products_df["canonical_product_id"].values:
                     return 404, {"error": True, "status_code": 404, "message": f"Product '{pid}' not found in catalog."}
                 fmt = q.get("format", ["json"])[0].lower()
-                report = self.engine.generate_explainable_report(pid, format="json" if fmt == "json" else "markdown")
+                report = self.engine.generate_report(pid, format_type="json" if fmt == "json" else "markdown")
                 if fmt == "markdown":
                     return 200, {"format": "markdown", "report_markdown": report}
                 return 200, report if isinstance(report, dict) else json.loads(report)
 
-            # 5. Listing Trust Assessment
+            # 5. Product Subgraph
+            elif clean_path.startswith("/api/v1/products/") and clean_path.endswith("/subgraph"):
+                pid = clean_path.split("/")[4]
+                if pid not in self.engine.evidence_engine.products_df["canonical_product_id"].values:
+                    return 404, {"error": True, "status_code": 404, "message": f"Product '{pid}' not found in catalog."}
+                depth_raw = q.get("depth", ["1"])[0]
+                try:
+                    depth = int(depth_raw)
+                    if depth < 1:
+                        return 400, {"error": True, "status_code": 400, "message": f"Depth must be a positive integer, got '{depth_raw}'."}
+                except (ValueError, TypeError):
+                    return 400, {"error": True, "status_code": 400, "message": f"Invalid depth parameter '{depth_raw}'. Must be an integer."}
+                return 200, self.engine.get_entity_subgraph(pid, depth=depth)
+
+            # 6. Listing Trust Assessment
             elif clean_path.startswith("/api/v1/listings/") and clean_path.endswith("/trust-assessment"):
                 lid = clean_path.split("/")[4]
                 if lid not in self.engine.evidence_engine.listings_df["listing_id"].values:
                     return 404, {"error": True, "status_code": 404, "message": f"Listing '{lid}' not found in catalog."}
                 return 200, self.engine.assess_listing(lid)
 
-            # 6. Seller Governance Assessment
+            # 7. Seller Governance Assessment
             elif clean_path.startswith("/api/v1/sellers/") and clean_path.endswith("/trust-assessment"):
                 sid = clean_path.split("/")[4]
                 if sid not in self.engine.evidence_engine.sellers_df["seller_id"].values:
                     return 404, {"error": True, "status_code": 404, "message": f"Seller '{sid}' not found in catalog."}
                 return 200, self.engine.assess_seller(sid)
 
-            # 7. Modality Ablation Studies
+            # 8. Modality Ablation Studies
             elif clean_path in ["/api/v1/ablations", "/ablations"]:
                 version = q.get("version", ["v1.0"])[0]
                 return 200, self.engine.get_modality_ablations(version=version)
@@ -111,7 +126,7 @@ class TrustIntelligenceDispatcher:
 
         elif method == "POST":
             # 1. Product Comparison
-            if clean_path in ["/api/v1/compare"]:
+            if clean_path in ["/api/v1/compare", "/api/v1/products/compare"]:
                 pids = (payload or {}).get("canonical_product_ids", [])
                 if not isinstance(pids, list) or len(pids) == 0:
                     return 400, {"error": True, "status_code": 400, "message": "Payload must contain a non-empty 'canonical_product_ids' list."}
@@ -202,9 +217,15 @@ class TrustIntelligenceRequestHandler(BaseHTTPRequestHandler):
 class TrustIntelligenceRestServer:
     """Manages the REST API dispatcher and optional TCP HTTP server."""
 
-    def __init__(self, host: str = "127.0.0.1", port: int = 8080, dataset_dir: Optional[Path] = None, bind_socket: bool = True):
-        self.host = host
-        self.port = port
+    def __init__(
+        self,
+        host: Optional[str] = None,
+        port: Optional[int] = None,
+        dataset_dir: Optional[Path] = None,
+        bind_socket: bool = True,
+    ):
+        self.host = host if host is not None else os.environ.get("SERVICE_HOST", "127.0.0.1")
+        self.port = int(port if port is not None else os.environ.get("SERVICE_PORT", "8000"))
         self.dispatcher = TrustIntelligenceDispatcher(dataset_dir)
         TrustIntelligenceRequestHandler.dispatcher = self.dispatcher
         self.httpd: Optional[HTTPServer] = None
@@ -230,13 +251,21 @@ class TrustIntelligenceRestServer:
             logger.info("REST API Server stopped.")
 
 
-def create_app_server(host: str = "127.0.0.1", port: int = 8080, bind_socket: bool = True) -> TrustIntelligenceRestServer:
-    return TrustIntelligenceRestServer(host, port, bind_socket=bind_socket)
+def create_app_server(
+    host: Optional[str] = None,
+    port: Optional[int] = None,
+    bind_socket: bool = True,
+) -> TrustIntelligenceRestServer:
+    resolved_host = host if host is not None else os.environ.get("SERVICE_HOST", "127.0.0.1")
+    resolved_port = int(port if port is not None else os.environ.get("SERVICE_PORT", "8000"))
+    return TrustIntelligenceRestServer(host=resolved_host, port=resolved_port, bind_socket=bind_socket)
 
 
 if __name__ == "__main__":
-    server = create_app_server(port=8080, bind_socket=True)
-    print("Serving Trust Intelligence REST API on port 8080. Press Ctrl+C to stop.")
+    host = os.environ.get("SERVICE_HOST", "127.0.0.1")
+    port = int(os.environ.get("SERVICE_PORT", "8000"))
+    server = create_app_server(host=host, port=port, bind_socket=True)
+    print(f"Serving Trust Intelligence REST API on http://{host}:{port}. Press Ctrl+C to stop.")
     try:
         server.httpd.serve_forever()
     except KeyboardInterrupt:
