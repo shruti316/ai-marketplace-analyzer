@@ -253,14 +253,16 @@ export class DatasetSeeder {
     const rows: unknown[][] = [];
     for (const item of rawData) {
       const ts = normalizeTimestamp((item.created_at as string) || '2026-11-06T00:00:00.000Z');
+      const isIndividual = item.seller_type === 'VERIFIED_MERCHANT' && Boolean(item.is_individual_merchant);
+      const platformId = item.platform_id === 'PLATFORM_MULTI' ? 'PLATFORM_AMAZON_IN' : item.platform_id;
       rows.push([
         item.seller_id,
-        item.platform_id,
+        platformId,
         item.marketplace,
         item.seller_display_name,
         item.operator_entity || null,
         item.seller_type || 'PLATFORM_AGGREGATE',
-        Boolean(item.is_individual_merchant),
+        isIndividual,
         item.merchant_resolution_status || 'UNRESOLVED_AGGREGATE',
         item.registration_status || null,
         item.source_provenance || 'SELLER_CATALOG',
@@ -321,7 +323,7 @@ export class DatasetSeeder {
     const rows: unknown[][] = [];
     for (const item of rawData) {
       const ts = normalizeTimestamp((item.created_at as string) || '2026-11-06T00:00:00.000Z');
-      const attrJson = safeJsonStringify(item.extracted_attributes_json);
+      const attrJson = safeJsonStringify(item.extracted_attributes_json) || '{}';
       rows.push([
         item.canonical_product_id,
         item.platform_id,
@@ -333,7 +335,7 @@ export class DatasetSeeder {
         item.product_title || 'Untitled Product',
         item.category || 'General',
         item.subcategory || 'General',
-        item.product_description || null,
+        item.product_description || '',
         item.product_url || '',
         attrJson,
         Boolean(item.has_image),

@@ -1,7 +1,7 @@
 import { Pool } from 'mysql2/promise';
 import { DatasetSeeder } from './seeder';
 import { SeedReport, SeedOptions } from './types';
-import { getApplicationPool } from '../../src/config/database';
+import { getApplicationPool, closeApplicationPool } from '../../src/config/database';
 
 // =============================================================================
 // HISTORICAL DATASET SEED RUNNER (CLI & PROGRAMMATIC ENTRY)
@@ -79,8 +79,8 @@ if (require.main === module) {
   }
 
   (async () => {
+    let pool: Pool | undefined = undefined;
     try {
-      let pool: Pool | undefined = undefined;
       if (!dryRun) {
         pool = getApplicationPool();
       }
@@ -96,6 +96,10 @@ if (require.main === module) {
       const message = err instanceof Error ? err.message : String(err);
       console.error(`\n[FATAL SEED ERROR] ${message}`);
       process.exit(1);
+    } finally {
+      if (pool) {
+        await closeApplicationPool();
+      }
     }
   })();
 }
