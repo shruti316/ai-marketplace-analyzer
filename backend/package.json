@@ -1,0 +1,41 @@
+{
+  "name": "ai-marketplace-trust-backend",
+  "version": "1.0.0",
+  "description": "Backend API and database management service for AI-Powered Indian Marketplace Trust Intelligence Platform",
+  "main": "dist/src/index.js",
+  "type": "commonjs",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/src/index.js",
+    "test": "tsx tests/migration_runner.test.ts && tsx tests/seeder.test.ts",
+    "migrate": "tsx database/migrate.ts up",
+    "migrate:status": "tsx database/migrate.ts status",
+    "migrate:down": "tsx database/migrate.ts down",
+    "seed": "tsx database/seeds/index.ts --dry-run",
+    "seed:live": "tsx database/seeds/index.ts --live"
+  },
+  "keywords": [
+    "marketplace",
+    "trust-intelligence",
+    "mysql",
+    "express",
+    "typescript"
+  ],
+  "author": "Google DeepMind Project Team",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^5.0.1",
+    "mysql2": "^3.11.4",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.8.7",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3"
+  }
+}
