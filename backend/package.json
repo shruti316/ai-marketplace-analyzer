@@ -8,12 +8,18 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/src/index.js",
-    "test": "tsx tests/migration_runner.test.ts && tsx tests/seeder.test.ts",
+    "test": "tsx tests/migration_runner.test.ts && tsx tests/seeder.test.ts && tsx tests/app.test.ts && tsx tests/domain_api.test.ts && tsx tests/hardening.test.ts",
     "migrate": "tsx database/migrate.ts up",
     "migrate:status": "tsx database/migrate.ts status",
     "migrate:down": "tsx database/migrate.ts down",
     "seed": "tsx database/seeds/index.ts --dry-run",
-    "seed:live": "tsx database/seeds/index.ts --live"
+    "seed:live": "tsx database/seeds/index.ts --live",
+    "verify:schema": "tsx database/verify_live_schema.ts",
+    "inspect:cols": "tsx database/inspect_cols.ts",
+    "widen:brand": "tsx database/widen_brand_id.ts",
+    "check:counts": "tsx database/verify_table_counts.ts",
+    "verify:post-seed": "tsx database/verify_post_seed.ts",
+    "admin:provision": "tsx src/scripts/provision_admin.ts"
   },
   "keywords": [
     "marketplace",
@@ -25,15 +31,19 @@
   "author": "Google DeepMind Project Team",
   "license": "UNLICENSED",
   "dependencies": {
+    "@node-rs/argon2": "^2.2.2",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^5.0.1",
+    "express-rate-limit": "^8.7.4",
+    "jsonwebtoken": "^9.0.3",
     "mysql2": "^3.11.4",
     "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^22.8.7",
     "tsx": "^4.19.2",
     "typescript": "^5.6.3"

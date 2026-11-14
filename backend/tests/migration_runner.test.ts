@@ -1,7 +1,8 @@
 import assert from 'node:assert';
 import path from 'node:path';
+import fs from 'node:fs';
 import { discoverMigrations, calculateChecksum, runMigrationsDown } from '../database/migrate';
-import { envSchema, resetEnvCache } from '../src/config/env';
+import { envSchema, resetEnvCache, resolveEnvFilePath, loadEnv } from '../src/config/env';
 import { createMigrationPool } from '../src/config/database';
 
 console.log('Running backend unit tests...');
@@ -89,37 +90,103 @@ assert.strictEqual(invalidParsed.success, false, 'Invalid environment configurat
   console.log('PASS: Destructive down migration safety guard verified.');
 
   // ---------------------------------------------------------------------------
-  // Test 5: createMigrationPool Credential Enforcement (Offline Validation)
+  // Test 5: createMigrationPool Credential Enforcement & Protected Configuration (Offline Validation)
   // ---------------------------------------------------------------------------
-  // Case A: Missing MIGRATION_DB_USER throws descriptive error before connecting
-  let missingUserThrown = false;
+  const originalEnv = { ...process.env };
   try {
-    createMigrationPool({ user: '', password: 'some_password' });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : String(err);
-    if (message.includes('MIGRATION_DB_USER is required for migration operations')) {
-      missingUserThrown = true;
-    }
-  }
-  assert.strictEqual(missingUserThrown, true, 'createMigrationPool must reject missing MIGRATION_DB_USER');
+    // Case A: Missing MIGRATION_DB_USER throws descriptive error before connecting
+    delete process.env.MIGRATION_DB_USER;
+    delete process.env.MIGRATION_DB_PASSWORD;
+    resetEnvCache();
 
-  // Case B: Missing MIGRATION_DB_PASSWORD throws descriptive error before connecting
-  let missingPasswordThrown = false;
-  try {
-    createMigrationPool({ user: 'marketplace_migrator', password: '' });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : String(err);
-    if (message.includes('MIGRATION_DB_PASSWORD is required for migration operations')) {
-      missingPasswordThrown = true;
+    let missingUserThrown = false;
+    try {
+      createMigrationPool();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      if (message.includes('MIGRATION_DB_USER is required for migration operations')) {
+        missingUserThrown = true;
+      }
     }
-  }
-  assert.strictEqual(missingPasswordThrown, true, 'createMigrationPool must reject missing MIGRATION_DB_PASSWORD');
+    assert.strictEqual(missingUserThrown, true, 'createMigrationPool must reject missing MIGRATION_DB_USER');
 
-  // Case C: Provided valid migration credentials creates pool successfully without live connection
-  const pool = createMigrationPool({ user: 'marketplace_migrator', password: 'secure_password' });
-  assert.ok(pool, 'createMigrationPool must return a pool object when migration credentials are provided');
-  await pool.end();
-  console.log('PASS: createMigrationPool credential enforcement and offline validation verified.');
+    // Case B: Missing MIGRATION_DB_PASSWORD throws descriptive error before connecting
+    process.env.MIGRATION_DB_USER = 'marketplace_migrator';
+    delete process.env.MIGRATION_DB_PASSWORD;
+    resetEnvCache();
+
+    let missingPasswordThrown = false;
+    try {
+      createMigrationPool();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      if (message.includes('MIGRATION_DB_PASSWORD is required for migration operations')) {
+        missingPasswordThrown = true;
+      }
+    }
+    assert.strictEqual(missingPasswordThrown, true, 'createMigrationPool must reject missing MIGRATION_DB_PASSWORD');
+
+    // Setup valid migration credentials in environment for regression tests
+    process.env.MIGRATION_DB_USER = 'marketplace_migrator';
+    process.env.MIGRATION_DB_PASSWORD = 'secure_migration_password';
+    resetEnvCache();
+
+    // Case C: Regression tests - attempts to override protected configuration MUST be rejected
+    const protectedOverrideAttempts: Array<{ key: string; payload: any }> = [
+      { key: 'user', payload: { user: 'malicious_user' } },
+      { key: 'password', payload: { password: 'wrong_password' } },
+      { key: 'connectionLimit', payload: { connectionLimit: 10 } },
+      { key: 'multipleStatements', payload: { multipleStatements: false } },
+      { key: 'database', payload: { database: 'compromised_db' } },
+      { key: 'host', payload: { host: 'rogue_host' } },
+      { key: 'port', payload: { port: 9999 } }
+    ];
+
+    for (const { key, payload } of protectedOverrideAttempts) {
+      let rejected = false;
+      try {
+        createMigrationPool(payload);
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        if (message.includes(`Attempted to override protected migration pool property "${key}"`)) {
+          rejected = true;
+        }
+      }
+      assert.strictEqual(rejected, true, `createMigrationPool must reject attempts to override protected property "${key}"`);
+    }
+
+    // Case D: Valid migration credentials with safe option creates pool successfully without live connection
+    const pool = createMigrationPool({ connectTimeout: 15000 });
+    assert.ok(pool, 'createMigrationPool must return a pool object when migration credentials are provided with safe options');
+    await pool.end();
+    console.log('PASS: createMigrationPool credential enforcement, security overrides rejection, and offline validation verified.');
+  } finally {
+    process.env = { ...originalEnv };
+    resetEnvCache();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Test 6: Deterministic Environment File Resolution
+  // ---------------------------------------------------------------------------
+  const resolvedPath = resolveEnvFilePath();
+  assert.ok(resolvedPath, 'resolveEnvFilePath must find a valid .env file');
+  assert.ok(fs.existsSync(resolvedPath), 'Resolved .env file path must exist on disk');
+  assert.ok(resolvedPath.endsWith('.env'), 'Resolved file path must end with .env');
+  assert.ok(resolvedPath.includes('backend'), 'Resolved path must target backend/.env');
+
+  // Case A: Verify DOTENV_CONFIG_PATH override
+  const customEnvPath = path.resolve(__dirname, '../.env.example');
+  process.env.DOTENV_CONFIG_PATH = customEnvPath;
+  assert.strictEqual(resolveEnvFilePath(), customEnvPath, 'Explicit DOTENV_CONFIG_PATH must be respected');
+  delete process.env.DOTENV_CONFIG_PATH;
+
+  // Case B: Verify loadEnv preserves pre-existing environment variables
+  const sentinelKey = 'TEST_PRESERVE_PREEXISTING_VAR';
+  process.env[sentinelKey] = 'original_value';
+  loadEnv();
+  assert.strictEqual(process.env[sentinelKey], 'original_value', 'loadEnv must not overwrite pre-existing process.env variables');
+  delete process.env[sentinelKey];
+  console.log('PASS: Deterministic environment file path resolution and variable preservation verified.');
 
   console.log('ALL BACKEND UNIT TESTS PASSED (100%).');
 })();
