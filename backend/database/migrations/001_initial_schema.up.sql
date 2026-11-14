@@ -1,4 +1,4 @@
-- =============================================================================
+-- =============================================================================
 -- AI-Powered Indian Marketplace Trust Intelligence Platform
 -- Production Database Schema Specification (MySQL 8.0+)
 -- 16 Tables | Full Referential Integrity & Invariant Constraints
