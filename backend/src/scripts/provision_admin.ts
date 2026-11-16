@@ -23,6 +23,11 @@ export interface ProvisionResult {
   isActive: boolean;
 }
 
+export interface ResetPasswordOptions {
+  email: string;
+  password: string;
+}
+
 /**
  * Validates administrative email format against database constraints.
  */
@@ -131,63 +136,191 @@ export async function provisionAdmin(options: ProvisionAdminOptions): Promise<Pr
 }
 
 /**
- * Interactive masked password reader for secure terminal input.
+ * Resets an existing administrator's password using Argon2id.
+ * Validates invariants to ensure the historical bootstrap account is untouched.
  */
-async function promptHidden(query: string): Promise<string> {
-  return new Promise((resolve) => {
-    const rl = readline.createInterface({
-      input: process.stdin,
-      output: process.stdout
-    });
+export async function resetAdminPassword(options: ResetPasswordOptions): Promise<ProvisionResult> {
+  const email = options.email.trim().toLowerCase();
+  const password = options.password;
 
-    const stdin = process.stdin as any;
-    process.stdout.write(query);
+  validateAdminEmail(email);
+  validateAdminPassword(password);
 
-    let password = '';
-    if (process.stdin.isTTY) {
-      stdin.setRawMode(true);
-      const onData = (chunk: Buffer) => {
-        const char = chunk.toString();
-        if (char === '\n' || char === '\r' || char === '\u0004') {
-          stdin.setRawMode(false);
-          stdin.removeListener('data', onData);
-          process.stdout.write('\n');
-          rl.close();
-          resolve(password);
-        } else if (char === '\u0003') {
-          process.exit(1);
-        } else if (char === '\b' || char === '\x7f') {
-          if (password.length > 0) {
-            password = password.slice(0, -1);
-          }
-        } else {
-          password += char;
-        }
-      };
-      stdin.on('data', onData);
-    } else {
-      rl.question('', (answer) => {
-        rl.close();
-        resolve(answer.trim());
-      });
-    }
-  });
+  const pool = getApplicationPool();
+
+  const [existingUser] = await pool.query<RowDataPacket[]>(
+    'SELECT id, email, full_name, role, is_active FROM users WHERE email = ?',
+    [email]
+  );
+
+  if (existingUser.length === 0) {
+    throw new Error(`No user found with email "${email}".`);
+  }
+
+  if (existingUser[0].id === BOOTSTRAP_REVIEWER_ID) {
+    throw new Error(
+      'Refusing to activate or reassign the historical bootstrap reviewer account.'
+    );
+  }
+
+  const passwordHash = await hash(password);
+  const now = new Date();
+
+  await pool.query<ResultSetHeader>(
+    'UPDATE users SET password_hash = ?, is_active = 1, updated_at = ? WHERE id = ?',
+    [passwordHash, now, existingUser[0].id]
+  );
+
+  return {
+    userId: existingUser[0].id,
+    email: existingUser[0].email,
+    fullName: existingUser[0].full_name,
+    role: existingUser[0].role,
+    isActive: true
+  };
 }
 
 /**
- * Simple question prompter.
+ * Safe, robust interactive CLI session for PowerShell and terminal environments.
+ * Buffers incoming lines without closing or leaking the underlying standard streams.
  */
-async function prompt(query: string): Promise<string> {
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
-  });
-  return new Promise((resolve) => {
-    rl.question(query, (ans) => {
-      rl.close();
-      resolve(ans.trim());
+export class InteractiveCli {
+  private rl: readline.Interface | null = null;
+  private queue: string[] = [];
+  private pendingResolve: ((value: string) => void) | null = null;
+  private isClosed = false;
+
+  constructor() {
+    this.rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+      terminal: false
     });
-  });
+
+    this.rl.on('line', (line) => {
+      const trimmed = line.trim();
+      if (this.pendingResolve) {
+        const resolve = this.pendingResolve;
+        this.pendingResolve = null;
+        resolve(trimmed);
+      } else {
+        this.queue.push(trimmed);
+      }
+    });
+
+    this.rl.on('close', () => {
+      this.isClosed = true;
+      if (this.pendingResolve) {
+        const resolve = this.pendingResolve;
+        this.pendingResolve = null;
+        resolve('');
+      }
+    });
+  }
+
+  async ask(query: string): Promise<string> {
+    if (this.queue.length > 0) {
+      process.stdout.write(query);
+      const val = this.queue.shift()!;
+      process.stdout.write(val + '\n');
+      return val;
+    }
+    if (this.isClosed) {
+      return '';
+    }
+    process.stdout.write(query);
+    return new Promise((resolve) => {
+      this.pendingResolve = resolve;
+    });
+  }
+
+  async askHidden(query: string): Promise<string> {
+    // If not in TTY mode, fall back to buffered ask (for automated pipes / CI)
+    if (!process.stdin.isTTY) {
+      return this.ask(query);
+    }
+
+    return new Promise((resolve) => {
+      process.stdout.write(query);
+
+      if (this.rl) {
+        this.rl.pause();
+      }
+
+      const stdin = process.stdin;
+      const oldRaw = stdin.isRaw;
+      stdin.setRawMode(true);
+      stdin.resume();
+
+      let password = '';
+
+      const onData = (chunk: Buffer) => {
+        const str = chunk.toString('utf-8');
+
+        for (let i = 0; i < str.length; i++) {
+          const char = str[i];
+
+          // Enter key (\r or \n)
+          if (char === '\r' || char === '\n') {
+            cleanup();
+            process.stdout.write('\n');
+            resolve(password);
+            return;
+          }
+
+          // Ctrl+C
+          if (char === '\u0003') {
+            cleanup();
+            process.stdout.write('\n\n[CANCELLED] Operation cancelled by user.\n');
+            process.exit(130);
+          }
+
+          // Backspace (\b, \x7f, \x08)
+          if (char === '\b' || char === '\x7f' || char === '\x08') {
+            if (password.length > 0) {
+              password = password.slice(0, -1);
+              process.stdout.write('\b \b');
+            }
+            continue;
+          }
+
+          // Ignore ANSI escape codes
+          if (char === '\u001b') {
+            if (i + 1 < str.length && str[i + 1] === '[') {
+              i += 2;
+              while (i < str.length && str[i] >= '0' && str[i] <= '?') {
+                i++;
+              }
+            }
+            continue;
+          }
+
+          // Printable characters
+          if (char >= ' ' && char <= '~') {
+            password += char;
+            process.stdout.write('*');
+          }
+        }
+      };
+
+      const cleanup = () => {
+        stdin.removeListener('data', onData);
+        stdin.setRawMode(Boolean(oldRaw));
+        if (this.rl && !this.isClosed) {
+          this.rl.resume();
+        }
+      };
+
+      stdin.on('data', onData);
+    });
+  }
+
+  close(): void {
+    if (this.rl && !this.isClosed) {
+      this.rl.close();
+      this.isClosed = true;
+    }
+  }
 }
 
 /**
@@ -195,42 +328,227 @@ async function prompt(query: string): Promise<string> {
  */
 async function main() {
   const args = process.argv.slice(2);
-  const force = args.includes('--force');
+  let force = args.includes('--force');
+  const isReset = args.includes('--reset') || args.includes('--reset-password');
 
   // Extract optional flags
   const emailIdx = args.indexOf('--email');
   const nameIdx = args.indexOf('--name');
   const passEnvIdx = args.indexOf('--password-env');
 
-  let email = emailIdx !== -1 ? args[emailIdx + 1] : '';
-  let fullName = nameIdx !== -1 ? args[nameIdx + 1] : '';
+  let email = emailIdx !== -1 ? (args[emailIdx + 1] || '') : '';
+  let fullName = nameIdx !== -1 ? (args[nameIdx + 1] || '') : '';
   let password = '';
 
   if (passEnvIdx !== -1) {
     const envVarName = args[passEnvIdx + 1];
-    password = process.env[envVarName] || '';
+    password = (envVarName && process.env[envVarName]) ? process.env[envVarName]! : '';
   }
 
   console.log('=============================================================================');
   console.log('AI-Powered Indian Marketplace Trust Intelligence Platform');
-  console.log('Secure Offline Administrator Provisioning Tool');
+  console.log(isReset ? 'Secure Offline Administrator Password Reset Tool' : 'Secure Offline Administrator Provisioning Tool');
   console.log('=============================================================================');
 
+  const cli = new InteractiveCli();
+  const pool = getApplicationPool();
+
   try {
-    if (!email) {
-      email = await prompt('Enter administrator email: ');
+    // -------------------------------------------------------------------------
+    // PASSWORD RESET WORKFLOW (--reset)
+    // -------------------------------------------------------------------------
+    if (isReset) {
+      while (!email) {
+        const inputEmail = await cli.ask('Enter administrator email to reset: ');
+        if (!inputEmail) {
+          console.log('[ERROR] Email cannot be empty. Please enter an email address.');
+          continue;
+        }
+        try {
+          validateAdminEmail(inputEmail);
+          email = inputEmail;
+        } catch (err: unknown) {
+          console.log(`[INVALID EMAIL] ${err instanceof Error ? err.message : String(err)}`);
+        }
+      }
+
+      // Verify email exists in database
+      const [existingUsers] = await pool.query<RowDataPacket[]>(
+        'SELECT id, email, full_name, role, is_active FROM users WHERE email = ?',
+        [email.toLowerCase()]
+      );
+
+      if (existingUsers.length === 0) {
+        console.log(`\n[OPERATION FAILED] No user found with email "${email}".`);
+        process.exitCode = 1;
+        return;
+      }
+
+      if (existingUsers[0].id === BOOTSTRAP_REVIEWER_ID) {
+        console.log('\n[OPERATION FAILED] Refusing to activate or reassign the historical bootstrap reviewer account.');
+        process.exitCode = 1;
+        return;
+      }
+
+      // Prompt for new password
+      while (!password) {
+        const inputPass = await cli.askHidden('Enter new administrator password (min 12 chars, upper, lower, digit, special): ');
+        try {
+          validateAdminPassword(inputPass);
+          password = inputPass;
+        } catch (err: unknown) {
+          console.log(`[INVALID PASSWORD] ${err instanceof Error ? err.message : String(err)}`);
+        }
+      }
+
+      while (true) {
+        const confirm = await cli.askHidden('Confirm new administrator password: ');
+        if (confirm === password) {
+          break;
+        }
+        console.log('[MISMATCH] Passwords do not match. Please try again.');
+      }
+
+      console.log('\n[INFO] Validating and resetting administrator password in database...');
+      const result = await resetAdminPassword({ email, password });
+
+      console.log('\n=============================================================================');
+      console.log('[SUCCESS] Administrator password successfully updated.');
+      console.log('=============================================================================');
+      console.log(`  User ID    : ${result.userId}`);
+      console.log(`  Email      : ${result.email}`);
+      console.log(`  Full Name  : ${result.fullName}`);
+      console.log(`  Role       : ${result.role}`);
+      console.log(`  Status     : ${result.isActive ? 'ACTIVE' : 'INACTIVE'}`);
+      console.log('=============================================================================');
+      console.log('NOTE: The password has been hashed with Argon2id and never logged.');
+      return;
     }
-    if (!fullName) {
-      fullName = await prompt('Enter administrator full name: ');
-    }
-    if (!password) {
-      password = await promptHidden('Enter administrator password (min 12 chars, upper, lower, digit, special): ');
-      const confirm = await promptHidden('Confirm administrator password: ');
-      if (password !== confirm) {
-        throw new Error('Passwords do not match.');
+
+    // -------------------------------------------------------------------------
+    // STANDARD PROVISIONING WORKFLOW
+    // -------------------------------------------------------------------------
+
+    // Step 1: Prompt for administrator email
+    while (!email) {
+      const inputEmail = await cli.ask('Enter administrator email: ');
+      if (!inputEmail) {
+        console.log('[ERROR] Email cannot be empty. Please enter an email address.');
+        continue;
+      }
+      try {
+        validateAdminEmail(inputEmail);
+        email = inputEmail;
+      } catch (err: unknown) {
+        console.log(`[INVALID EMAIL] ${err instanceof Error ? err.message : String(err)}`);
       }
     }
 
+    // Step 2: Prompt for administrator full name
+    while (!fullName) {
+      const inputName = await cli.ask('Enter administrator full name: ');
+      if (!inputName || inputName.length > 150) {
+        console.log('[INVALID NAME] Full name is required and must not exceed 150 characters.');
+        continue;
+      }
+      fullName = inputName;
+    }
+
+    // Step 3: Detect whether administrator already exists BEFORE asking for password
+    const [existingUserRows] = await pool.query<RowDataPacket[]>(
+      'SELECT id, email, full_name, role, is_active FROM users WHERE email = ?',
+      [email.toLowerCase()]
+    );
+
+    if (existingUserRows.length > 0) {
+      const existing = existingUserRows[0];
+      if (existing.id === BOOTSTRAP_REVIEWER_ID) {
+        console.log('\n[OPERATION FAILED] Refusing to activate or reassign the historical bootstrap reviewer account.');
+        process.exitCode = 1;
+        return;
+      }
+
+      console.log(`\n[NOTICE] An account with email "${email}" already exists (Role: ${existing.role}).`);
+      const resetChoice = await cli.ask('Would you like to reset their password instead? (y/N): ');
+      if (resetChoice.toLowerCase() !== 'y' && resetChoice.toLowerCase() !== 'yes') {
+        console.log('\nOperation cancelled. No changes were made.');
+        return;
+      }
+
+      // Prompt for new password to reset
+      while (!password) {
+        const inputPass = await cli.askHidden('Enter new administrator password (min 12 chars, upper, lower, digit, special): ');
+        try {
+          validateAdminPassword(inputPass);
+          password = inputPass;
+        } catch (err: unknown) {
+          console.log(`[INVALID PASSWORD] ${err instanceof Error ? err.message : String(err)}`);
+        }
+      }
+
+      while (true) {
+        const confirm = await cli.askHidden('Confirm new administrator password: ');
+        if (confirm === password) {
+          break;
+        }
+        console.log('[MISMATCH] Passwords do not match. Please try again.');
+      }
+
+      console.log('\n[INFO] Validating and resetting administrator password in database...');
+      const resetResult = await resetAdminPassword({ email, password });
+
+      console.log('\n=============================================================================');
+      console.log('[SUCCESS] Administrator password successfully updated.');
+      console.log('=============================================================================');
+      console.log(`  User ID    : ${resetResult.userId}`);
+      console.log(`  Email      : ${resetResult.email}`);
+      console.log(`  Full Name  : ${resetResult.fullName}`);
+      console.log(`  Role       : ${resetResult.role}`);
+      console.log(`  Status     : ${resetResult.isActive ? 'ACTIVE' : 'INACTIVE'}`);
+      console.log('=============================================================================');
+      console.log('NOTE: The password has been hashed with Argon2id and never logged.');
+      return;
+    }
+
+    // Step 4: Check if other active administrator(s) exist and prompt confirmation
+    const [existingAdmins] = await pool.query<RowDataPacket[]>(
+      'SELECT id, email, full_name FROM users WHERE role = ? AND is_active = 1',
+      ['ADMIN']
+    );
+
+    if (existingAdmins.length > 0 && !force) {
+      console.log(`\n[NOTICE] An active administrator account already exists (${existingAdmins[0].email}).`);
+      const addChoice = await cli.ask(
+        `Would you like to provision "${email}" as an additional administrator? (y/N): `
+      );
+      if (addChoice.toLowerCase() !== 'y' && addChoice.toLowerCase() !== 'yes') {
+        console.log('\nOperation cancelled. No additional administrator was created.');
+        return;
+      }
+      force = true;
+    }
+
+    // Step 5: Prompt for masked password
+    while (!password) {
+      const inputPass = await cli.askHidden('Enter administrator password (min 12 chars, upper, lower, digit, special): ');
+      try {
+        validateAdminPassword(inputPass);
+        password = inputPass;
+      } catch (err: unknown) {
+        console.log(`[INVALID PASSWORD] ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+
+    // Step 6: Confirm password
+    while (true) {
+      const confirm = await cli.askHidden('Confirm administrator password: ');
+      if (confirm === password) {
+        break;
+      }
+      console.log('[MISMATCH] Passwords do not match. Please try again.');
+    }
+
+    // Step 7: Create administrator using Argon2id
     console.log('\n[INFO] Validating and provisioning administrator in database...');
     const result = await provisionAdmin({
       email,
@@ -239,6 +557,7 @@ async function main() {
       force
     });
 
+    // Step 8: Safe success confirmation
     console.log('\n=============================================================================');
     console.log('[SUCCESS] Administrator account successfully provisioned.');
     console.log('=============================================================================');
@@ -250,14 +569,22 @@ async function main() {
     console.log('=============================================================================');
     console.log('NOTE: The password has been hashed with Argon2id and never logged.');
   } catch (err: unknown) {
-    console.error('\n[PROVISIONING FAILED]');
+    console.error('\n[OPERATION FAILED]');
     console.error(err instanceof Error ? err.message : String(err));
     process.exitCode = 1;
   } finally {
+    cli.close();
     await closeApplicationPool();
   }
 }
 
 if (require.main === module) {
-  main();
+  main()
+    .then(() => {
+      process.exit(process.exitCode || 0);
+    })
+    .catch((err) => {
+      console.error('\n[FATAL ERROR]', err instanceof Error ? err.message : String(err));
+      process.exit(1);
+    });
 }

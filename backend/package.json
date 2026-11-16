@@ -19,7 +19,9 @@
     "widen:brand": "tsx database/widen_brand_id.ts",
     "check:counts": "tsx database/verify_table_counts.ts",
     "verify:post-seed": "tsx database/verify_post_seed.ts",
-    "admin:provision": "tsx src/scripts/provision_admin.ts"
+    "admin": "tsx src/scripts/provision_admin.ts",
+    "admin:provision": "tsx src/scripts/provision_admin.ts",
+    "admin:reset": "tsx src/scripts/provision_admin.ts --reset"
   },
   "keywords": [
     "marketplace",
