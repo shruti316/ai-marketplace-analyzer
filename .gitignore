@@ -57,3 +57,4 @@ data/archive/
 # Model training staging & backup artifacts
 models/staging/
 *.bak_*
+*.tsbuildinfo
