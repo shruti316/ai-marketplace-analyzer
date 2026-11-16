@@ -1,0 +1,44 @@
+:root {
+  /* Soft Modern Enterprise Design Tokens */
+  --color-brand-navy: #0D1B2A;
+  --color-brand-navy-surface: #15263A;
+  --color-brand-teal: #3D7584;
+  --color-brand-teal-hover: #32606D;
+  --color-brand-teal-light: #EBF2F4;
+  --color-brand-blue: #89BBBE;
+  --color-brand-mist: #E8EFF0;
+  --color-brand-mist-border: #DCE5E7;
+  --color-brand-ivory: #F6EFE3;
+  --color-brand-ivory-light: #FAF7F2;
+  --color-brand-sage: #A3B18A;
+  --color-brand-sage-light: #F0F4EC;
+  --color-brand-lavender: #B8B2D8;
+  --color-brand-lavender-light: #F3F1F9;
+
+  /* Semantic Anomaly & Risk Tiers */
+  --color-risk-low: #4D7C5B;
+  --color-risk-low-bg: #EEF6F0;
+  --color-risk-low-border: #C3DFCA;
+  --color-risk-moderate: #C67D3B;
+  --color-risk-moderate-bg: #FDF4EB;
+  --color-risk-moderate-border: #F3D4B6;
+  --color-risk-elevated: #B84A4A;
+  --color-risk-elevated-bg: #FBECEC;
+  --color-risk-elevated-border: #F3BFBF;
+  --color-risk-sparse: #64748B;
+  --color-risk-sparse-bg: #F1F5F9;
+  --color-risk-sparse-border: #CBD5E1;
+
+  /* Surfaces & Elevations */
+  --radius-card: 14px;
+  --radius-modal: 18px;
+  --radius-button: 10px;
+  --shadow-soft: 0 2px 8px -1px rgba(13, 27, 42, 0.05), 0 1px 3px -1px rgba(13, 27, 42, 0.03);
+  --shadow-soft-md: 0 4px 16px -2px rgba(13, 27, 42, 0.08), 0 2px 6px -2px rgba(13, 27, 42, 0.04);
+  --shadow-soft-lg: 0 10px 25px -3px rgba(13, 27, 42, 0.1), 0 4px 10px -4px rgba(13, 27, 42, 0.05);
+
+  /* Animation Timings */
+  --duration-interaction: 150ms;
+  --duration-transition: 200ms;
+  --duration-page: 220ms;
+}
