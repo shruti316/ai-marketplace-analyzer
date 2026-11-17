@@ -18,31 +18,26 @@ import { SettingsPage } from '../../features/settings/SettingsPage';
 export const AppRoutes: React.FC = () => {
   return (
     <Routes>
-      {/* Public Routes */}
+      {/* Standalone Authentication Route */}
       <Route path="/login" element={<LoginPage />} />
 
-      {/* Protected Enterprise Routes */}
-      <Route element={<ProtectedRoute />}>
-        <Route element={<AppLayout />}>
-          {/* Primary Investigation Entry Point */}
-          <Route path="/" element={<InvestigationWorkspacePage />} />
-          <Route path="/investigate/:id" element={<InvestigationDetailPage />} />
+      {/* Main Application Layout */}
+      <Route element={<AppLayout />}>
+        {/* Open Consumer Hub & Intelligence Experiences */}
+        <Route path="/" element={<InvestigationWorkspacePage />} />
+        <Route path="/investigate" element={<InvestigationWorkspacePage />} />
+        <Route path="/investigate/:id" element={<InvestigationDetailPage />} />
+        <Route path="/products" element={<ProductIntelligencePage />} />
+        <Route path="/comparisons" element={<ComparisonsPage />} />
+        <Route path="/assistant" element={<AssistantPage />} />
+        <Route path="/overview" element={<OverviewPage />} />
+        <Route path="/evidence" element={<EvidenceExplorerPage />} />
+
+        {/* Authenticated User & Analyst Routes */}
+        <Route element={<ProtectedRoute />}>
           <Route path="/investigations" element={<InvestigationsHistoryPage />} />
-
-          {/* Core Product & Intelligence Workflows */}
-          <Route path="/products" element={<ProductIntelligencePage />} />
-          <Route path="/evidence" element={<EvidenceExplorerPage />} />
-          <Route path="/comparisons" element={<ComparisonsPage />} />
-
-          {/* TrustSphere AI Assistant */}
-          <Route path="/assistant" element={<AssistantPage />} />
-
-          {/* Model Insights & Human Annotation Studio */}
           <Route path="/model-insights" element={<ModelInsightsPage />} />
           <Route path="/annotations" element={<AnnotationStudioPage />} />
-
-          {/* Platform Overview (Secondary) & Settings */}
-          <Route path="/overview" element={<OverviewPage />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Route>
       </Route>

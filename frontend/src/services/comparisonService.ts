@@ -12,6 +12,8 @@ export interface ComparisonItem {
   observed_price_inr: number | null;
   predicted_risk_tier: string;
   continuous_anomaly_score: number | null;
+  is_recommended?: boolean;
+  tradeoff_notes?: string | null;
   created_at: string;
 }
 
@@ -22,6 +24,8 @@ export interface ComparisonRecord {
   product_count: number;
   price_dispersion_inr: number | null;
   max_risk_tier: string;
+  recommended_product_id?: string | null;
+  recommendation_rationale?: string | null;
   created_at: string;
   updated_at: string;
   items?: ComparisonItem[];

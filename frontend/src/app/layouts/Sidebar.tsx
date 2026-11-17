@@ -50,20 +50,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onToggleCollapse,
   className,
 }) => {
-  const { user, logout } = useAuth();
+  const { user, logout, isAuthenticated } = useAuth();
 
   return (
     <aside
       className={cn(
-        'hidden md:flex flex-col bg-[#0D1B2A] text-slate-300 border-r border-slate-800/80 transition-all duration-200 select-none shrink-0 relative z-30',
+        'hidden md:flex flex-col bg-[#080713] text-[#A39CB8] border-r border-purple-900/40 transition-all duration-200 select-none shrink-0 relative z-30',
         isCollapsed ? 'w-[74px]' : 'w-64',
         className
       )}
     >
       {/* Brand Header */}
-      <div className="flex items-center justify-between h-16 px-4 border-b border-slate-800">
+      <div className="flex items-center justify-between h-16 px-4 border-b border-purple-900/40">
         <div className="flex items-center gap-3 overflow-hidden">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#3D7584] text-white shadow-sm">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#9875F5] to-[#6D7CFF] text-white shadow-md">
             <ShieldCheck className="h-5 w-5" />
           </div>
           {!isCollapsed && (
@@ -71,8 +71,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <span className="font-bold text-white text-sm tracking-tight leading-tight">
                 TrustSphere
               </span>
-              <span className="text-[10px] text-[#89BBBE] tracking-wider uppercase font-medium">
-                Enterprise Intelligence
+              <span className="text-[10px] text-[#C6B5FF] tracking-wider uppercase font-medium">
+                Shopping Intelligence
               </span>
             </div>
           )}
@@ -81,11 +81,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Collapse Toggle */}
         <button
           onClick={onToggleCollapse}
-          className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#3D7584]"
+          className="p-1.5 rounded-lg text-[#A39CB8] hover:text-white hover:bg-purple-950/40 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#9875F5]"
           title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
-          {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+          {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4 text-[#A39CB8]" />}
         </button>
       </div>
 
@@ -102,8 +102,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 cn(
                   'flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium transition-all duration-150 group relative',
                   isActive
-                    ? 'bg-[#3D7584] text-white shadow-sm'
-                    : 'text-slate-300 hover:bg-slate-800/70 hover:text-white',
+                    ? 'bg-gradient-to-r from-[#9875F5] to-[#6D7CFF] text-white shadow-md'
+                    : 'text-[#A39CB8] hover:bg-purple-950/30 hover:text-white',
                   isCollapsed && 'justify-center px-2'
                 )
               }
@@ -120,7 +120,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </nav>
 
       {/* User Profile & Account Area */}
-      <div className="p-3 border-t border-slate-800/90 bg-[#091420]/60">
+      <div className="p-3 border-t border-purple-900/40 bg-[#100D20]/60">
         <div
           className={cn(
             'flex items-center gap-3 p-2 rounded-xl transition-colors',
@@ -128,32 +128,34 @@ export const Sidebar: React.FC<SidebarProps> = ({
           )}
         >
           <div className="flex items-center gap-2.5 overflow-hidden">
-            <div className="h-8 w-8 rounded-full bg-[#3D7584]/30 border border-[#89BBBE]/40 flex items-center justify-center text-xs font-bold text-[#89BBBE] shrink-0">
+            <div className="h-8 w-8 rounded-full bg-purple-950/80 border border-purple-500/30 flex items-center justify-center text-xs font-bold text-[#C6B5FF] shrink-0">
               {user?.fullName?.charAt(0) || user?.email?.charAt(0) || 'U'}
             </div>
             {!isCollapsed && (
               <div className="flex flex-col truncate">
                 <span className="text-xs font-semibold text-white truncate">
-                  {user?.fullName || 'Analyst'}
+                  {user?.fullName || (isAuthenticated ? 'Consumer' : 'Guest')}
                 </span>
-                <span className="text-[10px] text-[#A3B18A] uppercase tracking-wider font-medium truncate">
-                  {user?.role || 'Guest'}
+                <span className="text-[10px] text-[#A39CB8] uppercase tracking-wider font-medium truncate">
+                  {user?.role || 'Visitor'}
                 </span>
               </div>
             )}
           </div>
 
-          <button
-            onClick={() => logout()}
-            className={cn(
-              'text-slate-400 hover:text-[#B84A4A] hover:bg-slate-800/80 p-1.5 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#B84A4A]',
-              isCollapsed && 'mt-2'
-            )}
-            title="Log out"
-            aria-label="Log out"
-          >
-            <LogOut className="w-4 h-4" />
-          </button>
+          {isAuthenticated && (
+            <button
+              onClick={() => logout()}
+              className={cn(
+                'text-[#A39CB8] hover:text-rose-400 hover:bg-rose-500/10 p-1.5 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-rose-500',
+                isCollapsed && 'mt-2'
+              )}
+              title="Log out"
+              aria-label="Log out"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </div>
     </aside>
