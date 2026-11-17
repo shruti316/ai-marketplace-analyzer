@@ -11,7 +11,7 @@ console.log('Running backend unit tests...');
 // Test 1: Migration discovery and checksum validation
 // -----------------------------------------------------------------------------
 const migrations = discoverMigrations(path.resolve(__dirname, '../database/migrations'));
-assert.strictEqual(migrations.length, 1, 'Should discover exactly 1 migration file pair');
+assert.strictEqual(migrations.length, 2, 'Should discover exactly 2 migration file pairs');
 
 const m1 = migrations[0];
 assert.strictEqual(m1.version, 1, 'Migration version must be 1');
@@ -20,6 +20,14 @@ assert.ok(m1.upPath.endsWith('001_initial_schema.up.sql'), 'upPath must target 0
 assert.ok(m1.downPath && m1.downPath.endsWith('001_initial_schema.down.sql'), 'downPath must target 001_initial_schema.down.sql');
 assert.strictEqual(typeof m1.checksum, 'string', 'Checksum must be a string');
 assert.strictEqual(m1.checksum.length, 64, 'SHA-256 checksum must be exactly 64 hexadecimal characters');
+
+const m2 = migrations[1];
+assert.strictEqual(m2.version, 2, 'Migration version must be 2');
+assert.strictEqual(m2.name, 'investigations', 'Migration name must be investigations');
+assert.ok(m2.upPath.endsWith('002_investigations.up.sql'), 'upPath must target 002_investigations.up.sql');
+assert.ok(m2.downPath && m2.downPath.endsWith('002_investigations.down.sql'), 'downPath must target 002_investigations.down.sql');
+assert.strictEqual(typeof m2.checksum, 'string', 'Checksum must be a string');
+assert.strictEqual(m2.checksum.length, 64, 'SHA-256 checksum must be exactly 64 hexadecimal characters');
 
 // -----------------------------------------------------------------------------
 // Test 2: Checksum immutability

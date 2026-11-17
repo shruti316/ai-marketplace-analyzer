@@ -113,6 +113,49 @@ export interface AssistantChatResult {
   timestamp: number;
 }
 
+export interface InvestigationRecord {
+  id: string;
+  user_id: string | null;
+  input_type: 'URL' | 'IMAGE' | 'ADHOC' | 'CATALOG';
+  title: string;
+  marketplace: string | null;
+  listing_url: string | null;
+  extracted_identifier: string | null;
+  canonical_product_id: string | null;
+  overall_risk_tier: 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL';
+  overall_risk_score: number;
+  verdict_summary: string | null;
+  assessment_snapshot: Record<string, any>;
+  evidence_citations?: any | null;
+  status: 'PENDING' | 'COMPLETED' | 'FAILED';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PaginatedInvestigations {
+  items: InvestigationRecord[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface SaveInvestigationPayload {
+  id?: string;
+  input_type: 'URL' | 'IMAGE' | 'ADHOC' | 'CATALOG';
+  title: string;
+  marketplace?: string | null;
+  listing_url?: string | null;
+  extracted_identifier?: string | null;
+  canonical_product_id?: string | null;
+  overall_risk_tier: 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL';
+  overall_risk_score: number;
+  verdict_summary?: string | null;
+  assessment_snapshot: Record<string, any>;
+  evidence_citations?: any;
+  status?: 'PENDING' | 'COMPLETED' | 'FAILED';
+}
+
 export const investigateService = {
   /**
    * Evaluates and parses marketplace URL with SSRF defense and catalog resolution.
@@ -178,5 +221,56 @@ export const investigateService = {
       }
     );
     return response.data.data;
+  },
+
+  /**
+   * Persists an investigation snapshot to user's history in MySQL.
+   */
+  async saveInvestigation(payload: SaveInvestigationPayload): Promise<InvestigationRecord> {
+    const response = await apiClient.post<{ success: boolean; data: InvestigationRecord }>(
+      '/api/v1/investigations',
+      payload
+    );
+    return response.data.data;
+  },
+
+  /**
+   * Retrieves paginated list of user's past investigations.
+   */
+  async getInvestigations(params?: {
+    page?: number;
+    limit?: number;
+    risk_tier?: string;
+    input_type?: string;
+    search?: string;
+  }): Promise<PaginatedInvestigations> {
+    const response = await apiClient.get<PaginatedInvestigations & { success: boolean }>(
+      '/api/v1/investigations',
+      { params }
+    );
+    return {
+      items: response.data.items,
+      total: response.data.total,
+      page: response.data.page,
+      limit: response.data.limit,
+      totalPages: response.data.totalPages,
+    };
+  },
+
+  /**
+   * Retrieves full snapshot of a specific historical investigation.
+   */
+  async getInvestigationById(id: string): Promise<InvestigationRecord> {
+    const response = await apiClient.get<{ success: boolean; data: InvestigationRecord }>(
+      `/api/v1/investigations/${id}`
+    );
+    return response.data.data;
+  },
+
+  /**
+   * Deletes a saved investigation record.
+   */
+  async deleteInvestigation(id: string): Promise<void> {
+    await apiClient.delete(`/api/v1/investigations/${id}`);
   },
 };

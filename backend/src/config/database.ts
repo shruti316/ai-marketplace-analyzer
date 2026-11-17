@@ -1,4 +1,4 @@
-import mysql, { Pool, PoolOptions, Connection, PoolConnection, RowDataPacket } from 'mysql2/promise';
+import mysql, { Pool, PoolOptions, Connection, PoolConnection, RowDataPacket, ResultSetHeader } from 'mysql2/promise';
 import { getEnv, Env } from './env';
 
 // =============================================================================
@@ -116,6 +116,15 @@ export async function query<T extends RowDataPacket[]>(sql: string, params: unkn
 export async function queryOne<T extends RowDataPacket>(sql: string, params: unknown[] = []): Promise<T | null> {
   const rows = await query<T[]>(sql, params);
   return rows && rows.length > 0 ? rows[0] : null;
+}
+
+/**
+ * Safely executes a parameterized DML statement (INSERT, UPDATE, DELETE) and returns the ResultSetHeader.
+ */
+export async function execute(sql: string, params: unknown[] = []): Promise<ResultSetHeader> {
+  const pool = getApplicationPool();
+  const [result] = await pool.execute<ResultSetHeader>(sql, params);
+  return result;
 }
 
 /**

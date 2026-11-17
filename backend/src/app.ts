@@ -1,4 +1,5 @@
 import express, { Express, Request, Response } from 'express';
+import cookieParser from 'cookie-parser';
 import { securityHeaders, buildCorsMiddleware } from './middleware/security';
 import { requestLogger } from './middleware/logging';
 import { notFoundHandler, errorHandler } from './middleware/errorHandler';
@@ -9,6 +10,7 @@ import { trustRoutes } from './modules/trust/trust.routes';
 import { comparisonRoutes } from './modules/comparison/comparison.routes';
 import { annotationsRoutes } from './modules/annotations/annotations.routes';
 import { investigateRoutes, assistantRoutes } from './modules/investigate/investigate.routes';
+import { investigationHistoryRoutes } from './modules/investigation_history/investigation_history.routes';
 
 /**
  * Creates and configures the Express 5 application instance.
@@ -34,9 +36,10 @@ export function createApp(): Express {
   // 2. CORS Policy (Explicit Allowed Origins Whitelist)
   app.use(buildCorsMiddleware());
 
-  // 3. Request Body Parsers with Strict 1MB Size Limit
-  app.use(express.json({ limit: '1mb' }));
-  app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+  // 3. Request Body Parsers & Cookie Parser (with 15MB limit for image inspection payloads)
+  app.use(express.json({ limit: '15mb' }));
+  app.use(express.urlencoded({ extended: true, limit: '15mb' }));
+  app.use(cookieParser());
 
   // 4. Request Logging (Sanitized, No Secrets/Credentials)
   app.use(requestLogger);
@@ -94,6 +97,12 @@ export function createApp(): Express {
           image: 'POST /api/v1/investigate/image',
           adhoc: 'POST /api/v1/investigate/adhoc'
         },
+        investigations: {
+          create: 'POST /api/v1/investigations',
+          list: 'GET /api/v1/investigations',
+          detail: 'GET /api/v1/investigations/:id',
+          delete: 'DELETE /api/v1/investigations/:id'
+        },
         assistant: {
           chat: 'POST /api/v1/assistant/chat'
         }
@@ -108,6 +117,7 @@ export function createApp(): Express {
   // 7. Mount Domain API Modules
   app.use('/api/v1/auth', authRoutes);
   app.use('/api/v1/investigate', investigateRoutes);
+  app.use('/api/v1/investigations', investigationHistoryRoutes);
   app.use('/api/v1/assistant', assistantRoutes);
   app.use('/api/v1/comparisons', comparisonRoutes);
   app.use('/api/v1/annotations', annotationsRoutes);
