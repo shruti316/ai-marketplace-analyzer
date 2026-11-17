@@ -20,6 +20,8 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.trust_engine.api_service import TrustIntelligenceEngine
+from src.api.inspect_service import ImageInspectionService, ImageInspectionError
+from src.api.assistant_service import EvidenceGroundedAssistantService
 
 logger = logging.getLogger("TrustIntelligenceREST")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -30,6 +32,8 @@ class TrustIntelligenceDispatcher:
 
     def __init__(self, dataset_dir: Optional[Path] = None):
         self.engine = TrustIntelligenceEngine(dataset_dir)
+        self.inspect_service = ImageInspectionService(dataset_dir=dataset_dir)
+        self.assistant_service = EvidenceGroundedAssistantService(self.engine)
 
     def dispatch(
         self, method: str, path: str, payload: Optional[Dict[str, Any]] = None, query: Optional[Dict[str, List[str]]] = None
@@ -160,6 +164,46 @@ class TrustIntelligenceDispatcher:
                     "zero_penalty_invariant_applied": core_count < 2,
                     "timestamp": time.time(),
                 }
+
+            # 3. Image Inspection Endpoint
+            elif clean_path in ["/api/v1/inspect/image", "/inspect/image"]:
+                payload = payload or {}
+                try:
+                    result = self.inspect_service.inspect_image(
+                        image_base64=payload.get("image_base64"),
+                        image_path=payload.get("image_path"),
+                        canonical_brand=payload.get("canonical_brand"),
+                        product_title=payload.get("product_title"),
+                    )
+                    return 200, result
+                except ImageInspectionError as e:
+                    return e.status_code, {"error": True, "status_code": e.status_code, "code": e.code, "message": str(e)}
+                except Exception as e:
+                    logger.error(f"Image inspection unhandled failure: {e}", exc_info=True)
+                    return 500, {"error": True, "status_code": 500, "code": "IMAGE_INSPECTION_FAILED", "message": str(e)}
+
+            # 4. Evidence-Grounded Assistant Endpoint
+            elif clean_path in ["/api/v1/assistant/chat", "/assistant/chat"]:
+                payload = payload or {}
+                query_str = payload.get("query")
+                if not query_str or not isinstance(query_str, str) or not query_str.strip():
+                    return 400, {"error": True, "status_code": 400, "code": "INVALID_QUERY", "message": "'query' is required and must be non-empty string."}
+                pid = payload.get("canonical_product_id")
+                history = payload.get("conversation_history", [])
+                try:
+                    resp = self.assistant_service.process_chat_query(
+                        query=query_str,
+                        canonical_product_id=pid,
+                        conversation_history=history,
+                    )
+                    return 200, resp
+                except KeyError as e:
+                    return 404, {"error": True, "status_code": 404, "code": "PRODUCT_NOT_FOUND", "message": str(e).strip("'\"")}
+                except ValueError as e:
+                    return 400, {"error": True, "status_code": 400, "code": "INVALID_INPUT", "message": str(e)}
+                except Exception as e:
+                    logger.error(f"Assistant processing failure: {e}", exc_info=True)
+                    return 500, {"error": True, "status_code": 500, "code": "ASSISTANT_FAILED", "message": str(e)}
 
             # 7. Modality Ablation Studies
             elif clean_path in ["/api/v1/ablations", "/ablations"]:

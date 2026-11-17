@@ -8,6 +8,7 @@ import { catalogRoutes } from './modules/catalog/catalog.routes';
 import { trustRoutes } from './modules/trust/trust.routes';
 import { comparisonRoutes } from './modules/comparison/comparison.routes';
 import { annotationsRoutes } from './modules/annotations/annotations.routes';
+import { investigateRoutes, assistantRoutes } from './modules/investigate/investigate.routes';
 
 /**
  * Creates and configures the Express 5 application instance.
@@ -87,6 +88,14 @@ export function createApp(): Express {
           detail: 'GET /api/v1/annotations/tasks/:id',
           submit: 'POST /api/v1/annotations/tasks/:id/submit',
           adjudicate: 'POST /api/v1/annotations/tasks/:id/adjudicate'
+        },
+        investigate: {
+          url: 'POST /api/v1/investigate/url',
+          image: 'POST /api/v1/investigate/image',
+          adhoc: 'POST /api/v1/investigate/adhoc'
+        },
+        assistant: {
+          chat: 'POST /api/v1/assistant/chat'
         }
       }
     });
@@ -98,6 +107,8 @@ export function createApp(): Express {
 
   // 7. Mount Domain API Modules
   app.use('/api/v1/auth', authRoutes);
+  app.use('/api/v1/investigate', investigateRoutes);
+  app.use('/api/v1/assistant', assistantRoutes);
   app.use('/api/v1/comparisons', comparisonRoutes);
   app.use('/api/v1/annotations', annotationsRoutes);
   app.use('/api/v1', trustRoutes);

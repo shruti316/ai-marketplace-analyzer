@@ -1,6 +1,18 @@
 import React, { useState } from 'react';
-import { Package, Tag, IndianRupee, Store, AlertTriangle, ShieldCheck, ArrowRight } from 'lucide-react';
+import {
+  Package,
+  Tag,
+  IndianRupee,
+  Store,
+  AlertTriangle,
+  ShieldCheck,
+  ArrowRight,
+  Sparkles,
+  Loader2,
+  Info,
+} from 'lucide-react';
 import { Button } from '../../components/ui/Button';
+import { investigateService, AdhocInferenceResult } from '../../services/investigateService';
 
 export interface ProductDetailsFormData {
   title: string;
@@ -31,6 +43,9 @@ export const ProductDetailsTab: React.FC<ProductDetailsTabProps> = ({
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [inferenceResult, setInferenceResult] = useState<AdhocInferenceResult | null>(null);
 
   // Real-time pricing anomaly heuristic
   const isPriceExceedingMrp =
@@ -43,7 +58,7 @@ export const ProductDetailsTab: React.FC<ProductDetailsTabProps> = ({
       (formData.mrp - formData.observedPrice) / formData.mrp > 0.85
     );
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: Record<string, string> = {};
 
@@ -60,8 +75,60 @@ export const ProductDetailsTab: React.FC<ProductDetailsTabProps> = ({
     }
 
     setErrors({});
-    if (onSubmitDetails) {
-      onSubmitDetails(formData);
+    setSubmitError(null);
+    setIsSubmitting(true);
+
+    try {
+      const result = await investigateService.inferAdhoc({
+        product_title: formData.title.trim(),
+        brand: formData.brand.trim(),
+        category: formData.category,
+        observed_price_inr: formData.observedPrice,
+        mrp_inr: formData.mrp,
+      });
+      setInferenceResult(result);
+
+      if (onSubmitDetails) {
+        onSubmitDetails(formData);
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to perform ad-hoc multimodal inference';
+      setSubmitError(msg);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const getRiskBadge = (tier: string) => {
+    switch (tier) {
+      case 'CRITICAL_RISK':
+      case 'HIGH_RISK':
+      case 'ELEVATED_MULTIMODAL_ANOMALY':
+        return {
+          bg: 'bg-rose-50 border-rose-200 text-rose-800',
+          dot: 'bg-rose-500',
+          label: tier.replace(/_/g, ' '),
+        };
+      case 'MODERATE_RISK':
+      case 'MODERATE_SINGLE_MODALITY_ANOMALY':
+        return {
+          bg: 'bg-amber-50 border-amber-200 text-amber-800',
+          dot: 'bg-amber-500',
+          label: tier.replace(/_/g, ' '),
+        };
+      case 'LOW_RISK':
+      case 'LOW_OBSERVED_ANOMALY':
+        return {
+          bg: 'bg-emerald-50 border-emerald-200 text-emerald-800',
+          dot: 'bg-emerald-500',
+          label: tier.replace(/_/g, ' '),
+        };
+      default:
+        return {
+          bg: 'bg-slate-50 border-slate-300 text-slate-700',
+          dot: 'bg-slate-400',
+          label: tier.replace(/_/g, ' ') || 'UNASSESSED SPARSE DATA',
+        };
     }
   };
 
@@ -216,16 +283,100 @@ export const ProductDetailsTab: React.FC<ProductDetailsTabProps> = ({
           />
         </div>
 
+        {submitError && (
+          <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-xs text-red-800 flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+            <span>{submitError}</span>
+          </div>
+        )}
+
         <Button
           type="submit"
           variant="primary"
           size="md"
+          disabled={isSubmitting}
           className="w-full mt-2"
-          rightIcon={<ArrowRight className="w-4 h-4" />}
+          rightIcon={
+            isSubmitting ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <ArrowRight className="w-4 h-4" />
+            )
+          }
         >
-          Start Multimodal Investigation
+          {isSubmitting ? 'Evaluating Across Multimodal Engines...' : 'Start Multimodal Investigation'}
         </Button>
       </form>
+
+      {/* Live Ad-hoc Inference Result Display */}
+      {inferenceResult && (
+        <div className="p-5 rounded-2xl bg-white border border-[#DCE5E7] shadow-soft space-y-4 animate-fadeIn">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-[#3D7584]" />
+              <span className="text-sm font-bold text-[#0D1B2A]">Live Ad-Hoc Multimodal Assessment</span>
+            </div>
+            {(() => {
+              const badge = getRiskBadge(inferenceResult.overall_risk_tier);
+              return (
+                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${badge.bg}`}>
+                  <span className={`w-2 h-2 rounded-full ${badge.dot}`} />
+                  {badge.label}
+                </span>
+              );
+            })()}
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+            <div className="p-3 rounded-xl bg-[#FAF7F2] border border-[#BAC7CA]/50">
+              <span className="text-[11px] text-slate-500 block">Evaluated Modalities</span>
+              <span className="text-sm font-bold text-[#3D7584]">
+                {inferenceResult.available_modalities_count} / 5 Available
+              </span>
+            </div>
+            <div className="p-3 rounded-xl bg-[#FAF7F2] border border-[#BAC7CA]/50">
+              <span className="text-[11px] text-slate-500 block">Zero-Penalty Invariant</span>
+              <span className="text-sm font-bold text-emerald-700">
+                {inferenceResult.zero_penalty_invariant_applied ? 'Active (Protected)' : 'Standard'}
+              </span>
+            </div>
+            <div className="p-3 rounded-xl bg-[#FAF7F2] border border-[#BAC7CA]/50 col-span-2 sm:col-span-1">
+              <span className="text-[11px] text-slate-500 block">Marketplace Target</span>
+              <span className="text-sm font-bold text-slate-800">
+                {formData.marketplace}
+              </span>
+            </div>
+          </div>
+
+          {/* Active Anomaly Flags */}
+          {inferenceResult.flags && inferenceResult.flags.length > 0 && (
+            <div className="space-y-1.5">
+              <span className="text-xs font-semibold text-slate-700">Active Signals & Corroborated Flags:</span>
+              <div className="flex flex-wrap gap-1.5">
+                {inferenceResult.flags.map((flag: string) => (
+                  <span
+                    key={flag}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 text-[11px] font-medium"
+                  >
+                    <AlertTriangle className="w-3 h-3 text-amber-600" />
+                    {flag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Sparsity note */}
+          {inferenceResult.zero_penalty_invariant_applied && (
+            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 flex items-start gap-2">
+              <Info className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
+              <span>
+                Zero-penalty invariant applied: Newly submitted listing with sparse channels ({inferenceResult.available_modalities_count}/5 modalities) is safeguarded from counterfeit penalty prejudice.
+              </span>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Zero Penalty Invariant Notice */}
       <div className="p-4 rounded-xl bg-[#FAF7F2] border border-[#DCE5E7] text-xs text-[#0D1B2A] space-y-2">

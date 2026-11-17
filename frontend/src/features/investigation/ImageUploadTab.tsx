@@ -1,18 +1,28 @@
 import React, { useState, useRef } from 'react';
-import { UploadCloud, Image as ImageIcon, X, AlertCircle, CheckCircle2, ShieldCheck, ArrowRight } from 'lucide-react';
+import {
+  UploadCloud,
+  Image as ImageIcon,
+  X,
+  AlertCircle,
+  ShieldCheck,
+  Eye,
+  FileText,
+} from 'lucide-react';
 import { Button } from '../../components/ui/Button';
+import { Badge } from '../../components/ui/Badge';
+import { investigateService, ImageInspectionResult } from '../../services/investigateService';
 
 export interface ImageUploadTabProps {
   onStartInvestigation?: (file: File) => void;
 }
 
-export const ImageUploadTab: React.FC<ImageUploadTabProps> = ({ onStartInvestigation }) => {
+export const ImageUploadTab: React.FC<ImageUploadTabProps> = () => {
   const [dragActive, setDragActive] = useState<boolean>(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
-  const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const [inspectionResult, setInspectionResult] = useState<ImageInspectionResult | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
@@ -20,6 +30,7 @@ export const ImageUploadTab: React.FC<ImageUploadTabProps> = ({ onStartInvestiga
 
   const handleFile = (file: File) => {
     setErrorMessage(null);
+    setInspectionResult(null);
 
     if (!allowedTypes.includes(file.type)) {
       setErrorMessage('Invalid file type. Please upload a PNG, JPEG, or WebP image.');
@@ -63,32 +74,37 @@ export const ImageUploadTab: React.FC<ImageUploadTabProps> = ({ onStartInvestiga
     }
     setPreviewUrl(null);
     setErrorMessage(null);
-    setUploadProgress(0);
+    setInspectionResult(null);
     setIsProcessing(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
   };
 
-  const handleSubmit = async () => {
+  const handleInspectImage = async () => {
     if (!selectedFile) return;
+
     setIsProcessing(true);
-    setUploadProgress(25);
+    setErrorMessage(null);
 
-    // Simulate pipeline ingestion client preparation
-    const timer1 = setTimeout(() => setUploadProgress(70), 300);
-    const timer2 = setTimeout(() => {
-      setUploadProgress(100);
+    try {
+      // Convert file to base64
+      const base64Data = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject(new Error('Failed to read file buffer'));
+        reader.readAsDataURL(selectedFile);
+      });
+
+      // Call live Python CV and OCR inspection endpoint through Express backend
+      const result = await investigateService.inspectImage(base64Data);
+      setInspectionResult(result);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Image inspection failed.';
+      setErrorMessage(msg);
+    } finally {
       setIsProcessing(false);
-      if (onStartInvestigation) {
-        onStartInvestigation(selectedFile);
-      }
-    }, 700);
-
-    return () => {
-      clearTimeout(timer1);
-      clearTimeout(timer2);
-    };
+    }
   };
 
   return (
@@ -162,88 +178,160 @@ export const ImageUploadTab: React.FC<ImageUploadTabProps> = ({ onStartInvestiga
                 </div>
               )}
               <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold text-sm text-[#0D1B2A] truncate max-w-xs">
-                    {selectedFile.name}
-                  </span>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
-                    Validated
+                <p className="text-sm font-semibold text-[#0D1B2A] break-all">
+                  {selectedFile.name}
+                </p>
+                <div className="flex items-center gap-2 text-xs text-slate-500">
+                  <span>{(selectedFile.size / (1024 * 1024)).toFixed(2)} MB</span>
+                  <span>•</span>
+                  <span className="uppercase font-medium text-[#3D7584]">
+                    {selectedFile.type.split('/')[1]}
                   </span>
                 </div>
-                <p className="text-xs text-slate-500">
-                  Size: {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB • Type: {selectedFile.type}
-                </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={handleClear}
-                leftIcon={<X className="w-4 h-4" />}
                 disabled={isProcessing}
+                leftIcon={<X className="w-4 h-4" />}
+                className="text-slate-500 hover:text-red-600"
               >
-                Remove
+                Clear
               </Button>
               <Button
                 variant="primary"
                 size="sm"
-                onClick={handleSubmit}
+                onClick={handleInspectImage}
                 isLoading={isProcessing}
-                rightIcon={<ArrowRight className="w-4 h-4" />}
+                leftIcon={<Eye className="w-4 h-4" />}
+                className="w-full sm:w-auto"
               >
-                Analyze Image
+                {isProcessing ? 'Analyzing Image...' : 'Inspect Image Evidence'}
               </Button>
             </div>
           </div>
 
-          {/* Upload Progress Simulation */}
-          {isProcessing && (
-            <div className="space-y-1.5 pt-2">
-              <div className="flex items-center justify-between text-xs text-slate-600">
-                <span>Preparing image vectorization & dHash inspection...</span>
-                <span>{uploadProgress}%</span>
+          {/* Error Notice */}
+          {errorMessage && (
+            <div className="flex items-start gap-3 p-4 rounded-xl bg-red-50 border border-red-200 text-red-800 text-xs">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-600" />
+              <div className="space-y-1">
+                <p className="font-semibold">Inspection Failed</p>
+                <p>{errorMessage}</p>
               </div>
-              <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                <div
-                  className="bg-[#3D7584] h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${uploadProgress}%` }}
-                />
+            </div>
+          )}
+
+          {/* Live Inspection Results Breakdown */}
+          {inspectionResult && (
+            <div className="space-y-5 pt-4 border-t border-[#DCE5E7] animate-fadeIn">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="w-5 h-5 text-[#3D7584]" />
+                  <span className="text-sm font-bold text-[#0D1B2A]">
+                    Live Visual & Packaging Findings
+                  </span>
+                </div>
+                <Badge
+                  variant={inspectionResult.processing_status === 'SUCCESS' ? 'risk-low' : 'risk-moderate'}
+                  size="sm"
+                >
+                  {inspectionResult.processing_status}
+                </Badge>
+              </div>
+
+              {/* Quality & Resolution Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="p-3.5 rounded-xl bg-[#FAF7F2] border border-[#E8EFF1]">
+                  <p className="text-[11px] font-medium text-slate-500">Dimensions</p>
+                  <p className="text-sm font-bold text-[#0D1B2A] mt-0.5">
+                    {inspectionResult.image_metadata.width} × {inspectionResult.image_metadata.height}px
+                  </p>
+                </div>
+                <div className="p-3.5 rounded-xl bg-[#FAF7F2] border border-[#E8EFF1]">
+                  <p className="text-[11px] font-medium text-slate-500">Laplacian Blur Score</p>
+                  <p className="text-sm font-bold text-[#0D1B2A] mt-0.5">
+                    {inspectionResult.quality_findings.blur_score.toFixed(1)}
+                  </p>
+                </div>
+                <div className="p-3.5 rounded-xl bg-[#FAF7F2] border border-[#E8EFF1]">
+                  <p className="text-[11px] font-medium text-slate-500">Resolution Tier</p>
+                  <p className="text-sm font-bold text-[#0D1B2A] mt-0.5">
+                    {inspectionResult.quality_findings.resolution_tier}
+                  </p>
+                </div>
+                <div className="p-3.5 rounded-xl bg-[#FAF7F2] border border-[#E8EFF1]">
+                  <p className="text-[11px] font-medium text-slate-500">White Background</p>
+                  <p className="text-sm font-bold text-[#0D1B2A] mt-0.5">
+                    {inspectionResult.quality_findings.is_white_background ? 'Detected' : 'Natural/Studio'}
+                  </p>
+                </div>
+              </div>
+
+              {/* OCR Extracted Packaging Fields */}
+              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+                <div className="flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-[#3D7584]" />
+                  <span className="text-xs font-semibold text-[#0D1B2A]">
+                    Statutory Packaging Identifiers (Physical OCR)
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                  <div>
+                    <span className="text-slate-500">Detected MRP: </span>
+                    <span className="font-semibold text-[#0D1B2A]">
+                      {inspectionResult.ocr_findings.extracted_mrp
+                        ? `₹${inspectionResult.ocr_findings.extracted_mrp}`
+                        : 'Not detected on packaging'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Net Quantity: </span>
+                    <span className="font-semibold text-[#0D1B2A]">
+                      {inspectionResult.ocr_findings.extracted_net_quantity || 'Not detected'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Batch / Mfg Code: </span>
+                    <span className="font-semibold text-[#0D1B2A]">
+                      {inspectionResult.ocr_findings.extracted_batch_code || 'Not detected'}
+                    </span>
+                  </div>
+                </div>
+                {inspectionResult.ocr_findings.detected_text && (
+                  <div className="pt-2 border-t border-slate-200">
+                    <p className="text-[11px] font-medium text-slate-500 mb-1">Raw Detected Text:</p>
+                    <p className="text-xs text-slate-700 bg-white p-2.5 rounded-lg border border-slate-200 max-h-24 overflow-y-auto font-mono">
+                      {inspectionResult.ocr_findings.detected_text}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Warnings List */}
+              {inspectionResult.warnings.length > 0 && (
+                <div className="space-y-1.5">
+                  {inspectionResult.warnings.map((w, idx) => (
+                    <div key={idx} className="flex items-center gap-2 text-xs text-amber-700 bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-200">
+                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                      <span>{w}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Invariant Grounding Notice */}
+              <div className="p-3 rounded-xl bg-blue-50/70 border border-blue-200/60 text-[11px] text-blue-800 leading-relaxed">
+                <strong>Architectural Note:</strong> Image inspection provides isolated visual asset and statutory packaging evidence. In accordance with TrustSphere invariants, visual quality observations alone do not constitute a full multi-modal product trust assessment.
               </div>
             </div>
           )}
         </div>
       )}
-
-      {/* Validation Error Alert */}
-      {errorMessage && (
-        <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-xs text-red-800 flex items-start gap-2.5">
-          <AlertCircle className="w-4 h-4 shrink-0 text-red-600 mt-0.5" />
-          <span>{errorMessage}</span>
-        </div>
-      )}
-
-      {/* Transparent Pipeline Status */}
-      <div className="p-4 rounded-xl bg-[#FAF7F2] border border-[#DCE5E7] text-xs text-[#0D1B2A] space-y-2">
-        <div className="flex items-center gap-2 font-semibold text-[#3D7584]">
-          <ShieldCheck className="w-4 h-4" />
-          <span>Multimodal Visual Intelligence Pipeline Status</span>
-        </div>
-        <p className="text-[11px] text-slate-600 leading-relaxed">
-          Uploaded images are processed by frozen vision models for perceptual hashing (dHash), background cleanliness,
-          blurriness scoring, and CLIP image-text cross-modal category discordance.
-        </p>
-        <div className="flex flex-wrap items-center gap-2 pt-1 text-[10px] text-slate-500 font-mono">
-          <span className="flex items-center gap-1">
-            <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Client Validation: Active
-          </span>
-          <span className="text-slate-300">•</span>
-          <span>Max Size: 10MB</span>
-          <span className="text-slate-300">•</span>
-          <span>Zero Data Fabrication Enforced</span>
-        </div>
-      </div>
     </div>
   );
 };

@@ -1,6 +1,15 @@
 import React, { useState } from 'react';
-import { Globe, CheckCircle2, AlertTriangle, ShieldCheck, ArrowRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import {
+  Globe,
+  CheckCircle2,
+  AlertTriangle,
+  ArrowRight,
+  Search,
+} from 'lucide-react';
 import { Button } from '../../components/ui/Button';
+import { Badge } from '../../components/ui/Badge';
+import { investigateService, UrlResolutionResult } from '../../services/investigateService';
 
 export interface MarketplaceUrlTabProps {
   onInvestigateUrl?: (url: string, platform: string, productId?: string) => void;
@@ -19,10 +28,14 @@ export const MarketplaceUrlTab: React.FC<MarketplaceUrlTabProps> = ({ onInvestig
   const [url, setUrl] = useState<string>('');
   const [detectedPlatform, setDetectedPlatform] = useState<DetectedPlatform | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [isResolving, setIsResolving] = useState<boolean>(false);
+  const [resolutionResult, setResolutionResult] = useState<UrlResolutionResult | null>(null);
+  const navigate = useNavigate();
 
   const analyzeUrl = (inputUrl: string) => {
     setUrl(inputUrl);
     setValidationError(null);
+    setResolutionResult(null);
 
     const trimmed = inputUrl.trim().toLowerCase();
     if (!trimmed) {
@@ -92,119 +105,162 @@ export const MarketplaceUrlTab: React.FC<MarketplaceUrlTabProps> = ({ onInvestig
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleResolve = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!detectedPlatform) return;
-    if (onInvestigateUrl) {
-      onInvestigateUrl(url, detectedPlatform.name, detectedPlatform.detectedId);
+    if (!url.trim()) return;
+
+    setIsResolving(true);
+    setValidationError(null);
+
+    try {
+      const result = await investigateService.resolveMarketplaceUrl(url.trim());
+      setResolutionResult(result);
+
+      if (onInvestigateUrl && result.canonical_product_id) {
+        onInvestigateUrl(url, result.recognized_platform || '', result.canonical_product_id);
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'URL resolution failed.';
+      setValidationError(msg);
+    } finally {
+      setIsResolving(false);
     }
   };
 
   return (
     <div className="space-y-6">
-      {/* URL Input Form */}
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-[#0D1B2A]">
-            Marketplace Product URL
-          </label>
-          <div className="relative flex items-center">
-            <Globe className="w-4 h-4 text-slate-400 absolute left-3.5 pointer-events-none" />
-            <input
-              type="url"
-              value={url}
-              onChange={(e) => analyzeUrl(e.target.value)}
-              placeholder="https://www.amazon.in/dp/B08N5WRWNW or https://www.flipkart.com/..."
-              className="w-full bg-white text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 rounded-xl pl-10 pr-24 py-3 border border-[#BAC7CA] focus:border-[#3D7584] focus:ring-1 focus:ring-[#3D7584] transition-all outline-none"
-            />
-            <button
-              type="button"
-              onClick={handlePaste}
-              className="absolute right-2 px-3 py-1.5 rounded-lg bg-[#FAF7F2] hover:bg-[#EBF2F4] text-xs font-medium text-slate-600 transition-colors border border-slate-200"
-            >
-              Paste
-            </button>
+      <form onSubmit={handleResolve} className="space-y-4">
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+            <Globe className="w-5 h-5" />
           </div>
+          <input
+            type="url"
+            value={url}
+            onChange={(e) => analyzeUrl(e.target.value)}
+            placeholder="Paste marketplace product link (e.g., https://www.amazon.in/dp/B000052YQN)..."
+            className="w-full pl-11 pr-24 py-3 rounded-xl border border-[#BAC7CA] focus:border-[#3D7584] focus:ring-2 focus:ring-[#3D7584]/20 outline-none text-sm text-[#0D1B2A] placeholder:text-slate-400 transition-all bg-white"
+          />
+          <button
+            type="button"
+            onClick={handlePaste}
+            className="absolute inset-y-1.5 right-1.5 px-3 rounded-lg text-xs font-medium text-[#3D7584] hover:bg-[#EBF2F4] transition-colors"
+          >
+            Paste
+          </button>
         </div>
 
-        {/* Supported Marketplace Pills */}
-        <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
-          <span className="text-[11px] text-slate-500 font-medium">Supported Platforms:</span>
-          {[
-            { name: 'Amazon India', domain: 'amazon.in' },
-            { name: 'Flipkart', domain: 'flipkart.com' },
-            { name: 'Myntra', domain: 'myntra.com' },
-          ].map((m) => {
-            const isMatch = detectedPlatform?.name.toLowerCase().includes(m.name.toLowerCase().split(' ')[0]);
-            return (
-              <span
-                key={m.name}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-medium border transition-colors ${
-                  isMatch
-                    ? 'bg-[#3D7584] text-white border-[#3D7584] shadow-sm'
-                    : 'bg-[#FAF7F2] text-slate-600 border-[#DCE5E7]'
-                }`}
-              >
-                {m.name}
-              </span>
-            );
-          })}
-        </div>
-
-        {/* Detected Platform Card */}
-        {detectedPlatform && (
-          <div className="p-4 rounded-xl bg-white border border-[#DCE5E7] shadow-soft space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                <span className="text-xs font-semibold text-[#0D1B2A]">
-                  Marketplace Identified: {detectedPlatform.name}
+        {/* Real-time Detected Platform Indicator */}
+        {detectedPlatform && !validationError && (
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-slate-500 font-medium">Detected Platform:</span>
+            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border font-semibold ${detectedPlatform.badgeClass}`}>
+              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: detectedPlatform.iconColor }} />
+              {detectedPlatform.name}
+              {detectedPlatform.detectedId && (
+                <span className="font-mono text-[11px] opacity-80">
+                  ({detectedPlatform.idType}: {detectedPlatform.detectedId})
                 </span>
-              </div>
-              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded border ${detectedPlatform.badgeClass}`}>
-                Verified Source
-              </span>
-            </div>
-
-            {detectedPlatform.detectedId && (
-              <div className="text-xs text-slate-600 flex items-center gap-2 bg-[#FAF7F2] p-2.5 rounded-lg border border-slate-200">
-                <span className="font-mono text-[11px] text-slate-500">{detectedPlatform.idType}:</span>
-                <span className="font-mono font-semibold text-[#0D1B2A]">{detectedPlatform.detectedId}</span>
-              </div>
-            )}
-
-            <Button
-              type="submit"
-              variant="primary"
-              size="md"
-              className="w-full mt-2"
-              rightIcon={<ArrowRight className="w-4 h-4" />}
-            >
-              Analyze Marketplace Offer
-            </Button>
+              )}
+            </span>
           </div>
         )}
 
-        {/* Validation Error */}
+        {/* Validation Error Banner */}
         {validationError && (
-          <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-start gap-2.5">
-            <AlertTriangle className="w-4 h-4 shrink-0 text-amber-600 mt-0.5" />
-            <span>{validationError}</span>
+          <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs">
+            <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-amber-600" />
+            <p>{validationError}</p>
           </div>
         )}
+
+        {/* Action Button */}
+        <div className="flex justify-end">
+          <Button
+            type="submit"
+            variant="primary"
+            size="md"
+            disabled={!url.trim() || isResolving}
+            isLoading={isResolving}
+            leftIcon={<Search className="w-4 h-4" />}
+          >
+            {isResolving ? 'Resolving Catalog...' : 'Resolve & Investigate Listing'}
+          </Button>
+        </div>
       </form>
 
-      {/* Honest Capability Disclosure */}
-      <div className="p-4 rounded-xl bg-[#FAF7F2] border border-[#DCE5E7] text-xs text-[#0D1B2A] space-y-2">
-        <div className="flex items-center gap-2 font-semibold text-[#3D7584]">
-          <ShieldCheck className="w-4 h-4" />
-          <span>Catalog Matching & Ingestion Architecture</span>
+      {/* Resolution Results Card */}
+      {resolutionResult && (
+        <div className="p-6 rounded-2xl bg-white border border-[#DCE5E7] shadow-soft space-y-4 animate-fadeIn">
+          {resolutionResult.catalogue_match && resolutionResult.product ? (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                  <span className="text-sm font-bold text-[#0D1B2A]">
+                    Catalog Match Confirmed
+                  </span>
+                </div>
+                <Badge variant="risk-low" size="sm">
+                  Indexed in Platform Catalog
+                </Badge>
+              </div>
+
+              <div className="p-4 rounded-xl bg-[#FAF7F2] border border-[#E8EFF1] space-y-2">
+                <p className="text-sm font-semibold text-[#0D1B2A]">
+                  {resolutionResult.product.title}
+                </p>
+                <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600">
+                  <span><strong>Brand:</strong> {resolutionResult.product.brand_id}</span>
+                  <span>•</span>
+                  <span><strong>Category:</strong> {resolutionResult.product.category}</span>
+                  {resolutionResult.product.observed_price_inr && (
+                    <>
+                      <span>•</span>
+                      <span><strong>Observed Price:</strong> ₹{resolutionResult.product.observed_price_inr}</span>
+                    </>
+                  )}
+                  {resolutionResult.product.mrp_inr && (
+                    <>
+                      <span>•</span>
+                      <span><strong>MRP:</strong> ₹{resolutionResult.product.mrp_inr}</span>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-2">
+                <div className="text-xs text-slate-500">
+                  Canonical ID: <code className="bg-slate-100 px-1.5 py-0.5 rounded font-mono">{resolutionResult.canonical_product_id}</code>
+                </div>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => navigate(`/investigate/${encodeURIComponent(resolutionResult.canonical_product_id!)}`)}
+                  rightIcon={<ArrowRight className="w-4 h-4" />}
+                >
+                  Open Full Investigation
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-amber-600" />
+                <span className="text-sm font-bold text-[#0D1B2A]">
+                  Unmatched Listing ({resolutionResult.recognized_platform || 'Marketplace'})
+                </span>
+              </div>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                {resolutionResult.message || 'Product identifier not indexed in current dataset.'}
+              </p>
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-500">
+                You can still analyze this product using the <strong>Manual Details</strong> tab or upload packaging photos in the <strong>Image Upload</strong> tab.
+              </div>
+            </div>
+          )}
         </div>
-        <p className="text-[11px] text-slate-600 leading-relaxed">
-          The platform correlates marketplace identifiers against verified historical catalog records.
-          In accordance with sandbox security policies, outbound headless live scraping requires authorized affiliate API credentials.
-        </p>
-      </div>
+      )}
     </div>
   );
 };

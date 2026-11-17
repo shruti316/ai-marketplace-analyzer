@@ -1,14 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { catalogService } from '../../services/catalogService';
 import { trustService } from '../../services/trustService';
+import { investigateService } from '../../services/investigateService';
 import {
   Sparkles,
   Bot,
   Send,
   ShieldCheck,
+  CheckCircle2,
 } from 'lucide-react';
-import { ProductTrustAssessment } from '../../types/trust';
 import { Button } from '../../components/ui/Button';
 
 interface Message {
@@ -16,6 +17,8 @@ interface Message {
   sender: 'user' | 'assistant';
   text: string;
   timestamp: string;
+  provider?: string;
+  evidence?: string[];
 }
 
 export const AssistantPage: React.FC = () => {
@@ -30,6 +33,7 @@ export const AssistantPage: React.FC = () => {
   ]);
   const [input, setInput] = useState<string>('');
   const [isTyping, setIsTyping] = useState<boolean>(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Fetch sample products for context selector
   const { data: productsData } = useQuery({
@@ -37,18 +41,20 @@ export const AssistantPage: React.FC = () => {
     queryFn: () => catalogService.getProducts({ limit: 8 }),
   });
 
-  // Fetch assessment for selected product
-  const { data: assessmentData } = useQuery({
+  // Fetch assessment for selected product (validates selected product availability)
+  useQuery({
     queryKey: ['assistant-product-assessment', selectedProductId],
     queryFn: () => trustService.getProductTrustAssessment(selectedProductId),
     enabled: Boolean(selectedProductId),
   });
 
-  const assessment = assessmentData?.assessment as ProductTrustAssessment | undefined;
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, isTyping]);
 
-  const handleSend = (textToSend?: string) => {
+  const handleSend = async (textToSend?: string) => {
     const q = (textToSend || input).trim();
-    if (!q) return;
+    if (!q || isTyping) return;
 
     const userMsg: Message = {
       id: `u-${Date.now()}`,
@@ -61,31 +67,45 @@ export const AssistantPage: React.FC = () => {
     setInput('');
     setIsTyping(true);
 
-    setTimeout(() => {
-      let ans = '';
-      const lower = q.toLowerCase();
+    try {
+      // Build conversation history (omit system greeting)
+      const history = messages
+        .filter((m) => m.id !== 'init-msg')
+        .map((m) => ({
+          role: m.sender,
+          content: m.text,
+        }));
 
-      if (lower.includes('zero-penalty') || lower.includes('penalty')) {
-        ans = `**The Zero-Penalty Modeling Invariant:**\n\nWhen a product offering lacks certain observation channels (e.g., zero reviews on a newly published listing, or no packaging photos), our fusion engine does NOT treat the absence of data as evidence of fraud. Instead, it classifies the product as \`UNASSESSED_SPARSE_DATA\` if fewer than 2 core modalities exist, preventing systemic false alarms against genuine new merchant listings.`;
-      } else if (lower.includes('modalities') || lower.includes('fusion') || lower.includes('modal')) {
-        ans = `**The 5 Learned Fusion Modalities:**\n\n1. **Pricing**: Evaluates robust z-scores against category rolling corridors.\n2. **Review NLP**: Evaluates review velocity, sentiment discordance, and synthetic text signatures.\n3. **Vision CV**: Detects perceptual image duplicates (dHash) and background cleanliness.\n4. **CLIP Text-Image**: Evaluates cross-modal cosine similarity between listing titles and visual assets.\n5. **Graph Topology**: Identifies seller co-listing density and merchant clustering.\n\n*Note: Packaging OCR operates as an independent evidence-only engine.*`;
-      } else if (assessment) {
-        ans = `**Analysis for ${selectedProductId}:**\n\n• **Overall Risk Tier**: \`${assessment.overall_risk_tier}\`\n• **Core Modalities Available**: ${assessment.available_core_modalities_count}/5\n• **Recommendation Summary**: ${assessment.recommendation_summary || 'Standard monitoring baseline.'}\n\n*All insights are synthesized directly from verified database records.*`;
-      } else {
-        ans = `TrustSphere utilizes explainable, calibrated risk tiers rather than pseudo-probabilities. You can select any product from the catalog list on the left to inspect its active modalities, pricing corridor variances, and evidence limitations.`;
-      }
+      const res = await investigateService.chatAssistant(
+        q,
+        selectedProductId || undefined,
+        history
+      );
 
+      const assistantMsg: Message = {
+        id: `a-${Date.now()}`,
+        sender: 'assistant',
+        text: res.message.content,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        provider: res.provider_info.provider,
+        evidence: res.evidence_citations,
+      };
+
+      setMessages((prev) => [...prev, assistantMsg]);
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : 'Assistant query failed';
       setMessages((prev) => [
         ...prev,
         {
-          id: `a-${Date.now()}`,
+          id: `err-${Date.now()}`,
           sender: 'assistant',
-          text: ans,
+          text: `Error communicating with grounded assistant: ${errMsg}. Please verify that backend (port 5000) and ML service (port 8000) are running.`,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         },
       ]);
+    } finally {
       setIsTyping(false);
-    }, 450);
+    }
   };
 
   return (
@@ -178,16 +198,37 @@ export const AssistantPage: React.FC = () => {
                   className={`max-w-[85%] rounded-2xl p-4 text-xs leading-relaxed ${
                     m.sender === 'user'
                       ? 'bg-[#3D7584] text-white rounded-tr-none'
-                      : 'bg-[#FAF7F2] border border-[#DCE5E7] text-slate-800 rounded-tl-none'
+                      : 'bg-[#FAF7F2] border border-[#DCE5E7] text-slate-800 rounded-tl-none shadow-xs'
                   }`}
                 >
                   <div className="whitespace-pre-line font-normal">{m.text}</div>
-                  <div
-                    className={`text-[9px] mt-2 font-mono text-right ${
-                      m.sender === 'user' ? 'text-white/70' : 'text-slate-400'
-                    }`}
-                  >
-                    {m.timestamp}
+
+                  {m.evidence && m.evidence.length > 0 && (
+                    <div className="mt-3 pt-2.5 border-t border-slate-200/60 space-y-1">
+                      <span className="text-[10px] font-semibold text-slate-500 block">Supporting Evidence Citations:</span>
+                      <div className="flex flex-wrap gap-1">
+                        {m.evidence.map((ev, i) => (
+                          <span
+                            key={i}
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-white border border-slate-200 text-slate-700 text-[10px] font-mono"
+                          >
+                            <CheckCircle2 className="w-2.5 h-2.5 text-emerald-600" />
+                            {ev}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between text-[9px] mt-2 font-mono">
+                    {m.provider ? (
+                      <span className="text-slate-400">Engine: {m.provider}</span>
+                    ) : (
+                      <span />
+                    )}
+                    <span className={m.sender === 'user' ? 'text-white/70' : 'text-slate-400'}>
+                      {m.timestamp}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -196,9 +237,10 @@ export const AssistantPage: React.FC = () => {
             {isTyping && (
               <div className="text-xs text-slate-400 italic flex items-center gap-2">
                 <Bot className="w-4 h-4 text-[#3D7584] animate-pulse" />
-                <span>Synthesizing evidence...</span>
+                <span>Synthesizing evidence across multimodal engines...</span>
               </div>
             )}
+            <div ref={messagesEndRef} />
           </div>
 
           {/* Quick Questions */}

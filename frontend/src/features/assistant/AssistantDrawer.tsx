@@ -6,9 +6,11 @@ import {
   ShieldCheck,
   Bot,
   User as UserIcon,
+  CheckCircle2,
 } from 'lucide-react';
 import { ProductTrustAssessment, UnifiedEvidenceItem } from '../../types/trust';
 import { Product } from '../../types/catalog';
+import { investigateService } from '../../services/investigateService';
 
 export interface AssistantDrawerProps {
   isOpen: boolean;
@@ -24,6 +26,7 @@ interface ChatMessage {
   text: string;
   timestamp: string;
   supportingEvidenceIds?: string[];
+  provider?: string;
 }
 
 export const AssistantDrawer: React.FC<AssistantDrawerProps> = ({
@@ -147,9 +150,9 @@ export const AssistantDrawer: React.FC<AssistantDrawerProps> = ({
     return `Based on the ${evidenceItems.length} verified evidence items for this product, the platform synthesizes signals across pricing, reviews, image perceptual hashing, CLIP consistency, and seller network clustering. You can ask specifically about pricing anomalies, image duplicate status, or evidence limitations.`;
   };
 
-  const handleSend = (textToSend?: string) => {
+  const handleSend = async (textToSend?: string) => {
     const text = (textToSend || inputText).trim();
-    if (!text) return;
+    if (!text || isTyping) return;
 
     const userMsg: ChatMessage = {
       id: `user-${Date.now()}`,
@@ -162,18 +165,39 @@ export const AssistantDrawer: React.FC<AssistantDrawerProps> = ({
     setInputText('');
     setIsTyping(true);
 
-    // Simulate grounded synthesis delay (300-500ms)
-    setTimeout(() => {
+    try {
+      const canonicalId = product?.canonical_product_id || assessment?.canonical_product_id;
+      const history = messages
+        .filter((m) => !m.id.startsWith('welcome-'))
+        .map((m) => ({
+          role: m.sender,
+          content: m.text,
+        }));
+
+      const res = await investigateService.chatAssistant(text, canonicalId, history);
+      const assistantMsg: ChatMessage = {
+        id: `assistant-${Date.now()}`,
+        sender: 'assistant',
+        text: res.message.content,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        supportingEvidenceIds: res.evidence_citations,
+        provider: res.provider_info.provider,
+      };
+      setMessages((prev) => [...prev, assistantMsg]);
+    } catch {
+      // Graceful fallback to deterministic local logic if network disconnects
       const answer = generateAnswer(text);
       const assistantMsg: ChatMessage = {
         id: `assistant-${Date.now()}`,
         sender: 'assistant',
         text: answer,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        provider: 'LOCAL_DETERMINISTIC_FALLBACK',
       };
       setMessages((prev) => [...prev, assistantMsg]);
+    } finally {
       setIsTyping(false);
-    }, 400);
+    }
   };
 
   if (!isOpen) return null;
@@ -253,12 +277,33 @@ export const AssistantDrawer: React.FC<AssistantDrawerProps> = ({
                 <div className="whitespace-pre-line font-normal space-y-1">
                   {msg.text}
                 </div>
-                <div
-                  className={`text-[9px] mt-2 font-mono text-right ${
-                    msg.sender === 'user' ? 'text-white/70' : 'text-slate-400'
-                  }`}
-                >
-                  {msg.timestamp}
+
+                {msg.supportingEvidenceIds && msg.supportingEvidenceIds.length > 0 && (
+                  <div className="mt-2.5 pt-2 border-t border-slate-100 space-y-1">
+                    <span className="text-[10px] font-semibold text-slate-500 block">Corroborated Evidence:</span>
+                    <div className="flex flex-wrap gap-1">
+                      {msg.supportingEvidenceIds.map((ev, i) => (
+                        <span
+                          key={i}
+                          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-slate-50 border border-slate-200 text-slate-700 text-[9px] font-mono"
+                        >
+                          <CheckCircle2 className="w-2.5 h-2.5 text-emerald-600" />
+                          {ev}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between text-[9px] mt-2 font-mono">
+                  {msg.provider ? (
+                    <span className="text-slate-400">Engine: {msg.provider}</span>
+                  ) : (
+                    <span />
+                  )}
+                  <span className={msg.sender === 'user' ? 'text-white/70' : 'text-slate-400'}>
+                    {msg.timestamp}
+                  </span>
                 </div>
               </div>
 
