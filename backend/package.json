@@ -8,7 +8,7 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/src/index.js",
-    "test": "tsx tests/migration_runner.test.ts && tsx tests/seeder.test.ts && tsx tests/app.test.ts && tsx tests/domain_api.test.ts && tsx tests/hardening.test.ts",
+    "test": "tsx tests/migration_runner.test.ts && tsx tests/seeder.test.ts && tsx tests/app.test.ts && tsx tests/domain_api.test.ts && tsx tests/hardening.test.ts && tsx tests/investigate.test.ts",
     "migrate": "tsx database/migrate.ts up",
     "migrate:status": "tsx database/migrate.ts status",
     "migrate:down": "tsx database/migrate.ts down",

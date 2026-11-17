@@ -96,14 +96,8 @@ export const InvestigationsHistoryPage: React.FC = () => {
             ))}
           </div>
         ) : productsData && productsData.items.length > 0 ? (
-          productsData.items.map((prod, idx) => {
-            // Alternate risk tier display for historical simulation
-            const tierBadge =
-              idx % 4 === 1
-                ? { label: 'Moderate Single-Modality', class: 'bg-amber-50 text-amber-900 border-amber-200' }
-                : idx % 4 === 3
-                ? { label: 'Elevated Multimodal Flag', class: 'bg-rose-50 text-rose-900 border-rose-200' }
-                : { label: 'Low Observed Anomaly', class: 'bg-emerald-50 text-emerald-800 border-emerald-200' };
+          productsData.items.map((prod) => {
+            const categoryBadge = { label: prod.category || 'Verified Catalog', class: 'bg-[#FAF7F2] text-slate-700 border-[#BAC7CA]' };
 
             return (
               <div
@@ -118,8 +112,8 @@ export const InvestigationsHistoryPage: React.FC = () => {
                     <span className="text-xs font-semibold text-[#3D7584]">
                       {prod.brand_name || 'Brand Verified'}
                     </span>
-                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${tierBadge.class}`}>
-                      {tierBadge.label}
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${categoryBadge.class}`}>
+                      {categoryBadge.label}
                     </span>
                   </div>
 
@@ -136,7 +130,7 @@ export const InvestigationsHistoryPage: React.FC = () => {
                     </span>
                     <span>•</span>
                     <span className="flex items-center gap-1">
-                      <Calendar className="w-3 h-3" /> Historical Verified Scrape
+                      <Calendar className="w-3 h-3" /> Historical Catalog Audit Trail
                     </span>
                   </div>
                 </div>
@@ -148,7 +142,7 @@ export const InvestigationsHistoryPage: React.FC = () => {
                     onClick={() => navigate(`/investigate/${prod.canonical_product_id}`)}
                     rightIcon={<ArrowRight className="w-3.5 h-3.5" />}
                   >
-                    View Report
+                    Inspect Findings
                   </Button>
                 </div>
               </div>
