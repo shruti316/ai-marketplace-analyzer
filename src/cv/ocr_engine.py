@@ -253,6 +253,8 @@ class PhysicalOCREngine:
         self.dataset_dir = Path(dataset_dir)
         self._winocr_available = False
         self._tesseract_available = False
+        self._easyocr_available = False
+        self._easyocr_reader = None
         self.engine_name = "unavailable"
 
         # 1. Try Windows native WinRT OCR
@@ -276,7 +278,18 @@ class PhysicalOCREngine:
                 self.engine_name = "pytesseract"
                 logger.info("pytesseract initialized successfully as fallback OCR engine.")
             except (ImportError, Exception):
-                logger.info("Neither winocr nor pytesseract is available; OCR will return neutral status.")
+                pass
+
+        # 3. Try EasyOCR if winocr and pytesseract are unavailable
+        if not self._winocr_available and not self._tesseract_available:
+            try:
+                import easyocr
+                self._easyocr = easyocr
+                self._easyocr_available = True
+                self.engine_name = "easyocr"
+                logger.info("easyocr initialized successfully as optical character recognition engine.")
+            except (ImportError, Exception):
+                logger.info("Neither winocr, pytesseract, nor easyocr is available; OCR will return neutral status.")
 
     @staticmethod
     def build_confidence_record(raw_result: Dict[str, Any]) -> OCRConfidenceRecord:
@@ -351,7 +364,7 @@ class PhysicalOCREngine:
             res["confidence_record"] = self.build_confidence_record(res).to_dict()
             return res
 
-        if not self._winocr_available and not self._tesseract_available:
+        if not self._winocr_available and not self._tesseract_available and not self._easyocr_available:
             res = {
                 "detected_text": "",
                 "word_count": 0,
@@ -367,7 +380,7 @@ class PhysicalOCREngine:
                 "extracted_net_quantity": None,
                 "extracted_batch_code": None,
                 "processing_status": "UNSUPPORTED_PLATFORM",
-                "failure_reason": "No supported OCR engine (winocr or pytesseract) available on host environment.",
+                "failure_reason": "No supported OCR engine (winocr, pytesseract, or easyocr) available on host environment.",
                 "processing_latency_ms": (time.time() - t0) * 1000,
             }
             res["confidence_record"] = self.build_confidence_record(res).to_dict()
@@ -421,6 +434,38 @@ class PhysicalOCREngine:
                 word_count = len(words)
                 confidence = 0.90 if word_count > 0 else 0.0
                 engine_label = "pytesseract"
+
+            elif self._easyocr_available:
+                # Execute EasyOCR with CPU fallback
+                if self._easyocr_reader is None:
+                    self._easyocr_reader = self._easyocr.Reader(["en"], gpu=False, verbose=False)
+                img_np = np.array(pil_img)
+                raw_results = self._easyocr_reader.readtext(img_np)
+                toks = []
+                for item in raw_results:
+                    if len(item) >= 2:
+                        bbox = item[0]
+                        txt = str(item[1]).strip()
+                        conf = float(item[2]) if len(item) >= 3 else 0.85
+                        if txt:
+                            toks.append(txt)
+                            xs = [pt[0] for pt in bbox]
+                            ys = [pt[1] for pt in bbox]
+                            x_min, y_min = min(xs), min(ys)
+                            w = max(xs) - x_min
+                            h = max(ys) - y_min
+                            words.append({
+                                "text": txt,
+                                "confidence": conf,
+                                "x": float(x_min),
+                                "y": float(y_min),
+                                "w": float(w),
+                                "h": float(h),
+                            })
+                detected_text = " ".join(toks).strip()
+                word_count = len(words)
+                confidence = float(np.mean([w["confidence"] for w in words])) if words else 0.0
+                engine_label = "easyocr"
             else:
                 word_count = 0
                 confidence = 0.0
