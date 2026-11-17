@@ -11,9 +11,17 @@ export interface LoginCredentials {
   rememberMe?: boolean;
 }
 
+export interface RegisterCredentials {
+  email: string;
+  password: string;
+  fullName: string;
+  rememberMe?: boolean;
+}
+
 export interface LoginResponse {
   status: 'success';
   token: string;
+  refreshToken?: string;
   user: User;
 }
 

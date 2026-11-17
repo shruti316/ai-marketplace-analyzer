@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { User, LoginCredentials } from '../../types/auth';
+import { User, LoginCredentials, RegisterCredentials } from '../../types/auth';
 import { authService } from '../../services/authService';
 
 interface AuthContextType {
@@ -8,6 +8,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (credentials: LoginCredentials) => Promise<void>;
+  register: (credentials: RegisterCredentials) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -29,6 +30,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     async function checkAuth() {
       const storedToken = authService.getStoredToken();
       if (!storedToken) {
+        // Attempt silent refresh via HttpOnly cookie before giving up
+        try {
+          const refreshedToken = await authService.refreshSession();
+          if (refreshedToken && isMounted) {
+            const currentUser = await authService.getCurrentUser();
+            setUser(currentUser);
+            setToken(refreshedToken);
+            setIsLoading(false);
+            return;
+          }
+        } catch {
+          // No active session cookie
+        }
+
         if (isMounted) {
           setUser(null);
           setToken(null);
@@ -44,8 +59,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setToken(storedToken);
         }
       } catch (err: unknown) {
-        // Only invalidate if the server explicitly rejected the token (401/403)
-        // If it was a network drop or temporary outage, preserve existing unexpired token
+        // Attempt silent refresh before logging user out
+        try {
+          const refreshedToken = await authService.refreshSession();
+          if (refreshedToken && isMounted) {
+            const currentUser = await authService.getCurrentUser();
+            setUser(currentUser);
+            setToken(refreshedToken);
+            return;
+          }
+        } catch {
+          // Refresh failed
+        }
+
         const errorObj = err as { code?: string; message?: string };
         const isAuthRejection =
           errorObj?.code === 'TOKEN_INVALID' ||
@@ -97,6 +123,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
+  const register = useCallback(async (credentials: RegisterCredentials) => {
+    setIsLoading(true);
+    try {
+      const response = await authService.register(credentials);
+      setUser(response.user);
+      setToken(response.token);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   const logout = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -116,6 +153,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAuthenticated: Boolean(token && user),
         isLoading,
         login,
+        register,
         logout,
       }}
     >

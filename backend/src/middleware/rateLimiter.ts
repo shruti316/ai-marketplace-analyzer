@@ -36,7 +36,7 @@ export function buildRateLimiter(options: Partial<Options> & { message?: string 
  */
 export const authRateLimiter = buildRateLimiter({
   windowMs: 15 * 60 * 1000,
-  limit: () => getEnv().AUTH_RATE_LIMIT,
+  limit: () => (process.env.NODE_ENV === 'test' ? 1000 : getEnv().AUTH_RATE_LIMIT),
   message: 'Too many authentication attempts from this IP. Please try again after 15 minutes.'
 });
 

@@ -3,6 +3,7 @@ import { ApiErrorResponse } from '../types/api';
 
 export const TOKEN_STORAGE_KEY = 'trustsphere_token';
 export const USER_STORAGE_KEY = 'trustsphere_user';
+export const REFRESH_TOKEN_STORAGE_KEY = 'trustsphere_refresh_token';
 
 // Determine base API URL (in dev, proxy routes /api to http://127.0.0.1:5000)
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
@@ -13,6 +14,7 @@ export const apiClient = axios.create({
     'Content-Type': 'application/json',
   },
   timeout: 30000,
+  withCredentials: true, // Send HttpOnly refresh cookies across origins
 });
 
 // Request Interceptor: Attach JWT Bearer Token from localStorage or sessionStorage
@@ -29,20 +31,103 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response Interceptor: Standardize error handling and handle 401/429
+let isRefreshing = false;
+let failedQueue: Array<{
+  resolve: (value?: unknown) => void;
+  reject: (reason?: unknown) => void;
+}> = [];
+
+const processQueue = (error: unknown, token: string | null = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
+// Response Interceptor: Standardize error handling and handle 401 with silent session refresh
 apiClient.interceptors.response.use(
   (response) => response,
-  (error: AxiosError<ApiErrorResponse>) => {
+  async (error: AxiosError<ApiErrorResponse>) => {
+    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+
     if (error.response) {
       const { status, data } = error.response;
+      const url = originalRequest?.url || '';
 
-      // Handle token expiration or unauthorized access
-      if (status === 401) {
-        localStorage.removeItem(TOKEN_STORAGE_KEY);
-        localStorage.removeItem(USER_STORAGE_KEY);
-        sessionStorage.removeItem(TOKEN_STORAGE_KEY);
-        sessionStorage.removeItem(USER_STORAGE_KEY);
-        window.dispatchEvent(new Event('auth:unauthorized'));
+      // Skip refresh attempt on login, register, or refresh endpoints themselves
+      const isAuthEndpoint =
+        url.includes('/api/v1/auth/login') ||
+        url.includes('/api/v1/auth/register') ||
+        url.includes('/api/v1/auth/refresh');
+
+      // Handle 401 Unauthorized by attempting session refresh once
+      if (status === 401 && !originalRequest?._retry && !isAuthEndpoint) {
+        if (isRefreshing) {
+          return new Promise((resolve, reject) => {
+            failedQueue.push({ resolve, reject });
+          })
+            .then((token) => {
+              if (originalRequest.headers) {
+                originalRequest.headers.Authorization = `Bearer ${token}`;
+              }
+              return apiClient(originalRequest);
+            })
+            .catch((err) => Promise.reject(err));
+        }
+
+        originalRequest._retry = true;
+        isRefreshing = true;
+
+        try {
+          const fallbackRefresh =
+            localStorage.getItem(REFRESH_TOKEN_STORAGE_KEY) ||
+            sessionStorage.getItem(REFRESH_TOKEN_STORAGE_KEY) ||
+            undefined;
+
+          const refreshRes = await axios.post<{
+            status: string;
+            token: string;
+            refreshToken?: string;
+          }>(
+            `${API_BASE_URL}/api/v1/auth/refresh`,
+            { refreshToken: fallbackRefresh },
+            { withCredentials: true }
+          );
+
+          const newToken = refreshRes.data.token;
+          const newRefreshToken = refreshRes.data.refreshToken;
+
+          if (localStorage.getItem(TOKEN_STORAGE_KEY)) {
+            localStorage.setItem(TOKEN_STORAGE_KEY, newToken);
+            if (newRefreshToken) localStorage.setItem(REFRESH_TOKEN_STORAGE_KEY, newRefreshToken);
+          } else {
+            sessionStorage.setItem(TOKEN_STORAGE_KEY, newToken);
+            if (newRefreshToken) sessionStorage.setItem(REFRESH_TOKEN_STORAGE_KEY, newRefreshToken);
+          }
+
+          processQueue(null, newToken);
+
+          if (originalRequest.headers) {
+            originalRequest.headers.Authorization = `Bearer ${newToken}`;
+          }
+          return apiClient(originalRequest);
+        } catch (refreshErr) {
+          processQueue(refreshErr, null);
+          localStorage.removeItem(TOKEN_STORAGE_KEY);
+          localStorage.removeItem(USER_STORAGE_KEY);
+          localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
+          sessionStorage.removeItem(TOKEN_STORAGE_KEY);
+          sessionStorage.removeItem(USER_STORAGE_KEY);
+          sessionStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
+          window.dispatchEvent(new Event('auth:unauthorized'));
+          return Promise.reject(refreshErr);
+        } finally {
+          isRefreshing = false;
+        }
       }
 
       // Handle Rate Limiting (429)
@@ -56,25 +141,23 @@ apiClient.interceptors.response.use(
         return Promise.reject(rateLimitError);
       }
 
-      // Handle Upstream Gateway / Reverse Proxy 500 (Vite proxy ECONNREFUSED)
-      if (status === 500 && (!data || typeof data === 'string' || !data.message)) {
-        return Promise.reject(
-          new Error('Backend connection failure (Gateway 500). Please ensure the backend is running at http://127.0.0.1:5000.')
-        );
-      }
+      // Extract descriptive error message
+      const message =
+        data?.message ||
+        (data as unknown as { error?: string })?.error ||
+        (data as unknown as { msg?: string })?.msg ||
+        `Request failed with HTTP status ${status}`;
 
-      // Format custom API error message
-      const formattedMessage = data?.message || `Request failed with status ${status}`;
-      const customError = new Error(formattedMessage);
-      (customError as unknown as { code?: string }).code = data?.code || 'API_ERROR';
+      const customError = new Error(message);
+      (customError as unknown as { code?: string; status?: number }).code = data?.code;
+      (customError as unknown as { code?: string; status?: number }).status = status;
       return Promise.reject(customError);
-    } else if (error.request) {
-      // Network failure / backend offline
-      return Promise.reject(
-        new Error('Unable to connect to backend service. Please ensure the backend is running at http://127.0.0.1:5000.')
-      );
     }
 
-    return Promise.reject(error);
+    if (error.code === 'ECONNABORTED') {
+      return Promise.reject(new Error('Request timed out. Please verify server connection and try again.'));
+    }
+
+    return Promise.reject(new Error(error.message || 'Network error encountered. Please check connectivity.'));
   }
 );

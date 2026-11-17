@@ -1,5 +1,5 @@
-import { apiClient, TOKEN_STORAGE_KEY, USER_STORAGE_KEY } from './apiClient';
-import { LoginCredentials, LoginResponse, User } from '../types/auth';
+import { apiClient, TOKEN_STORAGE_KEY, USER_STORAGE_KEY, REFRESH_TOKEN_STORAGE_KEY } from './apiClient';
+import { LoginCredentials, RegisterCredentials, LoginResponse, User } from '../types/auth';
 
 /**
  * Checks whether an RFC 7519 JSON Web Token is structurally valid and unexpired.
@@ -28,34 +28,71 @@ export function isTokenExpired(token: string): boolean {
 
 export const authService = {
   /**
+   * Registers a new consumer user account.
+   */
+  async register(credentials: RegisterCredentials): Promise<LoginResponse> {
+    const response = await apiClient.post<LoginResponse>('/api/v1/auth/register', {
+      email: credentials.email.trim(),
+      password: credentials.password,
+      fullName: credentials.fullName.trim(),
+      rememberMe: credentials.rememberMe !== false,
+    });
+
+    if (response.data?.token) {
+      this.persistAuthData(response.data, credentials.rememberMe !== false);
+    }
+
+    return response.data;
+  },
+
+  /**
    * Submits credentials to the backend Express authentication endpoint.
-   * On success, persists token to localStorage (if rememberMe is enabled) or sessionStorage.
    */
   async login(credentials: LoginCredentials): Promise<LoginResponse> {
     const response = await apiClient.post<LoginResponse>('/api/v1/auth/login', {
       email: credentials.email.trim(),
       password: credentials.password,
+      rememberMe: credentials.rememberMe !== false,
     });
 
     if (response.data?.token) {
-      const token = response.data.token;
-      const user = response.data.user;
-      const isRemember = credentials.rememberMe !== false;
-
-      if (isRemember) {
-        localStorage.setItem(TOKEN_STORAGE_KEY, token);
-        localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
-        sessionStorage.removeItem(TOKEN_STORAGE_KEY);
-        sessionStorage.removeItem(USER_STORAGE_KEY);
-      } else {
-        sessionStorage.setItem(TOKEN_STORAGE_KEY, token);
-        sessionStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
-        localStorage.removeItem(TOKEN_STORAGE_KEY);
-        localStorage.removeItem(USER_STORAGE_KEY);
-      }
+      this.persistAuthData(response.data, credentials.rememberMe !== false);
     }
 
     return response.data;
+  },
+
+  /**
+   * Triggers session refresh and token rotation.
+   */
+  async refreshSession(): Promise<string | null> {
+    const fallbackRefresh =
+      localStorage.getItem(REFRESH_TOKEN_STORAGE_KEY) ||
+      sessionStorage.getItem(REFRESH_TOKEN_STORAGE_KEY) ||
+      undefined;
+
+    try {
+      const response = await apiClient.post<{ status: string; token: string; refreshToken?: string; user?: User }>(
+        '/api/v1/auth/refresh',
+        { refreshToken: fallbackRefresh }
+      );
+
+      if (response.data?.token) {
+        const isRemember = Boolean(localStorage.getItem(TOKEN_STORAGE_KEY));
+        const targetStorage = isRemember ? localStorage : sessionStorage;
+        targetStorage.setItem(TOKEN_STORAGE_KEY, response.data.token);
+        if (response.data.refreshToken) {
+          targetStorage.setItem(REFRESH_TOKEN_STORAGE_KEY, response.data.refreshToken);
+        }
+        if (response.data.user) {
+          targetStorage.setItem(USER_STORAGE_KEY, JSON.stringify(response.data.user));
+        }
+        return response.data.token;
+      }
+      return null;
+    } catch {
+      return null;
+    }
   },
 
   /**
@@ -80,36 +117,49 @@ export const authService = {
    */
   async logout(): Promise<void> {
     try {
-      await apiClient.post('/api/v1/auth/logout');
+      const fallbackRefresh =
+        localStorage.getItem(REFRESH_TOKEN_STORAGE_KEY) ||
+        sessionStorage.getItem(REFRESH_TOKEN_STORAGE_KEY) ||
+        undefined;
+      await apiClient.post('/api/v1/auth/logout', { refreshToken: fallbackRefresh });
     } catch {
       // Best-effort server notification: even if server fails or network drop, clear client tokens
     } finally {
       localStorage.removeItem(TOKEN_STORAGE_KEY);
       localStorage.removeItem(USER_STORAGE_KEY);
+      localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
       sessionStorage.removeItem(TOKEN_STORAGE_KEY);
       sessionStorage.removeItem(USER_STORAGE_KEY);
+      sessionStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
     }
   },
 
   /**
-   * Returns the stored token from localStorage or sessionStorage if valid and unexpired.
+   * Internal helper to persist tokens and user profile across localStorage or sessionStorage.
    */
-  getStoredToken(): string | null {
-    const token =
-      localStorage.getItem(TOKEN_STORAGE_KEY) ||
-      sessionStorage.getItem(TOKEN_STORAGE_KEY);
+  persistAuthData(data: LoginResponse, isRemember: boolean): void {
+    const primaryStorage = isRemember ? localStorage : sessionStorage;
+    const secondaryStorage = isRemember ? sessionStorage : localStorage;
 
-    if (!token) return null;
-
-    if (isTokenExpired(token)) {
-      localStorage.removeItem(TOKEN_STORAGE_KEY);
-      localStorage.removeItem(USER_STORAGE_KEY);
-      sessionStorage.removeItem(TOKEN_STORAGE_KEY);
-      sessionStorage.removeItem(USER_STORAGE_KEY);
-      return null;
+    primaryStorage.setItem(TOKEN_STORAGE_KEY, data.token);
+    primaryStorage.setItem(USER_STORAGE_KEY, JSON.stringify(data.user));
+    if (data.refreshToken) {
+      primaryStorage.setItem(REFRESH_TOKEN_STORAGE_KEY, data.refreshToken);
     }
 
-    return token;
+    secondaryStorage.removeItem(TOKEN_STORAGE_KEY);
+    secondaryStorage.removeItem(USER_STORAGE_KEY);
+    secondaryStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
+  },
+
+  /**
+   * Returns the stored token from localStorage or sessionStorage if valid.
+   */
+  getStoredToken(): string | null {
+    return (
+      localStorage.getItem(TOKEN_STORAGE_KEY) ||
+      sessionStorage.getItem(TOKEN_STORAGE_KEY)
+    );
   },
 
   /**
