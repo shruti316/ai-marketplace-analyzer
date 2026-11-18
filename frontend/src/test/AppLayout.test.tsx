@@ -19,18 +19,14 @@ function renderAppLayout() {
 }
 
 describe('AppLayout Shell', () => {
-  it('renders all required 7 enterprise navigation sections', () => {
+  it('renders all required 4 core navigation sections', () => {
     renderAppLayout();
 
-    // Verify all 7 navigation items from section 4 of the specification:
-    // 1. Overview, 2. Product Intelligence, 3. Evidence Explorer, 4. Comparisons,
-    // 5. Annotation Studio, 6. Model Insights, 7. Settings
-    expect(screen.getAllByText('Overview')[0]).toBeInTheDocument();
-    expect(screen.getAllByText('Product Intelligence')[0]).toBeInTheDocument();
-    expect(screen.getAllByText('Evidence Explorer')[0]).toBeInTheDocument();
+    // Verify all 4 navigation items:
+    // 1. Scanner, 2. Comparisons, 3. AI Assistant, 4. Settings
+    expect(screen.getAllByText('Scanner')[0]).toBeInTheDocument();
     expect(screen.getAllByText('Comparisons')[0]).toBeInTheDocument();
-    expect(screen.getAllByText('Annotation Studio')[0]).toBeInTheDocument();
-    expect(screen.getAllByText('Model Insights')[0]).toBeInTheDocument();
+    expect(screen.getAllByText('AI Assistant')[0]).toBeInTheDocument();
     expect(screen.getAllByText('Settings')[0]).toBeInTheDocument();
   });
 
