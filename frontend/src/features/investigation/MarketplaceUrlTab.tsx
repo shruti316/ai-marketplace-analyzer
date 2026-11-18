@@ -139,12 +139,12 @@ export const MarketplaceUrlTab: React.FC<MarketplaceUrlTabProps> = ({ onInvestig
             value={url}
             onChange={(e) => analyzeUrl(e.target.value)}
             placeholder="Paste marketplace product link (e.g., https://www.amazon.in/dp/B000052YQN)..."
-            className="w-full pl-11 pr-24 py-3 rounded-xl border border-[#BAC7CA] focus:border-[#3D7584] focus:ring-2 focus:ring-[#3D7584]/20 outline-none text-sm text-[#0D1B2A] placeholder:text-slate-400 transition-all bg-white"
+            className="w-full pl-11 pr-24 py-3 rounded-xl border border-white/[0.08] focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none text-sm text-slate-100 placeholder:text-slate-500 transition-all bg-[#181D2E]"
           />
           <button
             type="button"
             onClick={handlePaste}
-            className="absolute inset-y-1.5 right-1.5 px-3 rounded-lg text-xs font-medium text-[#3D7584] hover:bg-[#EBF2F4] transition-colors"
+            className="absolute inset-y-1.5 right-1.5 px-3 rounded-lg text-xs font-semibold text-indigo-400 hover:bg-white/[0.06] transition-colors"
           >
             Paste
           </button>
@@ -153,12 +153,12 @@ export const MarketplaceUrlTab: React.FC<MarketplaceUrlTabProps> = ({ onInvestig
         {/* Real-time Detected Platform Indicator */}
         {detectedPlatform && !validationError && (
           <div className="flex items-center gap-2 text-xs">
-            <span className="text-slate-500 font-medium">Detected Platform:</span>
-            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border font-semibold ${detectedPlatform.badgeClass}`}>
+            <span className="text-slate-400 font-medium">Detected Platform:</span>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-white/[0.08] bg-[#181D2E] text-slate-200 font-semibold">
               <span className="w-2 h-2 rounded-full" style={{ backgroundColor: detectedPlatform.iconColor }} />
               {detectedPlatform.name}
               {detectedPlatform.detectedId && (
-                <span className="font-mono text-[11px] opacity-80">
+                <span className="font-mono text-[11px] text-slate-400">
                   ({detectedPlatform.idType}: {detectedPlatform.detectedId})
                 </span>
               )}
@@ -168,8 +168,8 @@ export const MarketplaceUrlTab: React.FC<MarketplaceUrlTabProps> = ({ onInvestig
 
         {/* Validation Error Banner */}
         {validationError && (
-          <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs">
-            <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-amber-600" />
+          <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs">
+            <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-amber-400" />
             <p>{validationError}</p>
           </div>
         )}
@@ -183,6 +183,7 @@ export const MarketplaceUrlTab: React.FC<MarketplaceUrlTabProps> = ({ onInvestig
             disabled={!url.trim() || isResolving}
             isLoading={isResolving}
             leftIcon={<Search className="w-4 h-4" />}
+            className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold shadow-xs shadow-indigo-500/20"
           >
             {isResolving ? 'Resolving Catalog...' : 'Resolve & Investigate Listing'}
           </Button>
@@ -191,26 +192,26 @@ export const MarketplaceUrlTab: React.FC<MarketplaceUrlTabProps> = ({ onInvestig
 
       {/* Resolution Results Card */}
       {resolutionResult && (
-        <div className="p-6 rounded-2xl bg-white border border-[#DCE5E7] shadow-soft space-y-4 animate-fadeIn">
+        <div className="p-6 rounded-2xl bg-[#181D2E] border border-white/[0.08] shadow-soft space-y-4 animate-fadeIn">
           {resolutionResult.catalogue_match && resolutionResult.product ? (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                  <span className="text-sm font-bold text-[#0D1B2A]">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                  <span className="text-sm font-bold text-white">
                     Catalog Match Confirmed
                   </span>
                 </div>
-                <Badge variant="risk-low" size="sm">
+                <Badge variant="teal" size="sm">
                   Indexed in Platform Catalog
                 </Badge>
               </div>
 
-              <div className="p-4 rounded-xl bg-[#FAF7F2] border border-[#E8EFF1] space-y-2">
-                <p className="text-sm font-semibold text-[#0D1B2A]">
+              <div className="p-4 rounded-xl bg-[#111522] border border-white/[0.08] space-y-2">
+                <p className="text-sm font-semibold text-white">
                   {resolutionResult.product.title}
                 </p>
-                <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600">
+                <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400">
                   <span><strong>Brand:</strong> {resolutionResult.product.brand_id}</span>
                   <span>•</span>
                   <span><strong>Category:</strong> {resolutionResult.product.category}</span>
@@ -230,14 +231,15 @@ export const MarketplaceUrlTab: React.FC<MarketplaceUrlTabProps> = ({ onInvestig
               </div>
 
               <div className="flex items-center justify-between pt-2">
-                <div className="text-xs text-slate-500">
-                  Canonical ID: <code className="bg-slate-100 px-1.5 py-0.5 rounded font-mono">{resolutionResult.canonical_product_id}</code>
+                <div className="text-xs text-slate-400 font-mono">
+                  Canonical ID: <code className="bg-[#111522] border border-white/[0.08] px-1.5 py-0.5 rounded text-indigo-400 font-mono">{resolutionResult.canonical_product_id}</code>
                 </div>
                 <Button
                   variant="primary"
                   size="sm"
                   onClick={() => navigate(`/investigate/${encodeURIComponent(resolutionResult.canonical_product_id!)}`)}
                   rightIcon={<ArrowRight className="w-4 h-4" />}
+                  className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold"
                 >
                   Open Full Investigation
                 </Button>
@@ -246,16 +248,16 @@ export const MarketplaceUrlTab: React.FC<MarketplaceUrlTabProps> = ({ onInvestig
           ) : (
             <div className="space-y-3">
               <div className="flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5 text-amber-600" />
-                <span className="text-sm font-bold text-[#0D1B2A]">
+                <AlertTriangle className="w-5 h-5 text-amber-400" />
+                <span className="text-sm font-bold text-white">
                   Unmatched Listing ({resolutionResult.recognized_platform || 'Marketplace'})
                 </span>
               </div>
-              <p className="text-xs text-slate-600 leading-relaxed">
+              <p className="text-xs text-slate-300 leading-relaxed">
                 {resolutionResult.message || 'Product identifier not indexed in current dataset.'}
               </p>
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-500">
-                You can still analyze this product using the <strong>Manual Details</strong> tab or upload packaging photos in the <strong>Image Upload</strong> tab.
+              <div className="p-3 rounded-xl bg-[#111522] border border-white/[0.08] text-xs text-slate-400">
+                You can still analyze this product using the <strong className="text-slate-200">Manual Details</strong> tab or upload packaging photos in the <strong className="text-slate-200">Image Upload</strong> tab.
               </div>
             </div>
           )}

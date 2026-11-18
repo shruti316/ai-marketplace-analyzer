@@ -16,20 +16,20 @@ export const Alert: React.FC<AlertProps> = ({
 }) => {
   const configs = {
     info: {
-      container: 'bg-[#EBF2F4] text-[#1E3E47] border-[#BCD4D8]',
-      icon: <Info className="w-5 h-5 text-[#3D7584] shrink-0 mt-0.5" />,
+      container: 'bg-indigo-950/20 text-indigo-300 border-indigo-500/30',
+      icon: <Info className="w-5 h-5 text-indigo-400 shrink-0 mt-0.5" />,
     },
     success: {
-      container: 'bg-[#F0F4EC] text-[#22442C] border-[#C7DCBF]',
-      icon: <CheckCircle2 className="w-5 h-5 text-[#4D7C5B] shrink-0 mt-0.5" />,
+      container: 'bg-emerald-950/20 text-emerald-300 border-emerald-500/30',
+      icon: <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />,
     },
     warning: {
-      container: 'bg-[#FDF4EB] text-[#5C340F] border-[#F2D1B2]',
-      icon: <AlertTriangle className="w-5 h-5 text-[#C67D3B] shrink-0 mt-0.5" />,
+      container: 'bg-amber-950/20 text-amber-300 border-amber-500/30',
+      icon: <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />,
     },
     danger: {
-      container: 'bg-[#FBECEC] text-[#571B1B] border-[#F0B8B8]',
-      icon: <AlertCircle className="w-5 h-5 text-[#B84A4A] shrink-0 mt-0.5" />,
+      container: 'bg-rose-950/20 text-rose-300 border-rose-500/30',
+      icon: <AlertCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />,
     },
   };
 

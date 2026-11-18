@@ -5,40 +5,40 @@
 
 @layer base {
   html {
-    color-scheme: light;
+    color-scheme: dark;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
   body {
-    background-color: var(--color-brand-ivory-light);
-    color: #1E293B;
+    background-color: #0B0D14;
+    color: #F8FAFC;
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
     overflow-x: hidden;
   }
 
-  /* Accessible focus rings */
+  /* Accessible high-contrast focus rings */
   :focus-visible {
-    outline: 2px solid var(--color-brand-teal);
+    outline: 2px solid #6366F1;
     outline-offset: 2px;
   }
 }
 
 @layer components {
-  /* Restrained enterprise glassmorphism */
+  /* Restrained modern dark glassmorphism */
   .glass-card {
-    background: rgba(255, 255, 255, 0.88);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(220, 229, 231, 0.85);
+    background: rgba(18, 22, 36, 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
   }
 
   .glass-sidebar {
-    background: linear-gradient(180deg, #0D1B2A 0%, #112235 100%);
-    border-right: 1px solid rgba(255, 255, 255, 0.08);
+    background: #0D101A;
+    border-right: 1px solid rgba(255, 255, 255, 0.07);
   }
 
-  /* Modern restrained scrollbars */
+  /* Sleek modern dark scrollbars */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -49,28 +49,22 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: #CBD5E1;
+    background: #2A3147;
     border-radius: 9999px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: #94A3B8;
+    background: #3B4461;
   }
 }
 
-/* Custom subtle enterprise network animations */
+/* Custom subtle animations */
 @keyframes floatSlow {
   0%, 100% {
     transform: translateY(0px);
   }
   50% {
-    transform: translateY(-6px);
-  }
-}
-
-@keyframes dashSlow {
-  to {
-    stroke-dashoffset: -32;
+    transform: translateY(-4px);
   }
 }
 
@@ -80,32 +74,15 @@
     opacity: 1;
   }
   50% {
-    transform: scale(1.02);
-    opacity: 0.95;
+    transform: scale(1.015);
+    opacity: 0.96;
   }
 }
 
 .animate-floatSlow {
-  animation: floatSlow 10s ease-in-out infinite;
-}
-
-.animate-dashSlow {
-  animation: dashSlow 14s linear infinite;
+  animation: floatSlow 8s ease-in-out infinite;
 }
 
 .animate-pulseSubtle {
-  animation: pulseSubtle 6s ease-in-out infinite;
-}
-
-/* Reduced motion support */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation: none !important;
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
+  animation: pulseSubtle 4s ease-in-out infinite;
 }

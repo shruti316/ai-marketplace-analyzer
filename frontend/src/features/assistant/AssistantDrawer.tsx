@@ -219,21 +219,21 @@ export const AssistantDrawer: React.FC<AssistantDrawerProps> = ({
       />
 
       {/* Drawer Container */}
-      <aside className="relative w-full max-w-lg bg-[#FAF7F2] text-[#0D1B2A] flex flex-col h-full shadow-2xl z-10 border-l border-[#DCE5E7] animate-slideLeft">
+      <aside className="relative w-full max-w-lg bg-[#111522] text-slate-100 flex flex-col h-full shadow-2xl z-10 border-l border-white/[0.08] animate-slideLeft">
         {/* Header */}
-        <div className="h-16 px-5 border-b border-[#DCE5E7] bg-white flex items-center justify-between shrink-0">
+        <div className="h-16 px-5 border-b border-white/[0.08] bg-[#181D2E] flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-xl bg-[#0D1B2A] text-white flex items-center justify-center shadow-sm">
-              <Sparkles className="w-5 h-5 text-[#89BBBE]" />
+            <div className="h-9 w-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-sm">
+              <Sparkles className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-bold text-sm text-[#0D1B2A]">TrustSphere Assistant</h3>
-                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#EBF2F4] text-[#3D7584] font-semibold border border-[#BAC7CA]">
+                <h3 className="font-bold text-sm text-slate-100 font-heading">TrustSphere Assistant</h3>
+                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-indigo-950/40 text-indigo-300 font-semibold border border-indigo-500/30">
                   Grounded
                 </span>
               </div>
-              <p className="text-[11px] text-slate-500">
+              <p className="text-[11px] text-slate-400">
                 Contextual evidence reasoning for active investigation
               </p>
             </div>
@@ -241,7 +241,7 @@ export const AssistantDrawer: React.FC<AssistantDrawerProps> = ({
 
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition-colors"
+            className="p-1.5 text-slate-400 hover:text-slate-200 rounded-lg hover:bg-white/[0.05] transition-colors"
             aria-label="Close assistant panel"
           >
             <X className="w-5 h-5" />
@@ -249,8 +249,8 @@ export const AssistantDrawer: React.FC<AssistantDrawerProps> = ({
         </div>
 
         {/* System Capability Banner */}
-        <div className="px-5 py-2.5 bg-[#EBF2F4] border-b border-[#D8E3E5] text-[11px] text-[#1E3E47] flex items-center gap-2">
-          <ShieldCheck className="w-4 h-4 text-[#3D7584] shrink-0" />
+        <div className="px-5 py-2.5 bg-indigo-950/20 border-b border-indigo-500/20 text-[11px] text-indigo-300 flex items-center gap-2">
+          <ShieldCheck className="w-4 h-4 text-indigo-400 shrink-0" />
           <span>Responses are strictly synthesized from verified atomic engine observations.</span>
         </div>
 
@@ -262,16 +262,16 @@ export const AssistantDrawer: React.FC<AssistantDrawerProps> = ({
               className={`flex gap-3 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               {msg.sender === 'assistant' && (
-                <div className="h-8 w-8 rounded-xl bg-[#0D1B2A] text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
-                  <Bot className="w-4 h-4 text-[#89BBBE]" />
+                <div className="h-8 w-8 rounded-xl bg-[#181D2E] text-indigo-400 border border-white/[0.08] flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
+                  <Bot className="w-4 h-4" />
                 </div>
               )}
 
               <div
                 className={`max-w-[85%] rounded-2xl p-4 text-xs leading-relaxed ${
                   msg.sender === 'user'
-                    ? 'bg-[#3D7584] text-white rounded-tr-none shadow-sm'
-                    : 'bg-white border border-[#DCE5E7] text-slate-800 rounded-tl-none shadow-soft'
+                    ? 'bg-indigo-600 text-white rounded-tr-none shadow-sm'
+                    : 'bg-[#181D2E] border border-white/[0.08] text-slate-200 rounded-tl-none shadow-soft'
                 }`}
               >
                 <div className="whitespace-pre-line font-normal space-y-1">
@@ -279,15 +279,15 @@ export const AssistantDrawer: React.FC<AssistantDrawerProps> = ({
                 </div>
 
                 {msg.supportingEvidenceIds && msg.supportingEvidenceIds.length > 0 && (
-                  <div className="mt-2.5 pt-2 border-t border-slate-100 space-y-1">
-                    <span className="text-[10px] font-semibold text-slate-500 block">Corroborated Evidence:</span>
+                  <div className="mt-2.5 pt-2 border-t border-white/[0.08] space-y-1">
+                    <span className="text-[10px] font-semibold text-slate-400 block font-mono">Corroborated Evidence:</span>
                     <div className="flex flex-wrap gap-1">
                       {msg.supportingEvidenceIds.map((ev, i) => (
                         <span
                           key={i}
-                          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-slate-50 border border-slate-200 text-slate-700 text-[9px] font-mono"
+                          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-[#111522] border border-white/[0.08] text-slate-300 text-[9px] font-mono"
                         >
-                          <CheckCircle2 className="w-2.5 h-2.5 text-emerald-600" />
+                          <CheckCircle2 className="w-2.5 h-2.5 text-emerald-400" />
                           {ev}
                         </span>
                       ))}
@@ -301,14 +301,14 @@ export const AssistantDrawer: React.FC<AssistantDrawerProps> = ({
                   ) : (
                     <span />
                   )}
-                  <span className={msg.sender === 'user' ? 'text-white/70' : 'text-slate-400'}>
+                  <span className={msg.sender === 'user' ? 'text-white/70' : 'text-slate-500'}>
                     {msg.timestamp}
                   </span>
                 </div>
               </div>
 
               {msg.sender === 'user' && (
-                <div className="h-8 w-8 rounded-xl bg-[#3D7584] text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
+                <div className="h-8 w-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
                   <UserIcon className="w-4 h-4" />
                 </div>
               )}
@@ -316,8 +316,8 @@ export const AssistantDrawer: React.FC<AssistantDrawerProps> = ({
           ))}
 
           {isTyping && (
-            <div className="flex gap-3 items-center text-xs text-slate-500 italic pl-1">
-              <Bot className="w-4 h-4 text-[#3D7584] animate-pulse" />
+            <div className="flex gap-3 items-center text-xs text-slate-400 italic pl-1">
+              <Bot className="w-4 h-4 text-indigo-400 animate-pulse" />
               <span>Synthesizing multimodal evidence...</span>
             </div>
           )}
@@ -326,8 +326,8 @@ export const AssistantDrawer: React.FC<AssistantDrawerProps> = ({
         </div>
 
         {/* Contextual Suggested Questions */}
-        <div className="px-4 py-2 border-t border-[#DCE5E7] bg-white/70 space-y-1.5">
-          <p className="text-[10px] uppercase font-semibold tracking-wider text-slate-400">
+        <div className="px-4 py-2 border-t border-white/[0.08] bg-[#181D2E]/50 space-y-1.5">
+          <p className="text-[10px] uppercase font-semibold tracking-wider text-slate-400 font-mono">
             Suggested Investigation Inquiries:
           </p>
           <div className="flex flex-wrap gap-1.5">
@@ -335,7 +335,7 @@ export const AssistantDrawer: React.FC<AssistantDrawerProps> = ({
               <button
                 key={idx}
                 onClick={() => handleSend(q)}
-                className="text-[11px] px-2.5 py-1 rounded-lg bg-white hover:bg-[#FAF7F2] text-[#3D7584] border border-[#BAC7CA] hover:border-[#3D7584] transition-all text-left truncate max-w-full"
+                className="text-[11px] px-2.5 py-1 rounded-lg bg-[#111522] hover:bg-[#181D2E] text-slate-300 border border-white/[0.08] hover:border-indigo-500/40 transition-all text-left truncate max-w-full"
               >
                 {q}
               </button>
@@ -344,7 +344,7 @@ export const AssistantDrawer: React.FC<AssistantDrawerProps> = ({
         </div>
 
         {/* Input Bar */}
-        <div className="p-4 bg-white border-t border-[#DCE5E7] shrink-0">
+        <div className="p-4 bg-[#111522] border-t border-white/[0.08] shrink-0">
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -357,12 +357,12 @@ export const AssistantDrawer: React.FC<AssistantDrawerProps> = ({
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               placeholder="Ask about this product's anomaly evidence or risk..."
-              className="flex-1 bg-[#FAF7F2] text-xs text-slate-800 placeholder:text-slate-400 rounded-xl px-4 py-2.5 border border-[#BAC7CA] focus:border-[#3D7584] outline-none"
+              className="flex-1 bg-[#181D2E] text-xs text-slate-100 placeholder:text-slate-500 rounded-xl px-4 py-2.5 border border-white/[0.08] focus:border-indigo-500 outline-none transition-all"
             />
             <button
               type="submit"
               disabled={!inputText.trim()}
-              className="h-9 w-9 rounded-xl bg-[#0D1B2A] text-white flex items-center justify-center hover:bg-[#1C324D] transition-colors disabled:opacity-40"
+              className="h-9 w-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center hover:bg-indigo-500 transition-colors disabled:opacity-40"
               aria-label="Send message"
             >
               <Send className="w-4 h-4" />

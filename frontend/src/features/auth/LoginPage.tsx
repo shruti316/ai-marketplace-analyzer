@@ -120,59 +120,57 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen w-full flex bg-[#080713] text-[#F5F2FF] overflow-x-hidden relative">
+    <div className="min-h-screen w-full flex bg-[#0B0D14] text-slate-100 overflow-x-hidden relative font-sans">
       {/* Ambient background glow orbs */}
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-0 left-1/4 w-96 h-96 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none" />
 
       {/* =========================================================================
           LEFT VISUAL PANEL (Desktop: 48% width)
-          Dark Cinematic Purple & Indigo with Dynamic Network Topology
          ========================================================================= */}
-      <div className="hidden lg:flex lg:w-[48%] bg-[#100D20]/90 backdrop-blur-xl p-10 xl:p-12 flex-col justify-between relative overflow-hidden select-none border-r border-purple-900/30">
+      <div className="hidden lg:flex lg:w-[48%] bg-[#0D101A] backdrop-blur-xl p-10 xl:p-12 flex-col justify-between relative overflow-hidden select-none border-r border-white/[0.08]">
         {/* Top Header & Brand Identity */}
         <div className="relative z-10 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-[#9875F5] to-[#6D7CFF] text-white flex items-center justify-center shadow-lg shadow-purple-500/25 border border-purple-400/30">
+            <div className="h-10 w-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-md border border-indigo-400/20">
               <ShieldCheck className="h-6 w-6" />
             </div>
             <div>
-              <h1 className="text-lg font-bold tracking-tight text-white leading-tight">TrustSphere</h1>
-              <p className="text-[11px] text-[#C6B5FF] font-medium tracking-wide">
+              <h1 className="text-lg font-bold tracking-tight text-slate-100 leading-tight font-heading">TrustSphere</h1>
+              <p className="text-[11px] text-indigo-300 font-medium tracking-wide">
                 Shop Smarter • Buy With Confidence
               </p>
             </div>
           </div>
-          <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-white/5 border border-purple-500/20 text-[#C6B5FF]">
-            AI Shopping Intelligence
+          <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-white/[0.05] border border-white/[0.08] text-slate-400">
+            Shopping Intelligence
           </span>
         </div>
 
         {/* Center: Hero Headline & Topology */}
         <div className="relative z-10 space-y-6 my-auto py-6">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-xs font-medium text-[#C6B5FF]">
-              <Sparkles className="w-3.5 h-3.5 text-[#9875F5]" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-xs font-medium text-indigo-300">
+              <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
               <span>Consumer Shopping Protection</span>
             </div>
-            <h2 className="text-3xl xl:text-4xl font-extrabold tracking-tight text-white leading-tight">
+            <h2 className="text-3xl xl:text-4xl font-extrabold tracking-tight text-slate-100 leading-tight font-heading">
               Spot suspicious deals before you pay.
             </h2>
-            <p className="text-sm text-[#A39CB8] leading-relaxed font-normal">
+            <p className="text-sm text-slate-400 leading-relaxed font-normal">
               Deep multimodal intelligence analyzing price anomalies, review patterns, and seller risks across Indian marketplaces.
             </p>
           </div>
 
           {/* Animated Marketplace Topology */}
-          <div className="rounded-2xl border border-purple-500/20 bg-[#171329]/60 backdrop-blur-md p-4">
+          <div className="rounded-2xl border border-white/[0.08] bg-[#111522] backdrop-blur-md p-4">
             <MarketplaceNetworkVisual />
           </div>
         </div>
 
         {/* Bottom Footer Metadata */}
-        <div className="relative z-10 text-xs text-[#A39CB8] flex items-center justify-between border-t border-purple-900/30 pt-4">
-          <span className="text-[11px] text-[#A39CB8]">Amazon India • Flipkart • Myntra</span>
-          <span className="text-[11px] text-[#C6B5FF] font-mono flex items-center gap-1.5">
+        <div className="relative z-10 text-xs text-slate-400 flex items-center justify-between border-t border-white/[0.08] pt-4 font-mono">
+          <span className="text-[11px] text-slate-500">Amazon India • Flipkart • Myntra</span>
+          <span className="text-[11px] text-indigo-300 flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             Surveillance Active
           </span>
@@ -185,13 +183,13 @@ export const LoginPage: React.FC = () => {
       <div className="w-full lg:w-[52%] flex items-center justify-center p-6 sm:p-10 lg:p-12 relative z-10">
         <div className="w-full max-w-md space-y-6">
           {/* Mobile brand header */}
-          <div className="lg:hidden flex items-center gap-3 pb-3 border-b border-purple-900/30">
-            <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-[#9875F5] to-[#6D7CFF] text-white flex items-center justify-center shadow-sm">
+          <div className="lg:hidden flex items-center gap-3 pb-3 border-b border-white/[0.08]">
+            <div className="h-9 w-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-sm">
               <ShieldCheck className="h-5 w-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-white">TrustSphere</h2>
-              <p className="text-[11px] text-[#C6B5FF] font-medium">Shop Smarter. Buy with confidence.</p>
+              <h2 className="text-base font-bold text-slate-100 font-heading">TrustSphere</h2>
+              <p className="text-[11px] text-indigo-300 font-medium">Shop Smarter. Buy with confidence.</p>
             </div>
           </div>
 
@@ -199,10 +197,10 @@ export const LoginPage: React.FC = () => {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-2xl font-bold tracking-tight text-white">
+                <h3 className="text-2xl font-bold tracking-tight text-slate-100 font-heading">
                   {mode === 'signin' ? 'Sign in' : 'Create an account'}
                 </h3>
-                <p className="text-xs text-[#A39CB8] mt-1">
+                <p className="text-xs text-slate-400 mt-1">
                   {mode === 'signin'
                     ? 'Enter your credentials to access your saved investigations & advisor.'
                     : 'Join TrustSphere to check suspicious marketplace deals and save comparisons.'}
@@ -211,7 +209,7 @@ export const LoginPage: React.FC = () => {
             </div>
 
             {/* Mode Switch Tabs */}
-            <div role="tablist" className="grid grid-cols-2 p-1 rounded-xl bg-[#171329] border border-purple-900/40 text-xs font-semibold">
+            <div role="tablist" className="grid grid-cols-2 p-1 rounded-xl bg-[#111522] border border-white/[0.08] text-xs font-semibold">
               <button
                 type="button"
                 role="tab"
@@ -222,8 +220,8 @@ export const LoginPage: React.FC = () => {
                 }}
                 className={`py-2 px-3 rounded-lg transition-all ${
                   mode === 'signin'
-                    ? 'bg-gradient-to-r from-[#9875F5] to-[#6D7CFF] text-white shadow-sm'
-                    : 'text-[#A39CB8] hover:text-white'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
                 Sign In
@@ -238,8 +236,8 @@ export const LoginPage: React.FC = () => {
                 }}
                 className={`py-2 px-3 rounded-lg transition-all ${
                   mode === 'register'
-                    ? 'bg-gradient-to-r from-[#9875F5] to-[#6D7CFF] text-white shadow-sm'
-                    : 'text-[#A39CB8] hover:text-white'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
                 Create Account
@@ -262,10 +260,10 @@ export const LoginPage: React.FC = () => {
                 type="email"
                 placeholder="name@organization.com"
                 autoComplete="email"
-                leftIcon={<Mail className="w-4 h-4 text-[#A39CB8]" />}
+                leftIcon={<Mail className="w-4 h-4 text-slate-500" />}
                 error={loginForm.formState.errors.email?.message}
                 disabled={loginForm.formState.isSubmitting}
-                className="bg-[#171329] border-purple-900/40 text-white placeholder:text-[#A39CB8]/50 focus:border-[#9875F5]"
+                className="bg-[#181D2E] border-white/[0.08] text-slate-100 placeholder:text-slate-500 focus:border-indigo-500"
                 {...loginForm.register('email')}
               />
 
@@ -275,12 +273,12 @@ export const LoginPage: React.FC = () => {
                   type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••••••"
                   autoComplete="current-password"
-                  leftIcon={<Lock className="w-4 h-4 text-[#A39CB8]" />}
+                  leftIcon={<Lock className="w-4 h-4 text-slate-500" />}
                   rightIcon={
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="text-[#A39CB8] hover:text-white focus:outline-none p-1"
+                      className="text-slate-500 hover:text-slate-300 focus:outline-none p-1"
                       aria-label={showPassword ? 'Hide password' : 'Show password'}
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -288,16 +286,16 @@ export const LoginPage: React.FC = () => {
                   }
                   error={loginForm.formState.errors.password?.message}
                   disabled={loginForm.formState.isSubmitting}
-                  className="bg-[#171329] border-purple-900/40 text-white placeholder:text-[#A39CB8]/50 focus:border-[#9875F5]"
+                  className="bg-[#181D2E] border-white/[0.08] text-slate-100 placeholder:text-slate-500 focus:border-indigo-500"
                   {...loginForm.register('password')}
                 />
               </div>
 
               <div className="flex items-center justify-between text-xs pt-1">
-                <label className="flex items-center gap-2 cursor-pointer text-[#A39CB8] hover:text-white select-none">
+                <label className="flex items-center gap-2 cursor-pointer text-slate-400 hover:text-slate-200 select-none">
                   <input
                     type="checkbox"
-                    className="rounded border-purple-900/50 bg-[#171329] text-[#9875F5] focus:ring-[#9875F5] w-4 h-4"
+                    className="rounded border-white/[0.08] bg-[#181D2E] text-indigo-600 focus:ring-indigo-500 w-4 h-4"
                     disabled={loginForm.formState.isSubmitting}
                     {...loginForm.register('rememberMe')}
                   />
@@ -309,7 +307,7 @@ export const LoginPage: React.FC = () => {
                 type="submit"
                 variant="primary"
                 size="md"
-                className="w-full mt-2 bg-gradient-to-r from-[#9875F5] to-[#6D7CFF] hover:from-[#8964e8] hover:to-[#5e6deb] text-white border-0 shadow-lg shadow-purple-500/25 py-2.5 font-semibold text-sm"
+                className="w-full mt-2 py-2.5 font-semibold text-sm"
                 isLoading={loginForm.formState.isSubmitting}
                 disabled={loginForm.formState.isSubmitting}
                 rightIcon={<ArrowRight className="w-4 h-4" />}
@@ -327,10 +325,10 @@ export const LoginPage: React.FC = () => {
                 type="text"
                 placeholder="John Doe"
                 autoComplete="name"
-                leftIcon={<UserIcon className="w-4 h-4 text-[#A39CB8]" />}
+                leftIcon={<UserIcon className="w-4 h-4 text-slate-500" />}
                 error={registerForm.formState.errors.fullName?.message}
                 disabled={registerForm.formState.isSubmitting}
-                className="bg-[#171329] border-purple-900/40 text-white placeholder:text-[#A39CB8]/50 focus:border-[#9875F5]"
+                className="bg-[#181D2E] border-white/[0.08] text-slate-100 placeholder:text-slate-500 focus:border-indigo-500"
                 {...registerForm.register('fullName')}
               />
 
@@ -339,10 +337,10 @@ export const LoginPage: React.FC = () => {
                 type="email"
                 placeholder="name@organization.com"
                 autoComplete="email"
-                leftIcon={<Mail className="w-4 h-4 text-[#A39CB8]" />}
+                leftIcon={<Mail className="w-4 h-4 text-slate-500" />}
                 error={registerForm.formState.errors.email?.message}
                 disabled={registerForm.formState.isSubmitting}
-                className="bg-[#171329] border-purple-900/40 text-white placeholder:text-[#A39CB8]/50 focus:border-[#9875F5]"
+                className="bg-[#181D2E] border-white/[0.08] text-slate-100 placeholder:text-slate-500 focus:border-indigo-500"
                 {...registerForm.register('email')}
               />
 
@@ -352,12 +350,12 @@ export const LoginPage: React.FC = () => {
                   type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••••••"
                   autoComplete="new-password"
-                  leftIcon={<Lock className="w-4 h-4 text-[#A39CB8]" />}
+                  leftIcon={<Lock className="w-4 h-4 text-slate-500" />}
                   rightIcon={
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="text-[#A39CB8] hover:text-white focus:outline-none p-1"
+                      className="text-slate-500 hover:text-slate-300 focus:outline-none p-1"
                       aria-label={showPassword ? 'Hide password' : 'Show password'}
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -365,16 +363,16 @@ export const LoginPage: React.FC = () => {
                   }
                   error={registerForm.formState.errors.password?.message}
                   disabled={registerForm.formState.isSubmitting}
-                  className="bg-[#171329] border-purple-900/40 text-white placeholder:text-[#A39CB8]/50 focus:border-[#9875F5]"
+                  className="bg-[#181D2E] border-white/[0.08] text-slate-100 placeholder:text-slate-500 focus:border-indigo-500"
                   {...registerForm.register('password')}
                 />
               </div>
 
               <div className="flex items-center justify-between text-xs pt-1">
-                <label className="flex items-center gap-2 cursor-pointer text-[#A39CB8] hover:text-white select-none">
+                <label className="flex items-center gap-2 cursor-pointer text-slate-400 hover:text-slate-200 select-none">
                   <input
                     type="checkbox"
-                    className="rounded border-purple-900/50 bg-[#171329] text-[#9875F5] focus:ring-[#9875F5] w-4 h-4"
+                    className="rounded border-white/[0.08] bg-[#181D2E] text-indigo-600 focus:ring-indigo-500 w-4 h-4"
                     disabled={registerForm.formState.isSubmitting}
                     {...registerForm.register('rememberMe')}
                   />
@@ -386,7 +384,7 @@ export const LoginPage: React.FC = () => {
                 type="submit"
                 variant="primary"
                 size="md"
-                className="w-full mt-2 bg-gradient-to-r from-[#9875F5] to-[#6D7CFF] hover:from-[#8964e8] hover:to-[#5e6deb] text-white border-0 shadow-lg shadow-purple-500/25 py-2.5 font-semibold text-sm"
+                className="w-full mt-2 py-2.5 font-semibold text-sm"
                 isLoading={registerForm.formState.isSubmitting}
                 disabled={registerForm.formState.isSubmitting}
                 rightIcon={<ShoppingBag className="w-4 h-4" />}
@@ -397,12 +395,12 @@ export const LoginPage: React.FC = () => {
           )}
 
           {/* Quick Notice */}
-          <div className="p-4 rounded-xl bg-[#171329]/80 border border-purple-900/30 text-xs text-[#A39CB8] space-y-1">
-            <div className="flex items-center gap-1.5 font-semibold text-[#C6B5FF]">
-              <ShieldCheck className="w-4 h-4 text-[#9875F5] shrink-0" />
+          <div className="p-4 rounded-xl bg-[#111522] border border-white/[0.08] text-xs text-slate-400 space-y-1">
+            <div className="flex items-center gap-1.5 font-semibold text-indigo-300 font-heading">
+              <ShieldCheck className="w-4 h-4 text-indigo-400 shrink-0" />
               <span>Independent Shopping Intelligence</span>
             </div>
-            <p className="text-[11px] text-[#A39CB8] leading-relaxed">
+            <p className="text-[11px] text-slate-400 leading-relaxed">
               TrustSphere analyzes listings against multi-source evidence. We never claim guaranteed authenticity — we surface empirical signals so you can shop with confidence.
             </p>
           </div>

@@ -10,15 +10,15 @@ export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
 export const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(
   ({ className, variant = 'default', size = 'md', children, ...props }, ref) => {
     const variants = {
-      default: 'bg-slate-100 text-slate-700 border-slate-200',
-      teal: 'bg-[#EBF2F4] text-[#3D7584] border-[#D0E2E5]',
-      navy: 'bg-[#0D1B2A] text-white border-transparent',
-      sage: 'bg-[#F0F4EC] text-[#4D7C5B] border-[#D5E3CE]',
-      lavender: 'bg-[#F3F1F9] text-[#6E63A6] border-[#DDD8F0]',
-      'risk-low': 'bg-[#EEF6F0] text-[#2F6B3E] border-[#C3DFCA]',
-      'risk-moderate': 'bg-[#FDF4EB] text-[#A65E1E] border-[#F3D4B6]',
-      'risk-elevated': 'bg-[#FBECEC] text-[#A83232] border-[#F3BFBF]',
-      'risk-sparse': 'bg-[#F1F5F9] text-[#475569] border-[#CBD5E1]',
+      default: 'bg-[#181D2E] text-slate-300 border-white/[0.08]',
+      teal: 'bg-indigo-950/40 text-indigo-300 border-indigo-500/30',
+      navy: 'bg-[#0B0D14] text-slate-200 border-white/[0.08]',
+      sage: 'bg-emerald-950/40 text-emerald-300 border-emerald-500/30',
+      lavender: 'bg-purple-950/40 text-purple-300 border-purple-500/30',
+      'risk-low': 'bg-emerald-950/40 text-emerald-300 border-emerald-500/30',
+      'risk-moderate': 'bg-amber-950/40 text-amber-300 border-amber-500/30',
+      'risk-elevated': 'bg-rose-950/40 text-rose-300 border-rose-500/30',
+      'risk-sparse': 'bg-slate-800 text-slate-300 border-slate-700',
     };
 
     const sizes = {

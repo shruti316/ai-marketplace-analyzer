@@ -27,9 +27,9 @@ describe('Button Component', () => {
 
   it('applies variant classes correctly', () => {
     const { rerender } = render(<Button variant="primary">Primary</Button>);
-    expect(screen.getByRole('button')).toHaveClass('bg-[#3D7584]');
+    expect(screen.getByRole('button')).toHaveClass('bg-indigo-600');
 
     rerender(<Button variant="danger">Danger</Button>);
-    expect(screen.getByRole('button')).toHaveClass('bg-[#B84A4A]');
+    expect(screen.getByRole('button')).toHaveClass('bg-rose-600');
   });
 });

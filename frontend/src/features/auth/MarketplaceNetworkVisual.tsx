@@ -2,7 +2,7 @@ import React from 'react';
 
 export const MarketplaceNetworkVisual: React.FC = () => {
   return (
-    <div className="relative w-full h-[480px] flex items-center justify-center select-none overflow-hidden rounded-2xl bg-gradient-to-b from-[#0D1B2A] via-[#102237] to-[#0A1624] border border-slate-800/80 shadow-2xl">
+    <div className="relative w-full h-[480px] flex items-center justify-center select-none overflow-hidden rounded-2xl bg-gradient-to-b from-[#0D101A] via-[#111522] to-[#0B0D14] border border-white/[0.08] shadow-2xl">
       {/* Background ambient radial glow */}
       <div className="absolute inset-0 pointer-events-none opacity-25">
         <div className="absolute top-1/4 left-1/3 w-80 h-80 rounded-full bg-[#3D7584] blur-3xl" />

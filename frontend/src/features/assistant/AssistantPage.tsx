@@ -111,19 +111,19 @@ export const AssistantPage: React.FC = () => {
   return (
     <div className="space-y-6 animate-fadeIn pb-12 max-w-6xl mx-auto">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-200">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-white/[0.08]">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#0D1B2A] flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-[#3D7584]" />
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-100 font-heading flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-indigo-400" />
             <span>TrustSphere Intelligence Assistant</span>
           </h1>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-slate-400 mt-1">
             Grounded multimodal reasoning and evidence synthesis across marketplace investigations
           </p>
         </div>
 
-        <div className="flex items-center gap-2 text-xs text-slate-600 bg-white px-3 py-1.5 rounded-xl border border-slate-200">
-          <ShieldCheck className="w-4 h-4 text-emerald-600" />
+        <div className="flex items-center gap-2 text-xs text-slate-300 bg-[#181D2E] px-3 py-1.5 rounded-xl border border-white/[0.08]">
+          <ShieldCheck className="w-4 h-4 text-emerald-400" />
           <span>Knowledge-Grounded Reasoning Active</span>
         </div>
       </div>
@@ -131,12 +131,12 @@ export const AssistantPage: React.FC = () => {
       {/* Main Grid: Left Context Selector, Right Chat Canvas */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left: Product Context Anchor (4 Cols) */}
-        <div className="lg:col-span-4 bg-white rounded-2xl border border-[#DCE5E7] p-5 shadow-soft space-y-4">
+        <div className="lg:col-span-4 bg-[#111522] rounded-2xl border border-white/[0.08] p-5 shadow-soft space-y-4">
           <div className="space-y-1">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono">
               Investigation Context Anchor
             </h3>
-            <p className="text-xs text-slate-600">
+            <p className="text-xs text-slate-400">
               Select a catalog product to ground all assistant inquiries in verified observations.
             </p>
           </div>
@@ -148,18 +148,18 @@ export const AssistantPage: React.FC = () => {
                 onClick={() => setSelectedProductId(prod.canonical_product_id)}
                 className={`p-3 rounded-xl border text-xs cursor-pointer transition-all ${
                   selectedProductId === prod.canonical_product_id
-                    ? 'border-[#3D7584] bg-[#EBF2F4]/80 shadow-xs'
-                    : 'border-slate-200 hover:border-slate-300 bg-[#FAF7F2]'
+                    ? 'border-indigo-500 bg-indigo-950/30 shadow-xs'
+                    : 'border-white/[0.08] hover:border-white/20 bg-[#181D2E]'
                 }`}
               >
-                <div className="flex items-center justify-between text-[10px] text-slate-500 mb-1">
-                  <span className="font-semibold text-[#3D7584]">{prod.brand_name || 'Verified Brand'}</span>
-                  <span className="font-mono">{prod.category}</span>
+                <div className="flex items-center justify-between text-[10px] text-slate-400 mb-1 font-mono">
+                  <span className="font-semibold text-indigo-300 font-heading">{prod.brand_name || 'Verified Brand'}</span>
+                  <span>{prod.category}</span>
                 </div>
-                <p className="font-semibold text-[#0D1B2A] line-clamp-1">
+                <p className="font-semibold text-slate-100 line-clamp-1 font-heading">
                   {prod.product_title || prod.title}
                 </p>
-                <p className="font-mono text-[10px] text-slate-400 mt-1">
+                <p className="font-mono text-[10px] text-slate-500 mt-1">
                   {prod.canonical_product_id}
                 </p>
               </div>
@@ -168,16 +168,16 @@ export const AssistantPage: React.FC = () => {
         </div>
 
         {/* Right: Conversational Panel (8 Cols) */}
-        <div className="lg:col-span-8 bg-white rounded-2xl border border-[#DCE5E7] shadow-soft flex flex-col h-[650px] overflow-hidden">
+        <div className="lg:col-span-8 bg-[#111522] rounded-2xl border border-white/[0.08] shadow-soft flex flex-col h-[650px] overflow-hidden">
           {/* Thread Header */}
-          <div className="px-5 py-3.5 border-b border-slate-200 bg-[#FAF7F2] flex items-center justify-between">
+          <div className="px-5 py-3.5 border-b border-white/[0.08] bg-[#181D2E] flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Bot className="w-4 h-4 text-[#3D7584]" />
-              <span className="text-xs font-semibold text-[#0D1B2A]">
-                Context: <span className="font-mono text-[#3D7584]">{selectedProductId}</span>
+              <Bot className="w-4 h-4 text-indigo-400" />
+              <span className="text-xs font-semibold text-slate-200">
+                Context: <span className="font-mono text-indigo-400">{selectedProductId}</span>
               </span>
             </div>
-            <span className="text-[10px] font-mono text-slate-500 bg-white px-2 py-0.5 rounded border border-slate-200">
+            <span className="text-[10px] font-mono text-slate-400 bg-[#111522] px-2 py-0.5 rounded border border-white/[0.08]">
               Evidence Engine v1.7
             </span>
           </div>
@@ -190,29 +190,29 @@ export const AssistantPage: React.FC = () => {
                 className={`flex gap-3 ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 {m.sender === 'assistant' && (
-                  <div className="h-8 w-8 rounded-xl bg-[#0D1B2A] text-white flex items-center justify-center shrink-0 shadow-xs">
-                    <Bot className="w-4 h-4 text-[#89BBBE]" />
+                  <div className="h-8 w-8 rounded-xl bg-[#181D2E] text-indigo-400 border border-white/[0.08] flex items-center justify-center shrink-0 shadow-xs">
+                    <Bot className="w-4 h-4" />
                   </div>
                 )}
                 <div
                   className={`max-w-[85%] rounded-2xl p-4 text-xs leading-relaxed ${
                     m.sender === 'user'
-                      ? 'bg-[#3D7584] text-white rounded-tr-none'
-                      : 'bg-[#FAF7F2] border border-[#DCE5E7] text-slate-800 rounded-tl-none shadow-xs'
+                      ? 'bg-indigo-600 text-white rounded-tr-none'
+                      : 'bg-[#181D2E] border border-white/[0.08] text-slate-200 rounded-tl-none shadow-xs'
                   }`}
                 >
                   <div className="whitespace-pre-line font-normal">{m.text}</div>
 
                   {m.evidence && m.evidence.length > 0 && (
-                    <div className="mt-3 pt-2.5 border-t border-slate-200/60 space-y-1">
-                      <span className="text-[10px] font-semibold text-slate-500 block">Supporting Evidence Citations:</span>
+                    <div className="mt-3 pt-2.5 border-t border-white/[0.08] space-y-1">
+                      <span className="text-[10px] font-semibold text-slate-400 block font-mono">Supporting Evidence Citations:</span>
                       <div className="flex flex-wrap gap-1">
                         {m.evidence.map((ev, i) => (
                           <span
                             key={i}
-                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-white border border-slate-200 text-slate-700 text-[10px] font-mono"
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#111522] border border-white/[0.08] text-slate-300 text-[10px] font-mono"
                           >
-                            <CheckCircle2 className="w-2.5 h-2.5 text-emerald-600" />
+                            <CheckCircle2 className="w-2.5 h-2.5 text-emerald-400" />
                             {ev}
                           </span>
                         ))}
@@ -226,7 +226,7 @@ export const AssistantPage: React.FC = () => {
                     ) : (
                       <span />
                     )}
-                    <span className={m.sender === 'user' ? 'text-white/70' : 'text-slate-400'}>
+                    <span className={m.sender === 'user' ? 'text-white/70' : 'text-slate-500'}>
                       {m.timestamp}
                     </span>
                   </div>
@@ -236,7 +236,7 @@ export const AssistantPage: React.FC = () => {
 
             {isTyping && (
               <div className="text-xs text-slate-400 italic flex items-center gap-2">
-                <Bot className="w-4 h-4 text-[#3D7584] animate-pulse" />
+                <Bot className="w-4 h-4 text-indigo-400 animate-pulse" />
                 <span>Synthesizing evidence across multimodal engines...</span>
               </div>
             )}
@@ -244,7 +244,7 @@ export const AssistantPage: React.FC = () => {
           </div>
 
           {/* Quick Questions */}
-          <div className="px-4 py-2 border-t border-slate-100 bg-[#FAF7F2]/50 flex flex-wrap gap-1.5">
+          <div className="px-4 py-2 border-t border-white/[0.08] bg-[#181D2E]/60 flex flex-wrap gap-1.5">
             {[
               'Explain the zero-penalty invariant',
               'What are the 5 fusion modalities?',
@@ -253,7 +253,7 @@ export const AssistantPage: React.FC = () => {
               <button
                 key={idx}
                 onClick={() => handleSend(q)}
-                className="text-[11px] px-2.5 py-1 rounded-lg bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 transition-colors"
+                className="text-[11px] px-2.5 py-1 rounded-lg bg-[#111522] hover:bg-[#181D2E] text-slate-300 border border-white/[0.08] transition-colors"
               >
                 {q}
               </button>
@@ -261,7 +261,7 @@ export const AssistantPage: React.FC = () => {
           </div>
 
           {/* Input Bar */}
-          <div className="p-4 border-t border-slate-200 bg-white">
+          <div className="p-4 border-t border-white/[0.08] bg-[#111522]">
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -274,7 +274,7 @@ export const AssistantPage: React.FC = () => {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Ask about this product's anomaly classification or evidence..."
-                className="flex-1 bg-[#FAF7F2] text-xs text-slate-800 placeholder:text-slate-400 rounded-xl px-4 py-2.5 border border-[#BAC7CA] focus:border-[#3D7584] outline-none"
+                className="flex-1 bg-[#181D2E] text-xs text-slate-100 placeholder:text-slate-500 rounded-xl px-4 py-2.5 border border-white/[0.08] focus:border-indigo-500 outline-none transition-all"
               />
               <Button type="submit" variant="primary" size="sm" disabled={!input.trim()}>
                 <Send className="w-4 h-4" />
