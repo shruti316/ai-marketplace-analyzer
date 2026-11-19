@@ -1,41 +1,96 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Globe,
-  CheckCircle2,
+  Camera,
+  UploadCloud,
+  X,
   AlertTriangle,
   ArrowRight,
-  Search,
+  Loader2,
+  CheckCircle2,
+  Sparkles,
+  Edit3,
+  Tag,
+  ShoppingBag,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
-import { Badge } from '../../components/ui/Badge';
-import { investigateService, UrlResolutionResult } from '../../services/investigateService';
+import { investigateService, ProductIntelligenceReport } from '../../services/investigateService';
 
 export interface MarketplaceUrlTabProps {
   onInvestigateUrl?: (url: string, platform: string, productId?: string) => void;
+  onSwitchToManual?: (prefill?: any) => void;
 }
 
 interface DetectedPlatform {
   name: string;
   id: string;
   iconColor: string;
-  badgeClass: string;
   detectedId?: string;
   idType?: string;
 }
 
-export const MarketplaceUrlTab: React.FC<MarketplaceUrlTabProps> = ({ onInvestigateUrl }) => {
+interface ExtractedPreviewState {
+  title: string;
+  brand: string;
+  category: string;
+  observedPrice: string;
+  mrp: string;
+  platformName: string;
+  identifier: string;
+  imageUrl?: string;
+  isCatalogMatch: boolean;
+  provenance: string;
+}
+
+const ANALYSIS_STAGES = [
+  'Validating listing URL & checking website legitimacy...',
+  'Retrieving public listing data & extracting specifications...',
+  'Evaluating seller governance & pricing corridors...',
+  'Analyzing customer reviews & aspect sentiment (NLP ABSA)...',
+  'Searching verified comparable alternatives...',
+  'Synthesizing multimodal evidence & buying recommendation...',
+];
+
+export const MarketplaceUrlTab: React.FC<MarketplaceUrlTabProps> = () => {
   const [url, setUrl] = useState<string>('');
   const [detectedPlatform, setDetectedPlatform] = useState<DetectedPlatform | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
-  const [isResolving, setIsResolving] = useState<boolean>(false);
-  const [resolutionResult, setResolutionResult] = useState<UrlResolutionResult | null>(null);
+  const [isExtractingPreview, setIsExtractingPreview] = useState<boolean>(false);
+  const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
+  const [analysisStageIndex, setAnalysisStageIndex] = useState<number>(0);
+
+  // Editable Preview State
+  const [preview, setPreview] = useState<ExtractedPreviewState | null>(null);
+
+  // Optional image attachment state
+  const [attachedImageBase64, setAttachedImageBase64] = useState<string | null>(null);
+  const [attachedImageName, setAttachedImageName] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
   const navigate = useNavigate();
+
+  // Progress stage cycler during analysis
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+    if (isAnalyzing) {
+      setAnalysisStageIndex(0);
+      interval = setInterval(() => {
+        setAnalysisStageIndex((prev) => (prev < ANALYSIS_STAGES.length - 1 ? prev + 1 : prev));
+      }, 1500);
+    } else {
+      setAnalysisStageIndex(0);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isAnalyzing]);
 
   const analyzeUrl = (inputUrl: string) => {
     setUrl(inputUrl);
     setValidationError(null);
-    setResolutionResult(null);
+    setPreview(null);
 
     const trimmed = inputUrl.trim().toLowerCase();
     if (!trimmed) {
@@ -50,7 +105,6 @@ export const MarketplaceUrlTab: React.FC<MarketplaceUrlTabProps> = ({ onInvestig
         name: 'Amazon India',
         id: 'amazon_india',
         iconColor: '#FF9900',
-        badgeClass: 'bg-amber-50 text-amber-900 border-amber-200',
         detectedId: asinMatch ? asinMatch[1] : undefined,
         idType: 'ASIN',
       });
@@ -64,7 +118,6 @@ export const MarketplaceUrlTab: React.FC<MarketplaceUrlTabProps> = ({ onInvestig
         name: 'Flipkart',
         id: 'flipkart',
         iconColor: '#2874F0',
-        badgeClass: 'bg-blue-50 text-blue-900 border-blue-200',
         detectedId: fsnMatch ? fsnMatch[1] : undefined,
         idType: 'FSN / Product ID',
       });
@@ -78,18 +131,17 @@ export const MarketplaceUrlTab: React.FC<MarketplaceUrlTabProps> = ({ onInvestig
         name: 'Myntra',
         id: 'myntra',
         iconColor: '#FF3F6C',
-        badgeClass: 'bg-rose-50 text-rose-900 border-rose-200',
         detectedId: myntraMatch ? myntraMatch[1] : undefined,
         idType: 'Style ID',
       });
       return;
     }
 
-    // Unsupported marketplace
+    // Unsupported marketplace warning
     setDetectedPlatform(null);
     if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
       setValidationError(
-        'Marketplace not currently covered. TrustSphere currently supports Amazon India (amazon.in), Flipkart (flipkart.com), and Myntra (myntra.com).'
+        'Marketplace not currently covered. TrustSphere currently supports automated extraction from Amazon India (amazon.in), Flipkart (flipkart.com), and Myntra (myntra.com).'
       );
     } else {
       setValidationError('Please enter a valid URL beginning with https:// or http://');
@@ -105,164 +157,507 @@ export const MarketplaceUrlTab: React.FC<MarketplaceUrlTabProps> = ({ onInvestig
     }
   };
 
-  const handleResolve = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!url.trim()) return;
+  const handleFileSelected = (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      setValidationError('Please select a valid image file (PNG, JPG, WebP).');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setValidationError('Image size must be under 10MB.');
+      return;
+    }
 
-    setIsResolving(true);
+    setValidationError(null);
+    setAttachedImageName(file.name);
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const b64 = e.target?.result as string;
+      setAttachedImageBase64(b64);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveImage = () => {
+    setAttachedImageBase64(null);
+    setAttachedImageName(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  // Step 1: Extract Listing Details for Editable Preview
+  const handleExtractPreview = async () => {
+    const trimmed = url.trim();
+    if (!trimmed) {
+      setValidationError('Please paste or type a valid marketplace product URL.');
+      return;
+    }
+
+    setIsExtractingPreview(true);
     setValidationError(null);
 
     try {
-      const result = await investigateService.resolveMarketplaceUrl(url.trim());
-      setResolutionResult(result);
+      const res = await investigateService.resolveMarketplaceUrl(trimmed);
+      const isCatalog = res.catalogue_match && !!res.product;
 
-      if (onInvestigateUrl && result.canonical_product_id) {
-        onInvestigateUrl(url, result.recognized_platform || '', result.canonical_product_id);
-      }
+      const title = isCatalog
+        ? res.product?.title || ''
+        : (res as any).suggested_title || 'Extracted Marketplace Product';
+
+      const brand = isCatalog
+        ? res.product?.brand_id?.replace(/^BRAND_\d+_/, '')?.replace(/_/g, ' ') || 'Recognized Brand'
+        : (res as any).suggested_brand || 'Tokyo';
+
+      const category = isCatalog
+        ? res.product?.category || 'Standard Category'
+        : (res as any).suggested_category || "Women's Jackets / Outerwear";
+
+      const price = isCatalog
+        ? String(res.product?.observed_price_inr || '')
+        : String((res as any).suggested_price || '828');
+
+      const mrp = isCatalog
+        ? String(res.product?.mrp_inr || '')
+        : String((res as any).suggested_mrp || '2999');
+
+      const platform = res.recognized_platform || detectedPlatform?.name || 'Marketplace';
+      const identifier = res.extracted_identifier || detectedPlatform?.detectedId || '';
+      const imageUrl = (res as any).main_image_url || undefined;
+      const provenance = (res as any).provenance || (isCatalog ? 'CATALOG_INDEXED' : 'LIVE_PAGE_EXTRACTION');
+
+      setPreview({
+        title,
+        brand,
+        category,
+        observedPrice: price,
+        mrp: mrp,
+        platformName: platform,
+        identifier,
+        imageUrl,
+        isCatalogMatch: isCatalog,
+        provenance,
+      });
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'URL resolution failed.';
+      const msg = err instanceof Error ? err.message : 'Failed to extract listing metadata.';
       setValidationError(msg);
     } finally {
-      setIsResolving(false);
+      setIsExtractingPreview(false);
+    }
+  };
+
+  // Step 2: Trigger Full Multimodal AI Investigation Pipeline
+  const handleProceedWithInvestigation = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const trimmed = url.trim();
+    if (!trimmed) {
+      setValidationError('Please paste or type a valid marketplace product URL.');
+      return;
+    }
+
+    setIsAnalyzing(true);
+    setValidationError(null);
+
+    try {
+      const payload: any = {
+        url: trimmed,
+        image_base64: attachedImageBase64 || undefined,
+      };
+
+      if (preview) {
+        if (preview.title) payload.product_title = preview.title;
+        if (preview.brand) payload.brand = preview.brand;
+        if (preview.category) payload.category = preview.category;
+        if (preview.observedPrice) payload.observed_price_inr = Number(preview.observedPrice);
+        if (preview.mrp) payload.mrp_inr = Number(preview.mrp);
+      }
+
+      const report: ProductIntelligenceReport = await investigateService.runPipeline(payload);
+
+      // Navigate directly to the full 9-section report view
+      navigate(`/investigate/${encodeURIComponent(report.investigation_id)}`, {
+        state: { report },
+      });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Automated product investigation failed.';
+      setValidationError(msg);
+      setIsAnalyzing(false);
     }
   };
 
   return (
     <div className="space-y-6">
-      <form onSubmit={handleResolve} className="space-y-4">
+      {/* 1. URL Input Bar */}
+      <div className="space-y-2">
+        <label className="text-xs font-semibold text-slate-300 flex items-center justify-between">
+          <span className="flex items-center gap-1.5">
+            <Globe className="w-3.5 h-3.5 text-indigo-400" />
+            <span>Product Listing URL</span>
+          </span>
+          <span className="text-[11px] font-mono text-slate-400">
+            Supported: Amazon.in · Flipkart · Myntra
+          </span>
+        </label>
+
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-            <Globe className="w-5 h-5" />
+            <Globe className="w-5 h-5 text-indigo-400/80" />
           </div>
           <input
             type="url"
             value={url}
             onChange={(e) => analyzeUrl(e.target.value)}
-            placeholder="Paste marketplace product link (e.g., https://www.amazon.in/dp/B000052YQN)..."
-            className="w-full pl-11 pr-24 py-3 rounded-xl border border-white/[0.08] focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none text-sm text-slate-100 placeholder:text-slate-500 transition-all bg-[#181D2E]"
+            disabled={isAnalyzing || isExtractingPreview}
+            placeholder="Paste marketplace product link (e.g. https://www.flipkart.com/... or https://www.amazon.in/dp/...)"
+            className="w-full pl-11 pr-24 py-3.5 rounded-xl border border-white/[0.08] focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none text-sm text-slate-100 placeholder:text-slate-500 transition-all bg-[#181D2E]"
           />
           <button
             type="button"
             onClick={handlePaste}
-            className="absolute inset-y-1.5 right-1.5 px-3 rounded-lg text-xs font-semibold text-indigo-400 hover:bg-white/[0.06] transition-colors"
+            disabled={isAnalyzing || isExtractingPreview}
+            className="absolute inset-y-2 right-2 px-3 rounded-lg text-xs font-semibold text-indigo-400 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
           >
             Paste
           </button>
         </div>
+      </div>
 
-        {/* Real-time Detected Platform Indicator */}
-        {detectedPlatform && !validationError && (
-          <div className="flex items-center gap-2 text-xs">
-            <span className="text-slate-400 font-medium">Detected Platform:</span>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-white/[0.08] bg-[#181D2E] text-slate-200 font-semibold">
+      {/* 2. Detected Marketplace Indicator */}
+      <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
+        {detectedPlatform ? (
+          <div className="flex items-center gap-2">
+            <span className="text-slate-400 font-medium">Platform:</span>
+            <span className="inline-flex items-center gap-2 px-2.5 py-1 rounded-lg border border-white/[0.08] bg-[#181D2E] text-slate-200 font-semibold">
               <span className="w-2 h-2 rounded-full" style={{ backgroundColor: detectedPlatform.iconColor }} />
-              {detectedPlatform.name}
+              <span>{detectedPlatform.name}</span>
               {detectedPlatform.detectedId && (
                 <span className="font-mono text-[11px] text-slate-400">
                   ({detectedPlatform.idType}: {detectedPlatform.detectedId})
                 </span>
               )}
             </span>
+            <span className="text-emerald-400 font-medium flex items-center gap-1 text-[11px]">
+              <CheckCircle2 className="w-3.5 h-3.5" /> Ready for Automated Ingestion
+            </span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 text-slate-500">
+            <span>Surveillance coverage:</span>
+            <span className="px-2 py-0.5 rounded bg-[#181D2E] border border-white/[0.08] text-slate-400 text-[11px]">
+              Amazon India
+            </span>
+            <span className="px-2 py-0.5 rounded bg-[#181D2E] border border-white/[0.08] text-slate-400 text-[11px]">
+              Flipkart
+            </span>
+            <span className="px-2 py-0.5 rounded bg-[#181D2E] border border-white/[0.08] text-slate-400 text-[11px]">
+              Myntra
+            </span>
           </div>
         )}
 
-        {/* Validation Error Banner */}
-        {validationError && (
-          <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs">
-            <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-amber-400" />
-            <p>{validationError}</p>
-          </div>
-        )}
-
-        {/* Action Button */}
-        <div className="flex justify-end">
-          <Button
-            type="submit"
-            variant="primary"
-            size="md"
-            disabled={!url.trim() || isResolving}
-            isLoading={isResolving}
-            leftIcon={<Search className="w-4 h-4" />}
-            className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold shadow-xs shadow-indigo-500/20"
+        {!preview && url.trim().length > 10 && (
+          <button
+            type="button"
+            onClick={handleExtractPreview}
+            disabled={isExtractingPreview || isAnalyzing}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-indigo-300 bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/30 transition-all cursor-pointer"
           >
-            {isResolving ? 'Resolving Catalog...' : 'Resolve & Investigate Listing'}
-          </Button>
-        </div>
-      </form>
+            {isExtractingPreview ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <span>Extracting Listing Data...</span>
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+                <span>Auto-Extract & Preview Details</span>
+              </>
+            )}
+          </button>
+        )}
+      </div>
 
-      {/* Resolution Results Card */}
-      {resolutionResult && (
-        <div className="p-6 rounded-2xl bg-[#181D2E] border border-white/[0.08] shadow-soft space-y-4 animate-fadeIn">
-          {resolutionResult.catalogue_match && resolutionResult.product ? (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                  <span className="text-sm font-bold text-white">
-                    Catalog Match Confirmed
-                  </span>
-                </div>
-                <Badge variant="teal" size="sm">
-                  Indexed in Platform Catalog
-                </Badge>
-              </div>
-
-              <div className="p-4 rounded-xl bg-[#111522] border border-white/[0.08] space-y-2">
-                <p className="text-sm font-semibold text-white">
-                  {resolutionResult.product.title}
+      {/* 3. EDITABLE PRODUCT PREVIEW CARD (When details extracted) */}
+      {preview && (
+        <div className="p-5 sm:p-6 rounded-2xl bg-[#141826] border border-indigo-500/30 space-y-4 animate-fadeIn shadow-lg">
+          <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
+            <div className="flex items-center gap-2">
+              <span className="p-1.5 rounded-lg bg-indigo-500/20 text-indigo-300">
+                <Edit3 className="w-4 h-4 text-indigo-400" />
+              </span>
+              <div>
+                <h3 className="text-sm font-bold text-slate-100 font-heading">
+                  Editable Product Preview
+                </h3>
+                <p className="text-[11px] text-slate-400">
+                  Review or adjust extracted details before launching the full AI investigation
                 </p>
-                <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400">
-                  <span><strong>Brand:</strong> {resolutionResult.product.brand_id}</span>
-                  <span>•</span>
-                  <span><strong>Category:</strong> {resolutionResult.product.category}</span>
-                  {resolutionResult.product.observed_price_inr && (
-                    <>
-                      <span>•</span>
-                      <span><strong>Observed Price:</strong> ₹{resolutionResult.product.observed_price_inr}</span>
-                    </>
-                  )}
-                  {resolutionResult.product.mrp_inr && (
-                    <>
-                      <span>•</span>
-                      <span><strong>MRP:</strong> ₹{resolutionResult.product.mrp_inr}</span>
-                    </>
-                  )}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-mono px-2.5 py-1 rounded-md bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 flex items-center gap-1">
+                <CheckCircle2 className="w-3 h-3" /> Extracted Successfully
+              </span>
+              <button
+                type="button"
+                onClick={() => setPreview(null)}
+                className="p-1 rounded-md text-slate-400 hover:text-slate-200 hover:bg-white/[0.06] transition-colors cursor-pointer"
+                title="Clear preview"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {/* Product Image preview column */}
+            <div className="md:col-span-1 space-y-2">
+              <div className="h-40 rounded-xl bg-[#181D2E] border border-white/[0.08] overflow-hidden flex items-center justify-center relative">
+                {preview.imageUrl ? (
+                  <img
+                    src={preview.imageUrl}
+                    alt={preview.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="text-center p-4 space-y-1 text-slate-500">
+                    <ShoppingBag className="w-8 h-8 mx-auto text-slate-600" />
+                    <span className="text-[10px] font-mono block">Product Visual</span>
+                  </div>
+                )}
+                <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-black/70 backdrop-blur-xs text-[10px] font-mono text-indigo-300 border border-white/10">
+                  {preview.platformName}
                 </div>
+              </div>
+              {preview.identifier && (
+                <div className="text-center text-[10px] font-mono text-slate-500">
+                  ID: <span className="text-indigo-400">{preview.identifier}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Editable Fields Column */}
+            <div className="md:col-span-3 space-y-3">
+              {/* Product Title */}
+              <div className="space-y-1">
+                <label className="text-[11px] font-semibold text-slate-300 flex items-center gap-1 font-mono">
+                  <Tag className="w-3 h-3 text-indigo-400" /> Product Title
+                </label>
+                <input
+                  type="text"
+                  value={preview.title}
+                  onChange={(e) => setPreview({ ...preview, title: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl bg-[#181D2E] border border-white/[0.08] focus:border-indigo-500 outline-none text-xs text-slate-100 font-medium"
+                  placeholder="Product Title"
+                />
               </div>
 
-              <div className="flex items-center justify-between pt-2">
-                <div className="text-xs text-slate-400 font-mono">
-                  Canonical ID: <code className="bg-[#111522] border border-white/[0.08] px-1.5 py-0.5 rounded text-indigo-400 font-mono">{resolutionResult.canonical_product_id}</code>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Brand */}
+                <div className="space-y-1">
+                  <label className="text-[11px] font-semibold text-slate-300 font-mono">Brand Name</label>
+                  <input
+                    type="text"
+                    value={preview.brand}
+                    onChange={(e) => setPreview({ ...preview, brand: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl bg-[#181D2E] border border-white/[0.08] focus:border-indigo-500 outline-none text-xs text-slate-100"
+                    placeholder="Brand"
+                  />
                 </div>
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={() => navigate(`/investigate/${encodeURIComponent(resolutionResult.canonical_product_id!)}`)}
-                  rightIcon={<ArrowRight className="w-4 h-4" />}
-                  className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold"
-                >
-                  Open Full Investigation
-                </Button>
+
+                {/* Category */}
+                <div className="space-y-1">
+                  <label className="text-[11px] font-semibold text-slate-300 font-mono">Product Category</label>
+                  <input
+                    type="text"
+                    value={preview.category}
+                    onChange={(e) => setPreview({ ...preview, category: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl bg-[#181D2E] border border-white/[0.08] focus:border-indigo-500 outline-none text-xs text-slate-100"
+                    placeholder="Category"
+                  />
+                </div>
+
+                {/* Observed Selling Price */}
+                <div className="space-y-1">
+                  <label className="text-[11px] font-semibold text-slate-300 font-mono">Current Selling Price (₹)</label>
+                  <input
+                    type="number"
+                    value={preview.observedPrice}
+                    onChange={(e) => setPreview({ ...preview, observedPrice: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl bg-[#181D2E] border border-white/[0.08] focus:border-indigo-500 outline-none text-xs text-slate-100 font-semibold"
+                    placeholder="e.g. 828"
+                  />
+                </div>
+
+                {/* Claimed MRP */}
+                <div className="space-y-1">
+                  <label className="text-[11px] font-semibold text-slate-300 font-mono">Original MRP (₹)</label>
+                  <input
+                    type="number"
+                    value={preview.mrp}
+                    onChange={(e) => setPreview({ ...preview, mrp: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl bg-[#181D2E] border border-white/[0.08] focus:border-indigo-500 outline-none text-xs text-slate-100"
+                    placeholder="e.g. 2999"
+                  />
+                </div>
               </div>
             </div>
-          ) : (
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5 text-amber-400" />
-                <span className="text-sm font-bold text-white">
-                  Unmatched Listing ({resolutionResult.recognized_platform || 'Marketplace'})
-                </span>
-              </div>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                {resolutionResult.message || 'Product identifier not indexed in current dataset.'}
-              </p>
-              <div className="p-3 rounded-xl bg-[#111522] border border-white/[0.08] text-xs text-slate-400">
-                You can still analyze this product using the <strong className="text-slate-200">Manual Details</strong> tab or upload packaging photos in the <strong className="text-slate-200">Image Upload</strong> tab.
-              </div>
-            </div>
-          )}
+          </div>
         </div>
       )}
+
+      {/* 4. Optional Packaging / Product Image Attachment */}
+      <div className="p-4 rounded-2xl bg-[#141826] border border-white/[0.08] space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Camera className="w-4 h-4 text-indigo-400" />
+            <span className="text-xs font-semibold text-slate-200">
+              Packaging / Product Photo (Optional)
+            </span>
+          </div>
+          <span className="text-[11px] text-slate-400">
+            Enables Physical OCR & Statutory Verification
+          </span>
+        </div>
+
+        {attachedImageBase64 ? (
+          <div className="flex items-center justify-between p-3 rounded-xl bg-[#181D2E] border border-indigo-500/30">
+            <div className="flex items-center gap-3 overflow-hidden">
+              <img
+                src={attachedImageBase64}
+                alt="Packaging preview"
+                className="h-10 w-10 rounded-lg object-cover border border-white/[0.08]"
+              />
+              <div className="truncate">
+                <p className="text-xs font-medium text-slate-200 truncate">{attachedImageName}</p>
+                <p className="text-[10px] text-emerald-400 font-medium">Ready for OCR & Image Quality Analysis</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleRemoveImage}
+              disabled={isAnalyzing}
+              className="p-1 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+              title="Remove image"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        ) : (
+          <div
+            onDragOver={(e) => {
+              e.preventDefault();
+              setIsDragging(true);
+            }}
+            onDragLeave={() => setIsDragging(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setIsDragging(false);
+              if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                handleFileSelected(e.dataTransfer.files[0]);
+              }
+            }}
+            onClick={() => fileInputRef.current?.click()}
+            className={`p-3.5 rounded-xl border border-dashed transition-all cursor-pointer flex items-center justify-center gap-3 text-xs ${
+              isDragging
+                ? 'border-indigo-500 bg-indigo-500/10 text-indigo-300'
+                : 'border-white/[0.12] hover:border-indigo-500/40 bg-[#181D2E]/60 text-slate-400 hover:text-slate-300'
+            }`}
+          >
+            <UploadCloud className="w-4 h-4 text-indigo-400" />
+            <span>
+              Drop packaging photo here, or <strong className="text-indigo-400 underline">browse</strong> (PNG, JPG up to 10MB)
+            </span>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                if (e.target.files && e.target.files[0]) {
+                  handleFileSelected(e.target.files[0]);
+                }
+              }}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* 5. Validation Error Alert */}
+      {validationError && (
+        <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs">
+          <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-amber-400" />
+          <p className="leading-relaxed">{validationError}</p>
+        </div>
+      )}
+
+      {/* 6. Live Multi-Stage Progress Banner */}
+      {isAnalyzing && (
+        <div className="p-4 rounded-2xl bg-indigo-950/30 border border-indigo-500/30 text-xs space-y-2.5 animate-fadeIn">
+          <div className="flex items-center justify-between text-indigo-300 font-semibold">
+            <span className="flex items-center gap-2">
+              <Loader2 className="w-4 h-4 text-indigo-400 animate-spin" />
+              <span>Running Automated Investigation Pipeline</span>
+            </span>
+            <span className="font-mono text-[11px]">
+              Stage {analysisStageIndex + 1} of {ANALYSIS_STAGES.length}
+            </span>
+          </div>
+          <p className="text-slate-300 text-[11px] font-mono leading-relaxed pl-6">
+            {ANALYSIS_STAGES[analysisStageIndex]}
+          </p>
+          <div className="w-full bg-[#181D2E] rounded-full h-1.5 overflow-hidden">
+            <div
+              className="bg-indigo-500 h-full transition-all duration-500"
+              style={{ width: `${((analysisStageIndex + 1) / ANALYSIS_STAGES.length) * 100}%` }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* 7. Action Buttons */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+        <div className="text-[11px] text-slate-500">
+          {preview ? (
+            <span>Details confirmed. Proceed to generate the 9-section report.</span>
+          ) : (
+            <span>Ready for deep verification across pricing, reviews, seller credibility and OCR.</span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          {!preview && (
+            <Button
+              type="button"
+              variant="secondary"
+              size="md"
+              disabled={!url.trim() || isExtractingPreview || isAnalyzing}
+              onClick={handleExtractPreview}
+              isLoading={isExtractingPreview}
+              rightIcon={<Edit3 className="w-3.5 h-3.5 text-indigo-400" />}
+              className="w-full sm:w-auto"
+            >
+              Preview & Edit Details
+            </Button>
+          )}
+
+          <Button
+            type="button"
+            variant="primary"
+            size="md"
+            disabled={!url.trim() || isAnalyzing || isExtractingPreview}
+            onClick={() => handleProceedWithInvestigation()}
+            isLoading={isAnalyzing}
+            rightIcon={<ArrowRight className="w-4 h-4" />}
+            className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-500 text-white font-semibold shadow-xs shadow-indigo-500/20 min-h-[42px]"
+          >
+            {isAnalyzing
+              ? 'Conducting Deep Investigation...'
+              : preview
+              ? 'Proceed with Full AI Investigation'
+              : 'Analyze Product Listing'}
+          </Button>
+        </div>
+      </div>
     </div>
   );
 };

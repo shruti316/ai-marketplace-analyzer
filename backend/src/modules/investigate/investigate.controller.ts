@@ -1,13 +1,29 @@
 import { Request, Response, NextFunction } from 'express';
 import { investigateService } from './investigate.service';
+import { investigationOrchestrator } from './investigation_orchestrator';
 import {
   InvestigateUrlInput,
   InvestigateImageInput,
   InvestigateAdhocInput,
-  AssistantChatInput
+  AssistantChatInput,
+  PipelineInvestigationInput,
 } from './investigate.schemas';
 
 export class InvestigateController {
+  async runPipeline(req: Request, res: Response, next: NextFunction) {
+    try {
+      const input = req.body as PipelineInvestigationInput;
+      const userId = req.user?.id || null;
+      const report = await investigationOrchestrator.orchestrate(input, userId);
+      res.json({
+        status: 'success',
+        data: report,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
   async resolveUrl(req: Request, res: Response, next: NextFunction) {
     try {
       const input = req.body as InvestigateUrlInput;

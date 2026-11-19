@@ -105,9 +105,46 @@ export class ComparisonRepository {
       const comparison = compRows[0];
 
       const [itemRows] = await connection.query<ComparisonItemRow[]>(
-        `SELECT ci.*, p.product_title, p.category, p.platform_id, p.brand_id
+        `SELECT 
+          ci.*, 
+          ci.snapshot_price_inr AS observed_price_inr,
+          ci.snapshot_risk_tier AS predicted_risk_tier,
+          p.product_title, 
+          p.category, 
+          p.subcategory,
+          p.extracted_attributes_json,
+          p.has_image,
+          p.has_review,
+          p.has_price,
+          p.platform_id, 
+          p.brand_id,
+          b.brand_name,
+          pl.platform_name,
+          ph.mrp_inr,
+          s.seller_display_name,
+          s.seller_rating,
+          ta.continuous_anomaly_score,
+          ta.active_modalities_count,
+          ta.recommendation_summary
          FROM product_comparison_items ci
          LEFT JOIN canonical_products p ON ci.canonical_product_id = p.canonical_product_id
+         LEFT JOIN brands b ON p.brand_id = b.brand_id
+         LEFT JOIN platforms pl ON p.platform_id = pl.platform_id
+         LEFT JOIN (
+           SELECT canonical_product_id, MAX(listing_id) AS listing_id, MAX(seller_id) AS seller_id
+           FROM marketplace_listings
+           GROUP BY canonical_product_id
+         ) ml ON ml.canonical_product_id = p.canonical_product_id
+         LEFT JOIN sellers s ON ml.seller_id = s.seller_id
+         LEFT JOIN (
+           SELECT listing_id, MAX(mrp_inr) AS mrp_inr
+           FROM price_history
+           GROUP BY listing_id
+         ) ph ON ph.listing_id = ml.listing_id
+         LEFT JOIN (
+           SELECT canonical_product_id, continuous_anomaly_score, active_modalities_count, recommendation_summary
+           FROM trust_assessments
+         ) ta ON ta.canonical_product_id = p.canonical_product_id
          WHERE ci.comparison_id = ?
          ORDER BY ci.display_order ASC`,
         [dto.id]
@@ -125,16 +162,61 @@ export class ComparisonRepository {
    */
   async findById(id: string): Promise<ComparisonWithItems | null> {
     const comparison = await queryOne<ComparisonRow>(
-      'SELECT * FROM product_comparisons WHERE id = ? LIMIT 1',
+      `SELECT c.*,
+              COUNT(ci.id) AS product_count,
+              COALESCE(MAX(ci.snapshot_price_inr) - MIN(ci.snapshot_price_inr), 0) AS price_dispersion_inr,
+              COALESCE(MAX(ci.snapshot_risk_tier), 'LOW_OBSERVED_ANOMALY') AS max_risk_tier
+       FROM product_comparisons c
+       LEFT JOIN product_comparison_items ci ON c.id = ci.comparison_id
+       WHERE c.id = ?
+       GROUP BY c.id
+       LIMIT 1`,
       [id]
     );
 
     if (!comparison) return null;
 
     const items = await query<ComparisonItemRow[]>(
-      `SELECT ci.*, p.product_title, p.category, p.platform_id, p.brand_id
+      `SELECT 
+        ci.*, 
+        ci.snapshot_price_inr AS observed_price_inr,
+        ci.snapshot_risk_tier AS predicted_risk_tier,
+        p.product_title, 
+        p.category, 
+        p.subcategory,
+        p.extracted_attributes_json,
+        p.has_image,
+        p.has_review,
+        p.has_price,
+        p.platform_id, 
+        p.brand_id,
+        b.brand_name,
+        pl.platform_name,
+        ph.mrp_inr,
+        s.seller_display_name,
+        s.seller_rating,
+        ta.continuous_anomaly_score,
+        ta.active_modalities_count,
+        ta.recommendation_summary
        FROM product_comparison_items ci
        LEFT JOIN canonical_products p ON ci.canonical_product_id = p.canonical_product_id
+       LEFT JOIN brands b ON p.brand_id = b.brand_id
+       LEFT JOIN platforms pl ON p.platform_id = pl.platform_id
+       LEFT JOIN (
+         SELECT canonical_product_id, MAX(listing_id) AS listing_id, MAX(seller_id) AS seller_id
+         FROM marketplace_listings
+         GROUP BY canonical_product_id
+       ) ml ON ml.canonical_product_id = p.canonical_product_id
+       LEFT JOIN sellers s ON ml.seller_id = s.seller_id
+       LEFT JOIN (
+         SELECT listing_id, MAX(mrp_inr) AS mrp_inr
+         FROM price_history
+         GROUP BY listing_id
+       ) ph ON ph.listing_id = ml.listing_id
+       LEFT JOIN (
+         SELECT canonical_product_id, continuous_anomaly_score, active_modalities_count, recommendation_summary
+         FROM trust_assessments
+       ) ta ON ta.canonical_product_id = p.canonical_product_id
        WHERE ci.comparison_id = ?
        ORDER BY ci.display_order ASC`,
       [id]
@@ -164,9 +246,15 @@ export class ComparisonRepository {
     const total = countRow?.total ?? 0;
 
     const items = await query<ComparisonRow[]>(
-      `SELECT * FROM product_comparisons
-       WHERE user_id = ?
-       ORDER BY created_at DESC
+      `SELECT c.*,
+              COUNT(ci.id) AS product_count,
+              COALESCE(MAX(ci.snapshot_price_inr) - MIN(ci.snapshot_price_inr), 0) AS price_dispersion_inr,
+              COALESCE(MAX(ci.snapshot_risk_tier), 'LOW_OBSERVED_ANOMALY') AS max_risk_tier
+       FROM product_comparisons c
+       LEFT JOIN product_comparison_items ci ON c.id = ci.comparison_id
+       WHERE c.user_id = ?
+       GROUP BY c.id
+       ORDER BY c.created_at DESC
        LIMIT ? OFFSET ?`,
       [userId, safeLimit, safeOffset]
     );

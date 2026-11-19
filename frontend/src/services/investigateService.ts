@@ -1,6 +1,258 @@
 import { apiClient } from './apiClient';
 import { ApiResponse } from '../types/catalog';
 
+export interface StructuredAspectItem {
+  key: string;
+  display_name: string;
+  sentiment_score: number | null;
+  satisfaction_pct: number | null;
+  mention_count: number;
+  positive_mentions: number;
+  negative_mentions: number;
+  sentiment_label: string;
+  defect_risk_level: string;
+  status: 'EVALUATED' | 'NO_DATA';
+  top_complaints: string[];
+  top_praises: string[];
+}
+
+export interface RadarSignalItem {
+  modality: string;
+  listing_score: number | null;
+  genuine_benchmark: number;
+  status: 'EVALUATED' | 'NOT_PROVIDED' | 'NOT_EVALUATED' | 'PROCESSING_FAILED';
+}
+
+export interface ModalityCoverageItem {
+  name: string;
+  status: 'EVALUATED' | 'NOT_PROVIDED' | 'NOT_EVALUATED' | 'PROCESSING_FAILED';
+  note: string;
+}
+
+export interface WebsiteTrustAssessment {
+  domain: string;
+  is_https: boolean;
+  trust_tier: string;
+  trust_score: number;
+  organization_identity: string;
+  registered_entity: string;
+  grievance_officer_available: boolean;
+  return_policy_status: string;
+  payment_security_indicator: string;
+  supporting_evidence: string[];
+  concerning_signals: string[];
+  unavailable_checks: string[];
+  explanation: string;
+}
+
+export interface ExactMarketplaceOffer {
+  marketplace: string;
+  seller_name: string;
+  price_inr: number;
+  mrp_inr: number;
+  discount_percent: number;
+  listing_url: string;
+  in_stock: boolean;
+  is_cheapest: boolean;
+  retrieval_provenance: string;
+  retrieval_timestamp: string;
+}
+
+export interface CompetingProductAlternative {
+  product_id: string;
+  title: string;
+  brand: string;
+  category: string;
+  product_type?: string;
+  hierarchy_level?: string;
+  hierarchy_label?: string;
+  observed_price_inr: number;
+  mrp_inr: number;
+  marketplace: string;
+  trust_score_estimate: number;
+  key_advantage: string;
+  trade_off: string;
+  retrieval_provenance: string;
+}
+
+export interface ProductIntelligenceReport {
+  investigation_id: string;
+  timestamp: string;
+  summary: {
+    title: string;
+    brand: string;
+    category: string;
+    marketplace: string;
+    overall_risk_tier: 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL';
+    overall_trust_score: number;
+    buying_suitability_score: number;
+    suitability_category: string;
+    verdict_headline: string;
+    provenance: string;
+  };
+  section_1_overview: {
+    title: string;
+    brand: string;
+    category: string;
+    sku_identifier: string;
+    marketplace: string;
+    listing_url: string;
+    observed_price_inr: number;
+    claimed_mrp_inr: number;
+    discount_percentage: number;
+    effective_offer_price_inr?: number | null;
+    reference_market_price?: any | null;
+    price_evidence?: any[];
+    primary_image_url: string | null;
+    specifications: Record<string, string>;
+    retrieval_timestamp: string;
+    provenance: string;
+    status_note: string;
+  };
+  section_2_website_trust: WebsiteTrustAssessment;
+  section_3_seller_trust: {
+    seller_name: string;
+    seller_tier: string;
+    seller_trust_score: number;
+    risk_tier: string;
+    fulfillment_channel: string;
+    fulfillment_risk: string;
+    rating_summary: {
+      average_rating: number;
+      total_ratings_estimate: string;
+      is_rating_satisfactory: boolean;
+    };
+    pricing_integrity: {
+      is_steep_discount_anomaly: boolean;
+      discount_percentage: number;
+      observed_price_inr: number;
+      claimed_mrp_inr: number;
+      category_corridor_status: string;
+      anomaly_explanation: string;
+    };
+    supporting_evidence: string[];
+    concerning_signals: string[];
+    explanation: string;
+  };
+  section_4_multimodal_evidence: {
+    risk_tier: 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL';
+    trust_score: number;
+    confidence_score: number;
+    zero_penalty_invariant_applied: boolean;
+    radar_signals: RadarSignalItem[];
+    modality_coverage: ModalityCoverageItem[];
+    defect_matrix: Array<{
+      title: string;
+      severity: string;
+      description: string;
+    }>;
+  };
+  section_5_review_intelligence: {
+    overall_sentiment_score: number | null;
+    satisfaction_index: number | null;
+    aspects: StructuredAspectItem[];
+    rating_review_dissonance_detected: boolean;
+    positive_themes: string[];
+    negative_themes: string[];
+    complaints: string[];
+    reviews_analyzed_count: number;
+    sample_reviews: Array<{
+      rating?: number;
+      review_text: string;
+      sentiment?: string;
+    }>;
+    status: 'EVALUATED' | 'NO_REVIEWS';
+  };
+  section_6_visual_packaging: {
+    evaluation_state: 'NOT_PROVIDED' | 'NOT_EVALUATED' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
+    image_uploaded: boolean;
+    resolution_tier: string;
+    dimensions: string;
+    laplacian_blur_score: number | null;
+    is_sharp: boolean | null;
+    quality_status: string;
+    white_background_detected: boolean | null;
+    packaging_ocr: {
+      compliance_status: string;
+      detected_text: string | null;
+      detected_mrp: string | null;
+      net_quantity: string | null;
+      batch_code: string | null;
+    };
+    zero_shot_vision: {
+      status: string;
+      predicted_category: string | null;
+      category_confidence: number | null;
+      predicted_brand: string | null;
+      brand_confidence: number | null;
+      title_consistency_match: boolean | null;
+    };
+    modality_status_note: string;
+  };
+  section_7_price_comparison: {
+    price_corridor_analysis: {
+      listing_price: number;
+      claimed_mrp: number;
+      corridor_min: number;
+      corridor_median: number;
+      corridor_max: number;
+      fake_threshold: number;
+      is_anomalous: boolean;
+      status: 'MULTIPLE_VERIFIED_OFFERS' | 'SINGLE_OFFER_ONLY';
+    };
+    exact_offers: ExactMarketplaceOffer[];
+    cheapest_offer?: ExactMarketplaceOffer;
+    price_dispersion_inr: number;
+    data_provenance_note: string;
+  };
+  section_8_competing_products: {
+    status: 'ALTERNATIVES_FOUND' | 'NO_ALTERNATIVES_FOUND';
+    alternatives: CompetingProductAlternative[];
+    comparison_summary: string;
+    search_context: {
+      category_searched: string;
+      normalized_categories: string[];
+      price_min_inr: number;
+      price_max_inr: number;
+      sources_checked: string;
+      total_candidates_found: number;
+      explanation: string;
+    };
+  };
+  section_9_buying_recommendation: {
+    overall_suitability_score: number;
+    recommendation_tier: string;
+    verdict_title: string;
+    summary_reasoning: string;
+    dimension_scores: {
+      specification_match: number;
+      review_quality_and_satisfaction: number;
+      price_competitiveness: number;
+      feature_to_price_value: number;
+    };
+    reasons_to_consider: string[];
+    reasons_for_caution: string[];
+    explicit_trust_warning: string | null;
+    doorstep_verification_checklist: string[];
+  };
+  report_html: string;
+}
+
+export interface PipelineInvestigationPayload {
+  url?: string;
+  image_base64?: string;
+  product_title?: string;
+  brand?: string;
+  category?: string;
+  observed_price_inr?: number;
+  mrp_inr?: number;
+  marketplace?: string;
+  seller_name?: string;
+  fulfillment_type?: string;
+  specifications?: Record<string, string>;
+  reviews?: string[];
+}
+
 export interface UrlResolutionResult {
   catalogue_match: boolean;
   is_live_scraped: boolean;
@@ -157,6 +409,17 @@ export interface SaveInvestigationPayload {
 }
 
 export const investigateService = {
+  /**
+   * Runs the automated end-to-end multimodal 9-section shopping intelligence pipeline.
+   */
+  async runPipeline(payload: PipelineInvestigationPayload): Promise<ProductIntelligenceReport> {
+    const response = await apiClient.post<{ status: string; data: ProductIntelligenceReport }>(
+      '/api/v1/investigate/pipeline',
+      payload
+    );
+    return response.data.data;
+  },
+
   /**
    * Evaluates and parses marketplace URL with SSRF defense and catalog resolution.
    */

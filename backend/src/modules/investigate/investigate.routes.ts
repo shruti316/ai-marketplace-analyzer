@@ -1,16 +1,29 @@
 import { Router } from 'express';
 import { investigateController } from './investigate.controller';
 import { validateRequest } from '../../middleware/validator';
-import { authenticateToken } from '../../middleware/auth';
+import { authenticateToken, optionalAuthentication } from '../../middleware/auth';
 import { heavyOpsRateLimiter, inferenceRateLimiter } from '../../middleware/rateLimiter';
 import {
   investigateUrlSchema,
   investigateImageSchema,
   investigateAdhocSchema,
-  assistantChatSchema
+  assistantChatSchema,
+  pipelineInvestigationSchema,
 } from './investigate.schemas';
 
 const router = Router();
+
+// Master Investigation Pipeline: End-to-End 9-Section Shopping Intelligence
+// POST /api/v1/investigate/pipeline
+router.post(
+  '/pipeline',
+  optionalAuthentication,
+  inferenceRateLimiter,
+  validateRequest({ body: pipelineInvestigationSchema }),
+  (req, res, next) => {
+    investigateController.runPipeline(req, res, next);
+  }
+);
 
 // 1. Marketplace Listing URL Investigation (Catalog matching & SSRF Guard)
 // POST /api/v1/investigate/url

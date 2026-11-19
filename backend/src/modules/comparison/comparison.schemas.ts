@@ -8,7 +8,17 @@ export const createComparisonSchema = z.object({
     .max(5, 'A maximum of 5 products can be compared simultaneously')
     .refine(items => new Set(items).size === items.length, {
       message: 'Product comparison list must contain unique canonical product identifiers'
-    })
+    }),
+  custom_products: z.array(z.object({
+    canonical_product_id: z.string(),
+    product_title: z.string().optional(),
+    brand: z.string().optional(),
+    category: z.string().optional(),
+    observed_price_inr: z.number().optional(),
+    mrp_inr: z.number().optional(),
+    marketplace: z.string().optional(),
+    main_image_url: z.string().optional(),
+  })).optional(),
 });
 
 export type CreateComparisonInput = z.infer<typeof createComparisonSchema>;

@@ -30,7 +30,7 @@ export class InvestigationController {
     try {
       const userId = req.user ? req.user.id : null;
       const userRole = req.user ? req.user.role : null;
-      const { id } = req.params;
+      const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
 
       const result = await this.service.getInvestigationById(id, userId, userRole);
 
@@ -64,7 +64,7 @@ export class InvestigationController {
     try {
       const userId = req.user ? req.user.id : null;
       const userRole = req.user ? req.user.role : null;
-      const { id } = req.params;
+      const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
 
       await this.service.deleteInvestigation(id, userId, userRole);
 

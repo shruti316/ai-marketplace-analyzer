@@ -4,6 +4,7 @@ const path = require('path');
 const fs = require('fs');
 const readline = require('readline');
 const http = require('http');
+const net = require('net');
 
 const isWin = process.platform === 'win32';
 const rootDir = path.resolve(__dirname, '..');
@@ -131,6 +132,26 @@ function spawnService(name, color, command, args, cwd) {
   return child;
 }
 
+function checkPortOpen(port, host = '127.0.0.1', timeoutMs = 1000) {
+  return new Promise((resolve) => {
+    const socket = new net.Socket();
+    socket.setTimeout(timeoutMs);
+    socket.on('connect', () => {
+      socket.destroy();
+      resolve(true);
+    });
+    socket.on('timeout', () => {
+      socket.destroy();
+      resolve(false);
+    });
+    socket.on('error', () => {
+      socket.destroy();
+      resolve(false);
+    });
+    socket.connect(port, host);
+  });
+}
+
 function checkUrl(url, timeoutMs = 1500) {
   return new Promise((resolve) => {
     const req = http.get(url, { timeout: timeoutMs }, (res) => {
@@ -169,6 +190,35 @@ async function start() {
   freePort(8000);
   freePort(5000);
   freePort(3000);
+
+  // Step 1.5: Ensure MySQL Server is running on port 3306
+  console.log('[runner] Checking MySQL Server connectivity on port 3306...');
+  const isMysqlActive = await checkPortOpen(3306);
+  if (isMysqlActive) {
+    console.log(`${GREEN}[mysql] MySQL Server verified active on port 3306.${RESET}`);
+  } else {
+    console.log(`${YELLOW}[mysql] MySQL is not responding on port 3306. Attempting to start MySQL Server daemon...${RESET}`);
+    const mysqldWinPath = 'C:\\Program Files\\MySQL\\MySQL Server 8.4\\bin\\mysqld.exe';
+    const mysqlDataDir = 'C:\\Development\\MySQL\\data';
+    if (fs.existsSync(mysqldWinPath) && fs.existsSync(mysqlDataDir)) {
+      spawnService(
+        'mysql',
+        YELLOW,
+        `"${mysqldWinPath}"`,
+        [`--datadir="${mysqlDataDir}"`, '--port=3306', '--console'],
+        rootDir
+      );
+      for (let i = 0; i < 25; i++) {
+        await new Promise((r) => setTimeout(r, 600));
+        if (await checkPortOpen(3306)) {
+          console.log(`${GREEN}[mysql] MySQL Server successfully started and ready for connections.${RESET}`);
+          break;
+        }
+      }
+    } else {
+      console.warn(`${YELLOW}[mysql] Notice: mysqld binary not found at default path. Ensure MySQL service is running.${RESET}`);
+    }
+  }
 
   // Step 2: Launch Python ML Service on Port 8000
   console.log(`${BLUE}[python-ml]${RESET} Launching Python ML Inference Service on port 8000 using ${pythonBin}...`);

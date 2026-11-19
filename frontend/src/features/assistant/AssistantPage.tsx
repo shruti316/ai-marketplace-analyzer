@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { catalogService } from '../../services/catalogService';
-import { trustService } from '../../services/trustService';
 import { investigateService } from '../../services/investigateService';
 import {
   Sparkles,
@@ -21,13 +21,25 @@ interface Message {
   evidence?: string[];
 }
 
+const SUGGESTED_PROMPTS = [
+  'Why does this product have this risk assessment?',
+  'How does the price compare to the category median corridor?',
+  'What are the recurring customer complaints in the ABSA reviews?',
+  'Explain how the Zero-Penalty Guarantee protects missing modalities.',
+];
+
 export const AssistantPage: React.FC = () => {
-  const [selectedProductId, setSelectedProductId] = useState<string>('amazon_rec_00000001');
+  const [searchParams] = useSearchParams();
+  const paramProductId = searchParams.get('productId') || searchParams.get('id');
+
+  const [selectedProductId, setSelectedProductId] = useState<string>(
+    paramProductId || 'amazon_in_B000052YQN'
+  );
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'init-msg',
       sender: 'assistant',
-      text: 'Welcome to the TrustSphere Intelligence Assistant. I provide evidence-grounded interpretations of marketplace anomaly signals across Amazon India, Flipkart, and Myntra.\n\nSelect a product to anchor this session in verified atomic evidence, or ask general questions about our zero-penalty multimodal fusion framework.',
+      text: 'Welcome to the TrustSphere Intelligence Assistant. I provide evidence-grounded interpretations of marketplace anomaly signals, pricing corridors, and NLP review sentiment across Amazon India, Flipkart, and Myntra.\n\nAsk me any question regarding your investigated offerings or our multimodal zero-penalty evaluation framework.',
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     },
   ]);
@@ -35,18 +47,19 @@ export const AssistantPage: React.FC = () => {
   const [isTyping, setIsTyping] = useState<boolean>(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Fetch sample products for context selector
-  const { data: productsData } = useQuery({
-    queryKey: ['assistant-product-selector'],
-    queryFn: () => catalogService.getProducts({ limit: 8 }),
-  });
-
-  // Fetch assessment for selected product (validates selected product availability)
-  useQuery({
-    queryKey: ['assistant-product-assessment', selectedProductId],
-    queryFn: () => trustService.getProductTrustAssessment(selectedProductId),
+  // Fetch product metadata if available to show friendly active title
+  const { data: activeProduct } = useQuery({
+    queryKey: ['assistant-active-product', selectedProductId],
+    queryFn: () => catalogService.getProductById(selectedProductId),
     enabled: Boolean(selectedProductId),
   });
+
+  // Keep selectedProductId in sync with URL params
+  useEffect(() => {
+    if (paramProductId) {
+      setSelectedProductId(paramProductId);
+    }
+  }, [paramProductId]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -108,17 +121,24 @@ export const AssistantPage: React.FC = () => {
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
   return (
-    <div className="space-y-6 animate-fadeIn pb-12 max-w-6xl mx-auto">
+    <div className="space-y-6 animate-fadeIn pb-12 max-w-4xl mx-auto">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-white/[0.08]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/[0.08]">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-100 font-heading flex items-center gap-2">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white font-heading flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-indigo-400" />
             <span>TrustSphere Intelligence Assistant</span>
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
-            Grounded multimodal reasoning and evidence synthesis across marketplace investigations
+          <p className="text-xs text-slate-400 mt-0.5">
+            Grounded multimodal reasoning, pricing corridor analysis, and evidence synthesis across marketplace investigations
           </p>
         </div>
 
@@ -128,158 +148,143 @@ export const AssistantPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Main Grid: Left Context Selector, Right Chat Canvas */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left: Product Context Anchor (4 Cols) */}
-        <div className="lg:col-span-4 bg-[#111522] rounded-2xl border border-white/[0.08] p-5 shadow-soft space-y-4">
-          <div className="space-y-1">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono">
-              Investigation Context Anchor
-            </h3>
-            <p className="text-xs text-slate-400">
-              Select a catalog product to ground all assistant inquiries in verified observations.
-            </p>
+      {/* Full-Width Conversational Canvas (Left context panel completely removed per UX correction) */}
+      <div className="bg-[#111522] rounded-3xl border border-white/[0.08] shadow-2xl flex flex-col h-[700px] overflow-hidden">
+        {/* Thread Header with Active Grounding Context */}
+        <div className="px-6 py-4 border-b border-white/[0.08] bg-[#181D2E]/80 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+              <Bot className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-white">TrustSphere Assistant</span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  Online
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-400 font-mono mt-0.5">
+                Active Grounding Context: <span className="text-indigo-300 font-semibold">{activeProduct?.product_title || selectedProductId}</span>
+              </p>
+            </div>
           </div>
 
-          <div className="space-y-2">
-            {productsData?.items.map((prod) => (
+          <span className="text-[10px] font-mono text-slate-400 bg-[#111522] px-2.5 py-1 rounded-lg border border-white/[0.08]">
+            Evidence Engine v1.7
+          </span>
+        </div>
+
+        {/* Messages Feed */}
+        <div className="flex-1 p-6 overflow-y-auto space-y-4">
+          {messages.map((m) => (
+            <div
+              key={m.id}
+              className={`flex gap-3 ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+            >
+              {m.sender === 'assistant' && (
+                <div className="h-8 w-8 rounded-xl bg-[#181D2E] text-indigo-400 border border-white/[0.08] flex items-center justify-center shrink-0 shadow-xs mt-0.5">
+                  <Bot className="w-4 h-4" />
+                </div>
+              )}
               <div
-                key={prod.canonical_product_id}
-                onClick={() => setSelectedProductId(prod.canonical_product_id)}
-                className={`p-3 rounded-xl border text-xs cursor-pointer transition-all ${
-                  selectedProductId === prod.canonical_product_id
-                    ? 'border-indigo-500 bg-indigo-950/30 shadow-xs'
-                    : 'border-white/[0.08] hover:border-white/20 bg-[#181D2E]'
+                className={`max-w-[85%] rounded-2xl p-4 text-xs leading-relaxed ${
+                  m.sender === 'user'
+                    ? 'bg-indigo-600 text-white rounded-tr-none'
+                    : 'bg-[#181D2E] border border-white/[0.08] text-slate-200 rounded-tl-none shadow-xs'
                 }`}
               >
-                <div className="flex items-center justify-between text-[10px] text-slate-400 mb-1 font-mono">
-                  <span className="font-semibold text-indigo-300 font-heading">{prod.brand_name || 'Verified Brand'}</span>
-                  <span>{prod.category}</span>
+                <div className="whitespace-pre-line font-normal">{m.text}</div>
+
+                {/* Evidence Citations */}
+                {m.evidence && m.evidence.length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-white/[0.08] space-y-1.5">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block font-mono">
+                      Corroborating Evidence Citations:
+                    </span>
+                    <ul className="space-y-1">
+                      {m.evidence.map((ev, idx) => (
+                        <li
+                          key={idx}
+                          className="flex items-center gap-1.5 text-[11px] text-indigo-300 bg-[#111522] px-2 py-1 rounded-md border border-white/[0.05]"
+                        >
+                          <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" />
+                          <span className="font-mono truncate">{ev}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                <div className="mt-2 text-[10px] text-slate-400 text-right font-mono">
+                  {m.timestamp}
                 </div>
-                <p className="font-semibold text-slate-100 line-clamp-1 font-heading">
-                  {prod.product_title || prod.title}
-                </p>
-                <p className="font-mono text-[10px] text-slate-500 mt-1">
-                  {prod.canonical_product_id}
-                </p>
               </div>
-            ))}
+            </div>
+          ))}
+
+          {isTyping && (
+            <div className="flex gap-3 justify-start">
+              <div className="h-8 w-8 rounded-xl bg-[#181D2E] text-indigo-400 border border-white/[0.08] flex items-center justify-center shrink-0 shadow-xs">
+                <Bot className="w-4 h-4" />
+              </div>
+              <div className="bg-[#181D2E] border border-white/[0.08] text-slate-200 rounded-2xl rounded-tl-none p-4 text-xs shadow-xs flex items-center gap-2">
+                <div className="flex gap-1.5">
+                  <div className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <div className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <div className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce" style={{ animationDelay: '300ms' }} />
+                </div>
+                <span className="text-[11px] text-slate-400 font-mono ml-2">Grounded reasoning in progress...</span>
+              </div>
+            </div>
+          )}
+
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Suggested Quick Prompts */}
+        <div className="px-6 py-2.5 border-t border-white/[0.05] bg-[#141826] overflow-x-auto">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-mono text-slate-400 shrink-0 uppercase tracking-wider font-semibold">
+              Suggested:
+            </span>
+            <div className="flex items-center gap-2 flex-nowrap">
+              {SUGGESTED_PROMPTS.map((prompt, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => handleSend(prompt)}
+                  disabled={isTyping}
+                  className="px-3 py-1 rounded-lg bg-[#181D2E] hover:bg-white/[0.08] border border-white/[0.08] text-[11px] text-slate-300 hover:text-white transition-all whitespace-nowrap cursor-pointer disabled:opacity-50"
+                >
+                  {prompt}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
-        {/* Right: Conversational Panel (8 Cols) */}
-        <div className="lg:col-span-8 bg-[#111522] rounded-2xl border border-white/[0.08] shadow-soft flex flex-col h-[650px] overflow-hidden">
-          {/* Thread Header */}
-          <div className="px-5 py-3.5 border-b border-white/[0.08] bg-[#181D2E] flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Bot className="w-4 h-4 text-indigo-400" />
-              <span className="text-xs font-semibold text-slate-200">
-                Context: <span className="font-mono text-indigo-400">{selectedProductId}</span>
-              </span>
-            </div>
-            <span className="text-[10px] font-mono text-slate-400 bg-[#111522] px-2 py-0.5 rounded border border-white/[0.08]">
-              Evidence Engine v1.7
-            </span>
-          </div>
-
-          {/* Messages Feed */}
-          <div className="flex-1 p-5 overflow-y-auto space-y-4">
-            {messages.map((m) => (
-              <div
-                key={m.id}
-                className={`flex gap-3 ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                {m.sender === 'assistant' && (
-                  <div className="h-8 w-8 rounded-xl bg-[#181D2E] text-indigo-400 border border-white/[0.08] flex items-center justify-center shrink-0 shadow-xs">
-                    <Bot className="w-4 h-4" />
-                  </div>
-                )}
-                <div
-                  className={`max-w-[85%] rounded-2xl p-4 text-xs leading-relaxed ${
-                    m.sender === 'user'
-                      ? 'bg-indigo-600 text-white rounded-tr-none'
-                      : 'bg-[#181D2E] border border-white/[0.08] text-slate-200 rounded-tl-none shadow-xs'
-                  }`}
-                >
-                  <div className="whitespace-pre-line font-normal">{m.text}</div>
-
-                  {m.evidence && m.evidence.length > 0 && (
-                    <div className="mt-3 pt-2.5 border-t border-white/[0.08] space-y-1">
-                      <span className="text-[10px] font-semibold text-slate-400 block font-mono">Supporting Evidence Citations:</span>
-                      <div className="flex flex-wrap gap-1">
-                        {m.evidence.map((ev, i) => (
-                          <span
-                            key={i}
-                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#111522] border border-white/[0.08] text-slate-300 text-[10px] font-mono"
-                          >
-                            <CheckCircle2 className="w-2.5 h-2.5 text-emerald-400" />
-                            {ev}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex items-center justify-between text-[9px] mt-2 font-mono">
-                    {m.provider ? (
-                      <span className="text-slate-400">Engine: {m.provider}</span>
-                    ) : (
-                      <span />
-                    )}
-                    <span className={m.sender === 'user' ? 'text-white/70' : 'text-slate-500'}>
-                      {m.timestamp}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ))}
-
-            {isTyping && (
-              <div className="text-xs text-slate-400 italic flex items-center gap-2">
-                <Bot className="w-4 h-4 text-indigo-400 animate-pulse" />
-                <span>Synthesizing evidence across multimodal engines...</span>
-              </div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
-
-          {/* Quick Questions */}
-          <div className="px-4 py-2 border-t border-white/[0.08] bg-[#181D2E]/60 flex flex-wrap gap-1.5">
-            {[
-              'Explain the zero-penalty invariant',
-              'What are the 5 fusion modalities?',
-              `Why was ${selectedProductId} given this risk tier?`,
-            ].map((q, idx) => (
-              <button
-                key={idx}
-                onClick={() => handleSend(q)}
-                className="text-[11px] px-2.5 py-1 rounded-lg bg-[#111522] hover:bg-[#181D2E] text-slate-300 border border-white/[0.08] transition-colors"
-              >
-                {q}
-              </button>
-            ))}
-          </div>
-
-          {/* Input Bar */}
-          <div className="p-4 border-t border-white/[0.08] bg-[#111522]">
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleSend();
-              }}
-              className="flex items-center gap-2"
+        {/* Input Bar */}
+        <div className="p-4 border-t border-white/[0.08] bg-[#181D2E]/80">
+          <div className="flex items-center gap-3">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              disabled={isTyping}
+              placeholder="Ask a question about this product's trust signals, reviews, or price corridor..."
+              className="flex-1 bg-[#111522] border border-white/[0.08] rounded-xl px-4 py-3 text-xs sm:text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+            />
+            <Button
+              variant="primary"
+              size="md"
+              onClick={() => handleSend()}
+              disabled={!input.trim() || isTyping}
+              rightIcon={<Send className="w-3.5 h-3.5" />}
+              className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold"
             >
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask about this product's anomaly classification or evidence..."
-                className="flex-1 bg-[#181D2E] text-xs text-slate-100 placeholder:text-slate-500 rounded-xl px-4 py-2.5 border border-white/[0.08] focus:border-indigo-500 outline-none transition-all"
-              />
-              <Button type="submit" variant="primary" size="sm" disabled={!input.trim()}>
-                <Send className="w-4 h-4" />
-              </Button>
-            </form>
+              Send
+            </Button>
           </div>
         </div>
       </div>

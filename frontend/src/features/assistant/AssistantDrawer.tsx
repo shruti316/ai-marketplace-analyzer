@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { ProductTrustAssessment, UnifiedEvidenceItem } from '../../types/trust';
 import { Product } from '../../types/catalog';
-import { investigateService } from '../../services/investigateService';
+import { investigateService, ProductIntelligenceReport } from '../../services/investigateService';
 
 export interface AssistantDrawerProps {
   isOpen: boolean;
@@ -18,6 +18,8 @@ export interface AssistantDrawerProps {
   product?: Product;
   assessment?: ProductTrustAssessment;
   evidenceItems?: UnifiedEvidenceItem[];
+  report?: ProductIntelligenceReport;
+  comparison?: any;
 }
 
 interface ChatMessage {
@@ -35,6 +37,8 @@ export const AssistantDrawer: React.FC<AssistantDrawerProps> = ({
   product,
   assessment,
   evidenceItems = [],
+  report,
+  comparison,
 }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState<string>('');
@@ -43,6 +47,34 @@ export const AssistantDrawer: React.FC<AssistantDrawerProps> = ({
 
   // Initialize contextual greeting whenever product context opens
   useEffect(() => {
+    if (comparison) {
+      const itemsCount = comparison.items?.length || comparison.product_count || 3;
+      const recId = comparison.recommended_product_id || 'Top Offering';
+      const rationale = comparison.recommendation_rationale || 'Optimal balance between seller credibility, catalog evidence density, and price spread.';
+      setMessages([
+        {
+          id: `welcome-comparison-${comparison.id || Date.now()}`,
+          sender: 'assistant',
+          text: `I have loaded your active cross-marketplace comparison matrix (${itemsCount} offerings).\n\n**Advisor Recommendation:** ${recId}\n**Rationale:** ${rationale}\n\nAsk me about price dispersion, feature trade-offs, seller track records, or doorstep verification tips.`,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        },
+      ]);
+      return;
+    }
+
+    if (report) {
+      const s = report.summary;
+      setMessages([
+        {
+          id: `welcome-report-${report.investigation_id}`,
+          sender: 'assistant',
+          text: `I have analyzed the complete 9-section shopping intelligence report for "${s.title}".\n\n**Risk Tier:** ${s.overall_risk_tier}\n**Buying Suitability:** ${s.buying_suitability_score}/100 (${s.suitability_category})\n**Verdict:** ${s.verdict_headline}\n\nYou can ask about website trust, seller credibility, review sentiment anomalies, or doorstep checks.`,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        },
+      ]);
+      return;
+    }
+
     if (!product && !assessment) {
       setMessages([
         {
@@ -78,7 +110,7 @@ export const AssistantDrawer: React.FC<AssistantDrawerProps> = ({
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       },
     ]);
-  }, [product, assessment]);
+  }, [product, assessment, report, comparison]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

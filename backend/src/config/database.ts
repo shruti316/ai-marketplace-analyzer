@@ -123,7 +123,7 @@ export async function queryOne<T extends RowDataPacket>(sql: string, params: unk
  */
 export async function execute(sql: string, params: unknown[] = []): Promise<ResultSetHeader> {
   const pool = getApplicationPool();
-  const [result] = await pool.execute<ResultSetHeader>(sql, params);
+  const [result] = await pool.execute<ResultSetHeader>(sql, params as any);
   return result;
 }
 

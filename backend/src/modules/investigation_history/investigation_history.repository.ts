@@ -163,7 +163,7 @@ export class InvestigationRepository {
       LIMIT ? OFFSET ?
     `;
 
-    const items = await query<InvestigationRow>(listSql, [...params, options.limit, offset]);
+    const items = await query<InvestigationRow[]>(listSql, [...params, options.limit, offset]);
 
     for (const item of items) {
       if (typeof item.assessment_snapshot === 'string') {

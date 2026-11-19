@@ -2,6 +2,7 @@ import { URL } from 'node:url';
 import { queryOne } from '../../config/database';
 import { trustClient } from '../trust/trust.client';
 import { AppError } from '../../middleware/errorHandler';
+import { urlRetrieverService } from './url_retriever';
 import {
   InvestigateUrlInput,
   InvestigateImageInput,
@@ -66,17 +67,20 @@ export class InvestigateService {
     }
 
     // Recognize Supported Indian Retail Platforms
-    let platformId: 'PLATFORM_AMAZON_IN' | 'PLATFORM_FLIPKART' | 'PLATFORM_MYNTRA' | null = null;
+    let platformId: string | null = null;
+    let platformName: string = 'Retail Webstore';
     let extractedIdentifier: string | null = null;
 
     if (hostname === 'amazon.in' || hostname.endsWith('.amazon.in')) {
       platformId = 'PLATFORM_AMAZON_IN';
+      platformName = 'Amazon India';
       const asinMatch = parsedUrl.pathname.match(/\/(?:dp|gp\/product)\/([A-Z0-9]{10})/i);
       if (asinMatch) {
         extractedIdentifier = asinMatch[1].toUpperCase();
       }
     } else if (hostname === 'flipkart.com' || hostname.endsWith('.flipkart.com')) {
       platformId = 'PLATFORM_FLIPKART';
+      platformName = 'Flipkart';
       const pidParam = parsedUrl.searchParams.get('pid');
       if (pidParam && pidParam.length >= 8) {
         extractedIdentifier = pidParam.trim();
@@ -88,10 +92,50 @@ export class InvestigateService {
       }
     } else if (hostname === 'myntra.com' || hostname.endsWith('.myntra.com')) {
       platformId = 'PLATFORM_MYNTRA';
+      platformName = 'Myntra';
       const styleMatch = parsedUrl.pathname.match(/\/([0-9]{5,10})(?:\/buy)?/);
       if (styleMatch) {
         extractedIdentifier = styleMatch[1];
       }
+    } else if (hostname === 'nykaa.com' || hostname.endsWith('.nykaa.com') || hostname.includes('nykaafashion')) {
+      platformId = 'PLATFORM_NYKAA';
+      platformName = 'Nykaa';
+      const prodParam = parsedUrl.searchParams.get('productId') || parsedUrl.searchParams.get('skuId');
+      if (prodParam) {
+        extractedIdentifier = prodParam.trim();
+      } else {
+        const pMatch = parsedUrl.pathname.match(/\/p\/([0-9a-zA-Z_-]+)/i);
+        if (pMatch) extractedIdentifier = pMatch[1];
+      }
+    } else if (hostname === 'nike.com' || hostname === 'nike.in' || hostname.endsWith('.nike.com') || hostname.endsWith('.nike.in')) {
+      platformId = 'PLATFORM_NIKE';
+      platformName = 'Nike Official';
+    } else if (hostname === 'adidas.co.in' || hostname === 'adidas.com' || hostname.endsWith('.adidas.co.in')) {
+      platformId = 'PLATFORM_ADIDAS';
+      platformName = 'Adidas Official';
+    } else if (hostname === 'plumgoodness.com' || hostname.endsWith('.plumgoodness.com')) {
+      platformId = 'PLATFORM_PLUM';
+      platformName = 'Plum Goodness';
+    } else if (hostname === 'tatacliq.com' || hostname.endsWith('.tatacliq.com')) {
+      platformId = 'PLATFORM_TATACLIQ';
+      platformName = 'Tata CLiQ';
+    } else if (hostname === 'ajio.com' || hostname.endsWith('.ajio.com')) {
+      platformId = 'PLATFORM_AJIO';
+      platformName = 'AJIO';
+    } else if (
+      hostname === 'purplle.com' || hostname.endsWith('.purplle.com') ||
+      hostname === 'sugarcosmetics.com' || hostname.endsWith('.sugarcosmetics.com') ||
+      hostname === 'mamaearth.in' || hostname.endsWith('.mamaearth.in') ||
+      hostname === 'boat-lifestyle.com' || hostname.endsWith('.boat-lifestyle.com') ||
+      hostname === 'gonoise.com' || hostname === 'noise.com' || hostname.endsWith('.gonoise.com') ||
+      hostname === 'samsung.com' || hostname.endsWith('.samsung.com') ||
+      hostname === 'zara.com' || hostname.endsWith('.zara.com') ||
+      hostname === 'hm.com' || hostname.endsWith('.hm.com')
+    ) {
+      platformId = 'PLATFORM_BRAND_STORE';
+      platformName = hostname.replace(/^www\./, '');
+    } else {
+      platformId = null;
     }
 
     if (!platformId) {
@@ -100,7 +144,7 @@ export class InvestigateService {
         is_live_scraped: false,
         recognized_platform: null,
         extracted_identifier: null,
-        message: 'Unsupported retail domain. Currently supported: Amazon India, Flipkart, and Myntra.'
+        message: 'Unsupported retail domain. Currently supported: Amazon India, Flipkart, Myntra, Nykaa, Nike, Adidas, Plum, Tata CLiQ, AJIO, and verified brand flagships.',
       };
     }
 
@@ -127,9 +171,9 @@ export class InvestigateService {
       );
     }
 
-    // Fallback: search by URL substring if identifier was missing or not matched
-    if (!matchedListing) {
-      const urlPattern = `%${parsedUrl.pathname.slice(0, 40)}%`;
+    // Fallback: search by URL substring only if pathname is specific and long enough
+    if (!matchedListing && parsedUrl.pathname.length > 15) {
+      const urlPattern = `%${parsedUrl.pathname.slice(0, 50)}%`;
       matchedListing = await queryOne<ListingMatchRow>(
         `SELECT ml.listing_id, ml.canonical_product_id, ml.platform_id, ml.marketplace_product_id,
                 ml.listing_title, ml.listing_url, cp.product_title, cp.brand_id, cp.category,
@@ -144,22 +188,38 @@ export class InvestigateService {
       );
     }
 
+    // Always attempt live extraction so fresh prices (e.g. ₹4,000) from the live webpage take precedence over stale seed data
+    let extracted: any = null;
+    try {
+      extracted = await urlRetrieverService.retrieveAndExtract(parsedUrl.toString());
+    } catch {
+      // gracefully continue with deterministic fallback
+    }
+
     if (matchedListing) {
+      const livePrice = (extracted && extracted.observed_price) ? extracted.observed_price : (matchedListing.selling_price_inr ? Number(matchedListing.selling_price_inr) : null);
+      const liveMrp = (extracted && extracted.mrp) ? extracted.mrp : (matchedListing.mrp_inr ? Number(matchedListing.mrp_inr) : null);
+      const liveTitle = (extracted && extracted.title && !extracted.title.includes('Marketplace Listing')) ? extracted.title : matchedListing.product_title;
+
       return {
         catalogue_match: true,
-        is_live_scraped: false,
+        is_live_scraped: Boolean(extracted && extracted.observed_price),
         recognized_platform: matchedListing.platform_name,
         extracted_identifier: extractedIdentifier || matchedListing.marketplace_product_id,
         canonical_product_id: matchedListing.canonical_product_id,
+        suggested_title: liveTitle,
+        suggested_price: livePrice,
+        suggested_mrp: liveMrp,
+        discount_percentage: livePrice && liveMrp && liveMrp > livePrice ? Math.round(((liveMrp - livePrice) / liveMrp) * 100) : null,
         product: {
           canonical_product_id: matchedListing.canonical_product_id,
-          title: matchedListing.product_title,
+          title: liveTitle,
           brand_id: matchedListing.brand_id,
           category: matchedListing.category,
           platform_id: matchedListing.platform_id,
           platform_name: matchedListing.platform_name,
-          observed_price_inr: matchedListing.selling_price_inr,
-          mrp_inr: matchedListing.mrp_inr,
+          observed_price_inr: livePrice,
+          mrp_inr: liveMrp,
           listing_url: matchedListing.listing_url
         },
         links: {
@@ -170,14 +230,137 @@ export class InvestigateService {
       };
     }
 
+    if (!extracted) {
+      const meta = this.extractSlugMetadata(parsedUrl, platformId || 'PLATFORM_GENERIC');
+      extracted = {
+        title: meta.title,
+        brand: meta.brand,
+        category: meta.category,
+        observed_price: meta.suggestedPrice,
+        mrp: meta.suggestedMrp,
+        discount_percent: (meta.suggestedPrice && meta.suggestedMrp && meta.suggestedMrp > meta.suggestedPrice) ? Math.round(((meta.suggestedMrp - meta.suggestedPrice) / meta.suggestedMrp) * 100) : null,
+        marketplace: platformName,
+        extraction_provenance: 'MARKETPLACE_SLUG_DERIVED' as const,
+        sku_or_asin: extractedIdentifier,
+        main_image_url: undefined,
+      };
+    }
+
+    const isLive = extracted.extraction_provenance === 'LIVE_PAGE_EXTRACTION' || extracted.extraction_provenance === 'LIVE_STRUCTURED_PAGE';
+
     return {
       catalogue_match: false,
-      is_live_scraped: false,
-      recognized_platform: platformId === 'PLATFORM_AMAZON_IN' ? 'Amazon India' : (platformId === 'PLATFORM_FLIPKART' ? 'Flipkart' : 'Myntra'),
-      extracted_identifier: extractedIdentifier,
-      message: extractedIdentifier
-        ? `Identifier "${extractedIdentifier}" extracted successfully, but is not present in the indexed 3,643 historical marketplace catalog offers.`
-        : 'Recognized retail domain, but could not reliably parse a specific product identifier from the URL.'
+      is_live_scraped: isLive,
+      is_unindexed_product: true,
+      recognized_platform: extracted.marketplace || platformName,
+      extracted_identifier: extractedIdentifier || extracted.sku_or_asin,
+      suggested_title: extracted.title,
+      suggested_brand: extracted.brand,
+      suggested_category: extracted.category,
+      suggested_price: extracted.observed_price || null,
+      suggested_mrp: extracted.mrp || null,
+      discount_percentage: extracted.discount_percent || null,
+      effective_offer_price: extracted.effective_offer_price || null,
+      reference_market_price: extracted.reference_market_price || null,
+      price_evidence: extracted.price_evidence || [],
+      main_image_url: extracted.main_image_url || null,
+      provenance: extracted.extraction_provenance,
+      retrieval_status: extracted.retrieval_status || (isLive ? 'CONFIRMED' : 'PRICE_UNAVAILABLE'),
+      message: `Identifier "${extractedIdentifier}" extracted successfully, but is not present in the indexed 3,643 historical marketplace catalog offers. Recognized ${extracted.marketplace || platformName} product ("${extracted.title}"). Ready for live AI multimodal inspection!`,
+      live_analysis_ready: true,
+    };
+  }
+
+  private extractSlugMetadata(url: URL, platformId: string) {
+    let cleanSlug = '';
+    const path = url.pathname;
+
+    if (platformId === 'PLATFORM_AMAZON_IN') {
+      const match = path.match(/\/([^\/]+)\/(?:dp|gp\/product)\//i);
+      cleanSlug = match ? match[1] : '';
+    } else if (platformId === 'PLATFORM_FLIPKART') {
+      const match = path.match(/\/([^\/]+)\/p\//i);
+      cleanSlug = match ? match[1] : '';
+    } else if (platformId === 'PLATFORM_MYNTRA') {
+      const match = path.match(/\/([^\/]+)\/\d+/i);
+      cleanSlug = match ? match[1] : '';
+    }
+
+    if (!cleanSlug && path.length > 2) {
+      cleanSlug = path.split('/').filter(Boolean)[0] || '';
+    }
+
+    const title = cleanSlug
+      .replace(/[-_+]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+
+    const lower = cleanSlug.toLowerCase();
+
+    let brand = 'Generic';
+    if (lower.includes('souled-store') || lower.includes('souled store')) brand = 'The Souled Store';
+    else if (lower.includes('plum')) brand = 'Plum';
+    else if (lower.includes('minimalist')) brand = 'Minimalist';
+    else if (lower.includes('cetaphil')) brand = 'Cetaphil';
+    else if (lower.includes('mamaearth')) brand = 'Mamaearth';
+    else if (lower.includes('dot & key') || lower.includes('dot and key') || lower.includes('dot-key')) brand = 'Dot & Key';
+    else if (lower.includes('derma co') || lower.includes('the derma co') || lower.includes('dermaco')) brand = 'The Derma Co';
+    else if (lower.includes('sugar')) brand = 'Sugar Cosmetics';
+    else if (lower.includes('nykaa')) brand = 'Nykaa';
+    else if (lower.includes('nike')) brand = 'Nike';
+    else if (lower.includes('adidas')) brand = 'Adidas';
+    else if (lower.includes('puma')) brand = 'Puma';
+    else if (lower.includes('boat')) brand = 'boAt';
+    else if (lower.includes('sony')) brand = 'Sony';
+    else if (lower.includes('apple')) brand = 'Apple';
+    else if (lower.includes('samsung')) brand = 'Samsung';
+    else if (title.split(' ').length > 0 && title.split(' ')[0].length > 2) brand = title.split(' ')[0];
+
+    let category = 'General E-Commerce';
+    let suggestedPrice: number | null = null;
+    let suggestedMrp: number | null = null;
+
+    if (lower.match(/facewash|face-wash|face wash|cleanser|moisturi|serum|sunscreen|cream|lotion|soap|scrub|skin|hair|beauty|shampoo|conditioner|cosmetic|toner|gel|mask|balm|bodywash|body wash/)) {
+      category = 'Beauty & Personal Care';
+    } else if (lower.match(/jacket|puffer|coat|parka|bomber|blazer|windcheater|winterwear/)) {
+      category = lower.includes('women') || lower.includes('ladies') || lower.includes('girl')
+        ? "Women's Jackets / Outerwear"
+        : "Men's Jackets / Outerwear";
+    } else if (lower.match(/shoe|sneaker|blaze|runner|footwear|boot|sandal|trainer/)) {
+      category = 'Footwear / Shoes';
+    } else if (lower.match(/earphone|headphone|airdope|earbud|audio|tws|neckband/)) {
+      category = 'Electronics / Audio';
+    } else if (lower.match(/tshirt|t-shirt|shirt|hoodie|pant|trouser|apparel|dress|kurta/)) {
+      category = 'Apparel / Clothing';
+    } else if (lower.match(/watch|smartwatch|band/)) {
+      category = 'Wearables / Smartwatch';
+    }
+
+    // Direct price parameter extraction from URL query or path
+    const qPrice = url.searchParams.get('price') || url.searchParams.get('sp') || url.searchParams.get('cost') || url.searchParams.get('selling_price');
+    if (qPrice && !isNaN(Number(qPrice)) && Number(qPrice) > 0) {
+      suggestedPrice = Math.round(Number(qPrice));
+    } else {
+      const pathPriceMatch = path.match(/(?:price|rs|inr)[-_:=]*(\d{2,6})/i);
+      if (pathPriceMatch && Number(pathPriceMatch[1]) > 50) {
+        suggestedPrice = Math.round(Number(pathPriceMatch[1]));
+      }
+    }
+
+    const qMrp = url.searchParams.get('mrp') || url.searchParams.get('original_price');
+    if (qMrp && !isNaN(Number(qMrp)) && Number(qMrp) > 0) {
+      suggestedMrp = Math.round(Number(qMrp));
+    } else if (suggestedPrice !== null && (suggestedMrp === null || suggestedMrp < suggestedPrice)) {
+      suggestedMrp = Math.round(suggestedPrice * 1.4);
+    }
+
+    return {
+      title: title || 'Marketplace Product',
+      brand,
+      category,
+      suggestedPrice,
+      suggestedMrp,
     };
   }
 
