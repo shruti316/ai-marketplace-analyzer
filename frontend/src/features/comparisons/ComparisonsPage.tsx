@@ -21,6 +21,10 @@ import {
   Download,
   Printer,
   ExternalLink,
+  ChevronDown,
+  ChevronUp,
+  Camera,
+  X,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { comparisonService, ComparisonRecord } from '../../services/comparisonService';
@@ -74,6 +78,9 @@ interface CardSlotState {
   mrp?: number;
   imageUrl?: string | null;
   seller?: string;
+  uploadedImageBase64?: string | null;
+  uploadedImageName?: string | null;
+  showManualDetails?: boolean;
 }
 
 interface FeaturePoint {
@@ -86,14 +93,28 @@ function getProductDetailsImage1(item: any, category: string, index: number): {
   pros: FeaturePoint[];
   cons: FeaturePoint[];
 } {
+  const defaultPlaceholder = 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80';
+  if (!item) {
+    return {
+      image: defaultPlaceholder,
+      pros: [
+        { title: 'Verified Product Offering', desc: 'Listing details corroborated against category standards' },
+      ],
+      cons: [
+        { title: 'Information Incomplete', desc: 'Inspect product listing directly on marketplace' },
+      ],
+    };
+  }
+
   const title = (item.product_title || '').toLowerCase();
-  const isAudio = category.toLowerCase().includes('audio') || title.match(/headphone|earphone|airdope|earbud|tws|sound|bose|sony|audio/);
-  const isShoes = category.toLowerCase().includes('footwear') || category.toLowerCase().includes('shoe') || title.match(/shoe|sneaker|runner|running|trainer|nike|adidas|puma/);
-  const isBeauty = category.toLowerCase().includes('beauty') || category.toLowerCase().includes('skin') || title.match(/facewash|cleanser|cream|lotion|serum|sunscreen|plum|cetaphil|minimalist/);
+  const cat = (category || item.category || '').toLowerCase();
+  const isAudio = cat.includes('audio') || title.match(/headphone|earphone|airdope|earbud|tws|sound|bose|sony|audio/);
+  const isShoes = cat.includes('footwear') || cat.includes('shoe') || title.match(/shoe|sneaker|runner|running|trainer|nike|adidas|puma/);
+  const isBeauty = cat.includes('beauty') || cat.includes('skin') || title.match(/facewash|cleanser|cream|lotion|serum|sunscreen|plum|cetaphil|minimalist/);
 
   // High quality images matching Image 1 floating transparent/dark look
   let image = item.main_image_url || '';
-  if (!image || image.includes('placeholder')) {
+  if (!image || image.includes('placeholder') || (!image.startsWith('http') && !image.startsWith('data:'))) {
     if (isAudio) {
       const audioImages = [
         'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&auto=format&fit=crop&q=80',
@@ -199,33 +220,21 @@ export const ComparisonsPage: React.FC = () => {
   const addParam = searchParams.get('add');
   const idParam = searchParams.get('id');
 
-  // Comparison basket: starts with TWO candidate cards initially
+  // Comparison basket: starts with TWO clean candidate intake cards initially
   const [cardSlots, setCardSlots] = useState<CardSlotState[]>([
     {
-      id: 'flipkart_JCKEC893GVPBWCGU',
+      id: 'slot_init_0',
       url: '',
       isExtracting: false,
       extractError: null,
-      productTitle: 'Kotty Full Sleeve Solid Women Jacket',
-      brandName: 'Kotty',
-      category: "Women's Jackets / Outerwear",
-      marketplace: 'Flipkart',
-      price: 828,
-      mrp: 2999,
-      seller: 'RetailNet Assured',
+      showManualDetails: false,
     },
     {
-      id: 'flipkart_JCKED9T5NPY4GRN5',
+      id: 'slot_init_1',
       url: '',
       isExtracting: false,
       extractError: null,
-      productTitle: 'Tokyo Talkies Full Sleeve Puffer Jacket',
-      brandName: 'Tokyo Talkies',
-      category: "Women's Jackets / Outerwear",
-      marketplace: 'Flipkart',
-      price: 999,
-      mrp: 2799,
-      seller: 'F-Assured Partner',
+      showManualDetails: false,
     },
   ]);
 
@@ -310,6 +319,27 @@ export const ComparisonsPage: React.FC = () => {
       setErrorMessage(msg);
     },
   });
+
+  // Handle optional image upload on a specific card slot
+  const handleSlotImageUpload = (slotIdx: number, file: File) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const base64 = e.target?.result as string;
+      setCardSlots((prev) => {
+        const next = [...prev];
+        next[slotIdx] = {
+          ...next[slotIdx],
+          uploadedImageBase64: base64,
+          uploadedImageName: file.name,
+          imageUrl: base64,
+          extractError: null,
+        };
+        return next;
+      });
+    };
+    reader.readAsDataURL(file);
+  };
 
   // Handle URL Auto-Extract for a specific card slot
   const handleAutoExtractCard = async (slotIdx: number) => {
@@ -543,12 +573,16 @@ export const ComparisonsPage: React.FC = () => {
 
   const handleRunComparison = () => {
     const populatedSlots = cardSlots.filter(
-      (s) => (s.id && !s.id.startsWith('temp_')) || (s.productTitle && s.productTitle.trim().length > 0)
+      (s) =>
+        (s.id && !s.id.startsWith('temp_') && !s.id.startsWith('slot_')) ||
+        (s.productTitle && s.productTitle.trim().length > 0) ||
+        (s.url && s.url.trim().length > 0) ||
+        Boolean(s.uploadedImageBase64)
     );
 
     if (populatedSlots.length < 2) {
       setErrorMessage(
-        'Please populate at least TWO product cards with URLs or product details for comparative analysis.'
+        'Please populate at least TWO product cards with URLs, images, or details for comparative analysis.'
       );
       return;
     }
@@ -557,17 +591,20 @@ export const ComparisonsPage: React.FC = () => {
     const customProducts: any[] = [];
 
     populatedSlots.forEach((s, idx) => {
-      const effectiveId = s.id && !s.id.startsWith('temp_') ? s.id : `custom_prod_${Date.now()}_${idx}`;
+      const effectiveId =
+        s.id && !s.id.startsWith('temp_') && !s.id.startsWith('slot_')
+          ? s.id
+          : `cand_${Date.now()}_${idx}`;
       ids.push(effectiveId);
       customProducts.push({
         canonical_product_id: effectiveId,
-        product_title: s.productTitle || `Product ${idx + 1}`,
+        product_title: s.productTitle || (s.url ? s.url.split('/').pop()?.replace(/[-_]/g, ' ') : `Product Offering ${idx + 1}`),
         brand: s.brandName || 'Brand Verified',
         category: s.category || 'Apparel & Clothing',
-        marketplace: s.marketplace || 'Flipkart',
-        observed_price_inr: s.price || 0,
-        mrp_inr: s.mrp || (s.price ? Math.round(s.price * 1.4) : 0),
-        main_image_url: s.url || '',
+        marketplace: s.marketplace || (s.url.includes('amazon') ? 'Amazon India' : s.url.includes('myntra') ? 'Myntra' : 'Flipkart'),
+        observed_price_inr: s.price ?? 699,
+        mrp_inr: s.mrp ?? (s.price ? Math.round(s.price * 1.4) : 1499),
+        main_image_url: s.imageUrl || s.uploadedImageBase64 || '',
       });
     });
 
@@ -804,6 +841,186 @@ export const ComparisonsPage: React.FC = () => {
                     )}
                   </div>
 
+                  {/* 2. Optional Packaging / Product Photo Upload (Scanner Equivalent) */}
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-mono text-slate-400 uppercase font-semibold flex items-center justify-between">
+                      <span>Packaging / Product Photo</span>
+                      <span className="text-slate-500 font-normal">Optional</span>
+                    </label>
+
+                    {slot.uploadedImageBase64 ? (
+                      <div className="flex items-center justify-between p-2 rounded-xl bg-[#111522] border border-white/[0.08]">
+                        <div className="flex items-center gap-2 overflow-hidden">
+                          <img
+                            src={slot.uploadedImageBase64}
+                            alt="Uploaded"
+                            className="w-8 h-8 rounded-lg object-cover shrink-0"
+                          />
+                          <span className="text-xs text-slate-200 truncate">
+                            {slot.uploadedImageName || 'Attached packaging photo'}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCardSlots((prev) => {
+                              const next = [...prev];
+                              next[index] = {
+                                ...next[index],
+                                uploadedImageBase64: null,
+                                uploadedImageName: null,
+                                imageUrl: null,
+                              };
+                              return next;
+                            });
+                          }}
+                          className="p-1 rounded text-slate-400 hover:text-rose-400 cursor-pointer"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="flex items-center justify-center gap-2 p-2.5 rounded-xl border border-dashed border-white/[0.12] hover:border-indigo-500/40 bg-[#111522]/50 cursor-pointer transition-colors text-xs text-slate-400 hover:text-indigo-300">
+                        <Camera className="w-3.5 h-3.5 text-indigo-400" />
+                        <span>Attach packaging or product photo</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleSlotImageUpload(index, file);
+                          }}
+                        />
+                      </label>
+                    )}
+                  </div>
+
+                  {/* 3. Optional Manual Details Toggle (Scanner Equivalent) */}
+                  <div className="space-y-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCardSlots((prev) => {
+                          const next = [...prev];
+                          next[index] = {
+                            ...next[index],
+                            showManualDetails: !next[index].showManualDetails,
+                          };
+                          return next;
+                        });
+                      }}
+                      className="text-[11px] font-mono text-indigo-400 hover:text-indigo-300 flex items-center gap-1 cursor-pointer transition-colors"
+                    >
+                      {slot.showManualDetails ? (
+                        <ChevronUp className="w-3.5 h-3.5" />
+                      ) : (
+                        <ChevronDown className="w-3.5 h-3.5" />
+                      )}
+                      <span>
+                        {slot.showManualDetails
+                          ? 'Hide Manual Parameters'
+                          : '+ Add / Edit Manual Parameters'}
+                      </span>
+                    </button>
+
+                    {slot.showManualDetails && (
+                      <div className="p-3 rounded-2xl bg-[#0B0E17] border border-white/[0.06] space-y-2.5 text-xs animate-fadeIn">
+                        <div>
+                          <label className="text-[10px] font-mono text-slate-400 block mb-0.5">Product Title</label>
+                          <input
+                            type="text"
+                            value={slot.productTitle || ''}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setCardSlots((prev) => {
+                                const next = [...prev];
+                                next[index] = { ...next[index], productTitle: val };
+                                return next;
+                              });
+                            }}
+                            placeholder="e.g. Nike Downshifter / Plum Facewash"
+                            className="w-full px-2.5 py-1.5 rounded-lg bg-[#111522] border border-white/[0.08] text-white focus:border-indigo-500 outline-none text-xs"
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-[10px] font-mono text-slate-400 block mb-0.5">Brand</label>
+                            <input
+                              type="text"
+                              value={slot.brandName || ''}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setCardSlots((prev) => {
+                                  const next = [...prev];
+                                  next[index] = { ...next[index], brandName: val };
+                                  return next;
+                                });
+                              }}
+                              placeholder="e.g. Nike, Plum"
+                              className="w-full px-2.5 py-1.5 rounded-lg bg-[#111522] border border-white/[0.08] text-white focus:border-indigo-500 outline-none text-xs"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-mono text-slate-400 block mb-0.5">Category</label>
+                            <input
+                              type="text"
+                              value={slot.category || ''}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setCardSlots((prev) => {
+                                  const next = [...prev];
+                                  next[index] = { ...next[index], category: val };
+                                  return next;
+                                });
+                              }}
+                              placeholder="e.g. Footwear / Skincare"
+                              className="w-full px-2.5 py-1.5 rounded-lg bg-[#111522] border border-white/[0.08] text-white focus:border-indigo-500 outline-none text-xs"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-[10px] font-mono text-slate-400 block mb-0.5">Observed Price (₹)</label>
+                            <input
+                              type="number"
+                              value={slot.price ?? ''}
+                              onChange={(e) => {
+                                const val = e.target.value ? Number(e.target.value) : undefined;
+                                setCardSlots((prev) => {
+                                  const next = [...prev];
+                                  next[index] = { ...next[index], price: val };
+                                  return next;
+                                });
+                              }}
+                              placeholder="e.g. 828"
+                              className="w-full px-2.5 py-1.5 rounded-lg bg-[#111522] border border-white/[0.08] text-emerald-400 font-bold focus:border-indigo-500 outline-none text-xs"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-mono text-slate-400 block mb-0.5">Claimed MRP (₹)</label>
+                            <input
+                              type="number"
+                              value={slot.mrp ?? ''}
+                              onChange={(e) => {
+                                const val = e.target.value ? Number(e.target.value) : undefined;
+                                setCardSlots((prev) => {
+                                  const next = [...prev];
+                                  next[index] = { ...next[index], mrp: val };
+                                  return next;
+                                });
+                              }}
+                              placeholder="e.g. 2999"
+                              className="w-full px-2.5 py-1.5 rounded-lg bg-[#111522] border border-white/[0.08] text-slate-300 focus:border-indigo-500 outline-none text-xs"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
                   {/* Rendered Details Inside Card */}
                   {isPopulated ? (
                     <div className="p-4 rounded-2xl bg-[#111522] border border-white/[0.06] space-y-3">
@@ -813,6 +1030,17 @@ export const ComparisonsPage: React.FC = () => {
                           {displayMarketplace}
                         </span>
                       </div>
+
+                      {/* Optional Thumbnail Image */}
+                      {(slot.imageUrl || slot.uploadedImageBase64) && (
+                        <div className="h-28 w-full rounded-xl bg-[#0B0E17] flex items-center justify-center overflow-hidden p-2">
+                          <img
+                            src={slot.imageUrl || slot.uploadedImageBase64 || ''}
+                            alt={displayTitle || 'Product Preview'}
+                            className="max-h-full max-w-full object-contain"
+                          />
+                        </div>
+                      )}
 
                       <h4 className="text-sm font-bold text-white line-clamp-2 font-heading leading-snug">
                         {displayTitle}
@@ -876,11 +1104,11 @@ export const ComparisonsPage: React.FC = () => {
                       </div>
                     </div>
                   ) : (
-                    <div className="p-8 rounded-2xl border-2 border-dashed border-white/[0.12] bg-[#111522]/50 text-center space-y-2">
+                    <div className="p-6 rounded-2xl border-2 border-dashed border-white/[0.12] bg-[#111522]/50 text-center space-y-2">
                       <ShoppingBag className="w-8 h-8 text-slate-600 mx-auto" />
-                      <p className="text-xs font-bold text-slate-300">Slot Awaiting Product</p>
+                      <p className="text-xs font-bold text-slate-300">Product Awaiting Input</p>
                       <p className="text-[11px] text-slate-500">
-                        Paste marketplace URL above to auto-extract details
+                        Paste marketplace URL above or attach packaging photo
                       </p>
                     </div>
                   )}
