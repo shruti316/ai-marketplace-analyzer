@@ -158,6 +158,22 @@ const PRESETS = {
   ],
 };
 
+// Initial blank candidate cards workspace (Product A and Product B empty by default)
+const INITIAL_BLANK_SLOTS: CardSlotState[] = [
+  {
+    id: 'slot_init_0',
+    url: '',
+    isExtracting: false,
+    extractError: null,
+  },
+  {
+    id: 'slot_init_1',
+    url: '',
+    isExtracting: false,
+    extractError: null,
+  },
+];
+
 export const ComparisonsPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
@@ -166,8 +182,8 @@ export const ComparisonsPage: React.FC = () => {
   const addParam = searchParams.get('add');
   const idParam = searchParams.get('id');
 
-  // Initial candidate cards workspace (defaulting to Women's Jackets preset for immediate parity)
-  const [cardSlots, setCardSlots] = useState<CardSlotState[]>(PRESETS.jackets);
+  // Initial candidate cards workspace (blank by default, ready for URL paste or preset selection)
+  const [cardSlots, setCardSlots] = useState<CardSlotState[]>(INITIAL_BLANK_SLOTS);
 
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -634,8 +650,8 @@ export const ComparisonsPage: React.FC = () => {
           onClick={handleRunComparison}
           disabled={readyCount < 2 || createMutation.isPending}
           isLoading={createMutation.isPending}
-          rightIcon={<Sparkles className="w-4 h-4" />}
-          className="bg-[#7C5DFA] hover:bg-[#6A49F2] text-white font-bold px-7 shadow-sm min-h-[44px]"
+          rightIcon={<Sparkles className="w-4 h-4 text-[#F0D9E4]" />}
+          className="bg-[#16131F] hover:bg-[#4A3F4B] text-white font-bold px-7 shadow-xs min-h-[44px] active:scale-[0.98] transition-all cursor-pointer"
         >
           {createMutation.isPending ? 'Comparing...' : 'Compare Products'}
         </Button>
@@ -644,14 +660,14 @@ export const ComparisonsPage: React.FC = () => {
       {/* =========================================================================
           2. CANDIDATE PRODUCT CARDS CONTAINER
          ========================================================================= */}
-      <div className="bg-white rounded-[24px] border border-[#ECE8F2] shadow-[0_8px_24px_rgba(22,19,31,0.05)] p-6 sm:p-7 space-y-6">
+      <div className="bg-white rounded-[24px] border border-[rgba(193,160,172,0.35)] shadow-[0_8px_24px_rgba(22,19,31,0.06)] p-6 sm:p-7 space-y-6">
         {/* Header Strip with Presets */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-[#ECE8F2]">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-[rgba(193,160,172,0.30)]">
           <div className="flex items-center gap-2.5">
             <h2 className="text-base sm:text-lg font-bold text-[#16131F] font-heading">
               Candidate Product Cards
             </h2>
-            <span className="text-[10px] sm:text-xs font-mono font-bold px-2.5 py-1 rounded-full bg-[#EDE9FE] text-[#7C5DFA] border border-[#7C5DFA]/20">
+            <span className="text-[10px] sm:text-xs font-mono font-bold px-2.5 py-1 rounded-full bg-[#F0D9E4] text-[#16131F] border border-[#C1A0AC]/40">
               Min 2 Required ({readyCount} / 5 Ready)
             </span>
           </div>
@@ -661,21 +677,21 @@ export const ComparisonsPage: React.FC = () => {
             <button
               type="button"
               onClick={() => handleApplyPreset('jackets')}
-              className="px-3 py-1 rounded-full text-xs font-medium bg-[#F9F8FC] border border-[#ECE8F2] hover:bg-[#EDE9FE]/60 text-[#16131F] transition-colors cursor-pointer"
+              className="px-3 py-1 rounded-full text-xs font-medium bg-[#F8EDF2] border border-[rgba(193,160,172,0.35)] hover:bg-[#F0D9E4] text-[#16131F] transition-colors cursor-pointer"
             >
               Women's Jackets
             </button>
             <button
               type="button"
               onClick={() => handleApplyPreset('skincare')}
-              className="px-3 py-1 rounded-full text-xs font-medium bg-[#F9F8FC] border border-[#ECE8F2] hover:bg-[#EDE9FE]/60 text-[#16131F] transition-colors cursor-pointer"
+              className="px-3 py-1 rounded-full text-xs font-medium bg-[#F8EDF2] border border-[rgba(193,160,172,0.35)] hover:bg-[#F0D9E4] text-[#16131F] transition-colors cursor-pointer"
             >
               Skincare & Cleansers
             </button>
             <button
               type="button"
               onClick={() => handleApplyPreset('dresses')}
-              className="px-3 py-1 rounded-full text-xs font-medium bg-[#F9F8FC] border border-[#ECE8F2] hover:bg-[#EDE9FE]/60 text-[#16131F] transition-colors cursor-pointer"
+              className="px-3 py-1 rounded-full text-xs font-medium bg-[#F8EDF2] border border-[rgba(193,160,172,0.35)] hover:bg-[#F0D9E4] text-[#16131F] transition-colors cursor-pointer"
             >
               Dresses & Fashion Apparel
             </button>
@@ -709,12 +725,12 @@ export const ComparisonsPage: React.FC = () => {
             return (
               <div
                 key={index}
-                className="p-5 rounded-[20px] bg-[#FDFCFE] border border-[#ECE8F2] hover:border-[#7C5DFA]/40 transition-all flex flex-col justify-between space-y-4 shadow-xs"
+                className="p-5 rounded-[24px] bg-white border border-[rgba(193,160,172,0.35)] hover:border-[#16131F]/40 shadow-[0_8px_24px_rgba(22,19,31,0.04)] card-hover-lift transition-all flex flex-col justify-between space-y-4"
               >
                 <div className="space-y-4">
                   {/* Card Header */}
-                  <div className="flex items-center justify-between pb-2 border-b border-[#ECE8F2]">
-                    <span className="text-[10px] font-mono font-bold tracking-wider uppercase px-2.5 py-1 rounded-lg bg-[#EDE9FE] text-[#7C5DFA] border border-[#7C5DFA]/20">
+                  <div className="flex items-center justify-between pb-2 border-b border-[rgba(193,160,172,0.25)]">
+                    <span className="text-[10px] font-mono font-bold tracking-wider uppercase px-2.5 py-1 rounded-lg bg-[#F0D9E4] text-[#16131F] border border-[#C1A0AC]/40">
                       PRODUCT {letter} (OPTION {index + 1})
                     </span>
 
@@ -758,13 +774,13 @@ export const ComparisonsPage: React.FC = () => {
                           }
                         }}
                         placeholder="Paste marketplace product URL"
-                        className="w-full pl-3.5 pr-24 py-2.5 rounded-xl border border-[#ECE8F2] focus:border-[#7C5DFA] outline-none text-xs text-[#16131F] placeholder:text-[#806C79] bg-[#F9F8FC] transition-colors"
+                        className="w-full pl-3.5 pr-24 py-2.5 rounded-xl border border-[rgba(193,160,172,0.35)] focus:border-[#16131F] outline-none text-xs text-[#16131F] placeholder:text-[#806C79] bg-[#F8EDF2]/40 transition-colors"
                       />
                       <button
                         type="button"
                         onClick={() => handleAutoExtractCard(index)}
                         disabled={slot.isExtracting || !slot.url.trim()}
-                        className="absolute right-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-[#7C5DFA] hover:bg-[#6A49F2] text-white transition-all cursor-pointer disabled:opacity-40 flex items-center gap-1.5 shadow-xs"
+                        className="absolute right-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-[#16131F] hover:bg-[#4A3F4B] text-white transition-all cursor-pointer disabled:opacity-40 flex items-center gap-1.5 shadow-xs"
                       >
                         {slot.isExtracting ? (
                           <>
@@ -784,12 +800,12 @@ export const ComparisonsPage: React.FC = () => {
 
                   {/* 2. Attach Image Option */}
                   {slot.uploadedImageBase64 ? (
-                    <div className="flex items-center justify-between p-2 rounded-xl bg-[#F9F8FC] border border-[#ECE8F2]">
+                    <div className="flex items-center justify-between p-2 rounded-xl bg-[#F8EDF2]/40 border border-[rgba(193,160,172,0.35)]">
                       <div className="flex items-center gap-2.5 overflow-hidden">
                         <img
                           src={slot.uploadedImageBase64}
                           alt="Attached"
-                          className="w-9 h-9 rounded-lg object-cover border border-[#ECE8F2]"
+                          className="w-9 h-9 rounded-lg object-cover border border-[rgba(193,160,172,0.35)]"
                         />
                         <span className="text-xs text-[#16131F] truncate font-medium">
                           {slot.uploadedImageName || 'Attached image'}
@@ -805,8 +821,8 @@ export const ComparisonsPage: React.FC = () => {
                       </button>
                     </div>
                   ) : (
-                    <label className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl border border-dashed border-[#ECE8F2] hover:border-[#7C5DFA]/50 bg-[#F9F8FC] hover:bg-[#EDE9FE]/20 text-xs text-[#806C79] hover:text-[#7C5DFA] cursor-pointer transition-colors">
-                      <Camera className="w-3.5 h-3.5 text-[#7C5DFA]" />
+                    <label className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl border border-dashed border-[rgba(193,160,172,0.40)] hover:border-[#16131F]/50 bg-[#F8EDF2]/40 hover:bg-[#F0D9E4]/30 text-xs text-[#806C79] hover:text-[#16131F] cursor-pointer transition-colors">
+                      <Camera className="w-3.5 h-3.5 text-[#16131F]" />
                       <span>Attach Image</span>
                       <input
                         type="file"
@@ -822,24 +838,24 @@ export const ComparisonsPage: React.FC = () => {
 
                   {/* 3. Product Details: Automatically Extracted Preview */}
                   {hasDetails ? (
-                    <div className="p-3.5 rounded-xl bg-[#F9F8FC] border border-[#ECE8F2] space-y-3">
+                    <div className="p-3.5 rounded-xl bg-[#F8EDF2]/40 border border-[rgba(193,160,172,0.35)] space-y-3">
                       <div className="flex items-start gap-3">
                         {(slot.imageUrl || slot.uploadedImageBase64) && (
                           <img
                             src={slot.imageUrl || slot.uploadedImageBase64 || ''}
                             alt={displayTitle || 'Product Preview'}
-                            className="w-14 h-14 rounded-lg object-contain bg-white p-1 border border-[#ECE8F2] shrink-0"
+                            className="w-14 h-14 rounded-lg object-contain bg-white p-1 border border-[rgba(193,160,172,0.35)] shrink-0"
                           />
                         )}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
                             {displayBrand && (
-                              <span className="text-[10px] font-mono font-bold uppercase text-[#7C5DFA]">
+                              <span className="text-[10px] font-mono font-bold uppercase text-[#16131F]">
                                 {displayBrand}
                               </span>
                             )}
                             {displayMarketplace && (
-                              <span className="text-[10px] px-2 py-0.2 rounded-full bg-white text-[#4A3F4B] border border-[#ECE8F2]">
+                              <span className="text-[10px] px-2 py-0.2 rounded-full bg-white text-[#4A3F4B] border border-[rgba(193,160,172,0.35)]">
                                 {displayMarketplace}
                               </span>
                             )}
@@ -870,14 +886,14 @@ export const ComparisonsPage: React.FC = () => {
                       </div>
 
                       {/* Observed Price & Claimed MRP Inputs */}
-                      <div className="grid grid-cols-2 gap-2 pt-1 border-t border-[#ECE8F2]">
+                      <div className="grid grid-cols-2 gap-2 pt-1 border-t border-[rgba(193,160,172,0.25)]">
                         <div>
                           <label className="text-[10px] font-mono text-[#806C79] block mb-0.5">Observed Price (₹)</label>
                           <input
                             type="number"
                             value={slot.price ?? displayPrice ?? ''}
                             onChange={(e) => updateSlotField(index, 'price', e.target.value ? Number(e.target.value) : undefined)}
-                            className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-[#ECE8F2] text-[#16131F] font-mono font-bold text-xs outline-none"
+                            className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-[rgba(193,160,172,0.35)] text-[#16131F] font-mono font-bold text-xs outline-none focus:border-[#16131F]"
                           />
                         </div>
                         <div>
@@ -886,7 +902,7 @@ export const ComparisonsPage: React.FC = () => {
                             type="number"
                             value={slot.mrp ?? displayMrp ?? ''}
                             onChange={(e) => updateSlotField(index, 'mrp', e.target.value ? Number(e.target.value) : undefined)}
-                            className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-[#ECE8F2] text-[#806C79] font-mono text-xs outline-none"
+                            className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-[rgba(193,160,172,0.35)] text-[#806C79] font-mono text-xs outline-none focus:border-[#16131F]"
                           />
                         </div>
                       </div>
@@ -913,7 +929,7 @@ export const ComparisonsPage: React.FC = () => {
                       </button>
 
                       {slot.isEditing && (
-                        <div className="space-y-2.5 pt-3 mt-2 border-t border-[#ECE8F2] animate-fadeIn text-xs">
+                        <div className="space-y-2.5 pt-3 mt-2 border-t border-[rgba(193,160,172,0.25)] animate-fadeIn text-xs">
                           <div>
                             <label className="text-[10px] text-[#806C79] block mb-0.5">Product Title</label>
                             <input
@@ -921,7 +937,7 @@ export const ComparisonsPage: React.FC = () => {
                               value={slot.productTitle || ''}
                               onChange={(e) => updateSlotField(index, 'productTitle', e.target.value)}
                               placeholder="e.g. Kotty Women Jacket"
-                              className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-[#ECE8F2] text-[#16131F] text-xs outline-none"
+                              className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-[rgba(193,160,172,0.35)] text-[#16131F] text-xs outline-none focus:border-[#16131F]"
                             />
                           </div>
                           <div className="grid grid-cols-2 gap-2">
@@ -932,7 +948,7 @@ export const ComparisonsPage: React.FC = () => {
                                 value={slot.brandName || ''}
                                 onChange={(e) => updateSlotField(index, 'brandName', e.target.value)}
                                 placeholder="e.g. Kotty"
-                                className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-[#ECE8F2] text-[#16131F] text-xs outline-none"
+                                className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-[rgba(193,160,172,0.35)] text-[#16131F] text-xs outline-none focus:border-[#16131F]"
                               />
                             </div>
                             <div>
@@ -942,7 +958,7 @@ export const ComparisonsPage: React.FC = () => {
                                 value={slot.price ?? ''}
                                 onChange={(e) => updateSlotField(index, 'price', e.target.value ? Number(e.target.value) : undefined)}
                                 placeholder="e.g. 828"
-                                className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-[#ECE8F2] text-emerald-700 font-bold text-xs outline-none"
+                                className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-[rgba(193,160,172,0.35)] text-emerald-700 font-bold text-xs outline-none focus:border-[#16131F]"
                               />
                             </div>
                           </div>
@@ -959,13 +975,13 @@ export const ComparisonsPage: React.FC = () => {
           {cardSlots.length < 5 && (
             <div
               onClick={handleAddCard}
-              className="border-2 border-dashed border-[#ECE8F2] hover:border-[#7C5DFA]/50 bg-[#F9F8FC] hover:bg-[#EDE9FE]/20 rounded-[20px] p-6 flex flex-col items-center justify-center text-center space-y-3 cursor-pointer transition-all min-h-[300px] group"
+              className="border-2 border-dashed border-[rgba(193,160,172,0.40)] hover:border-[#16131F]/50 bg-white/60 hover:bg-[#F8EDF2] rounded-[24px] p-6 flex flex-col items-center justify-center text-center space-y-3 cursor-pointer transition-all min-h-[300px] group shadow-[0_4px_16px_rgba(22,19,31,0.02)]"
             >
-              <div className="p-3.5 rounded-2xl bg-[#EDE9FE] text-[#7C5DFA] group-hover:scale-105 transition-transform shadow-xs">
+              <div className="p-3.5 rounded-2xl bg-[#F0D9E4] text-[#16131F] border border-[#C1A0AC]/40 group-hover:scale-105 transition-transform shadow-xs">
                 <Plus className="w-5 h-5" />
               </div>
               <div>
-                <h4 className="text-sm font-bold text-[#16131F] font-heading group-hover:text-[#7C5DFA] transition-colors">
+                <h4 className="text-sm font-bold text-[#16131F] font-heading group-hover:text-[#16131F] transition-colors">
                   + Add Card (Option {cardSlots.length + 1})
                 </h4>
                 <p className="text-xs text-[#806C79] mt-1">
@@ -988,8 +1004,8 @@ export const ComparisonsPage: React.FC = () => {
           3. COMPARISON LOADING STATE
          ========================================================================= */}
       {isComparisonLoading && (
-        <div className="bg-white rounded-[24px] border border-[#ECE8F2] p-10 text-center space-y-3 animate-pulse shadow-sm">
-          <Loader2 className="w-7 h-7 animate-spin text-[#7C5DFA] mx-auto" />
+        <div className="bg-white rounded-[24px] border border-[rgba(193,160,172,0.35)] shadow-[0_8px_24px_rgba(22,19,31,0.06)] p-10 text-center space-y-3 animate-pulse">
+          <Loader2 className="w-7 h-7 animate-spin text-[#16131F] mx-auto" />
           <h3 className="text-base font-bold text-[#16131F] font-heading">
             Comparing Products...
           </h3>

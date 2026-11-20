@@ -13,6 +13,8 @@ import {
   ShieldCheck,
   ChevronRight,
   ShoppingBag,
+  Footprints,
+  Package,
 } from 'lucide-react';
 import {
   AreaChart,
@@ -192,7 +194,7 @@ export const DashboardPage: React.FC = () => {
       {/* =========================================================================
           1. TOP GREETING & QUICK ACTION ROW
          ========================================================================= */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[rgba(193,160,172,0.35)]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#16131F] font-heading">
             {greetingTime}, {firstName}!
@@ -217,7 +219,7 @@ export const DashboardPage: React.FC = () => {
          ========================================================================= */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
         {/* KPI 1: Total Investigations */}
-        <div className="bg-white rounded-[24px] border border-[rgba(193,160,172,0.35)] shadow-[0_8px_24px_rgba(22,19,31,0.06)] p-5 space-y-3">
+        <div className="bg-white rounded-[24px] border border-[rgba(193,160,172,0.35)] border-l-4 border-l-[#F0D9E4] shadow-[0_8px_24px_rgba(22,19,31,0.06)] p-5 space-y-3 card-hover-lift">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-mono uppercase text-[#806C79] font-bold tracking-wider">
               Total Investigations
@@ -226,7 +228,7 @@ export const DashboardPage: React.FC = () => {
               <ScanSearch className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-3xl font-black text-[#16131F] font-heading">
+          <div className="text-3xl font-black text-[#16131F] font-heading tabular-nums font-mono">
             24
           </div>
           <p className="text-[11px] text-[#4A3F4B] leading-tight">
@@ -235,7 +237,7 @@ export const DashboardPage: React.FC = () => {
         </div>
 
         {/* KPI 2: Verified Authentic */}
-        <div className="bg-white rounded-[24px] border border-[rgba(193,160,172,0.35)] shadow-[0_8px_24px_rgba(22,19,31,0.06)] p-5 space-y-3">
+        <div className="bg-white rounded-[24px] border border-[rgba(193,160,172,0.35)] border-l-4 border-l-[#A7F3D0] shadow-[0_8px_24px_rgba(22,19,31,0.06)] p-5 space-y-3 card-hover-lift">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-mono uppercase text-[#065F46] font-bold tracking-wider">
               Verified Authentic
@@ -244,7 +246,7 @@ export const DashboardPage: React.FC = () => {
               <CheckCircle2 className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-3xl font-black text-[#065F46] font-heading">
+          <div className="text-3xl font-black text-[#065F46] font-heading tabular-nums font-mono">
             16
           </div>
           <p className="text-[11px] text-[#065F46] font-medium leading-tight">
@@ -253,7 +255,7 @@ export const DashboardPage: React.FC = () => {
         </div>
 
         {/* KPI 3: Needs Double-Check */}
-        <div className="bg-white rounded-[24px] border border-[rgba(193,160,172,0.35)] shadow-[0_8px_24px_rgba(22,19,31,0.06)] p-5 space-y-3">
+        <div className="bg-white rounded-[24px] border border-[rgba(193,160,172,0.35)] border-l-4 border-l-[#FDE68A] shadow-[0_8px_24px_rgba(22,19,31,0.06)] p-5 space-y-3 card-hover-lift">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-mono uppercase text-[#92400E] font-bold tracking-wider">
               Needs Double-Check
@@ -262,7 +264,7 @@ export const DashboardPage: React.FC = () => {
               <AlertTriangle className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-3xl font-black text-[#92400E] font-heading">
+          <div className="text-3xl font-black text-[#92400E] font-heading tabular-nums font-mono">
             5
           </div>
           <p className="text-[11px] text-[#92400E] font-medium leading-tight">
@@ -271,7 +273,7 @@ export const DashboardPage: React.FC = () => {
         </div>
 
         {/* KPI 4: High Anomaly / Flagged */}
-        <div className="bg-white rounded-[24px] border border-[rgba(193,160,172,0.35)] shadow-[0_8px_24px_rgba(22,19,31,0.06)] p-5 space-y-3">
+        <div className="bg-white rounded-[24px] border border-[rgba(193,160,172,0.35)] border-l-4 border-l-[#FECDD3] shadow-[0_8px_24px_rgba(22,19,31,0.06)] p-5 space-y-3 card-hover-lift">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-mono uppercase text-[#9F1239] font-bold tracking-wider">
               High Anomaly / Flagged
@@ -280,7 +282,7 @@ export const DashboardPage: React.FC = () => {
               <ShieldAlert className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-3xl font-black text-[#9F1239] font-heading">
+          <div className="text-3xl font-black text-[#9F1239] font-heading tabular-nums font-mono">
             3
           </div>
           <p className="text-[11px] text-[#9F1239] font-medium leading-tight">
@@ -300,7 +302,7 @@ export const DashboardPage: React.FC = () => {
           {/* Card 1: Recent Investigations Table */}
           <div className="bg-white rounded-[24px] border border-[rgba(193,160,172,0.35)] shadow-[0_8px_24px_rgba(22,19,31,0.06)] p-6 space-y-5">
             {/* Header with Title, Filter Tabs & Sort Dropdown */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[rgba(193,160,172,0.30)]">
+            <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3 pb-3 border-b border-[rgba(193,160,172,0.30)]">
               <div>
                 <h2 className="text-lg font-bold text-[#16131F] font-heading">
                   Recent Investigations
@@ -310,16 +312,16 @@ export const DashboardPage: React.FC = () => {
                 </p>
               </div>
 
-              <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap shrink-0">
                 {/* Filter Pills */}
-                <div className="flex items-center p-1 bg-[#F8EDF2] rounded-xl border border-[rgba(193,160,172,0.35)]">
+                <div className="flex items-center p-1 bg-[#F8EDF2] rounded-xl border border-[rgba(193,160,172,0.35)] shrink-0">
                   {(['All', 'Verified', 'Double-Check', 'Flagged'] as const).map((tab) => (
                     <button
                       key={tab}
                       type="button"
                       onClick={() => setFilterVerdict(tab)}
                       className={cn(
-                        'px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer',
+                        'px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap',
                         filterVerdict === tab
                           ? 'bg-white text-[#16131F] shadow-xs'
                           : 'text-[#806C79] hover:text-[#16131F]'
@@ -335,7 +337,7 @@ export const DashboardPage: React.FC = () => {
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as any)}
                   aria-label="Sort investigations by"
-                  className="px-2.5 py-1.5 rounded-xl border border-[rgba(193,160,172,0.35)] bg-white text-xs text-[#16131F] outline-none font-medium cursor-pointer shadow-xs"
+                  className="px-2.5 py-1.5 rounded-xl border border-[rgba(193,160,172,0.35)] bg-white text-xs text-[#16131F] outline-none font-medium cursor-pointer shadow-xs shrink-0"
                 >
                   <option value="newest">Newest First</option>
                   <option value="highest">Highest Score</option>
@@ -353,15 +355,15 @@ export const DashboardPage: React.FC = () => {
                   className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 group hover:bg-[#F8EDF2]/40 -mx-2 px-3 rounded-xl transition-colors cursor-pointer"
                 >
                   <div className="flex items-center gap-3.5 min-w-0">
-                    <div className="w-10 h-10 rounded-xl bg-[#F8EDF2] border border-[rgba(193,160,172,0.35)] shrink-0 flex items-center justify-center p-1.5 overflow-hidden">
-                      {item.imageUrl ? (
-                        <img
-                          src={item.imageUrl}
-                          alt={item.title}
-                          className="w-full h-full object-contain"
-                        />
+                    <div className="w-10 h-10 rounded-xl bg-[#F0D9E4] border border-[#C1A0AC]/40 shrink-0 flex items-center justify-center p-2 overflow-hidden shadow-xs">
+                      {item.category?.toLowerCase().includes('skin') || item.category?.toLowerCase().includes('beauty') ? (
+                        <Sparkles className="w-5 h-5 text-[#16131F]" />
+                      ) : item.category?.toLowerCase().includes('footwear') || item.category?.toLowerCase().includes('shoe') ? (
+                        <Footprints className="w-5 h-5 text-[#16131F]" />
+                      ) : item.category?.toLowerCase().includes('jacket') || item.category?.toLowerCase().includes('apparel') || item.category?.toLowerCase().includes('dress') ? (
+                        <ShoppingBag className="w-5 h-5 text-[#16131F]" />
                       ) : (
-                        <ShoppingBag className="w-5 h-5 text-[#806C79] group-hover:text-[#16131F] transition-colors" />
+                        <Package className="w-5 h-5 text-[#16131F]" />
                       )}
                     </div>
 
@@ -638,8 +640,8 @@ export const DashboardPage: React.FC = () => {
             </div>
 
             {/* Selected day activity pill */}
-            <div className="p-2.5 rounded-xl bg-[#F8EDF2] border border-[rgba(193,160,172,0.35)] text-center text-xs text-[#16131F] font-medium mt-1">
-              <strong>Nov {selectedCalendarDay}</strong> · {activeScanDates.includes(selectedCalendarDay) ? '3 Investigations run on this day' : 'No investigations run'}
+            <div className="p-2.5 rounded-xl bg-[#F8EDF2] border border-[rgba(193,160,172,0.35)] text-center text-xs text-[#16131F] font-medium mt-1 truncate">
+              <strong>Nov {selectedCalendarDay}</strong> · {activeScanDates.includes(selectedCalendarDay) ? '3 Investigations run' : 'No investigations run'}
             </div>
           </div>
 
@@ -658,7 +660,7 @@ export const DashboardPage: React.FC = () => {
             </div>
 
             <div>
-              <div className="text-3xl font-black text-[#16131F] font-heading">
+              <div className="text-3xl font-black text-[#16131F] font-heading tabular-nums font-mono">
                 67%
               </div>
               <p className="text-xs text-[#806C79] mt-0.5 leading-relaxed">
@@ -674,7 +676,7 @@ export const DashboardPage: React.FC = () => {
                   style={{ width: '67%' }}
                 />
               </div>
-              <div className="flex items-center justify-between text-[10px] font-mono font-semibold text-[#806C79]">
+              <div className="flex items-center justify-between text-[10px] font-mono font-semibold text-[#806C79] flex-wrap gap-1">
                 <span className="text-[#065F46]">✓ 16 Safe</span>
                 <span className="text-[#92400E]">⚠ 5 Caution</span>
                 <span className="text-[#9F1239]">✕ 3 Flagged</span>

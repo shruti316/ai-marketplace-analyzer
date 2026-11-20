@@ -19,12 +19,20 @@
 
   /* Accessible high-contrast focus rings */
   :focus-visible {
-    outline: 2px solid #7C5DFA;
+    outline: 2px solid #16131F;
     outline-offset: 2px;
   }
 }
 
 @layer components {
+  /* Card hover lift micro-animation */
+  .card-hover-lift {
+    transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .card-hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px -5px rgba(22, 19, 31, 0.08);
+  }
   /* Restrained modern soft light glassmorphism */
   .glass-card {
     background: rgba(255, 255, 255, 0.96);

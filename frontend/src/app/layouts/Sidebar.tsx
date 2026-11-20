@@ -45,8 +45,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <aside
       className={cn(
-        'hidden md:flex flex-col m-4 mr-0 rounded-[24px] bg-white text-[#4A3F4B] border border-[rgba(193,160,172,0.35)] shadow-[0_8px_24px_rgba(22,19,31,0.06)] transition-all duration-200 select-none shrink-0 relative z-30 overflow-hidden',
-        isCollapsed ? 'w-[74px]' : 'w-64',
+        'hidden md:flex flex-col m-4 mr-0 mb-4 rounded-[24px] bg-white text-[#4A3F4B] border border-[rgba(193,160,172,0.35)] shadow-[0_8px_24px_rgba(22,19,31,0.06)] transition-all duration-200 select-none shrink-0 relative z-30 overflow-hidden h-[calc(100vh-32px)]',
+        isCollapsed ? 'w-[76px]' : 'w-[240px]',
         className
       )}
     >
@@ -55,11 +55,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
         className={cn(
           'flex border-b border-[rgba(193,160,172,0.35)] transition-all duration-200',
           isCollapsed
-            ? 'flex-col items-center justify-center py-3 gap-2 px-2'
+            ? 'flex-col items-center justify-center py-4 gap-2.5 px-2'
             : 'items-center justify-between h-16 px-4'
         )}
       >
-        <div className="flex items-center gap-3 overflow-visible">
+        <div className={cn('flex items-center gap-3 overflow-visible', isCollapsed && 'justify-center')}>
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[12px] bg-[#16131F] text-[#F0D9E4] shadow-xs">
             <ShieldCheck className="h-5 w-5" />
           </div>
@@ -79,7 +79,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <button
           onClick={onToggleCollapse}
           className={cn(
-            'p-1.5 rounded-lg text-[#806C79] hover:text-[#16131F] hover:bg-[#F8EDF2] transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#16131F]',
+            'p-1.5 rounded-lg text-[#806C79] hover:text-[#16131F] hover:bg-[#F8EDF2] transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#16131F] cursor-pointer',
             isCollapsed && 'mt-0.5'
           )}
           title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
