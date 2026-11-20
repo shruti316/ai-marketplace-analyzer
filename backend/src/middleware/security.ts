@@ -52,7 +52,23 @@ export function buildCorsMiddleware(): (req: Request, res: Response, next: NextF
       }
 
       const allowed = getAllowedOrigins();
-      if (allowed.includes(origin) || allowed.includes('*')) {
+      const isAllowed =
+        allowed.includes(origin) ||
+        allowed.includes('*') ||
+        allowed.some((pattern) => {
+          if (pattern.startsWith('https://*.') || pattern.startsWith('http://*.')) {
+            const proto = pattern.startsWith('https://') ? 'https://' : 'http://';
+            const suffix = pattern.replace(/^https?:\/\/\*\./, '');
+            return origin.startsWith(proto) && origin.slice(proto.length).endsWith(suffix);
+          }
+          if (pattern.startsWith('*.')) {
+            const suffix = pattern.slice(2);
+            return origin.replace(/^https?:\/\//, '').endsWith(suffix);
+          }
+          return false;
+        });
+
+      if (isAllowed) {
         return callback(null, true);
       }
 

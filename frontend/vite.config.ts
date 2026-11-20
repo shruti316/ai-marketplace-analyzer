@@ -27,8 +27,7 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          'vendor-react': ['react', 'react-dom'],
-          'vendor-router-query': ['react-router-dom', '@tanstack/react-query'],
+          'vendor-core': ['react', 'react-dom', 'react-router-dom', '@tanstack/react-query'],
           'vendor-charts': ['recharts'],
           'vendor-ui': ['lucide-react', 'clsx', 'tailwind-merge'],
         },

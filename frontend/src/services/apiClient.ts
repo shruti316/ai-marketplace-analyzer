@@ -5,8 +5,9 @@ export const TOKEN_STORAGE_KEY = 'trustsphere_token';
 export const USER_STORAGE_KEY = 'trustsphere_user';
 export const REFRESH_TOKEN_STORAGE_KEY = 'trustsphere_refresh_token';
 
-// Determine base API URL (in dev, proxy routes /api to http://127.0.0.1:5000)
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+// Determine base API URL (in dev, proxy routes /api to http://127.0.0.1:5000; in prod on Vercel, set to Render backend URL)
+const rawBaseUrl = (import.meta.env.VITE_API_BASE_URL || '').trim();
+const API_BASE_URL = rawBaseUrl.endsWith('/') ? rawBaseUrl.slice(0, -1) : rawBaseUrl;
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,

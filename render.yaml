@@ -1,0 +1,30 @@
+# Render Blueprint configuration for AI Marketplace Analyzer Backend
+# Deploys the Node/Express backend service on Render
+services:
+  - type: web
+    name: ai-marketplace-backend
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    healthCheckPath: /live
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_BACKEND_PORT
+        value: 10000
+      - key: CORS_ALLOWED_ORIGINS
+        value: "https://*.vercel.app,http://localhost:3000"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        value: 3306
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_NAME
+        sync: false
