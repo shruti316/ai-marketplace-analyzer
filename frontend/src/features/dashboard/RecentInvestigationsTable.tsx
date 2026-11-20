@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card } from '../../components/ui/Card';
-import { Badge } from '../../components/ui/Badge';
+import { VerdictBadge } from '../../components/ui/VerdictBadge';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { EmptyState } from '../../components/common/EmptyState';
 import { Product } from '../../types/catalog';
@@ -90,9 +90,7 @@ export const RecentInvestigationsTable: React.FC<RecentInvestigationsTableProps>
                       {product.canonical_product_id.substring(0, 16)}...
                     </td>
                     <td className="py-3.5 px-4">
-                      <Badge variant={tier.variant} size="sm">
-                        {tier.label}
-                      </Badge>
+                      <VerdictBadge verdict={tier.label} size="sm" />
                     </td>
                     <td className="py-3.5 px-5 text-right">
                       <Link

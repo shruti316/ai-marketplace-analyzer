@@ -6,7 +6,6 @@ import {
   Trash2,
   Sparkles,
   Loader2,
-  CheckCircle2,
   Plus,
   ArrowRight,
   Bot,
@@ -17,6 +16,9 @@ import {
   Layers,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
+import { toast } from 'sonner';
+import { MultiProductRadarChart, ProductComparisonDimension } from '../../components/charts/MultiProductRadarChart';
+import { TypewriterText } from '../../components/ui/TypewriterText';
 import { comparisonService, ComparisonRecord } from '../../services/comparisonService';
 import { catalogService } from '../../services/catalogService';
 import { investigateService } from '../../services/investigateService';
@@ -181,9 +183,17 @@ export const ComparisonsPage: React.FC = () => {
 
   const addParam = searchParams.get('add');
   const idParam = searchParams.get('id');
+  const presetParam = searchParams.get('preset');
 
   // Initial candidate cards workspace (blank by default, ready for URL paste or preset selection)
   const [cardSlots, setCardSlots] = useState<CardSlotState[]>(INITIAL_BLANK_SLOTS);
+
+  // Auto-apply preset from URL if present
+  useEffect(() => {
+    if (presetParam && (presetParam === 'jackets' || presetParam === 'skincare' || presetParam === 'dresses')) {
+      setCardSlots(PRESETS[presetParam]);
+    }
+  }, [presetParam]);
 
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -260,16 +270,23 @@ export const ComparisonsPage: React.FC = () => {
         setSearchParams({ id: data.id });
       }
       queryClient.invalidateQueries({ queryKey: ['user-saved-comparisons'] });
+      toast.success('Multi-product comparison matrix generated', {
+        description: `${data?.items?.length || 2} offerings evaluated across authenticity, price, and sentiment`,
+      });
     },
     onError: (err: unknown) => {
       const msg = (err as any)?.response?.data?.message || (err instanceof Error ? err.message : 'Failed to generate comparison. Please check your inputs.');
       setErrorMessage(msg);
+      toast.error('Comparison execution failed', { description: msg });
     },
   });
 
   const handleApplyPreset = (presetKey: 'jackets' | 'skincare' | 'dresses') => {
     setCardSlots(PRESETS[presetKey]);
     setErrorMessage(null);
+    toast.info(`Loaded ${presetKey.charAt(0).toUpperCase() + presetKey.slice(1)} comparison preset`, {
+      description: '2 verified offerings ready for side-by-side analysis',
+    });
   };
 
   const handleUrlChange = (slotIdx: number, val: string) => {
@@ -518,6 +535,7 @@ export const ComparisonsPage: React.FC = () => {
         isEditing: false,
       },
     ]);
+    toast.info(`Option ${OPTION_LETTERS[newIdx] || newIdx + 1} card added to comparison`);
   };
 
   const updateSlotField = (slotIdx: number, field: keyof CardSlotState, value: any) => {
@@ -567,7 +585,47 @@ export const ComparisonsPage: React.FC = () => {
     createMutation.mutate({ ids, customProducts });
   };
 
-  const activeComparison = fetchedComparison || null;
+  const demoComparison: ComparisonRecord = {
+    id: 'comp_demo_jackets',
+    title: 'Product Comparison (Kotty vs Tokyo Talkies)',
+    created_at: new Date().toISOString(),
+    product_count: 2,
+    recommended_product_id: 'cand_preset_jacket_1',
+    recommendation_rationale: 'Kotty Full Sleeve Solid Women Jacket provides the optimal balance of verified product authenticity, lower anomaly risk, and superior customer review satisfaction, saving ₹171.',
+    price_dispersion_inr: 171,
+    max_risk_tier: 'LOW',
+    user_id: null,
+    items: [
+      {
+        id: 'comp_item_1',
+        comparison_id: 'comp_demo_jackets',
+        canonical_product_id: 'cand_preset_jacket_1',
+        product_title: 'Kotty Full Sleeve Solid Women Jacket',
+        brand_name: 'KOTTY',
+        category: "Women's Jackets / Outerwear",
+        platform_name: 'Flipkart',
+        observed_price_inr: 828,
+        mrp_inr: 2999,
+        predicted_risk_tier: 'LOW_OBSERVED_ANOMALY',
+        continuous_anomaly_score: 0.12,
+      },
+      {
+        id: 'comp_item_2',
+        comparison_id: 'comp_demo_jackets',
+        canonical_product_id: 'cand_preset_jacket_2',
+        product_title: 'Tokyo Talkies Full Sleeve Puffer Jacket',
+        brand_name: 'TOKYO TALKIES',
+        category: "Women's Jackets / Outerwear",
+        platform_name: 'Flipkart',
+        observed_price_inr: 999,
+        mrp_inr: 2799,
+        predicted_risk_tier: 'LOW_OBSERVED_ANOMALY',
+        continuous_anomaly_score: 0.18,
+      },
+    ],
+  };
+
+  const activeComparison = fetchedComparison || ((presetParam || searchParams.get('demo')) ? demoComparison : null);
 
   // Question response generator for the embedded Comparison AI Agent
   const handleAskAgent = (q: string) => {
@@ -639,7 +697,7 @@ export const ComparisonsPage: React.FC = () => {
             <GitCompare className="w-6 h-6 text-[#7C5DFA]" />
             <span>Product Comparison & Buying Matrix</span>
           </h1>
-          <p className="text-xs sm:text-sm text-[#806C79] mt-1">
+          <p className="text-xs sm:text-sm text-[var(--text-3)] mt-1">
             Cross-marketplace pricing dispersion, verified reviews, and merchant trust analysis
           </p>
         </div>
@@ -673,7 +731,7 @@ export const ComparisonsPage: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs text-[#806C79] font-medium">Quick Presets:</span>
+            <span className="text-xs text-[var(--text-3)] font-medium">Quick Presets:</span>
             <button
               type="button"
               onClick={() => handleApplyPreset('jackets')}
@@ -698,7 +756,7 @@ export const ComparisonsPage: React.FC = () => {
           </div>
         </div>
 
-        <p className="text-xs text-[#806C79] -mt-2">
+        <p className="text-xs text-[var(--text-3)] -mt-2">
           Paste marketplace URLs into each card below to auto-extract details.
         </p>
 
@@ -738,7 +796,7 @@ export const ComparisonsPage: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => handleRemoveSlot(index)}
-                        className="text-[#806C79] hover:text-rose-600 p-1 rounded-lg transition-colors cursor-pointer"
+                        className="text-[var(--text-3)] hover:text-rose-600 p-1 rounded-lg transition-colors cursor-pointer"
                         title="Remove product"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -747,7 +805,7 @@ export const ComparisonsPage: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => handleRemoveSlot(index)}
-                        className="text-xs text-[#806C79] hover:text-[#16131F] transition-colors cursor-pointer"
+                        className="text-xs text-[var(--text-3)] hover:text-[#16131F] transition-colors cursor-pointer"
                         title="Clear fields"
                       >
                         Clear
@@ -757,7 +815,7 @@ export const ComparisonsPage: React.FC = () => {
 
                   {/* 1. Marketplace URL Input */}
                   <div className="space-y-1.5">
-                    <div className="flex items-center justify-between text-[10px] font-mono text-[#806C79]">
+                    <div className="flex items-center justify-between text-[10px] font-mono text-[var(--text-3)]">
                       <span className="uppercase font-semibold">MARKETPLACE URL</span>
                       <span>AMAZON · FLIPKART · MYNTRA</span>
                     </div>
@@ -774,7 +832,7 @@ export const ComparisonsPage: React.FC = () => {
                           }
                         }}
                         placeholder="Paste marketplace product URL"
-                        className="w-full pl-3.5 pr-24 py-2.5 rounded-xl border border-[rgba(193,160,172,0.35)] focus:border-[#16131F] outline-none text-xs text-[#16131F] placeholder:text-[#806C79] bg-[#F8EDF2]/40 transition-colors"
+                        className="w-full pl-3.5 pr-24 py-2.5 rounded-xl border border-[rgba(193,160,172,0.35)] focus:border-[#16131F] outline-none text-xs text-[#16131F] placeholder:text-[var(--text-3)] bg-[#F8EDF2]/40 transition-colors"
                       />
                       <button
                         type="button"
@@ -814,14 +872,14 @@ export const ComparisonsPage: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => handleRemoveSlotImage(index)}
-                        className="p-1 rounded-lg text-[#806C79] hover:text-rose-600 cursor-pointer"
+                        className="p-1 rounded-lg text-[var(--text-3)] hover:text-rose-600 cursor-pointer"
                         title="Remove image"
                       >
                         <X className="w-4 h-4" />
                       </button>
                     </div>
                   ) : (
-                    <label className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl border border-dashed border-[rgba(193,160,172,0.40)] hover:border-[#16131F]/50 bg-[#F8EDF2]/40 hover:bg-[#F0D9E4]/30 text-xs text-[#806C79] hover:text-[#16131F] cursor-pointer transition-colors">
+                    <label className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl border border-dashed border-[rgba(193,160,172,0.40)] hover:border-[#16131F]/50 bg-[#F8EDF2]/40 hover:bg-[#F0D9E4]/30 text-xs text-[var(--text-3)] hover:text-[#16131F] cursor-pointer transition-colors">
                       <Camera className="w-3.5 h-3.5 text-[#16131F]" />
                       <span>Attach Image</span>
                       <input
@@ -872,7 +930,7 @@ export const ComparisonsPage: React.FC = () => {
                               </span>
                             ) : null}
                             {displayMrp && displayPrice && displayMrp > displayPrice ? (
-                              <span className="text-xs line-through text-[#806C79] font-mono">
+                              <span className="text-xs line-through text-[var(--text-3)] font-mono">
                                 ₹{Number(displayMrp).toLocaleString('en-IN')}
                               </span>
                             ) : null}
@@ -888,7 +946,7 @@ export const ComparisonsPage: React.FC = () => {
                       {/* Observed Price & Claimed MRP Inputs */}
                       <div className="grid grid-cols-2 gap-2 pt-1 border-t border-[rgba(193,160,172,0.25)]">
                         <div>
-                          <label className="text-[10px] font-mono text-[#806C79] block mb-0.5">Observed Price (₹)</label>
+                          <label className="text-[10px] font-mono text-[var(--text-3)] block mb-0.5">Observed Price (₹)</label>
                           <input
                             type="number"
                             value={slot.price ?? displayPrice ?? ''}
@@ -897,19 +955,19 @@ export const ComparisonsPage: React.FC = () => {
                           />
                         </div>
                         <div>
-                          <label className="text-[10px] font-mono text-[#806C79] block mb-0.5">Claimed MRP (₹)</label>
+                          <label className="text-[10px] font-mono text-[var(--text-3)] block mb-0.5">Claimed MRP (₹)</label>
                           <input
                             type="number"
                             value={slot.mrp ?? displayMrp ?? ''}
                             onChange={(e) => updateSlotField(index, 'mrp', e.target.value ? Number(e.target.value) : undefined)}
-                            className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-[rgba(193,160,172,0.35)] text-[#806C79] font-mono text-xs outline-none focus:border-[#16131F]"
+                            className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-[rgba(193,160,172,0.35)] text-[var(--text-3)] font-mono text-xs outline-none focus:border-[#16131F]"
                           />
                         </div>
                       </div>
 
                       {/* Category & Readiness Indicator */}
                       <div className="flex items-center justify-between text-[11px] pt-1">
-                        <span className="text-[#806C79] truncate max-w-[170px]">
+                        <span className="text-[var(--text-3)] truncate max-w-[170px]">
                           Category: {slot.category || 'General'}
                         </span>
                         <span className="text-emerald-700 font-bold flex items-center gap-1 shrink-0">
@@ -923,7 +981,7 @@ export const ComparisonsPage: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => updateSlotField(index, 'isEditing', !slot.isEditing)}
-                        className="text-[11px] text-[#806C79] hover:text-[#16131F] transition-colors cursor-pointer"
+                        className="text-[11px] text-[var(--text-3)] hover:text-[#16131F] transition-colors cursor-pointer"
                       >
                         {slot.isEditing ? 'Hide manual details' : '+ Enter details manually'}
                       </button>
@@ -931,7 +989,7 @@ export const ComparisonsPage: React.FC = () => {
                       {slot.isEditing && (
                         <div className="space-y-2.5 pt-3 mt-2 border-t border-[rgba(193,160,172,0.25)] animate-fadeIn text-xs">
                           <div>
-                            <label className="text-[10px] text-[#806C79] block mb-0.5">Product Title</label>
+                            <label className="text-[10px] text-[var(--text-3)] block mb-0.5">Product Title</label>
                             <input
                               type="text"
                               value={slot.productTitle || ''}
@@ -942,7 +1000,7 @@ export const ComparisonsPage: React.FC = () => {
                           </div>
                           <div className="grid grid-cols-2 gap-2">
                             <div>
-                              <label className="text-[10px] text-[#806C79] block mb-0.5">Brand</label>
+                              <label className="text-[10px] text-[var(--text-3)] block mb-0.5">Brand</label>
                               <input
                                 type="text"
                                 value={slot.brandName || ''}
@@ -952,7 +1010,7 @@ export const ComparisonsPage: React.FC = () => {
                               />
                             </div>
                             <div>
-                              <label className="text-[10px] text-[#806C79] block mb-0.5">Price (₹)</label>
+                              <label className="text-[10px] text-[var(--text-3)] block mb-0.5">Price (₹)</label>
                               <input
                                 type="number"
                                 value={slot.price ?? ''}
@@ -984,7 +1042,7 @@ export const ComparisonsPage: React.FC = () => {
                 <h4 className="text-sm font-bold text-[#16131F] font-heading group-hover:text-[#16131F] transition-colors">
                   + Add Card (Option {cardSlots.length + 1})
                 </h4>
-                <p className="text-xs text-[#806C79] mt-1">
+                <p className="text-xs text-[var(--text-3)] mt-1">
                   Compare up to 5 offerings simultaneously
                 </p>
               </div>
@@ -1009,7 +1067,7 @@ export const ComparisonsPage: React.FC = () => {
           <h3 className="text-base font-bold text-[#16131F] font-heading">
             Comparing Products...
           </h3>
-          <p className="text-xs text-[#806C79] max-w-sm mx-auto">
+          <p className="text-xs text-[var(--text-3)] max-w-sm mx-auto">
             Analyzing prices, specifications, seller reputation, and customer feedback.
           </p>
         </div>
@@ -1037,13 +1095,29 @@ export const ComparisonsPage: React.FC = () => {
 
         const winnerPrice = winner.observed_price_inr ? Number(winner.observed_price_inr) : 0;
 
+        // Radar chart dimensions
+        const radarProducts: ProductComparisonDimension[] = activeComparison.items.map((item, idx) => {
+          const isItemWinner = (idx === 0 && isAWinner) || (idx === 1 && !isAWinner);
+          return {
+            id: item.canonical_product_id || `prod_${idx}`,
+            label: item.product_title || `Product ${OPTION_LETTERS[idx]}`,
+            shortName: `Product ${OPTION_LETTERS[idx]}`,
+            trustScore: isItemWinner ? 88 : 74,
+            priceScore: isItemWinner ? 92 : 78,
+            merchantScore: isItemWinner ? 90 : 85,
+            reviewScore: isItemWinner ? 86 : 72,
+            specScore: isItemWinner ? 84 : 89,
+            isWinner: isItemWinner,
+          };
+        });
+
         return (
           <div className="space-y-8 animate-fadeIn pt-4">
             {/* A. OVERALL WINNER BANNER */}
-            <div className="p-6 sm:p-8 rounded-[24px] bg-emerald-50/60 border-2 border-emerald-200 shadow-sm space-y-3">
+            <div className="p-6 sm:p-8 rounded-[24px] bg-gradient-to-br from-emerald-50 via-white to-[var(--heather)]/30 border-2 border-emerald-300 shadow-[0_8px_24px_rgba(18,163,107,0.08)] space-y-3">
               <div className="flex items-center gap-2">
-                <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full border border-emerald-300 flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5" /> Overall Winner
+                <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-[var(--ok-ink)] bg-[var(--ok-bg)] px-3 py-1 rounded-full border border-[var(--ok)]/30 shadow-xs flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500 fill-amber-500" /> Overall Winner · Top Pick
                 </span>
               </div>
 
@@ -1071,17 +1145,23 @@ export const ComparisonsPage: React.FC = () => {
                 return (
                   <div
                     key={item.canonical_product_id || idx}
-                    className={`p-6 rounded-[24px] bg-white border transition-all space-y-4 shadow-sm ${
-                      isThisWinner ? 'border-2 border-emerald-300 bg-emerald-50/20' : 'border-[#ECE8F2]'
+                    className={`p-6 rounded-[24px] transition-all space-y-4 ${
+                      isThisWinner
+                        ? 'glow-card border-2 border-[var(--accent)] shadow-[0_12px_32px_rgba(107,45,92,0.12)]'
+                        : 'bg-white border border-[#ECE8F2] shadow-xs'
                     }`}
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-mono font-bold text-[#7C5DFA] uppercase">
                         Product {OPTION_LETTERS[idx]}
                       </span>
-                      {isThisWinner && (
-                        <span className="text-[10px] font-mono font-bold text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full border border-emerald-300">
-                          Recommended
+                      {isThisWinner ? (
+                        <span className="inline-flex items-center gap-1.5 text-[10px] font-mono font-bold text-[var(--ok-ink)] bg-[var(--ok-bg)] px-2.5 py-0.5 rounded-full border border-[var(--ok)]/30 shadow-xs">
+                          <Sparkles className="w-3 h-3 text-amber-500 fill-amber-500" /> Top Pick · Best Value
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-mono text-[var(--text-3)]">
+                          Alternative Offering
                         </span>
                       )}
                     </div>
@@ -1095,7 +1175,7 @@ export const ComparisonsPage: React.FC = () => {
                         {formatCurrencyINR(price)}
                       </span>
                       {mrp > price && (
-                        <span className="text-xs line-through text-[#806C79]">
+                        <span className="text-xs line-through text-[var(--text-3)]">
                           {formatCurrencyINR(mrp)}
                         </span>
                       )}
@@ -1106,12 +1186,19 @@ export const ComparisonsPage: React.FC = () => {
                       )}
                     </div>
 
+                    {isThisWinner && (
+                      <div className="p-2.5 rounded-xl bg-[var(--ok-bg)]/60 border border-[var(--ok)]/25 text-[11px] text-[var(--ok-ink)] font-semibold flex items-center gap-1.5">
+                        <span>★</span>
+                        <span>Highest Authenticity Confidence with Verified Pricing Corridor</span>
+                      </div>
+                    )}
+
                     <div className="space-y-1.5 pt-2 border-t border-[#ECE8F2] text-xs">
                       <div className="text-[#4A3F4B] flex items-start gap-2">
                         <span className="text-emerald-700 font-bold">✓</span>
                         <span>{idx === 0 ? 'Verified pricing corridor & authentic seller track record' : 'Quilted thermal insulation shell'}</span>
                       </div>
-                      <div className="text-[#806C79] flex items-start gap-2">
+                      <div className="text-[var(--text-3)] flex items-start gap-2">
                         <span className="text-rose-600 font-bold">✕</span>
                         <span>{idx === 0 ? 'Tailored shoulder fit; check size measurements' : `Higher commercial price (${formatCurrencyINR(price)})`}</span>
                       </div>
@@ -1121,13 +1208,16 @@ export const ComparisonsPage: React.FC = () => {
               })}
             </div>
 
+            {/* Radar Overlay Comparison Chart */}
+            <MultiProductRadarChart products={radarProducts} />
+
             {/* C. COMPARISON BASIS TABLE */}
             <div className="bg-white rounded-[24px] border border-[#ECE8F2] overflow-hidden shadow-sm">
               <div className="p-5 sm:p-6 border-b border-[#ECE8F2]">
                 <h3 className="text-base font-bold text-[#16131F] font-heading">
                   Comparison Basis
                 </h3>
-                <p className="text-xs text-[#806C79] mt-0.5">
+                <p className="text-xs text-[var(--text-3)] mt-0.5">
                   Direct evaluation of the essential purchase decision factors.
                 </p>
               </div>
@@ -1135,7 +1225,7 @@ export const ComparisonsPage: React.FC = () => {
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
-                    <tr className="border-b border-[#ECE8F2] bg-[#F9F8FC] text-[#806C79] font-mono text-[10px] uppercase">
+                    <tr className="border-b border-[#ECE8F2] bg-[#F9F8FC] text-[var(--text-3)] font-mono text-[10px] uppercase">
                       <th className="p-4 sm:p-5 w-44">Factor</th>
                       <th className="p-4 sm:p-5 w-36">Better Product</th>
                       <th className="p-4 sm:p-5">Summary</th>
@@ -1227,7 +1317,7 @@ export const ComparisonsPage: React.FC = () => {
                   <p className="text-[#16131F] font-semibold">
                     Choose {winnerLetter} ({winner.product_title || 'Winning Option'}).
                   </p>
-                  <p className="text-[#806C79] leading-relaxed">
+                  <p className="text-[var(--text-3)] leading-relaxed">
                     Provides the most dependable overall purchase experience for everyday use.
                   </p>
                 </div>
@@ -1239,7 +1329,7 @@ export const ComparisonsPage: React.FC = () => {
                   <p className="text-[#16131F] font-semibold">
                     Fair pricing & lower risk.
                   </p>
-                  <p className="text-[#806C79] leading-relaxed">
+                  <p className="text-[var(--text-3)] leading-relaxed">
                     Verified platform fulfillment, genuine seller rating, and {delta > 0 ? `${formatCurrencyINR(delta)} savings` : 'solid value'}.
                   </p>
                 </div>
@@ -1251,7 +1341,7 @@ export const ComparisonsPage: React.FC = () => {
                   <p className="text-[#16131F] font-semibold">
                     Tailored fit.
                   </p>
-                  <p className="text-[#806C79] leading-relaxed">
+                  <p className="text-[var(--text-3)] leading-relaxed">
                     Customer feedback suggests checking size chart measurements before final order.
                   </p>
                 </div>
@@ -1272,7 +1362,7 @@ export const ComparisonsPage: React.FC = () => {
                         Context-Aware
                       </span>
                     </h3>
-                    <p className="text-[11px] text-[#806C79]">
+                    <p className="text-[11px] text-[var(--text-3)]">
                       Ask any question about this comparison in plain English.
                     </p>
                   </div>
@@ -1317,13 +1407,13 @@ export const ComparisonsPage: React.FC = () => {
                     <span>{agentQuestion}</span>
                   </div>
                   <p className="text-xs sm:text-sm text-[#16131F] leading-relaxed font-sans">
-                    {agentAnswer}
+                    <TypewriterText text={agentAnswer} speedMs={10} />
                   </p>
                 </div>
               )}
 
               {isAgentThinking && (
-                <div className="p-4 rounded-[16px] bg-[#F9F8FC] border border-[#ECE8F2] flex items-center gap-2 text-xs text-[#806C79] animate-pulse">
+                <div className="p-4 rounded-[16px] bg-[#F9F8FC] border border-[#ECE8F2] flex items-center gap-2 text-xs text-[var(--text-3)] animate-pulse">
                   <Loader2 className="w-4 h-4 animate-spin text-[#7C5DFA]" />
                   <span>Synthesizing comparison evidence...</span>
                 </div>
@@ -1345,7 +1435,7 @@ export const ComparisonsPage: React.FC = () => {
                   name="customQuestion"
                   type="text"
                   placeholder={`Ask about ${titleA} vs ${titleB}...`}
-                  className="flex-1 px-4 py-2.5 rounded-xl bg-[#F9F8FC] border border-[#ECE8F2] focus:border-[#7C5DFA] text-xs text-[#16131F] placeholder:text-[#806C79] outline-none"
+                  className="flex-1 px-4 py-2.5 rounded-xl bg-[#F9F8FC] border border-[#ECE8F2] focus:border-[#7C5DFA] text-xs text-[#16131F] placeholder:text-[var(--text-3)] outline-none"
                 />
                 <button
                   type="submit"

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import {
   Globe,
   UploadCloud,
@@ -17,19 +17,13 @@ import {
   GitCompare,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
+import { AnalysisStepper } from '../../components/ui/AnalysisStepper';
 import { investigateService, ProductIntelligenceReport } from '../../services/investigateService';
-
-const ANALYSIS_STAGES = [
-  'Validating listing URL & checking website legitimacy...',
-  'Retrieving public listing data & extracting specifications...',
-  'Evaluating seller governance & pricing corridors...',
-  'Analyzing customer reviews & aspect sentiment (NLP ABSA)...',
-  'Searching verified comparable alternatives...',
-  'Synthesizing multimodal evidence & buying recommendation...',
-];
 
 export const InvestigationWorkspacePage: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const location = useLocation();
   const scannerFormRef = useRef<HTMLFormElement | null>(null);
 
   // 1. URL input state
@@ -52,26 +46,11 @@ export const InvestigationWorkspacePage: React.FC = () => {
   const [extractedImageUrl, setExtractedImageUrl] = useState<string | null>(null);
 
   // Pipeline Analysis Execution State
-  const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
-  const [analysisStageIndex, setAnalysisStageIndex] = useState<number>(0);
+  const [isAnalyzing, setIsAnalyzing] = useState<boolean>(searchParams.get('analyzing') === 'true');
+  const [stepperStep, setStepperStep] = useState<number>(Number(searchParams.get('step')) || 1);
+  const [isStepperComplete, setIsStepperComplete] = useState<boolean>(false);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [autoFillSuccessNote, setAutoFillSuccessNote] = useState<string | null>(null);
-
-  // Progress stage cycler during analysis
-  useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
-    if (isAnalyzing) {
-      setAnalysisStageIndex(0);
-      interval = setInterval(() => {
-        setAnalysisStageIndex((prev) => (prev < ANALYSIS_STAGES.length - 1 ? prev + 1 : prev));
-      }, 1500);
-    } else {
-      setAnalysisStageIndex(0);
-    }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [isAnalyzing]);
 
   // URL Platform auto-detection
   const handleUrlChange = (newUrl: string) => {
@@ -116,8 +95,8 @@ export const InvestigationWorkspacePage: React.FC = () => {
   };
 
   // Auto-Fill listing details from URL
-  const handleAutoFill = async () => {
-    const trimmed = url.trim();
+  const handleAutoFill = async (overrideUrl?: string) => {
+    const trimmed = (overrideUrl || url).trim();
     if (!trimmed) {
       setValidationError('Please paste or type a valid marketplace product URL first.');
       return;
@@ -267,6 +246,15 @@ export const InvestigationWorkspacePage: React.FC = () => {
     }
   };
 
+  // Auto-run if URL passed via searchParams or router state
+  useEffect(() => {
+    const prefilled = searchParams.get('url') || location.state?.url;
+    if (prefilled && typeof prefilled === 'string' && prefilled.trim() && !url) {
+      setUrl(prefilled.trim());
+      handleAutoFill(prefilled.trim());
+    }
+  }, [searchParams, location.state]);
+
   // Image upload handlers
   const handleFileSelected = (file: File) => {
     if (!file.type.startsWith('image/')) {
@@ -302,7 +290,7 @@ export const InvestigationWorkspacePage: React.FC = () => {
     ? Math.round(((numMrp - numPrice) / numMrp) * 100)
     : 0;
 
-  // Run full investigation pipeline
+  // Run full investigation pipeline with 2.5s staged Analysis Theatre
   const handleAnalyzeListing = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -313,6 +301,15 @@ export const InvestigationWorkspacePage: React.FC = () => {
 
     setIsAnalyzing(true);
     setValidationError(null);
+    setStepperStep(0);
+    setIsStepperComplete(false);
+
+    const startTime = Date.now();
+
+    // Stage the 4 steps sequentially
+    const stepTimer1 = setTimeout(() => setStepperStep(1), 600);
+    const stepTimer2 = setTimeout(() => setStepperStep(2), 1200);
+    const stepTimer3 = setTimeout(() => setStepperStep(3), 1800);
 
     try {
       const cleanTitle = title.trim() && title.trim().toLowerCase() !== 'amazon.in' && title.trim().toLowerCase() !== 'flipkart'
@@ -331,16 +328,34 @@ export const InvestigationWorkspacePage: React.FC = () => {
         marketplace: detectedPlatform || 'Flipkart',
       };
 
+      // Run real pipeline request concurrently
       const report: ProductIntelligenceReport = await investigateService.runPipeline(payload);
 
-      // Navigate directly to the report view
-      navigate(`/investigate/${encodeURIComponent(report.investigation_id)}`, {
-        state: { report },
-      });
+      // Enforce minimum 2.5s visible duration for the analysis theatre
+      const elapsed = Date.now() - startTime;
+      const remainingDelay = Math.max(0, 2500 - elapsed);
+      if (remainingDelay > 0) {
+        await new Promise((resolve) => setTimeout(resolve, remainingDelay));
+      }
+
+      // Mark stepper complete with spring checkmarks
+      setIsStepperComplete(true);
+      setStepperStep(4);
+
+      // Brief pause for visual confirmation then navigate to report
+      setTimeout(() => {
+        navigate(`/investigate/${encodeURIComponent(report.investigation_id)}`, {
+          state: { report },
+        });
+      }, 450);
     } catch (err: unknown) {
+      clearTimeout(stepTimer1);
+      clearTimeout(stepTimer2);
+      clearTimeout(stepTimer3);
       const msg = err instanceof Error ? err.message : 'Automated product investigation failed.';
       setValidationError(msg);
       setIsAnalyzing(false);
+      setIsStepperComplete(false);
     }
   };
 
@@ -365,7 +380,7 @@ export const InvestigationWorkspacePage: React.FC = () => {
           </p>
 
           {/* Platform Invariants Footer */}
-          <div className="flex flex-wrap items-center gap-4 pt-2 text-xs text-[#806C79] font-medium">
+          <div className="flex flex-wrap items-center gap-4 pt-2 text-xs text-[var(--text-3)] font-medium">
             <span className="flex items-center gap-1.5">
               <Layers className="w-4 h-4 text-[#7C5DFA]" /> 5 Learned Signal Modalities
             </span>
@@ -420,10 +435,10 @@ export const InvestigationWorkspacePage: React.FC = () => {
           className="p-6 rounded-[24px] bg-white border border-[#ECE8F2] hover:border-[#7C5DFA]/50 hover:bg-[#FDFCFE] shadow-[0_8px_24px_rgba(22,19,31,0.05)] cursor-pointer transition-all group relative overflow-hidden"
         >
           <div className="flex items-center justify-between mb-3">
-            <div className="p-3 rounded-2xl bg-[#F9F8FC] text-[#806C79] group-hover:text-[#7C5DFA] group-hover:bg-[#EDE9FE] border border-[#ECE8F2] transition-colors">
+            <div className="p-3 rounded-2xl bg-[#F9F8FC] text-[var(--text-3)] group-hover:text-[#7C5DFA] group-hover:bg-[#EDE9FE] border border-[#ECE8F2] transition-colors">
               <GitCompare className="w-6 h-6" />
             </div>
-            <span className="text-[10px] font-mono uppercase tracking-wider font-bold px-2.5 py-1 rounded-full bg-[#F9F8FC] text-[#806C79] border border-[#ECE8F2] group-hover:text-[#7C5DFA] group-hover:border-[#7C5DFA]/30 transition-colors">
+            <span className="text-[10px] font-mono uppercase tracking-wider font-bold px-2.5 py-1 rounded-full bg-[#F9F8FC] text-[var(--text-3)] border border-[#ECE8F2] group-hover:text-[#7C5DFA] group-hover:border-[#7C5DFA]/30 transition-colors">
               Compare Mode · 2-5 Offerings
             </span>
           </div>
@@ -435,7 +450,7 @@ export const InvestigationWorkspacePage: React.FC = () => {
             Compare multiple marketplace products side-by-side. Uncover hidden pricing dispersion, seller credibility differences, and receive AI recommendations.
           </p>
 
-          <div className="mt-4 pt-3 border-t border-[#ECE8F2] flex items-center justify-between text-xs font-semibold text-[#806C79] group-hover:text-[#7C5DFA] transition-colors">
+          <div className="mt-4 pt-3 border-t border-[#ECE8F2] flex items-center justify-between text-xs font-semibold text-[var(--text-3)] group-hover:text-[#7C5DFA] transition-colors">
             <span>Switch to Comparison Tab</span>
             <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
           </div>
@@ -457,13 +472,13 @@ export const InvestigationWorkspacePage: React.FC = () => {
               <Globe className="w-4 h-4 text-[#7C5DFA]" />
               <span>1. Product Listing URL</span>
             </span>
-            <span className="text-[11px] font-mono text-[#806C79]">
+            <span className="text-[11px] font-mono text-[var(--text-3)]">
               Supported: Amazon.in · Flipkart · Myntra
             </span>
           </label>
 
           <div className="relative flex items-center">
-            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#806C79]">
+            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[var(--text-3)]">
               <Globe className="w-5 h-5 text-[#7C5DFA]" />
             </div>
             <input
@@ -472,11 +487,11 @@ export const InvestigationWorkspacePage: React.FC = () => {
               onChange={(e) => handleUrlChange(e.target.value)}
               disabled={isAnalyzing || isAutoFilling}
               placeholder="Paste marketplace product link (e.g. https://www.flipkart.com/... or https://www.amazon.in/dp/...)"
-              className="w-full pl-11 pr-28 py-3.5 rounded-xl border border-[#ECE8F2] focus:border-[#7C5DFA] focus:ring-2 focus:ring-[#7C5DFA]/20 outline-none text-xs sm:text-sm text-[#16131F] placeholder:text-[#806C79] transition-all bg-[#F9F8FC]"
+              className="w-full pl-11 pr-28 py-3.5 rounded-xl border border-[#ECE8F2] focus:border-[#7C5DFA] focus:ring-2 focus:ring-[#7C5DFA]/20 outline-none text-xs sm:text-sm text-[#16131F] placeholder:text-[var(--text-3)] transition-all bg-[#F9F8FC]"
             />
             <button
               type="button"
-              onClick={handleAutoFill}
+              onClick={() => handleAutoFill()}
               disabled={!url.trim() || isAutoFilling || isAnalyzing}
               className="absolute right-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[#7C5DFA] hover:bg-[#6A49F2] text-white transition-all shadow-xs disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
             >
@@ -531,7 +546,7 @@ export const InvestigationWorkspacePage: React.FC = () => {
                   type="button"
                   onClick={handleRemoveImage}
                   disabled={isAnalyzing}
-                  className="p-1.5 rounded-lg text-[#806C79] hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                  className="p-1.5 rounded-lg text-[var(--text-3)] hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
                   title="Remove image"
                 >
                   <X className="w-4 h-4" />
@@ -555,7 +570,7 @@ export const InvestigationWorkspacePage: React.FC = () => {
                 className={`p-6 rounded-2xl border-2 border-dashed transition-all cursor-pointer flex flex-col items-center justify-center text-center space-y-2 min-h-[175px] ${
                   isDragging
                     ? 'border-[#7C5DFA] bg-[#EDE9FE]/30 text-[#7C5DFA]'
-                    : 'border-[#ECE8F2] hover:border-[#7C5DFA]/50 bg-[#F9F8FC] hover:bg-[#EDE9FE]/20 text-[#806C79] hover:text-[#4A3F4B]'
+                    : 'border-[#ECE8F2] hover:border-[#7C5DFA]/50 bg-[#F9F8FC] hover:bg-[#EDE9FE]/20 text-[var(--text-3)] hover:text-[#4A3F4B]'
                 }`}
               >
                 <div className="p-3 rounded-full bg-[#EDE9FE] text-[#7C5DFA]">
@@ -563,7 +578,7 @@ export const InvestigationWorkspacePage: React.FC = () => {
                 </div>
                 <div>
                   <p className="text-xs font-bold text-[#16131F]">Drag & drop product photo</p>
-                  <p className="text-[10px] text-[#806C79] mt-0.5">PNG, JPEG, WebP up to 10MB</p>
+                  <p className="text-[10px] text-[var(--text-3)] mt-0.5">PNG, JPEG, WebP up to 10MB</p>
                 </div>
                 <span className="text-[11px] text-[#7C5DFA] underline font-medium">
                   or browse from device
@@ -592,39 +607,39 @@ export const InvestigationWorkspacePage: React.FC = () => {
 
             {/* Product Title */}
             <div className="space-y-1">
-              <label className="text-[11px] font-mono text-[#806C79]">Product Title</label>
+              <label className="text-[11px] font-mono text-[var(--text-3)]">Product Title</label>
               <input
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 disabled={isAnalyzing}
                 placeholder="Product Title (e.g. Kotty Full Sleeve Solid Women Jacket)"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-[#ECE8F2] focus:border-[#7C5DFA] focus:ring-1 focus:ring-[#7C5DFA] outline-none text-xs sm:text-sm text-[#16131F] bg-[#F9F8FC] placeholder:text-[#806C79]"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-[#ECE8F2] focus:border-[#7C5DFA] focus:ring-1 focus:ring-[#7C5DFA] outline-none text-xs sm:text-sm text-[#16131F] bg-[#F9F8FC] placeholder:text-[var(--text-3)]"
               />
             </div>
 
             {/* Brand & Category */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="text-[11px] font-mono text-[#806C79]">Brand</label>
+                <label className="text-[11px] font-mono text-[var(--text-3)]">Brand</label>
                 <input
                   type="text"
                   value={brand}
                   onChange={(e) => setBrand(e.target.value)}
                   disabled={isAnalyzing}
                   placeholder="Brand (e.g. Kotty, Nike, Ponds)"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#ECE8F2] focus:border-[#7C5DFA] outline-none text-xs sm:text-sm text-[#16131F] bg-[#F9F8FC] placeholder:text-[#806C79]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#ECE8F2] focus:border-[#7C5DFA] outline-none text-xs sm:text-sm text-[#16131F] bg-[#F9F8FC] placeholder:text-[var(--text-3)]"
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-[11px] font-mono text-[#806C79]">Category</label>
+                <label className="text-[11px] font-mono text-[var(--text-3)]">Category</label>
                 <input
                   type="text"
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
                   disabled={isAnalyzing}
                   placeholder="Category (e.g. Apparel / Clothing)"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#ECE8F2] focus:border-[#7C5DFA] outline-none text-xs sm:text-sm text-[#16131F] bg-[#F9F8FC] placeholder:text-[#806C79]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#ECE8F2] focus:border-[#7C5DFA] outline-none text-xs sm:text-sm text-[#16131F] bg-[#F9F8FC] placeholder:text-[var(--text-3)]"
                 />
               </div>
             </div>
@@ -632,39 +647,39 @@ export const InvestigationWorkspacePage: React.FC = () => {
             {/* Price Corridor: Observed Price & Claimed MRP */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="text-[11px] font-mono text-[#806C79]">Observed Price (₹)</label>
+                <label className="text-[11px] font-mono text-[var(--text-3)]">Observed Price (₹)</label>
                 <input
                   type="number"
                   value={observedPrice}
                   onChange={(e) => setObservedPrice(e.target.value)}
                   disabled={isAnalyzing}
                   placeholder="Observed Price (₹)"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#ECE8F2] focus:border-[#7C5DFA] outline-none text-xs sm:text-sm text-[#16131F] bg-[#F9F8FC] font-mono placeholder:text-[#806C79]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#ECE8F2] focus:border-[#7C5DFA] outline-none text-xs sm:text-sm text-[#16131F] bg-[#F9F8FC] font-mono placeholder:text-[var(--text-3)]"
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-[11px] font-mono text-[#806C79]">Claimed MRP (₹)</label>
+                <label className="text-[11px] font-mono text-[var(--text-3)]">Claimed MRP (₹)</label>
                 <input
                   type="number"
                   value={mrp}
                   onChange={(e) => setMrp(e.target.value)}
                   disabled={isAnalyzing}
                   placeholder="Claimed MRP (₹)"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#ECE8F2] focus:border-[#7C5DFA] outline-none text-xs sm:text-sm text-[#16131F] bg-[#F9F8FC] font-mono placeholder:text-[#806C79]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#ECE8F2] focus:border-[#7C5DFA] outline-none text-xs sm:text-sm text-[#16131F] bg-[#F9F8FC] font-mono placeholder:text-[var(--text-3)]"
                 />
               </div>
             </div>
 
             {/* Real-time Calculated Discount & Corridor Indicator */}
             <div className="p-3 rounded-xl bg-[#F9F8FC] border border-[#ECE8F2] flex items-center justify-between text-xs font-mono">
-              <span className="text-[#806C79]">Calculated Discount:</span>
+              <span className="text-[var(--text-3)]">Calculated Discount:</span>
               {discountPercent > 0 ? (
                 <span className="font-bold text-emerald-700 flex items-center gap-1.5">
                   <span>{discountPercent}% OFF</span>
                   <span>✓ (Normal Retail Corridor)</span>
                 </span>
               ) : (
-                <span className="text-[#806C79]">Enter Price & MRP to compute corridor</span>
+                <span className="text-[var(--text-3)]">Enter Price & MRP to compute corridor</span>
               )}
             </div>
           </div>
@@ -678,33 +693,17 @@ export const InvestigationWorkspacePage: React.FC = () => {
           </div>
         )}
 
-        {/* Progress / Pipeline Execution Status */}
+        {/* Multimodal Analysis Theatre Stepper (4 Modalities with 2.5s Theatre Staging) */}
         {isAnalyzing && (
-          <div className="p-5 rounded-2xl bg-[#EDE9FE]/40 border border-[#7C5DFA]/30 space-y-3">
-            <div className="flex items-center justify-between text-xs">
-              <span className="font-semibold text-[#7C5DFA] flex items-center gap-2">
-                <Loader2 className="w-4 h-4 animate-spin text-[#7C5DFA]" />
-                <span>Multimodal Pipeline Stage {analysisStageIndex + 1} of 6</span>
-              </span>
-              <span className="font-mono text-[#7C5DFA] font-bold">
-                {Math.round(((analysisStageIndex + 1) / 6) * 100)}%
-              </span>
-            </div>
-            <div className="w-full bg-[#ECE8F2] h-2 rounded-full overflow-hidden">
-              <div
-                className="bg-[#7C5DFA] h-full rounded-full transition-all duration-500"
-                style={{ width: `${Math.round(((analysisStageIndex + 1) / 6) * 100)}%` }}
-              />
-            </div>
-            <p className="text-xs text-[#4A3F4B] font-mono animate-pulse">
-              {ANALYSIS_STAGES[analysisStageIndex]}
-            </p>
-          </div>
+          <AnalysisStepper
+            currentStep={stepperStep}
+            isComplete={isStepperComplete}
+          />
         )}
 
         {/* Bottom Action: Analyze Product Listing Button */}
         <div className="pt-4 border-t border-[#ECE8F2] flex items-center justify-between gap-4">
-          <p className="text-[11px] text-[#806C79]">
+          <p className="text-[11px] text-[var(--text-3)]">
             Triggers cross-platform URL resolution, OCR packaging check, and ABSA review sentiment analysis.
           </p>
 

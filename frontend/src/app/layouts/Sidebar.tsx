@@ -68,7 +68,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <span className="font-heading font-bold text-[#16131F] text-sm tracking-tight leading-tight">
                 TrustSphere
               </span>
-              <span className="text-[10px] text-[#806C79] tracking-wider uppercase font-semibold">
+              <span className="text-[10px] text-[var(--text-3)] tracking-wider uppercase font-semibold">
                 Shopping Intelligence
               </span>
             </div>
@@ -79,13 +79,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <button
           onClick={onToggleCollapse}
           className={cn(
-            'p-1.5 rounded-lg text-[#806C79] hover:text-[#16131F] hover:bg-[#F8EDF2] transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#16131F] cursor-pointer',
+            'p-1.5 rounded-lg text-[var(--text-3)] hover:text-[#16131F] hover:bg-[#F8EDF2] transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#16131F] cursor-pointer',
             isCollapsed && 'mt-0.5'
           )}
           title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
-          {isCollapsed ? <ChevronRight className="w-4 h-4 text-[#806C79]" /> : <ChevronLeft className="w-4 h-4 text-[#806C79]" />}
+          {isCollapsed ? <ChevronRight className="w-4 h-4 text-[var(--text-3)]" /> : <ChevronLeft className="w-4 h-4 text-[var(--text-3)]" />}
         </button>
       </div>
 
@@ -136,7 +136,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <span className="text-xs font-semibold text-[#16131F] truncate">
                   {user?.fullName || (isAuthenticated ? 'Consumer' : 'Shruti')}
                 </span>
-                <span className="text-[10px] text-[#806C79] uppercase tracking-wider font-medium truncate font-mono">
+                <span className="text-[10px] text-[var(--text-3)] uppercase tracking-wider font-medium truncate font-mono">
                   {user?.role || 'Viewer'}
                 </span>
               </div>
@@ -147,7 +147,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <button
               onClick={() => logout()}
               className={cn(
-                'text-[#806C79] hover:text-rose-600 hover:bg-rose-50 p-1.5 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-rose-500',
+                'text-[var(--text-3)] hover:text-rose-600 hover:bg-rose-50 p-1.5 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-rose-500',
                 isCollapsed && 'mt-2'
               )}
               title="Log out"

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, ShieldCheck, ScanSearch, LogOut } from 'lucide-react';
+import { Menu, ShieldCheck, ScanSearch, LogOut, Search } from 'lucide-react';
 import { Breadcrumbs } from './Breadcrumbs';
 import { StatusIndicator } from '../../components/common/StatusIndicator';
 import { useQuery } from '@tanstack/react-query';
@@ -10,9 +10,10 @@ import { cn } from '../../lib/utils';
 
 export interface TopNavbarProps {
   onOpenMobileMenu: () => void;
+  onOpenCommandPalette?: () => void;
 }
 
-export const TopNavbar: React.FC<TopNavbarProps> = ({ onOpenMobileMenu }) => {
+export const TopNavbar: React.FC<TopNavbarProps> = ({ onOpenMobileMenu, onOpenCommandPalette }) => {
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -31,12 +32,12 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onOpenMobileMenu }) => {
     : 'degraded';
 
   return (
-    <header className="h-16 mt-4 mx-4 sm:mx-6 rounded-[20px] bg-white border border-[rgba(193,160,172,0.35)] shadow-[0_4px_20px_rgba(22,19,31,0.04)] px-4 sm:px-6 flex items-center justify-between sticky top-4 z-20 shrink-0 transition-all">
+    <header className="h-16 mt-4 mx-4 sm:mx-6 rounded-[20px] bg-white/70 backdrop-blur-xl border border-white/60 shadow-[0_4px_20px_rgba(22,19,31,0.04)] px-4 sm:px-6 flex items-center justify-between sticky top-4 z-20 shrink-0 transition-all">
       {/* Left: Mobile hamburger menu & Breadcrumbs */}
       <div className="flex items-center gap-3">
         <button
           onClick={onOpenMobileMenu}
-          className="md:hidden p-2 -ml-1 text-[#806C79] hover:text-[#16131F] hover:bg-[#F8EDF2] rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16131F] transition-colors"
+          className="md:hidden p-2 -ml-1 text-[var(--text-3)] hover:text-[var(--ink)] hover:bg-[var(--canvas)] rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ink)] transition-colors"
           aria-label="Open navigation menu"
         >
           <Menu className="w-5 h-5" />
@@ -48,15 +49,29 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onOpenMobileMenu }) => {
 
         {/* Mobile brand text */}
         <div className="sm:hidden flex items-center gap-2">
-          <div className="h-7 w-7 rounded-xl bg-[#16131F] text-[#F0D9E4] flex items-center justify-center shadow-xs">
+          <div className="h-7 w-7 rounded-xl bg-[var(--ink)] text-[var(--heather)] flex items-center justify-center shadow-xs">
             <ShieldCheck className="h-4 w-4" />
           </div>
-          <span className="font-heading font-bold text-sm text-[#16131F]">TrustSphere</span>
+          <span className="font-heading font-bold text-sm text-[var(--ink)]">TrustSphere</span>
         </div>
       </div>
 
       {/* Center / Right: System Status, Search, User Auth */}
       <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+        {/* Command Palette Trigger Pill */}
+        <button
+          type="button"
+          onClick={onOpenCommandPalette}
+          className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/80 hover:bg-white border border-[#ECE8F2] hover:border-[var(--line)] text-xs text-[var(--text-3)] hover:text-[var(--ink)] shadow-2xs transition-all cursor-pointer group"
+          title="Search or jump to command (⌘K / Ctrl+K)"
+        >
+          <Search className="w-3.5 h-3.5 text-[var(--text-3)] group-hover:text-[var(--accent)] transition-colors" />
+          <span className="font-medium">Search / Commands</span>
+          <kbd className="inline-flex items-center px-1.5 py-0.2 rounded bg-[#F8EDF2] border border-[#ECE8F2] text-[10px] font-mono text-[var(--text-3)] font-semibold">
+            ⌘K
+          </kbd>
+        </button>
+
         {/* System Health Status Indicator */}
         <div
           className={cn(
@@ -94,7 +109,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onOpenMobileMenu }) => {
               <span className="text-xs font-semibold text-[#16131F] truncate max-w-[100px]">
                 {user.fullName || 'Shruti'}
               </span>
-              <span className="text-[10px] text-[#806C79] capitalize font-mono">
+              <span className="text-[10px] text-[var(--text-3)] capitalize font-mono">
                 {user.role?.toLowerCase() || 'Viewer'}
               </span>
             </div>
@@ -103,7 +118,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onOpenMobileMenu }) => {
                 await logout();
                 navigate('/');
               }}
-              className="p-1.5 text-[#806C79] hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
+              className="p-1.5 text-[var(--text-3)] hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
               title="Sign Out"
               aria-label="Sign Out"
             >

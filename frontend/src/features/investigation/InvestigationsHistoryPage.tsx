@@ -18,6 +18,7 @@ import {
   Sliders,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
+import { VerdictBadge } from '../../components/ui/VerdictBadge';
 
 export const InvestigationsHistoryPage: React.FC = () => {
   const [search, setSearch] = useState<string>('');
@@ -184,9 +185,11 @@ export const InvestigationsHistoryPage: React.FC = () => {
                       {getInputTypeIcon(inv.input_type)}
                       <span>{inv.input_type}</span>
                     </span>
-                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${tierBadge.bg} font-mono`}>
-                      {tierBadge.label} (Score: {(inv.overall_risk_score * 100).toFixed(1)}%)
-                    </span>
+                    <VerdictBadge
+                      verdict={inv.overall_risk_tier || 'LOW_OBSERVED_ANOMALY'}
+                      label={`${tierBadge.label} (Score: ${(inv.overall_risk_score * 100).toFixed(1)}%)`}
+                      size="sm"
+                    />
                     {inv.extracted_identifier && (
                       <span className="font-mono text-[10px] text-slate-400 bg-white/5 px-2 py-0.5 rounded border border-white/[0.05]">
                         ID: {inv.extracted_identifier}

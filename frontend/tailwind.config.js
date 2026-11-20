@@ -7,23 +7,55 @@ export default {
   theme: {
     extend: {
       colors: {
-        canvas: '#F8EDF2',
+        ink: 'var(--ink)',
+        canvas: 'var(--canvas)',
+        heather: 'var(--heather)',
+        accent: {
+          DEFAULT: 'var(--accent)',
+          hi: 'var(--accent-hi)',
+        },
+        line: 'var(--line)',
+        text: {
+          1: 'var(--ink)',
+          2: 'var(--text-2)',
+          3: 'var(--text-3)',
+        },
+        ok: {
+          DEFAULT: 'var(--ok)',
+          bg: 'var(--ok-bg)',
+          ink: 'var(--ok-ink)',
+        },
+        warn: {
+          DEFAULT: 'var(--warn)',
+          bg: 'var(--warn-bg)',
+          ink: 'var(--warn-ink)',
+        },
+        bad: {
+          DEFAULT: 'var(--bad)',
+          bg: 'var(--bad-bg)',
+          ink: 'var(--bad-ink)',
+        },
+        info: {
+          DEFAULT: 'var(--info)',
+          bg: 'var(--info-bg)',
+          ink: 'var(--info-ink)',
+        },
         surface: {
           DEFAULT: '#FFFFFF',
           card: '#FFFFFF',
           raised: '#FDFBFC',
           elevated: '#FDFBFC',
-          border: 'rgba(193, 160, 172, 0.35)',
+          border: 'var(--line)',
         },
         plum: {
-          charcoal: '#16131F',
-          dark: '#4A3F4B',
-          muted: '#806C79',
-          blush: '#F0D9E4',
+          charcoal: 'var(--ink)',
+          dark: 'var(--text-2)',
+          muted: 'var(--text-3)',
+          blush: 'var(--heather)',
           mauve: '#C1A0AC',
-          lavender: '#F0D9E4',
-          accent: '#16131F',
-          'accent-hover': '#4A3F4B',
+          lavender: 'var(--heather)',
+          accent: 'var(--accent)',
+          'accent-hover': 'var(--accent-hi)',
         },
         brand: {
           navy: '#16131F',

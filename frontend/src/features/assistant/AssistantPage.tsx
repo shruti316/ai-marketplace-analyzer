@@ -11,6 +11,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
+import { TypewriterText } from '../../components/ui/TypewriterText';
 
 interface Message {
   id: string;
@@ -137,7 +138,7 @@ export const AssistantPage: React.FC = () => {
             <Sparkles className="w-5 h-5 text-[#7C5DFA]" />
             <span>TrustSphere Intelligence Assistant</span>
           </h1>
-          <p className="text-xs text-[#806C79] mt-0.5">
+          <p className="text-xs text-[var(--text-3)] mt-0.5">
             Grounded multimodal reasoning, pricing corridor analysis, and evidence synthesis across marketplace investigations
           </p>
         </div>
@@ -163,13 +164,13 @@ export const AssistantPage: React.FC = () => {
                   Online
                 </span>
               </div>
-              <p className="text-[11px] text-[#806C79] font-mono mt-0.5">
+              <p className="text-[11px] text-[var(--text-3)] font-mono mt-0.5">
                 Active Grounding Context: <span className="text-[#7C5DFA] font-semibold">{activeProduct?.product_title || selectedProductId}</span>
               </p>
             </div>
           </div>
 
-          <span className="text-[10px] font-mono text-[#806C79] bg-[#F9F8FC] px-2.5 py-1 rounded-lg border border-[#ECE8F2]">
+          <span className="text-[10px] font-mono text-[var(--text-3)] bg-[#F9F8FC] px-2.5 py-1 rounded-lg border border-[#ECE8F2]">
             Evidence Engine v1.7
           </span>
         </div>
@@ -193,12 +194,18 @@ export const AssistantPage: React.FC = () => {
                     : 'bg-[#F9F8FC] border border-[#ECE8F2] text-[#16131F] rounded-tl-none shadow-xs'
                 }`}
               >
-                <div className="whitespace-pre-line font-normal">{m.text}</div>
+                <div className="whitespace-pre-line font-normal">
+                  {m.sender === 'assistant' && m.id.startsWith('a-') ? (
+                    <TypewriterText text={m.text} speedMs={8} />
+                  ) : (
+                    m.text
+                  )}
+                </div>
 
                 {/* Evidence Citations */}
                 {m.evidence && m.evidence.length > 0 && (
                   <div className="mt-3 pt-3 border-t border-[#ECE8F2] space-y-1.5">
-                    <span className="text-[10px] font-bold text-[#806C79] uppercase tracking-wider block font-mono">
+                    <span className="text-[10px] font-bold text-[var(--text-3)] uppercase tracking-wider block font-mono">
                       Corroborating Evidence Citations:
                     </span>
                     <ul className="space-y-1">
@@ -215,7 +222,7 @@ export const AssistantPage: React.FC = () => {
                   </div>
                 )}
 
-                <div className={`mt-2 text-[10px] text-right font-mono ${m.sender === 'user' ? 'text-white/70' : 'text-[#806C79]'}`}>
+                <div className={`mt-2 text-[10px] text-right font-mono ${m.sender === 'user' ? 'text-white/70' : 'text-[var(--text-3)]'}`}>
                   {m.timestamp}
                 </div>
               </div>
@@ -233,7 +240,7 @@ export const AssistantPage: React.FC = () => {
                   <div className="w-2 h-2 rounded-full bg-[#7C5DFA] animate-bounce" style={{ animationDelay: '150ms' }} />
                   <div className="w-2 h-2 rounded-full bg-[#7C5DFA] animate-bounce" style={{ animationDelay: '300ms' }} />
                 </div>
-                <span className="text-[11px] text-[#806C79] font-mono ml-2">Grounded reasoning in progress...</span>
+                <span className="text-[11px] text-[var(--text-3)] font-mono ml-2">Grounded reasoning in progress...</span>
               </div>
             </div>
           )}
@@ -244,7 +251,7 @@ export const AssistantPage: React.FC = () => {
         {/* Suggested Quick Prompts */}
         <div className="px-6 py-2.5 border-t border-[#ECE8F2] bg-[#FDFCFE] overflow-x-auto">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-mono text-[#806C79] shrink-0 uppercase tracking-wider font-semibold">
+            <span className="text-[10px] font-mono text-[var(--text-3)] shrink-0 uppercase tracking-wider font-semibold">
               Suggested:
             </span>
             <div className="flex items-center gap-2 flex-nowrap">
@@ -273,7 +280,7 @@ export const AssistantPage: React.FC = () => {
               onKeyDown={handleKeyDown}
               disabled={isTyping}
               placeholder="Ask a question about this product's trust signals, reviews, or price corridor..."
-              className="flex-1 bg-[#F9F8FC] border border-[#ECE8F2] rounded-xl px-4 py-3 text-xs sm:text-sm text-[#16131F] placeholder:text-[#806C79] focus:outline-none focus:border-[#7C5DFA] focus:ring-1 focus:ring-[#7C5DFA] transition-all"
+              className="flex-1 bg-[#F9F8FC] border border-[#ECE8F2] rounded-xl px-4 py-3 text-xs sm:text-sm text-[#16131F] placeholder:text-[var(--text-3)] focus:outline-none focus:border-[#7C5DFA] focus:ring-1 focus:ring-[#7C5DFA] transition-all"
             />
             <Button
               variant="primary"

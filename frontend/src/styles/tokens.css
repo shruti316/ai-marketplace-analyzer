@@ -1,35 +1,56 @@
 :root {
-  /* Exact Plum & Mountain Heather Color Theme (Reference Palette) */
-  --color-canvas-bg: #F8EDF2;
+  /* Design Tokens */
+  --ink: #16131F;
+  --canvas: #F8EDF2;
+  --heather: #F0D9E4;
+  --accent: #6B2D5C;
+  --accent-hi: #8E3F7A;
+  --line: rgba(193, 160, 172, 0.35);
+  --text-2: #4A3F4B;
+  --text-3: #6F5B68;           /* text-3 replaces #806C79 for AA contrast */
+  --ok-bg: #E3F4EC;
+  --ok-ink: #0B5B3B;
+  --ok: #12A36B;
+  --warn-bg: #FCF1D9;
+  --warn-ink: #7A4B00;
+  --warn: #E09A12;
+  --bad-bg: #FDE4E4;
+  --bad-ink: #8C1D2B;
+  --bad: #D63B4B;             /* coral-red, distinct from brand rose */
+  --info-bg: #E8E6FB;
+  --info-ink: #3B3596;
+  --info: #6A63E0;
+  --ring: 0 0 0 3px rgba(107, 45, 92, 0.18);
+
+  /* Compatibility & Semantic Aliases */
+  --color-canvas-bg: var(--canvas);
   --color-canvas-subtle: #FAF3F6;
   --color-surface-white: #FFFFFF;
   --color-surface-tint: #FDFBFC;
-  --color-border-subtle: rgba(193, 160, 172, 0.35);
-  --color-border-focus: #16131F;
+  --color-border-subtle: var(--line);
+  --color-border-focus: var(--ink);
 
-  /* Reference Palette Tokens */
-  --color-plum-charcoal: #16131F; /* Back in Black / Primary Headings, Text, Dark CTAs */
-  --color-plum-dark: #4A3F4B;     /* Funkie Friday / Secondary Text, Descriptions */
-  --color-plum-muted: #806C79;    /* Moonscape / Captions, Placeholders, Subtle Meta */
-  --color-plum-blush: #F0D9E4;    /* Mountain Heather / Soft Tint Canvas, Highlights */
-  --color-plum-mauve: #C1A0AC;    /* Decanting / Borders, Dividers, Secondary Badges */
-  --color-plum-lavender: #F0D9E4; /* Mountain Heather Pill Tint */
-  --color-plum-accent: #16131F;   /* Primary Dark Button Accent */
-  --color-plum-accent-hover: #4A3F4B;
+  --color-plum-charcoal: var(--ink);
+  --color-plum-dark: var(--text-2);
+  --color-plum-muted: var(--text-3);
+  --color-plum-blush: var(--heather);
+  --color-plum-mauve: #C1A0AC;
+  --color-plum-lavender: var(--heather);
+  --color-plum-accent: var(--accent);
+  --color-plum-accent-hover: var(--accent-hi);
 
-  /* Semantic Anomaly & Risk Tiers (High-contrast legible fills) */
-  --color-risk-low: #065F46;
-  --color-risk-low-bg: #ECFDF5;
+  --color-risk-low: var(--ok-ink);
+  --color-risk-low-bg: var(--ok-bg);
   --color-risk-low-border: #A7F3D0;
-  --color-risk-moderate: #92400E;
-  --color-risk-moderate-bg: #FEF3C7;
+  --color-risk-moderate: var(--warn-ink);
+  --color-risk-moderate-bg: var(--warn-bg);
   --color-risk-moderate-border: #FDE68A;
-  --color-risk-elevated: #9F1239;
-  --color-risk-elevated-bg: #FFE4E6;
+  --color-risk-elevated: var(--bad-ink);
+  --color-risk-elevated-bg: var(--bad-bg);
   --color-risk-elevated-border: #FECDD3;
-  --color-risk-sparse: #4A3F4B;
-  --color-risk-sparse-bg: #F8EDF2;
-  --color-risk-sparse-border: rgba(193, 160, 172, 0.35);
+  --color-risk-sparse: var(--text-2);
+  --color-risk-sparse-bg: var(--canvas);
+  --color-risk-sparse-border: var(--line);
 
   /* Surfaces & Elevations */
   --radius-card: 24px;

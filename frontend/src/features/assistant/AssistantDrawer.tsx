@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { ProductTrustAssessment, UnifiedEvidenceItem } from '../../types/trust';
 import { Product } from '../../types/catalog';
+import { TypewriterText } from '../../components/ui/TypewriterText';
 import { investigateService, ProductIntelligenceReport } from '../../services/investigateService';
 
 export interface AssistantDrawerProps {
@@ -265,7 +266,7 @@ export const AssistantDrawer: React.FC<AssistantDrawerProps> = ({
                   Grounded
                 </span>
               </div>
-              <p className="text-[11px] text-[#806C79]">
+              <p className="text-[11px] text-[var(--text-3)]">
                 Contextual evidence reasoning for active investigation
               </p>
             </div>
@@ -273,7 +274,7 @@ export const AssistantDrawer: React.FC<AssistantDrawerProps> = ({
 
           <button
             onClick={onClose}
-            className="p-1.5 text-[#806C79] hover:text-[#16131F] rounded-lg hover:bg-[#F6F5FA] transition-colors"
+            className="p-1.5 text-[var(--text-3)] hover:text-[#16131F] rounded-lg hover:bg-[#F6F5FA] transition-colors"
             aria-label="Close assistant panel"
           >
             <X className="w-5 h-5" />
@@ -307,12 +308,16 @@ export const AssistantDrawer: React.FC<AssistantDrawerProps> = ({
                 }`}
               >
                 <div className="whitespace-pre-line font-normal space-y-1">
-                  {msg.text}
+                  {msg.sender === 'assistant' && msg.id.startsWith('assistant-') ? (
+                    <TypewriterText text={msg.text} speedMs={8} />
+                  ) : (
+                    msg.text
+                  )}
                 </div>
 
                 {msg.supportingEvidenceIds && msg.supportingEvidenceIds.length > 0 && (
                   <div className="mt-2.5 pt-2 border-t border-[#ECE8F2] space-y-1">
-                    <span className="text-[10px] font-semibold text-[#806C79] block font-mono">Corroborated Evidence:</span>
+                    <span className="text-[10px] font-semibold text-[var(--text-3)] block font-mono">Corroborated Evidence:</span>
                     <div className="flex flex-wrap gap-1">
                       {msg.supportingEvidenceIds.map((ev, i) => (
                         <span
@@ -329,11 +334,11 @@ export const AssistantDrawer: React.FC<AssistantDrawerProps> = ({
 
                 <div className="flex items-center justify-between text-[9px] mt-2 font-mono">
                   {msg.provider ? (
-                    <span className="text-[#806C79]">Engine: {msg.provider}</span>
+                    <span className="text-[var(--text-3)]">Engine: {msg.provider}</span>
                   ) : (
                     <span />
                   )}
-                  <span className={msg.sender === 'user' ? 'text-white/70' : 'text-[#806C79]'}>
+                  <span className={msg.sender === 'user' ? 'text-white/70' : 'text-[var(--text-3)]'}>
                     {msg.timestamp}
                   </span>
                 </div>
@@ -348,7 +353,7 @@ export const AssistantDrawer: React.FC<AssistantDrawerProps> = ({
           ))}
 
           {isTyping && (
-            <div className="flex gap-3 items-center text-xs text-[#806C79] italic pl-1">
+            <div className="flex gap-3 items-center text-xs text-[var(--text-3)] italic pl-1">
               <Bot className="w-4 h-4 text-[#7C5DFA] animate-pulse" />
               <span>Synthesizing multimodal evidence...</span>
             </div>
@@ -359,7 +364,7 @@ export const AssistantDrawer: React.FC<AssistantDrawerProps> = ({
 
         {/* Contextual Suggested Questions */}
         <div className="px-4 py-2 border-t border-[#ECE8F2] bg-[#FDFCFE] space-y-1.5">
-          <p className="text-[10px] uppercase font-semibold tracking-wider text-[#806C79] font-mono">
+          <p className="text-[10px] uppercase font-semibold tracking-wider text-[var(--text-3)] font-mono">
             Suggested Investigation Inquiries:
           </p>
           <div className="flex flex-wrap gap-1.5">
@@ -389,7 +394,7 @@ export const AssistantDrawer: React.FC<AssistantDrawerProps> = ({
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               placeholder="Ask about this product's anomaly evidence or risk..."
-              className="flex-1 bg-[#F9F8FC] text-xs text-[#16131F] placeholder:text-[#806C79] rounded-xl px-4 py-2.5 border border-[#ECE8F2] focus:border-[#7C5DFA] outline-none transition-all"
+              className="flex-1 bg-[#F9F8FC] text-xs text-[#16131F] placeholder:text-[var(--text-3)] rounded-xl px-4 py-2.5 border border-[#ECE8F2] focus:border-[#7C5DFA] outline-none transition-all"
             />
             <button
               type="submit"

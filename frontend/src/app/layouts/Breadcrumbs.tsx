@@ -21,12 +21,12 @@ export const Breadcrumbs: React.FC = () => {
   const pathnames = location.pathname.split('/').filter((x) => x);
 
   return (
-    <nav aria-label="Breadcrumb" className="flex items-center space-x-1.5 text-xs text-[#806C79]">
+    <nav aria-label="Breadcrumb" className="flex items-center space-x-1.5 text-xs text-[var(--text-3)]">
       <Link
         to="/"
         className="flex items-center gap-1 hover:text-[#7C5DFA] transition-colors focus-visible:outline-none focus-visible:underline"
       >
-        <Home className="w-3.5 h-3.5 text-[#806C79]" />
+        <Home className="w-3.5 h-3.5 text-[var(--text-3)]" />
         <span className="sr-only">Home</span>
       </Link>
 

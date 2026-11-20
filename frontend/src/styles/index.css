@@ -11,27 +11,77 @@
   }
 
   body {
-    background-color: #F8EDF2;
-    color: #16131F;
+    background: radial-gradient(900px 500px at 8% -5%, rgba(142, 63, 122, 0.14), transparent 60%),
+                radial-gradient(700px 420px at 100% 0%, rgba(106, 99, 224, 0.10), transparent 60%),
+                var(--canvas);
+    background-attachment: fixed;
+    color: var(--ink);
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
     overflow-x: hidden;
   }
 
   /* Accessible high-contrast focus rings */
   :focus-visible {
-    outline: 2px solid #16131F;
-    outline-offset: 2px;
+    outline: none;
+    box-shadow: var(--ring);
+  }
+
+  /* Universal tabular numbers on figures and mono elements */
+  .tabular-nums, [data-tabular], .font-mono {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Micro-interaction defaults for buttons */
+  button, [role="button"] {
+    transition: transform 200ms cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  button:active:not(:disabled), [role="button"]:active:not(:disabled) {
+    transform: scale(0.98);
   }
 }
 
 @layer components {
   /* Card hover lift micro-animation */
   .card-hover-lift {
-    transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+    transition: transform 200ms cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
   }
   .card-hover-lift:hover {
     transform: translateY(-2px);
     box-shadow: 0 10px 30px -5px rgba(22, 19, 31, 0.08);
+  }
+
+  /* Hero gradient hairline glow border */
+  .glow-card {
+    position: relative;
+    background: #FFFFFF;
+  }
+  .glow-card::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1.5px;
+    background: linear-gradient(135deg, rgba(142, 63, 122, 0.45), rgba(106, 99, 224, 0.35), rgba(240, 217, 228, 0.5));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  /* Glassmorphism specifically for floating header & sticky bars */
+  .glass-header {
+    background: rgba(255, 255, 255, 0.70);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.60);
+    box-shadow: 0 4px 20px rgba(22, 19, 31, 0.04);
+  }
+
+  /* Shimmer skeleton animation */
+  .animate-shimmer {
+    background: linear-gradient(90deg, rgba(240, 217, 228, 0.35) 0%, rgba(255, 255, 255, 0.85) 50%, rgba(240, 217, 228, 0.35) 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
   }
   /* Restrained modern soft light glassmorphism */
   .glass-card {
@@ -95,3 +145,85 @@
 .animate-pulseSubtle {
   animation: pulseSubtle 4s ease-in-out infinite;
 }
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Accessibility: respect user prefers-reduced-motion setting */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* =========================================================================
+   Print Optimization: Presentation-Ready Trust Receipt & Forensic Export
+   ========================================================================= */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 12mm 15mm;
+  }
+
+  body {
+    background: #FFFFFF !important;
+    color: #16131F !important;
+    font-size: 11pt !important;
+    line-height: 1.4 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide app chrome, floating bars, drawers, and buttons */
+  header,
+  aside,
+  nav,
+  button,
+  .no-print,
+  [data-no-print] {
+    display: none !important;
+  }
+
+  /* Expand content to full page */
+  main,
+  .max-w-6xl {
+    max-width: 100% !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Optimize cards for clean printable ink */
+  .glow-card,
+  .glass-card,
+  .rounded-\[24px\],
+  .rounded-2xl {
+    box-shadow: none !important;
+    border: 1px solid #D1D5DB !important;
+    background: #FFFFFF !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    margin-bottom: 12pt !important;
+  }
+
+  /* Ensure print header appears cleanly */
+  .print-only {
+    display: block !important;
+  }
+}
+
+.print-only {
+  display: none;
+}
+

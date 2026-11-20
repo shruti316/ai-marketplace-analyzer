@@ -52,14 +52,14 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose }) =
             </div>
             <div className="flex flex-col">
               <span className="font-heading font-bold text-[#16131F] text-sm">TrustSphere</span>
-              <span className="text-[10px] text-[#806C79] tracking-wider uppercase font-semibold">
+              <span className="text-[10px] text-[var(--text-3)] tracking-wider uppercase font-semibold">
                 Shopping Intelligence
               </span>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-[#806C79] hover:text-[#16131F] rounded-lg focus-visible:outline-none"
+            className="p-2 text-[var(--text-3)] hover:text-[#16131F] rounded-lg focus-visible:outline-none"
             aria-label="Close menu"
           >
             <X className="w-5 h-5" />
@@ -102,7 +102,7 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose }) =
                 <span className="text-xs font-semibold text-[#16131F] truncate">
                   {user?.fullName || (isAuthenticated ? 'Consumer' : 'Guest')}
                 </span>
-                <span className="text-[10px] text-[#806C79] uppercase tracking-wider font-mono">
+                <span className="text-[10px] text-[var(--text-3)] uppercase tracking-wider font-mono">
                   {user?.role || 'Visitor'}
                 </span>
               </div>
@@ -111,7 +111,7 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose }) =
             {isAuthenticated && (
               <button
                 onClick={() => logout()}
-                className="text-[#806C79] hover:text-rose-600 p-2 rounded-lg transition-colors"
+                className="text-[var(--text-3)] hover:text-rose-600 p-2 rounded-lg transition-colors"
                 title="Log out"
                 aria-label="Log out"
               >

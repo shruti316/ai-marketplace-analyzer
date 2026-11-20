@@ -13,7 +13,7 @@ export const SettingsPage: React.FC = () => {
         <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#16131F] font-heading">
           Platform Settings
         </h1>
-        <p className="text-xs text-[#806C79] mt-1">
+        <p className="text-xs text-[var(--text-3)] mt-1">
           Analyst profile, security controls, and backend connection configurations
         </p>
       </div>
@@ -25,26 +25,26 @@ export const SettingsPage: React.FC = () => {
             <UserCheck className="w-5 h-5 text-[#7C5DFA]" />
             <div>
               <h3 className="text-sm font-semibold text-[#16131F] font-heading">Analyst Profile</h3>
-              <p className="text-xs text-[#806C79]">Currently active session and identity details</p>
+              <p className="text-xs text-[var(--text-3)]">Currently active session and identity details</p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             <div>
-              <label className="text-[#806C79] font-medium">Full Name</label>
+              <label className="text-[var(--text-3)] font-medium">Full Name</label>
               <p className="font-semibold text-[#16131F] mt-0.5">{user?.fullName || 'Active Analyst'}</p>
             </div>
             <div>
-              <label className="text-[#806C79] font-medium">Email Address</label>
+              <label className="text-[var(--text-3)] font-medium">Email Address</label>
               <p className="font-semibold text-[#16131F] mt-0.5">{user?.email || 'analyst@trustsphere.internal'}</p>
             </div>
             <div>
-              <label className="text-[#806C79] font-medium">Role Assignment</label>
+              <label className="text-[var(--text-3)] font-medium">Role Assignment</label>
               <p className="font-semibold text-[#7C5DFA] mt-0.5">{user?.role || 'ANALYST'}</p>
             </div>
             <div>
-              <label className="text-[#806C79] font-medium">Account Identifier</label>
-              <p className="font-mono text-[11px] text-[#806C79] mt-0.5 truncate">{user?.id || 'Local-Session'}</p>
+              <label className="text-[var(--text-3)] font-medium">Account Identifier</label>
+              <p className="font-mono text-[11px] text-[var(--text-3)] mt-0.5 truncate">{user?.id || 'Local-Session'}</p>
             </div>
           </div>
 
@@ -61,7 +61,7 @@ export const SettingsPage: React.FC = () => {
             <ShieldCheck className="w-5 h-5 text-emerald-600" />
             <div>
               <h3 className="text-sm font-semibold text-[#16131F] font-heading">Security & Token Policies</h3>
-              <p className="text-xs text-[#806C79]">JWT lifecycle and credential isolation</p>
+              <p className="text-xs text-[var(--text-3)]">JWT lifecycle and credential isolation</p>
             </div>
           </div>
 
@@ -87,7 +87,7 @@ export const SettingsPage: React.FC = () => {
             <Bell className="w-5 h-5 text-[#7C5DFA]" />
             <div>
               <h3 className="text-sm font-semibold text-[#16131F] font-heading">Notification Preferences</h3>
-              <p className="text-xs text-[#806C79]">Configure real-time alerts for elevated anomalies</p>
+              <p className="text-xs text-[var(--text-3)]">Configure real-time alerts for elevated anomalies</p>
             </div>
           </div>
 
