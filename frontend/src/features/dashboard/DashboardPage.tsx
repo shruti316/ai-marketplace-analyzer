@@ -96,9 +96,6 @@ export const DashboardPage: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // Quick Command Strip state
-  const [quickUrl, setQuickUrl] = useState<string>('');
-
   // Fetch real investigations from database
   const { data: investigationsData } = useQuery({
     queryKey: ['dashboard-investigations', user?.id],
@@ -333,13 +330,6 @@ export const DashboardPage: React.FC = () => {
     return filteredInvestigations.slice(0, 4);
   }, [filteredInvestigations, isExpandedAll]);
 
-  // Navigate to /scanner with URL prefilled
-  const handleQuickScan = () => {
-    const trimmed = quickUrl.trim();
-    if (!trimmed) return;
-    navigate(`/scanner?url=${encodeURIComponent(trimmed)}`);
-  };
-
   // Helper for marketplace badges using neutral plum palette
   const getMarketplaceChip = (mp: string) => {
     const lower = (mp || '').toLowerCase();
@@ -379,42 +369,6 @@ export const DashboardPage: React.FC = () => {
           <Sparkles className="w-4 h-4 text-[var(--heather)]" />
           <span>+ New Investigation</span>
         </button>
-      </div>
-
-      {/* =========================================================================
-          COMMAND STRIP: Hero URL Scan Input with .glow-card & Clean Action
-         ========================================================================= */}
-      <div className="glow-card rounded-[24px] p-4 sm:p-5 shadow-[0_8px_30px_rgba(22,19,31,0.06)] border border-[var(--line)]">
-        <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
-          <div className="relative flex-1 flex items-center">
-            <ScanSearch className="w-5 h-5 text-[var(--accent)] absolute left-3.5 pointer-events-none" />
-            <input
-              type="url"
-              value={quickUrl}
-              onChange={(e) => setQuickUrl(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && quickUrl.trim()) {
-                  handleQuickScan();
-                }
-              }}
-              placeholder="Paste Amazon, Flipkart, or Myntra product URL to audit authenticity..."
-              className="w-full pl-11 pr-20 py-3 rounded-xl bg-[var(--canvas)]/50 border border-[var(--line)] focus:border-[var(--accent)] focus:bg-white outline-none text-xs sm:text-sm text-[var(--ink)] placeholder:text-[var(--text-3)] font-medium transition-all"
-            />
-            <div className="absolute right-3 hidden sm:flex items-center gap-1 text-[10px] font-mono font-bold text-[var(--text-3)] bg-white px-2 py-0.5 rounded border border-[var(--line)] select-none">
-              <span className="text-xs">⌘</span>K
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={handleQuickScan}
-            disabled={!quickUrl.trim()}
-            className="px-6 py-3 rounded-xl bg-[var(--ink)] hover:bg-[var(--accent)] text-white text-xs sm:text-sm font-bold shadow-sm transition-all hover:translate-y-[-1px] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shrink-0 cursor-pointer"
-          >
-            <Sparkles className="w-4 h-4 text-[var(--heather)]" />
-            <span>Scan Product</span>
-          </button>
-        </div>
       </div>
 
       {/* =========================================================================

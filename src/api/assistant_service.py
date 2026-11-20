@@ -327,6 +327,8 @@ class EvidenceGroundedAssistantService:
                 evidence_items = self.engine.get_product_evidence(pid)
                 raw_report = self.engine.generate_report(pid, format_type="json")
                 report = raw_report if isinstance(raw_report, dict) else json.loads(raw_report)
+            elif not any(isinstance(m, dict) and ("CONTEXT:" in m.get("content", "") or "PRODUCT CONTEXT" in m.get("content", "")) for m in history):
+                raise KeyError(f"Product ID '{pid}' not found in catalog.")
 
         # Check for configured LLM Provider
         openai_key = os.environ.get("OPENAI_API_KEY", "").strip()
