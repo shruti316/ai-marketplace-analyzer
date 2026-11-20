@@ -205,19 +205,19 @@ export const MarketplaceUrlTab: React.FC<MarketplaceUrlTabProps> = () => {
 
       const brand = isCatalog
         ? res.product?.brand_id?.replace(/^BRAND_\d+_/, '')?.replace(/_/g, ' ') || 'Recognized Brand'
-        : (res as any).suggested_brand || 'Tokyo';
+        : (res as any).suggested_brand || '';
 
       const category = isCatalog
         ? res.product?.category || 'Standard Category'
-        : (res as any).suggested_category || "Women's Jackets / Outerwear";
+        : (res as any).suggested_category || '';
 
       const price = isCatalog
         ? String(res.product?.observed_price_inr || '')
-        : String((res as any).suggested_price || '828');
+        : ((res as any).suggested_price ? String((res as any).suggested_price) : '');
 
       const mrp = isCatalog
         ? String(res.product?.mrp_inr || '')
-        : String((res as any).suggested_mrp || '2999');
+        : ((res as any).suggested_mrp ? String((res as any).suggested_mrp) : '');
 
       const platform = res.recognized_platform || detectedPlatform?.name || 'Marketplace';
       const identifier = res.extracted_identifier || detectedPlatform?.detectedId || '';

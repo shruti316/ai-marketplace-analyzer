@@ -3,6 +3,7 @@ import { queryOne } from '../../config/database';
 import { trustClient } from '../trust/trust.client';
 import { AppError } from '../../middleware/errorHandler';
 import { urlRetrieverService } from './url_retriever';
+import { getCategoryFallbackImage } from './marketplace_adapters/adapter_interface';
 import {
   InvestigateUrlInput,
   InvestigateImageInput,
@@ -71,14 +72,36 @@ export class InvestigateService {
     let platformName: string = 'Retail Webstore';
     let extractedIdentifier: string | null = null;
 
-    if (hostname === 'amazon.in' || hostname.endsWith('.amazon.in')) {
+    // Strict Domain Validation (BUG 2)
+    const isAmazon = hostname === 'amazon.in' || hostname === 'www.amazon.in' || /^([a-z0-9-]+\.)*amazon\.in$/.test(hostname);
+    const isFlipkart = hostname === 'flipkart.com' || hostname === 'www.flipkart.com' || /^([a-z0-9-]+\.)*flipkart\.com$/.test(hostname);
+    const isMyntra = hostname === 'myntra.com' || hostname === 'www.myntra.com' || /^([a-z0-9-]+\.)*myntra\.com$/.test(hostname);
+
+    const isLookAlike =
+      (hostname.includes('amazon') || hostname.includes('flipkart') || hostname.includes('myntra') || hostname.includes('amaz0n')) &&
+      !isAmazon && !isFlipkart && !isMyntra;
+
+    if (isLookAlike) {
+      return {
+        catalogue_match: false,
+        is_live_scraped: false,
+        is_unverified_domain: true,
+        is_lookalike_domain: true,
+        recognized_platform: null,
+        extracted_identifier: null,
+        domain_status: 'SUSPECTED_IMPERSONATION',
+        message: `Look-alike domain detected: The website host '${hostname}' mimics an official retail marketplace but is hosted on an unverified domain. We can't confirm this is an official marketplace.`,
+      };
+    }
+
+    if (isAmazon) {
       platformId = 'PLATFORM_AMAZON_IN';
       platformName = 'Amazon India';
       const asinMatch = parsedUrl.pathname.match(/\/(?:dp|gp\/product)\/([A-Z0-9]{10})/i);
       if (asinMatch) {
         extractedIdentifier = asinMatch[1].toUpperCase();
       }
-    } else if (hostname === 'flipkart.com' || hostname.endsWith('.flipkart.com')) {
+    } else if (isFlipkart) {
       platformId = 'PLATFORM_FLIPKART';
       platformName = 'Flipkart';
       const pidParam = parsedUrl.searchParams.get('pid');
@@ -90,50 +113,13 @@ export class InvestigateService {
           extractedIdentifier = pathMatch[1];
         }
       }
-    } else if (hostname === 'myntra.com' || hostname.endsWith('.myntra.com')) {
+    } else if (isMyntra) {
       platformId = 'PLATFORM_MYNTRA';
       platformName = 'Myntra';
       const styleMatch = parsedUrl.pathname.match(/\/([0-9]{5,10})(?:\/buy)?/);
       if (styleMatch) {
         extractedIdentifier = styleMatch[1];
       }
-    } else if (hostname === 'nykaa.com' || hostname.endsWith('.nykaa.com') || hostname.includes('nykaafashion')) {
-      platformId = 'PLATFORM_NYKAA';
-      platformName = 'Nykaa';
-      const prodParam = parsedUrl.searchParams.get('productId') || parsedUrl.searchParams.get('skuId');
-      if (prodParam) {
-        extractedIdentifier = prodParam.trim();
-      } else {
-        const pMatch = parsedUrl.pathname.match(/\/p\/([0-9a-zA-Z_-]+)/i);
-        if (pMatch) extractedIdentifier = pMatch[1];
-      }
-    } else if (hostname === 'nike.com' || hostname === 'nike.in' || hostname.endsWith('.nike.com') || hostname.endsWith('.nike.in')) {
-      platformId = 'PLATFORM_NIKE';
-      platformName = 'Nike Official';
-    } else if (hostname === 'adidas.co.in' || hostname === 'adidas.com' || hostname.endsWith('.adidas.co.in')) {
-      platformId = 'PLATFORM_ADIDAS';
-      platformName = 'Adidas Official';
-    } else if (hostname === 'plumgoodness.com' || hostname.endsWith('.plumgoodness.com')) {
-      platformId = 'PLATFORM_PLUM';
-      platformName = 'Plum Goodness';
-    } else if (hostname === 'tatacliq.com' || hostname.endsWith('.tatacliq.com')) {
-      platformId = 'PLATFORM_TATACLIQ';
-      platformName = 'Tata CLiQ';
-    } else if (hostname === 'ajio.com' || hostname.endsWith('.ajio.com')) {
-      platformId = 'PLATFORM_AJIO';
-      platformName = 'AJIO';
-    } else if (
-      hostname === 'purplle.com' || hostname.endsWith('.purplle.com') ||
-      hostname === 'sugarcosmetics.com' || hostname.endsWith('.sugarcosmetics.com') ||
-      hostname === 'mamaearth.in' || hostname.endsWith('.mamaearth.in') ||
-      hostname === 'boat-lifestyle.com' || hostname.endsWith('.boat-lifestyle.com') ||
-      hostname === 'gonoise.com' || hostname === 'noise.com' || hostname.endsWith('.gonoise.com') ||
-      hostname === 'samsung.com' || hostname.endsWith('.samsung.com') ||
-      hostname === 'zara.com' || hostname.endsWith('.zara.com') ||
-      hostname === 'hm.com' || hostname.endsWith('.hm.com')
-    ) {
-      platformId = 'PLATFORM_BRAND_STORE';
-      platformName = hostname.replace(/^www\./, '');
     } else {
       platformId = null;
     }
@@ -142,9 +128,12 @@ export class InvestigateService {
       return {
         catalogue_match: false,
         is_live_scraped: false,
+        is_unverified_domain: true,
+        is_lookalike_domain: false,
         recognized_platform: null,
         extracted_identifier: null,
-        message: 'Unsupported retail domain. Currently supported: Amazon India, Flipkart, Myntra, Nykaa, Nike, Adidas, Plum, Tata CLiQ, AJIO, and verified brand flagships.',
+        domain_status: 'UNSUPPORTED_WEBSITE',
+        message: `Unsupported or unverified website. We can't confirm this is an official marketplace (${hostname}). Supported platforms: Amazon India (amazon.in), Flipkart (flipkart.com), and Myntra (myntra.com).`,
       };
     }
 
@@ -242,7 +231,7 @@ export class InvestigateService {
         marketplace: platformName,
         extraction_provenance: 'MARKETPLACE_SLUG_DERIVED' as const,
         sku_or_asin: extractedIdentifier,
-        main_image_url: undefined,
+        main_image_url: getCategoryFallbackImage(meta.category, meta.title),
       };
     }
 
@@ -296,7 +285,7 @@ export class InvestigateService {
       .trim()
       .replace(/\b\w/g, (c) => c.toUpperCase());
 
-    const lower = cleanSlug.toLowerCase();
+    const lower = (cleanSlug + ' ' + title).toLowerCase();
 
     let brand = 'Generic';
     if (lower.includes('souled-store') || lower.includes('souled store')) brand = 'The Souled Store';
@@ -313,8 +302,11 @@ export class InvestigateService {
     else if (lower.includes('puma')) brand = 'Puma';
     else if (lower.includes('boat')) brand = 'boAt';
     else if (lower.includes('sony')) brand = 'Sony';
-    else if (lower.includes('apple')) brand = 'Apple';
-    else if (lower.includes('samsung')) brand = 'Samsung';
+    else if (lower.includes('apple') || lower.includes('iphone')) brand = 'Apple';
+    else if (lower.includes('samsung') || lower.includes('galaxy')) brand = 'Samsung';
+    else if (lower.includes('oneplus')) brand = 'OnePlus';
+    else if (lower.includes('google') || lower.includes('pixel')) brand = 'Google';
+    else if (lower.includes('kotty')) brand = 'KOTTY';
     else if (title.split(' ').length > 0 && title.split(' ')[0].length > 2) brand = title.split(' ')[0];
 
     let category = 'General E-Commerce';
@@ -331,6 +323,8 @@ export class InvestigateService {
       category = 'Footwear / Shoes';
     } else if (lower.match(/earphone|headphone|airdope|earbud|audio|tws|neckband/)) {
       category = 'Electronics / Audio';
+    } else if (lower.match(/\b(phone|mobile|smartphone|iphone|galaxy|pixel|oneplus|redmi|realme|poco)\b/)) {
+      category = 'Electronics / Mobile Phones';
     } else if (lower.match(/tshirt|t-shirt|shirt|hoodie|pant|trouser|apparel|dress|kurta/)) {
       category = 'Apparel / Clothing';
     } else if (lower.match(/watch|smartwatch|band/)) {

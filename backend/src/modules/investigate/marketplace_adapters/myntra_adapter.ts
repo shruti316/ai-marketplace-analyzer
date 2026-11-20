@@ -1,5 +1,5 @@
 import { URL } from 'node:url';
-import { MarketplaceAdapter, ExtractedProductData } from './adapter_interface';
+import { MarketplaceAdapter, ExtractedProductData, getCategoryFallbackImage } from './adapter_interface';
 
 export class MyntraAdapter implements MarketplaceAdapter {
   platformId = 'PLATFORM_MYNTRA';
@@ -67,9 +67,14 @@ export class MyntraAdapter implements MarketplaceAdapter {
       category = 'Footwear / Shoes';
       price = 2499;
       mrp = 4999;
+    } else if (lower.match(/jacket|coat|parka|bomber|blazer|windcheater/)) {
+      category = "Women's Jackets / Outerwear";
+      price = 1499;
+      mrp = 2999;
     }
 
     const discount = mrp > 0 ? Math.round(((mrp - price) / mrp) * 100) : 0;
+    const resolvedImage = getCategoryFallbackImage(category, title);
 
     return {
       title,
@@ -85,10 +90,8 @@ export class MyntraAdapter implements MarketplaceAdapter {
       seller_name: 'Omnitech Retail / Myntra Direct Partner',
       seller_rating: 4.4,
       fulfillment_type: 'Myntra Verified Logistics',
-      main_image_url: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80',
-      gallery_images: [
-        'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80'
-      ],
+      main_image_url: resolvedImage,
+      gallery_images: [resolvedImage],
       specs: {
         'Material': 'Cotton / Synthetic Blend',
         'Wash Care': 'Hand Wash Separately',

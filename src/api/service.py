@@ -173,6 +173,7 @@ class TrustIntelligenceDispatcher:
                 diagnosis = assistant_engine.analyze_product_query(
                     product_title=title,
                     brand=brand,
+                    category=category,
                     marketplace=marketplace,
                     listing_price=price,
                     claimed_mrp=mrp,
@@ -196,8 +197,17 @@ class TrustIntelligenceDispatcher:
                 c_defects = report_gen.visualizer.generate_defect_distribution_chart(diagnosis.identified_gaps)
 
                 resp_data = asdict(diagnosis)
-                resp_data["available_modalities_count"] = 3
+                available_mods = 1  # Pricing corridor
+                if diagnosis.review_summary:
+                    available_mods += 1
+                if diagnosis.visual_summary and diagnosis.visual_summary.get("evaluation_state") == "COMPLETED":
+                    available_mods += 1
+
+                resp_data["available_modalities_count"] = available_mods
+                resp_data["confidence_score"] = round(0.55 + (available_mods * 0.13), 2)
                 resp_data["overall_risk_tier"] = diagnosis.risk_tier
+                resp_data["overall_trust_score"] = float(diagnosis.overall_trust_score)
+                resp_data["trust_score"] = float(diagnosis.overall_trust_score)
                 resp_data["flags"] = [g.title for g in diagnosis.identified_gaps if g.severity == "CRITICAL_BLOCKER"]
                 resp_data["zero_penalty_invariant_applied"] = False
                 resp_data["charts"] = {

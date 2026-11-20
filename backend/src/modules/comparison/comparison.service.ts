@@ -48,6 +48,26 @@ export class ComparisonService {
   ): Promise<ComparisonWithItems> {
     const productIds = input.canonical_product_ids;
 
+    // Validate Category Compatibility (BUG 6)
+    const normalizeCategoryFamily = (cat?: string, title?: string): string => {
+      const text = `${cat || ''} ${title || ''}`.toLowerCase();
+      if (text.match(/\b(phone|mobile|smartphone|iphone|galaxy|pixel|oneplus|redmi|realme|poco)\b/)) return 'Mobile Phones';
+      if (text.match(/\b(jacket|jackets|puffer|coat|outerwear|bomber)\b/)) return 'Jackets & Outerwear';
+      if (text.match(/\b(shoe|shoes|sneaker|sneakers|footwear|runner|boot)\b/)) return 'Footwear';
+      if (text.match(/\b(earphone|headphone|airdope|earbud|audio|tws|speaker)\b/)) return 'Audio';
+      if (text.match(/\b(facewash|cleanser|serum|sunscreen|cream|moisturizer|skincare)\b/)) return 'Skincare';
+      if (text.match(/\b(dress|kurta|saree|tshirt|shirt|hoodie|clothing|apparel)\b/)) return 'Apparel';
+      return 'General';
+    };
+
+    if (input.custom_products && input.custom_products.length > 1) {
+      const families = input.custom_products.map(c => normalizeCategoryFamily(c.category, c.product_title));
+      const distinct = Array.from(new Set(families.filter(f => f !== 'General')));
+      if (distinct.length > 1) {
+        throw new ValidationError(`Products belong to different categories (${distinct.join(' vs ')}) and cannot be meaningfully compared. Please select products within the same category family.`);
+      }
+    }
+
     // 1. Verify existence of all requested canonical products
     const placeholders = productIds.map(() => '?').join(', ');
     const products = await query<ProductInfo[]>(
@@ -235,15 +255,19 @@ export class ComparisonService {
       return 0;
     });
 
-    const recommendedProduct = ranked[0];
+    // Filter candidates safe to recommend (exclude ELEVATED_MULTIMODAL_ANOMALY / severity >= 4) (BUG 6)
+    const safeCandidates = ranked.filter(r => r.severity < 4);
+    const recommendedProduct = safeCandidates.length > 0 ? safeCandidates[0] : null;
     const comparisonId = crypto.randomUUID();
 
-    const rationale = `Recommended "${recommendedProduct.title}" due to optimal trust profile (risk tier: ${recommendedProduct.tier}) and verified multi-source catalog evidence density.`;
+    const rationale = recommendedProduct
+      ? `Recommended "${recommendedProduct.title}" due to optimal trust profile (risk tier: ${recommendedProduct.tier}) and verified multi-source catalog evidence density.`
+      : 'Neither product is recommended for purchase. Both evaluated offerings exhibit elevated anomaly risk flags or unverified merchant indicators.';
 
     const items = productStats.map((prod, idx) => {
       const riskRank = ranked.findIndex(r => r.id === prod.id) + 1;
       const densityRank = [...productStats].sort((a, b) => b.density - a.density).findIndex(r => r.id === prod.id) + 1;
-      const isRecommended = prod.id === recommendedProduct.id;
+      const isRecommended = recommendedProduct !== null && prod.id === recommendedProduct.id;
 
       return {
         canonical_product_id: prod.id,
@@ -255,7 +279,9 @@ export class ComparisonService {
         snapshot_risk_tier: prod.tier,
         tradeoff_notes: isRecommended
           ? 'Lowest anomaly risk with corroborated marketplace signals.'
-          : `Higher comparative risk (${prod.tier}) or sparse modality density relative to recommended alternative.`
+          : (recommendedProduct === null
+            ? 'Purchase not recommended due to elevated anomaly risk.'
+            : `Higher comparative risk (${prod.tier}) or sparse modality density relative to recommended alternative.`)
       };
     });
 
@@ -263,7 +289,7 @@ export class ComparisonService {
       id: comparisonId,
       user_id: user.id,
       comparison_title: input.title || 'Product Trust Comparison',
-      recommended_product_id: recommendedProduct.id,
+      recommended_product_id: recommendedProduct ? recommendedProduct.id : null,
       recommendation_rationale: rationale,
       items
     });

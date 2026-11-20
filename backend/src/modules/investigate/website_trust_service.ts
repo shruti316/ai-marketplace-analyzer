@@ -38,7 +38,7 @@ export class WebsiteTrustService {
     }
 
     // Check for Major Verified Indian Marketplaces
-    if (host === 'amazon.in' || host.endsWith('.amazon.in')) {
+    if (host === 'amazon.in' || /^([a-z0-9-]+\.)+amazon\.in$/.test(host)) {
       supporting.push('Official domain of Amazon Seller Services Private Limited (CIN: U51109KA2012PTC063737)');
       supporting.push('Statutory Grievance Officer and nodal contact published under Consumer Protection (E-Commerce) Rules 2020');
       supporting.push('Standard 7–10 day doorstep return/replacement policy enforced');
@@ -61,7 +61,7 @@ export class WebsiteTrustService {
       };
     }
 
-    if (host === 'flipkart.com' || host.endsWith('.flipkart.com')) {
+    if (host === 'flipkart.com' || /^([a-z0-9-]+\.)+flipkart\.com$/.test(host)) {
       supporting.push('Official domain of Flipkart Internet Private Limited (CIN: U51109KA2012PTC066107)');
       supporting.push('Statutory Indian e-commerce compliance officer and customer grievance portal registered');
       supporting.push('Flipkart Assured buyer protection and replacement window active');
@@ -83,7 +83,7 @@ export class WebsiteTrustService {
       };
     }
 
-    if (host === 'myntra.com' || host.endsWith('.myntra.com')) {
+    if (host === 'myntra.com' || /^([a-z0-9-]+\.)+myntra\.com$/.test(host)) {
       supporting.push('Official domain of Myntra Designs Private Limited');
       supporting.push('Strict brand partnership onboarding and 14-day return framework');
 
@@ -333,7 +333,7 @@ export class WebsiteTrustService {
       domain: host,
       is_https: isHttps,
       trust_tier: 'UNVERIFIED_THIRD_PARTY',
-      trust_score: 55,
+      trust_score: 35,
       organization_identity: host,
       registered_entity: 'Independent Merchant',
       grievance_officer_available: false,
@@ -342,7 +342,7 @@ export class WebsiteTrustService {
       supporting_evidence: supporting,
       concerning_signals: concerning,
       unavailable_checks: unavailable,
-      explanation: 'Independent webstore with unverified merchant credentials. While not inherently fraudulent, purchases should proceed with caution and verification of return terms.',
+      explanation: "Unsupported or unverified website. We can't confirm this is an official marketplace. Standard consumer safeguards cannot be validated.",
     };
   }
 }

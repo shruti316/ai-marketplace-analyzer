@@ -1,5 +1,5 @@
 import { URL } from 'node:url';
-import { MarketplaceAdapter, ExtractedProductData } from './adapter_interface';
+import { MarketplaceAdapter, ExtractedProductData, getCategoryFallbackImage } from './adapter_interface';
 
 export class GenericEcomAdapter implements MarketplaceAdapter {
   platformId = 'PLATFORM_GENERIC_RETAIL';
@@ -89,6 +89,8 @@ export class GenericEcomAdapter implements MarketplaceAdapter {
 
     const discount = price !== null && mrp !== null && mrp > 0 ? Math.round(((mrp - price) / mrp) * 100) : null;
 
+    const resolvedImage = getCategoryFallbackImage(category, title);
+
     return {
       title: title || 'Product Listing',
       brand,
@@ -103,8 +105,8 @@ export class GenericEcomAdapter implements MarketplaceAdapter {
       seller_name: marketplace,
       seller_rating: 4.5,
       fulfillment_type: 'Direct Brand Fulfillment',
-      main_image_url: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80',
-      gallery_images: [],
+      main_image_url: resolvedImage,
+      gallery_images: [resolvedImage],
       specs: {},
       marketplace,
       raw_url: url.toString(),

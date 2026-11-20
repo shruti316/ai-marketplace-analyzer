@@ -1,5 +1,5 @@
 import { URL } from 'node:url';
-import { MarketplaceAdapter, ExtractedProductData } from './adapter_interface';
+import { MarketplaceAdapter, ExtractedProductData, getCategoryFallbackImage } from './adapter_interface';
 
 export class FlipkartAdapter implements MarketplaceAdapter {
   platformId = 'PLATFORM_FLIPKART';
@@ -56,13 +56,20 @@ export class FlipkartAdapter implements MarketplaceAdapter {
     if (lower.includes('nike')) brand = 'Nike';
     else if (lower.includes('adidas')) brand = 'Adidas';
     else if (lower.includes('puma')) brand = 'Puma';
+    else if (lower.includes('apple') || lower.includes('iphone')) brand = 'Apple';
+    else if (lower.includes('samsung') || lower.includes('galaxy')) brand = 'Samsung';
+    else if (lower.includes('oneplus')) brand = 'OnePlus';
+    else if (lower.includes('google') || lower.includes('pixel')) brand = 'Google';
+    else if (lower.includes('realme')) brand = 'Realme';
+    else if (lower.includes('poco')) brand = 'POCO';
+    else if (lower.includes('redmi') || lower.includes('xiaomi')) brand = 'Xiaomi';
     else if (lower.includes('plum')) brand = 'Plum';
     else if (lower.includes('minimalist')) brand = 'Minimalist';
     else if (lower.includes('cetaphil')) brand = 'Cetaphil';
     else if (lower.includes('mamaearth')) brand = 'Mamaearth';
     else if (lower.includes('boat')) brand = 'boAt';
-    else if (lower.includes('realme')) brand = 'Realme';
     else if (lower.includes('sony')) brand = 'Sony';
+    else if (lower.includes('kotty')) brand = 'KOTTY';
     else if (lower.includes('souled-store') || lower.includes('souled store')) brand = 'The Souled Store';
     else if (title.split(' ')[0]?.length > 2) brand = title.split(' ')[0];
 
@@ -74,7 +81,15 @@ export class FlipkartAdapter implements MarketplaceAdapter {
 
     const isWomen = lower.includes('women') || lower.includes('ladies') || lower.includes('girl');
 
-    if (lower.match(/facewash|face-wash|face wash|cleanser|moisturiser|moisturizer|serum|sunscreen|lotion|cream|skincare|skin-care/)) {
+    if (lower.match(/\b(phone|mobile|smartphone|galaxy|iphone|pixel|oneplus|redmi|realme|poco)\b/)) {
+      category = 'Smartphones & Mobile';
+      specs = {
+        'Display': '6.7" FHD+ Super AMOLED, 120Hz',
+        'Processor': 'Octa-Core High-Speed Processor',
+        'Camera': '50MP OIS Camera with Night Mode',
+        'Battery': '5000 mAh Turbo Charging',
+      };
+    } else if (lower.match(/facewash|face-wash|face wash|cleanser|moisturiser|moisturizer|serum|sunscreen|lotion|cream|skincare|skin-care/)) {
       category = 'Beauty & Personal Care';
       specs = {
         'Skin Type': 'All Skin Types',
@@ -122,6 +137,7 @@ export class FlipkartAdapter implements MarketplaceAdapter {
     }
 
     const discount = price !== null && mrp !== null && mrp > 0 ? Math.round(((mrp - price) / mrp) * 100) : null;
+    const resolvedImage = getCategoryFallbackImage(category, title);
 
     return {
       title,
@@ -137,10 +153,8 @@ export class FlipkartAdapter implements MarketplaceAdapter {
       seller_name: 'RetailNet / Flipkart Assured Partner',
       seller_rating: 4.1,
       fulfillment_type: 'F-Assured Fulfilled',
-      main_image_url: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80',
-      gallery_images: [
-        'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80'
-      ],
+      main_image_url: resolvedImage,
+      gallery_images: [resolvedImage],
       specs,
       marketplace: this.platformName,
       raw_url: url.toString(),

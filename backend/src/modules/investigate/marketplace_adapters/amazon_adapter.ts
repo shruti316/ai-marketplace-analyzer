@@ -1,5 +1,5 @@
 import { URL } from 'node:url';
-import { MarketplaceAdapter, ExtractedProductData } from './adapter_interface';
+import { MarketplaceAdapter, ExtractedProductData, getCategoryFallbackImage } from './adapter_interface';
 
 export class AmazonIndiaAdapter implements MarketplaceAdapter {
   platformId = 'PLATFORM_AMAZON_IN';
@@ -68,8 +68,10 @@ export class AmazonIndiaAdapter implements MarketplaceAdapter {
     else if (lower.includes('puma')) brand = 'Puma';
     else if (lower.includes('boat')) brand = 'boAt';
     else if (lower.includes('sony')) brand = 'Sony';
-    else if (lower.includes('apple')) brand = 'Apple';
-    else if (lower.includes('samsung')) brand = 'Samsung';
+    else if (lower.includes('apple') || lower.includes('iphone')) brand = 'Apple';
+    else if (lower.includes('samsung') || lower.includes('galaxy')) brand = 'Samsung';
+    else if (lower.includes('oneplus')) brand = 'OnePlus';
+    else if (lower.includes('google') || lower.includes('pixel')) brand = 'Google';
     else if (lower.includes('noise')) brand = 'Noise';
     else if (lower.includes('boult')) brand = 'Boult';
     else if (title.split(' ')[0]?.length > 2) brand = title.split(' ')[0];
@@ -80,7 +82,15 @@ export class AmazonIndiaAdapter implements MarketplaceAdapter {
     let mrp: number | null = null;
     let specs: Record<string, string> = {};
 
-    if (lower.match(/facewash|face-wash|face wash|cleanser|moisturiser|moisturizer|serum|sunscreen|lotion|cream|skincare|skin-care|shampoo|conditioner|cosmetic|beauty/)) {
+    if (lower.match(/\b(phone|mobile|smartphone|galaxy|iphone|pixel|oneplus|redmi|realme|poco)\b/)) {
+      category = 'Smartphones & Mobile';
+      specs = {
+        'Display': '6.8" Dynamic AMOLED 2X, 120Hz',
+        'Processor': 'Octa-Core Neural AI Engine',
+        'Camera': '200MP Quad Camera with AI Nightography',
+        'Battery': '5000 mAh Super Fast Charging',
+      };
+    } else if (lower.match(/facewash|face-wash|face wash|cleanser|moisturiser|moisturizer|serum|sunscreen|lotion|cream|skincare|skin-care|shampoo|conditioner|cosmetic|beauty/)) {
       category = 'Beauty & Personal Care';
       specs = {
         'Skin Type': 'All Skin Types / Sensitive',
@@ -131,6 +141,7 @@ export class AmazonIndiaAdapter implements MarketplaceAdapter {
     }
 
     const discount = price !== null && mrp !== null && mrp > 0 ? Math.round(((mrp - price) / mrp) * 100) : null;
+    const resolvedImage = getCategoryFallbackImage(category, title);
 
     return {
       title,
@@ -146,11 +157,8 @@ export class AmazonIndiaAdapter implements MarketplaceAdapter {
       seller_name: 'Appario Retail / Amazon Verified Merchant',
       seller_rating: 4.3,
       fulfillment_type: 'Fulfilled by Amazon (FBA)',
-      main_image_url: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80',
-      gallery_images: [
-        'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80',
-        'https://images.unsplash.com/photo-1608231387042-66d1773070a5?w=600&auto=format&fit=crop&q=80'
-      ],
+      main_image_url: resolvedImage,
+      gallery_images: [resolvedImage],
       specs,
       marketplace: this.platformName,
       raw_url: url.toString(),

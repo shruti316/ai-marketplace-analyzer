@@ -69,6 +69,39 @@ export const detectPlatform = (newUrl: string): string | null => {
   return null;
 };
 
+export function getFallbackImageByMetadata(category?: string | null, title?: string | null): string {
+  const combined = ((category || '') + ' ' + (title || '')).toLowerCase();
+
+  if (combined.match(/\b(apple|iphone)\b/)) {
+    return 'https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=600&auto=format&fit=crop&q=80';
+  }
+  if (combined.match(/\b(samsung|galaxy)\b/)) {
+    return 'https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=600&auto=format&fit=crop&q=80';
+  }
+  if (combined.match(/\b(phone|mobile|smartphone|oneplus|pixel|redmi|realme|poco)\b/)) {
+    return 'https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=600&auto=format&fit=crop&q=80';
+  }
+  if (combined.match(/earphone|headphone|airdope|earbud|audio|tws|neckband|soundbar|speaker|bose|sony/)) {
+    return 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&auto=format&fit=crop&q=80';
+  }
+  if (combined.match(/facewash|face-wash|cleanser|moisturi|serum|sunscreen|cream|lotion|soap|scrub|skin|hair|beauty|shampoo|nykaa|plum|minimalist|cetaphil/)) {
+    return 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=600&auto=format&fit=crop&q=80';
+  }
+  if (combined.match(/jacket|puffer|coat|outerwear|bomber|parka|blazer|windcheater/)) {
+    return 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600&auto=format&fit=crop&q=80';
+  }
+  if (combined.match(/shoe|sneaker|runner|footwear|boot|sandal|trainer/)) {
+    return 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80';
+  }
+  if (combined.match(/watch|smartwatch|band|wearable/)) {
+    return 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop&q=80';
+  }
+  if (combined.match(/tshirt|t-shirt|shirt|hoodie|pant|trouser|apparel|dress|kurta|saree/)) {
+    return 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=600&auto=format&fit=crop&q=80';
+  }
+  return 'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=600&auto=format&fit=crop&q=80';
+}
+
 // Preset catalog datasets for quick evaluation
 const PRESETS = {
   jackets: [
@@ -374,20 +407,29 @@ export const ComparisonsPage: React.FC = () => {
       const isBeauty = lower.match(/facewash|face-wash|cleanser|moistur|serum|sunscreen|cream|lotion|skin|hair|beauty|plum|nykaa|shampoo/);
       const isFootwear = lower.match(/shoe|sneaker|runner|footwear|boot|sandal|trainer/);
       const isAudio = lower.match(/earphone|headphone|airdope|earbud|audio|tws/);
+      const isPhone = lower.match(/\b(phone|mobile|smartphone|galaxy|iphone|pixel|oneplus|redmi|realme|poco)\b/);
 
-      const brand = lower.includes('plum') ? 'Plum'
+      const brand = lower.includes('samsung') || lower.includes('galaxy') ? 'Samsung'
+        : lower.includes('apple') || lower.includes('iphone') ? 'Apple'
+        : lower.includes('oneplus') ? 'OnePlus'
+        : lower.includes('google') || lower.includes('pixel') ? 'Google'
+        : lower.includes('sony') ? 'Sony'
+        : lower.includes('boat') ? 'boAt'
+        : lower.includes('plum') ? 'Plum'
         : lower.includes('minimalist') ? 'Minimalist'
         : lower.includes('cetaphil') ? 'Cetaphil'
         : lower.includes('mamaearth') ? 'Mamaearth'
         : lower.includes('nykaa') ? 'Nykaa'
         : lower.includes('nike') ? 'Nike'
         : lower.includes('adidas') ? 'Adidas'
+        : lower.includes('puma') ? 'Puma'
         : lower.includes('kotty') ? 'KOTTY'
         : lower.includes('tokyo') ? 'TOKYO TALKIES'
         : isCatalog ? (res.product?.brand_id?.replace(/^BRAND_\d+_/, '')?.replace(/_/g, ' ') || 'Brand')
-        : (res as any).suggested_brand || (rawTitle ? rawTitle.split(' ')[0] : 'Brand');
+        : ((res as any).suggested_brand && (res as any).suggested_brand.toUpperCase() !== 'GENERIC' ? (res as any).suggested_brand : (rawTitle ? rawTitle.split(' ')[0] : 'Brand'));
 
-      const category = isBeauty ? 'Skincare & Cleansers'
+      const category = isPhone ? 'Smartphones & Mobile Devices'
+        : isBeauty ? 'Skincare & Cleansers'
         : isFootwear ? 'Footwear / Shoes'
         : isAudio ? 'Electronics / Audio'
         : lower.includes('dress') ? 'Dresses & Fashion Apparel'
@@ -406,7 +448,10 @@ export const ComparisonsPage: React.FC = () => {
         ? res.product.canonical_product_id
         : `cand_${Date.now()}_${slotIdx}`;
 
-      const imgUrl = (res as any).main_image_url || (isCatalog ? (res.product as any)?.image_url : null);
+      let imgUrl = (res as any).main_image_url || (isCatalog ? (res.product as any)?.image_url : null);
+      if (!imgUrl || (imgUrl.includes('1542291026-7eec264c27ff') && !isFootwear)) {
+        imgUrl = getFallbackImageByMetadata(category, rawTitle);
+      }
 
       setCardSlots((prev) => {
         const next = [...prev];
@@ -421,7 +466,7 @@ export const ComparisonsPage: React.FC = () => {
           marketplace: platform,
           price,
           mrp,
-          imageUrl: imgUrl || next[slotIdx].imageUrl || null,
+          imageUrl: next[slotIdx].uploadedImageBase64 || imgUrl || next[slotIdx].imageUrl || null,
           seller: `${platform} Verified Merchant`,
           priceNotFound,
         };
@@ -438,8 +483,13 @@ export const ComparisonsPage: React.FC = () => {
         const isBeauty = lowerC.match(/facewash|face-wash|cleanser|moistur|serum|sunscreen|cream|lotion|skin|hair|beauty|plum|nykaa|shampoo/);
         const isFootwear = lowerC.match(/shoe|sneaker|runner|footwear|boot|sandal|trainer/);
         const isAudio = lowerC.match(/earphone|headphone|airdope|earbud|audio|tws/);
+        const isPhone = lowerC.match(/\b(phone|mobile|smartphone|iphone|galaxy|pixel|oneplus|redmi|realme|poco)\b/);
 
-        const brandFallback = lowerC.includes('plum') ? 'Plum'
+        const brandFallback = lowerC.includes('apple') || lowerC.includes('iphone') ? 'Apple'
+          : lowerC.includes('samsung') || lowerC.includes('galaxy') ? 'Samsung'
+          : lowerC.includes('oneplus') ? 'OnePlus'
+          : lowerC.includes('google') || lowerC.includes('pixel') ? 'Google'
+          : lowerC.includes('plum') ? 'Plum'
           : lowerC.includes('minimalist') ? 'Minimalist'
           : lowerC.includes('cetaphil') ? 'Cetaphil'
           : lowerC.includes('mamaearth') ? 'Mamaearth'
@@ -448,7 +498,8 @@ export const ComparisonsPage: React.FC = () => {
           : lowerC.includes('adidas') ? 'Adidas'
           : title.split(' ')[0] || 'Brand';
 
-        const categoryFallback = isBeauty ? 'Skincare & Cleansers'
+        const categoryFallback = isPhone ? 'Mobile Phones & Smartphones'
+          : isBeauty ? 'Skincare & Cleansers'
           : isFootwear ? 'Footwear / Shoes'
           : isAudio ? 'Electronics / Audio'
           : 'Apparel & Clothing';
@@ -471,6 +522,7 @@ export const ComparisonsPage: React.FC = () => {
             marketplace: platform,
             price: priceFallback,
             mrp: mrpFallback,
+            imageUrl: next[slotIdx].uploadedImageBase64 || next[slotIdx].imageUrl || getFallbackImageByMetadata(categoryFallback, title),
             seller: `${platform} Verified Merchant`,
             priceNotFound,
           };
@@ -578,6 +630,17 @@ export const ComparisonsPage: React.FC = () => {
     });
   };
 
+  const normalizeCategoryFamily = (cat?: string, title?: string): string => {
+    const text = `${cat || ''} ${title || ''}`.toLowerCase();
+    if (text.match(/\b(phone|mobile|smartphone|iphone|galaxy|pixel|oneplus|redmi|realme|poco)\b/)) return 'Mobile Phones';
+    if (text.match(/\b(jacket|jackets|puffer|coat|outerwear|bomber)\b/)) return 'Jackets & Outerwear';
+    if (text.match(/\b(shoe|shoes|sneaker|sneakers|footwear|runner|boot)\b/)) return 'Footwear';
+    if (text.match(/\b(earphone|headphone|airdope|earbud|audio|tws|speaker)\b/)) return 'Audio';
+    if (text.match(/\b(facewash|cleanser|serum|sunscreen|cream|moisturizer|skincare)\b/)) return 'Skincare';
+    if (text.match(/\b(dress|kurta|saree|tshirt|shirt|hoodie|clothing|apparel)\b/)) return 'Apparel';
+    return 'General';
+  };
+
   // Run Comparison
   const handleRunComparison = () => {
     const populatedSlots = cardSlots.filter(
@@ -590,6 +653,20 @@ export const ComparisonsPage: React.FC = () => {
 
     if (populatedSlots.length < 2) {
       setErrorMessage('Please add at least two products (Product A and Product B) to compare.');
+      return;
+    }
+
+    // Require listing price (BUG 6)
+    const missingPriceSlot = populatedSlots.find((s) => !s.price || Number(s.price) <= 0);
+    if (missingPriceSlot) {
+      setErrorMessage('Please enter a valid listing price for each product before running comparison.');
+      return;
+    }
+
+    // Category compatibility check (BUG 6)
+    const families = Array.from(new Set(populatedSlots.map((s) => normalizeCategoryFamily(s.category, s.productTitle))));
+    if (families.length > 1 && !families.includes('General')) {
+      setErrorMessage(`Products belong to different categories (${families.join(' vs ')}) and cannot be meaningfully compared.`);
       return;
     }
 
@@ -608,8 +685,8 @@ export const ComparisonsPage: React.FC = () => {
         brand: s.brandName || 'Brand Verified',
         category: s.category || 'Apparel & Clothing',
         marketplace: s.marketplace || (s.url.includes('amazon') ? 'Amazon India' : s.url.includes('myntra') ? 'Myntra' : 'Flipkart'),
-        observed_price_inr: s.price ?? 699,
-        mrp_inr: s.mrp ?? (s.price ? Math.round(s.price * 1.4) : 1499),
+        observed_price_inr: Number(s.price),
+        mrp_inr: s.mrp ? Number(s.mrp) : Math.round(Number(s.price) * 1.3),
         main_image_url: s.imageUrl || s.uploadedImageBase64 || '',
       });
     });
@@ -827,7 +904,21 @@ export const ComparisonsPage: React.FC = () => {
             const dbProduct = slotProductsData?.find((p) => p && p.canonical_product_id === slot.id);
 
             const displayTitle = slot.productTitle || dbProduct?.product_title || '';
-            const displayBrand = slot.brandName || dbProduct?.brand_name || '';
+            let displayBrand = slot.brandName || dbProduct?.brand_name || '';
+            if (!displayBrand || displayBrand.toUpperCase() === 'GENERIC') {
+              const lowerT = displayTitle.toLowerCase();
+              if (lowerT.includes('samsung') || lowerT.includes('galaxy')) displayBrand = 'Samsung';
+              else if (lowerT.includes('apple') || lowerT.includes('iphone')) displayBrand = 'Apple';
+              else if (lowerT.includes('oneplus')) displayBrand = 'OnePlus';
+              else if (lowerT.includes('google') || lowerT.includes('pixel')) displayBrand = 'Google';
+              else if (lowerT.includes('sony')) displayBrand = 'Sony';
+              else if (lowerT.includes('boat')) displayBrand = 'boAt';
+              else if (lowerT.includes('nike')) displayBrand = 'Nike';
+              else if (lowerT.includes('adidas')) displayBrand = 'Adidas';
+              else if (lowerT.includes('puma')) displayBrand = 'Puma';
+              else if (lowerT.includes('kotty')) displayBrand = 'KOTTY';
+              else if (displayTitle.split(' ')[0]?.length > 2) displayBrand = displayTitle.split(' ')[0];
+            }
             const displayMarketplace = slot.marketplace || (dbProduct as any)?.platform_name || (slot.id.startsWith('amazon') ? 'Amazon India' : slot.id.startsWith('myntra') ? 'Myntra' : 'Flipkart');
             const displayPrice = slot.price ?? (dbProduct?.average_price ? Number(dbProduct.average_price) : undefined);
             const displayMrp = slot.mrp ?? ((dbProduct as any)?.mrp_inr ? Number((dbProduct as any).mrp_inr) : undefined);
@@ -974,9 +1065,14 @@ export const ComparisonsPage: React.FC = () => {
                   {hasDetails ? (
                     <div className="p-3.5 rounded-xl bg-[#F8EDF2]/40 border border-[rgba(193,160,172,0.35)] space-y-3">
                       <div className="flex items-start gap-3">
-                        {(slot.imageUrl || slot.uploadedImageBase64) && (
+                        {(slot.uploadedImageBase64 || slot.imageUrl || displayTitle) && (
                           <img
-                            src={slot.imageUrl || slot.uploadedImageBase64 || ''}
+                            src={
+                              slot.uploadedImageBase64 ||
+                              (slot.imageUrl && (!slot.imageUrl.includes('1542291026-7eec264c27ff') || slot.category?.toLowerCase().includes('shoe') || slot.category?.toLowerCase().includes('footwear'))
+                                ? slot.imageUrl
+                                : getFallbackImageByMetadata(slot.category, displayTitle))
+                            }
                             alt={displayTitle || 'Product Preview'}
                             className="w-14 h-14 rounded-lg object-contain bg-white p-1 border border-[rgba(193,160,172,0.35)] shrink-0"
                           />
@@ -1166,8 +1262,10 @@ export const ComparisonsPage: React.FC = () => {
         const delta = Math.abs(priceA - priceB);
 
         // Winner determination
-        const isAWinner = activeComparison.recommended_product_id === itemA.canonical_product_id ||
-          (priceA <= priceB && (itemA.predicted_risk_tier?.includes('LOW') || !itemB.predicted_risk_tier?.includes('LOW')));
+        const hasExplicitWinner = activeComparison.recommended_product_id !== null && activeComparison.recommended_product_id !== undefined;
+        const isAWinner = hasExplicitWinner
+          ? activeComparison.recommended_product_id === itemA.canonical_product_id
+          : (priceA <= priceB && (itemA.predicted_risk_tier?.includes('LOW') || !itemB.predicted_risk_tier?.includes('LOW')));
         const winner = isAWinner ? itemA : itemB;
         const loser = isAWinner ? itemB : itemA;
         const winnerLetter = isAWinner ? 'Product A' : 'Product B';
@@ -1177,16 +1275,21 @@ export const ComparisonsPage: React.FC = () => {
 
         // Radar chart dimensions
         const radarProducts: ProductComparisonDimension[] = activeComparison.items.map((item, idx) => {
-          const isItemWinner = (idx === 0 && isAWinner) || (idx === 1 && !isAWinner);
+          const isItemWinner = hasExplicitWinner
+            ? activeComparison.recommended_product_id === item.canonical_product_id
+            : ((idx === 0 && isAWinner) || (idx === 1 && !isAWinner));
+          const score = item.continuous_anomaly_score !== undefined && item.continuous_anomaly_score !== null
+            ? Math.round(Math.max(25, Math.min(95, (1 - Number(item.continuous_anomaly_score)) * 100)))
+            : (isItemWinner ? 84 : 72);
           return {
             id: item.canonical_product_id || `prod_${idx}`,
             label: item.product_title || `Product ${OPTION_LETTERS[idx]}`,
             shortName: `Product ${OPTION_LETTERS[idx]}`,
-            trustScore: isItemWinner ? 88 : 74,
-            priceScore: isItemWinner ? 92 : 78,
-            merchantScore: isItemWinner ? 90 : 85,
-            reviewScore: isItemWinner ? 86 : 72,
-            specScore: isItemWinner ? 84 : 89,
+            trustScore: score,
+            priceScore: isItemWinner ? 90 : 76,
+            merchantScore: isItemWinner ? 88 : 82,
+            reviewScore: isItemWinner ? 86 : 74,
+            specScore: isItemWinner ? 85 : 82,
             isWinner: isItemWinner,
           };
         });
@@ -1194,25 +1297,43 @@ export const ComparisonsPage: React.FC = () => {
         return (
           <div className="space-y-8 animate-fadeIn pt-4">
             {/* A. OVERALL WINNER BANNER */}
-            <div className="p-6 sm:p-8 rounded-[24px] bg-gradient-to-br from-emerald-50 via-white to-[var(--heather)]/30 border-2 border-emerald-300 shadow-[0_8px_24px_rgba(18,163,107,0.08)] space-y-3">
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-[var(--ok-ink)] bg-[var(--ok-bg)] px-3 py-1 rounded-full border border-[var(--ok)]/30 shadow-xs flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-500 fill-amber-500" /> Overall Winner · Top Pick
-                </span>
+            {activeComparison.recommended_product_id === null ? (
+              <div className="p-6 sm:p-8 rounded-[24px] bg-gradient-to-br from-rose-50 via-white to-[var(--heather)]/30 border-2 border-rose-300 shadow-[0_8px_24px_rgba(214,59,75,0.08)] space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-[var(--bad-ink)] bg-[var(--bad-bg)] px-3 py-1 rounded-full border border-[var(--bad)]/30 shadow-xs flex items-center gap-1.5">
+                    <AlertTriangle className="w-3.5 h-3.5 text-rose-600" /> Caution · Neither Product Recommended
+                  </span>
+                </div>
+
+                <h2 className="text-xl sm:text-2xl font-black text-[#16131F] font-heading">
+                  Neither product is recommended for purchase.
+                </h2>
+
+                <p className="text-xs sm:text-sm text-[#4A3F4B] leading-relaxed max-w-3xl">
+                  {activeComparison.recommendation_rationale || 'Both products exhibit elevated multimodal anomaly risks or unverified merchant indicators. Not recommended to buy.'}
+                </p>
               </div>
+            ) : (
+              <div className="p-6 sm:p-8 rounded-[24px] bg-gradient-to-br from-emerald-50 via-white to-[var(--heather)]/30 border-2 border-emerald-300 shadow-[0_8px_24px_rgba(18,163,107,0.08)] space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-[var(--ok-ink)] bg-[var(--ok-bg)] px-3 py-1 rounded-full border border-[var(--ok)]/30 shadow-xs flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-500 fill-amber-500" /> Overall Winner · Top Pick
+                  </span>
+                </div>
 
-              <h2 className="text-xl sm:text-2xl font-black text-[#16131F] font-heading">
-                {winnerLetter} is the better choice.
-              </h2>
+                <h2 className="text-xl sm:text-2xl font-black text-[#16131F] font-heading">
+                  {winnerLetter} is the better choice.
+                </h2>
 
-              <p className="text-sm font-semibold text-[#16131F]">
-                {winner.product_title || winnerLetter} — {formatCurrencyINR(winnerPrice)}
-              </p>
+                <p className="text-sm font-semibold text-[#16131F]">
+                  {winner.product_title || winnerLetter} — {formatCurrencyINR(winnerPrice)}
+                </p>
 
-              <p className="text-xs sm:text-sm text-[#4A3F4B] leading-relaxed max-w-3xl">
-                {winnerLetter} provides the optimal balance of verified product authenticity, lower anomaly risk, and superior customer review satisfaction{delta > 0 ? `, saving ${formatCurrencyINR(delta)} compared to ${loser.product_title || loserLetter}` : ''}.
-              </p>
-            </div>
+                <p className="text-xs sm:text-sm text-[#4A3F4B] leading-relaxed max-w-3xl">
+                  {activeComparison.recommendation_rationale || `${winnerLetter} provides the optimal balance of verified product authenticity, lower anomaly risk, and superior customer review satisfaction${delta > 0 ? `, saving ${formatCurrencyINR(delta)} compared to ${loser.product_title || loserLetter}` : ''}.`}
+                </p>
+              </div>
+            )}
 
             {/* B. SIDE-BY-SIDE PRODUCT SNAPSHOT */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

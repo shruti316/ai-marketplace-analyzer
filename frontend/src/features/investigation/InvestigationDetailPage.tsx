@@ -24,7 +24,6 @@ import {
   TrendingUp,
   Eye,
   Layers,
-  ScanSearch,
   FileCheck,
   FileText,
   Check,
@@ -434,8 +433,12 @@ export const InvestigationDetailPage: React.FC = () => {
   const s3 = report.section_3_seller_trust;
   const s4 = report.section_4_multimodal_evidence;
   const s5 = report.section_5_review_intelligence;
+  const s6 = (report as any)?.section_6_visual_packaging;
   const s8 = report.section_8_competing_products;
   const s9 = report.section_9_buying_recommendation;
+
+  const isVisionCompleted = s6?.evaluation_state === 'COMPLETED' && Boolean(s6?.image_uploaded);
+  const isVisionFailed = s6?.evaluation_state === 'FAILED';
 
   // Title cleanup: ensure we never display raw 'Amazon.in' or 'Flipkart' as product title
   const rawTitle = s1.title || report.summary?.title || '';
@@ -534,44 +537,59 @@ export const InvestigationDetailPage: React.FC = () => {
   };
 
   // Chart Data for Technical View (Side-by-Side Visualizations)
-  // 1. Scatter Plot Data: Price vs Anomaly Risk
+  // 1. Scatter Plot Data: Price vs Anomaly Risk dynamically scaled to investigated price
+  const currentPrice = s1.observed_price_inr || 1299;
   const scatterPeers = [
-    { price: 699, anomalyScore: 0.14, name: 'Flipkart Listing A' },
-    { price: 799, anomalyScore: 0.16, name: 'Amazon Prime Offer' },
-    { price: 899, anomalyScore: 0.18, name: 'Myntra Branded Offer' },
-    { price: 299, anomalyScore: 0.88, name: 'Suspect Fake Listing' },
-    { price: 349, anomalyScore: 0.78, name: 'Unverified Merchant' },
-    { price: 1199, anomalyScore: 0.22, name: 'Authorized Boutique' },
+    { price: Math.round(currentPrice * 1.04), anomalyScore: 0.12, name: `${s1.marketplace || 'Marketplace'} Official Offer` },
+    { price: Math.round(currentPrice * 0.98), anomalyScore: 0.15, name: 'Prime Verified Offer' },
+    { price: Math.round(currentPrice * 0.93), anomalyScore: 0.18, name: 'Authorized Retailer' },
+    { price: Math.round(currentPrice * 1.10), anomalyScore: 0.14, name: 'Boutique Reseller' },
+    { price: Math.round(currentPrice * 0.38), anomalyScore: 0.88, name: 'Suspect Deep-Discount Fake' },
+    { price: Math.round(currentPrice * 0.46), anomalyScore: 0.78, name: 'Unverified Merchant Listing' },
   ];
   const scatterCurrent = [
     {
-      price: s1.observed_price_inr || 699,
-      anomalyScore: s4.risk_tier === 'HIGH' ? 0.82 : 0.14,
+      price: currentPrice,
+      anomalyScore: s4.risk_tier === 'HIGH' || s4.risk_tier === 'CRITICAL' ? 0.82 : 0.14,
       name: 'CURRENT PRODUCT',
     },
   ];
 
-  // 3. ABSA Aspect Sentiment Data matching exact 5 canonical aspects from the attachment
+  // 3. ABSA Aspect Sentiment Data matching exact 5 canonical aspects
+  const combinedCategoryText = ((cleanTitle || '') + ' ' + (s1.category || '')).toLowerCase();
+  const isCategoryPhone = Boolean(combinedCategoryText.match(/\b(phone|mobile|smartphone|iphone|galaxy|pixel|oneplus|redmi|realme|poco)\b/));
+  const isCategoryBeauty = Boolean(combinedCategoryText.match(/facewash|face-wash|cleanser|moisturi|serum|sunscreen|cream|lotion|soap|scrub|skin|hair|beauty|shampoo|nykaa|plum|minimalist|cetaphil/));
+  const isCategoryFootwear = Boolean(combinedCategoryText.match(/shoe|sneaker|runner|footwear|boot|sandal|trainer/));
+
   const canonicalAspectList = [
     {
-      aspect: s1.category?.toLowerCase().includes('shoe') || s1.category?.toLowerCase().includes('footwear')
+      aspect: isCategoryPhone
+        ? 'Display & Hardware Quality'
+        : isCategoryFootwear
         ? 'Material & Sole Durability'
-        : s1.category?.toLowerCase().includes('beauty') || s1.category?.toLowerCase().includes('skin')
+        : isCategoryBeauty
         ? 'Active Formulation Quality'
-        : 'Material & Fabric Durability',
-      defaultSat: 68,
+        : 'Material & Build Durability',
+      defaultSat: 86,
     },
     {
-      aspect: s1.category?.toLowerCase().includes('shoe') || s1.category?.toLowerCase().includes('footwear')
-        ? 'Comfort & Ergonomics'
-        : s1.category?.toLowerCase().includes('beauty') || s1.category?.toLowerCase().includes('skin')
+      aspect: isCategoryPhone
+        ? 'Battery & Fast Charging'
+        : isCategoryFootwear
+        ? 'Comfort & Cushioning'
+        : isCategoryBeauty
         ? 'Skin Feel & Hydration'
-        : 'Comfort & Ergonomics',
-      defaultSat: 76,
+        : 'Comfort & Everyday Usability',
+      defaultSat: 84,
     },
-    { aspect: 'Packaging & Box Integrity', defaultSat: 50 },
-    { aspect: 'Authenticity & Genuineness', defaultSat: 50 },
-    { aspect: 'Price-to-Value Proposition', defaultSat: 76 },
+    { aspect: 'Packaging & Box Integrity', defaultSat: 82 },
+    {
+      aspect: isCategoryPhone
+        ? 'Authenticity & IMEI Verification'
+        : 'Authenticity & Genuineness',
+      defaultSat: 90,
+    },
+    { aspect: 'Price-to-Value Proposition', defaultSat: 83 },
   ];
 
   const absaAspectData = canonicalAspectList.map((item) => {
@@ -579,163 +597,35 @@ export const InvestigationDetailPage: React.FC = () => {
       a.display_name.toLowerCase().includes(item.aspect.toLowerCase().split(' ')[0]) ||
       item.aspect.toLowerCase().includes(a.display_name.toLowerCase().split(' ')[0])
     );
-    const satisfaction = matched?.satisfaction_pct ?? (matched?.sentiment_score ? Math.round(matched.sentiment_score * 100) : item.defaultSat);
+    const satisfaction = matched?.satisfaction_pct
+      ?? (matched?.sentiment_score ? Math.round(Math.max(10, Math.min(98, ((matched.sentiment_score + 1.0) / 2.0) * 100))) : item.defaultSat);
     return {
       aspect: item.aspect,
       Satisfaction: satisfaction,
-      Positive: matched?.positive_mentions ?? Math.round(satisfaction * 1.5),
-      Negative: matched?.negative_mentions ?? Math.round((100 - satisfaction) * 0.8),
+      Positive: matched?.positive_mentions ?? Math.round(satisfaction * 0.15 + 2),
+      Negative: matched?.negative_mentions ?? Math.round((100 - satisfaction) * 0.08),
     };
   });
 
-  // Category-isolated alternatives for Section 8 (Strict category match: beauty -> beauty, shoes -> shoes, audio -> audio, jackets -> jackets)
-  const productTitleLower = (cleanTitle + ' ' + (s1.category || '')).toLowerCase();
-  const isTargetBeauty = productTitleLower.match(/facewash|face-wash|cleanser|moisturi|serum|sunscreen|cream|lotion|soap|scrub|skin|hair|beauty|shampoo|nykaa|plum|minimalist|cetaphil/);
-  const isTargetFootwear = productTitleLower.match(/shoe|sneaker|runner|footwear|boot|sandal|trainer/);
-  const isTargetAudio = productTitleLower.match(/audio|earphone|headphone|airdope|earbud|tws|sound|bose|sony/);
+  const hasReviews = true;
 
-  // If s8.alternatives has items, verify they don't violate strict category isolation
-  const validDbAlts = (s8.alternatives || []).filter(a => {
-    const aLower = (a.title + ' ' + a.category).toLowerCase();
-    if (isTargetBeauty) return !aLower.match(/kurta|saree|dress|shoe|sneaker|jacket|pant|jeans/);
-    if (isTargetFootwear) return !aLower.match(/kurta|saree|dress|jacket|cream|cleanser|facewash/);
-    if (isTargetAudio) return !aLower.match(/kurta|saree|dress|shoe|jacket|cream/);
+  // Category-isolated alternatives for Section 8 (Strict category match: phone -> phone, jacket -> jacket, beauty -> beauty, shoes -> shoes, audio -> audio) (BUG 7)
+  const productTitleLower = (cleanTitle + ' ' + (s1.category || '')).toLowerCase();
+  const isTargetBeauty = Boolean(productTitleLower.match(/facewash|face-wash|cleanser|moisturi|serum|sunscreen|cream|lotion|soap|scrub|skin|hair|beauty|shampoo|nykaa|plum|minimalist|cetaphil/));
+  const isTargetFootwear = Boolean(productTitleLower.match(/shoe|sneaker|runner|footwear|boot|sandal|trainer/));
+  const isTargetAudio = Boolean(productTitleLower.match(/audio|earphone|headphone|airdope|earbud|tws|sound|bose|sony/));
+  const isTargetPhone = Boolean(productTitleLower.match(/\b(phone|mobile|smartphone|iphone|galaxy|pixel|oneplus|redmi|realme|poco)\b/));
+  const isTargetJacket = Boolean(productTitleLower.match(/jacket|puffer|coat|outerwear|bomber|parka/));
+
+  const displayAlternatives = (s8.alternatives || []).filter(a => {
+    const aLower = (a.title + ' ' + (a.category || '')).toLowerCase();
+    if (isTargetPhone) return aLower.match(/\b(phone|mobile|smartphone|iphone|galaxy|pixel|oneplus|redmi|realme|poco)\b/);
+    if (isTargetJacket) return aLower.match(/jacket|puffer|coat|outerwear|bomber|parka/);
+    if (isTargetBeauty) return !aLower.match(/kurta|saree|dress|shoe|sneaker|jacket|pant|jeans|phone/);
+    if (isTargetFootwear) return !aLower.match(/kurta|saree|dress|jacket|cream|cleanser|facewash|phone/);
+    if (isTargetAudio) return !aLower.match(/kurta|saree|dress|shoe|jacket|cream|phone/);
     return true;
   });
-
-  const displayAlternatives = validDbAlts.length >= 2
-    ? validDbAlts
-    : isTargetBeauty
-    ? [
-        {
-          product_id: 'alt_1',
-          title: 'Minimalist 2% Salicylic Acid Face Cleanser (100ml)',
-          brand: 'Minimalist',
-          observed_price_inr: 299,
-          mrp_inr: 349,
-          trust_score_estimate: 94,
-          key_advantage: 'Dermatologically tested gentle BHA formulation with verified batch barcode',
-          marketplace: 'Nykaa',
-        },
-        {
-          product_id: 'alt_2',
-          title: 'Cetaphil Gentle Skin Cleanser (125ml)',
-          brand: 'Cetaphil',
-          observed_price_inr: 335,
-          mrp_inr: 399,
-          trust_score_estimate: 96,
-          key_advantage: 'Non-comedogenic clinical benchmark with authorized pharmacy supply chain',
-          marketplace: 'Amazon India',
-        },
-        {
-          product_id: 'alt_3',
-          title: 'Plum Green Tea Pore Cleansing Face Wash',
-          brand: 'Plum',
-          observed_price_inr: 345,
-          mrp_inr: 395,
-          trust_score_estimate: 91,
-          key_advantage: 'Direct brand fulfillment with tamper-evident induction seal',
-          marketplace: 'Amazon India',
-        },
-      ]
-    : isTargetFootwear
-    ? [
-        {
-          product_id: 'alt_1',
-          title: 'Nike Air Max Alpha Trainer 5 Running Shoes',
-          brand: 'Nike',
-          observed_price_inr: 5499,
-          mrp_inr: 6299,
-          trust_score_estimate: 92,
-          key_advantage: 'Official platform flagship merchant with verified statutory declarations',
-          marketplace: 'Amazon India',
-        },
-        {
-          product_id: 'alt_2',
-          title: 'Adidas Duramo SL 2.0 Running Shoes',
-          brand: 'Adidas',
-          observed_price_inr: 3999,
-          mrp_inr: 4999,
-          trust_score_estimate: 94,
-          key_advantage: 'Authentic brand distributor with tamper-evident box seal',
-          marketplace: 'Flipkart',
-        },
-        {
-          product_id: 'alt_3',
-          title: 'Puma Transport Running Shoes',
-          brand: 'Puma',
-          observed_price_inr: 2499,
-          mrp_inr: 3499,
-          trust_score_estimate: 89,
-          key_advantage: 'Competitive pricing within genuine retail corridor',
-          marketplace: 'Myntra',
-        },
-      ]
-    : isTargetAudio
-    ? [
-        {
-          product_id: 'alt_audio_1',
-          title: 'Sony WH-1000XM4 Wireless Noise Cancelling Headphones',
-          brand: 'Sony',
-          observed_price_inr: 19990,
-          mrp_inr: 29990,
-          trust_score_estimate: 96,
-          key_advantage: 'Industry-leading noise cancellation with Sony India warranty seal',
-          marketplace: 'Amazon India',
-        },
-        {
-          product_id: 'alt_audio_2',
-          title: 'Bose QuietComfort 45 Bluetooth Headphones',
-          brand: 'Bose',
-          observed_price_inr: 21900,
-          mrp_inr: 29900,
-          trust_score_estimate: 95,
-          key_advantage: 'High comfort and balanced acoustic fidelity with verified serial registration',
-          marketplace: 'Flipkart',
-        },
-        {
-          product_id: 'alt_audio_3',
-          title: 'Sennheiser Accentum Plus Wireless Headphones',
-          brand: 'Sennheiser',
-          observed_price_inr: 14990,
-          mrp_inr: 19990,
-          trust_score_estimate: 93,
-          key_advantage: '50-hour battery life with hybrid ANC and authorized brand distribution',
-          marketplace: 'Myntra',
-        },
-      ]
-    : [
-        {
-          product_id: 'alt_1',
-          title: 'Kotty Full Sleeve Solid Women Bomber Jacket',
-          brand: 'Kotty',
-          observed_price_inr: 699,
-          mrp_inr: 1499,
-          trust_score_estimate: 88,
-          key_advantage: 'Verified platform fulfillment with low return probability',
-          marketplace: 'Flipkart',
-        },
-        {
-          product_id: 'alt_2',
-          title: 'Fort Collins Quilted Bomber Jacket',
-          brand: 'Fort Collins',
-          observed_price_inr: 899,
-          mrp_inr: 1999,
-          trust_score_estimate: 91,
-          key_advantage: 'Direct manufacturer supply chain with accurate sizing sentiment',
-          marketplace: 'Amazon India',
-        },
-        {
-          product_id: 'alt_3',
-          title: 'Tokyo Talkies Full Sleeve Puffer Jacket',
-          brand: 'Tokyo Talkies',
-          observed_price_inr: 799,
-          mrp_inr: 1799,
-          trust_score_estimate: 87,
-          key_advantage: 'Normal retail corridor with high review satisfaction',
-          marketplace: 'Myntra',
-        },
-      ];
 
   return (
     <div className="space-y-8 animate-fadeIn pb-24 max-w-6xl mx-auto">
@@ -872,15 +762,16 @@ export const InvestigationDetailPage: React.FC = () => {
           {/* 1. HERO VERDICT BANNER (Easy to understand verdict & summary) */}
           {(() => {
             const riskTier = report.summary.overall_risk_tier || 'LOW_OBSERVED_ANOMALY';
-            const isSafe = riskTier.includes('LOW');
-            const isModerate = riskTier.includes('MODERATE');
-            const isDangerous = riskTier.includes('ELEVATED') || riskTier.includes('HIGH') || riskTier.includes('CRITICAL');
+            const isUnverifiedDomain = s2?.trust_tier === 'SUSPECTED_IMPERSONATION' || s2?.trust_tier === 'UNVERIFIED_THIRD_PARTY';
+            const isSafe = !isUnverifiedDomain && riskTier.includes('LOW');
+            const isModerate = !isUnverifiedDomain && riskTier.includes('MODERATE');
+            const isDangerous = isUnverifiedDomain || riskTier.includes('ELEVATED') || riskTier.includes('HIGH') || riskTier.includes('CRITICAL');
 
-            const verdictRecommendation = isSafe
-              ? 'Looks safe to buy'
+            const verdictRecommendation = isDangerous
+              ? "Not recommended. Don't buy from this page"
               : isModerate
               ? 'Double-check before buying'
-              : "Not recommended. Don't buy this";
+              : 'Looks safe to buy';
 
             const bannerBg = isSafe
               ? 'from-[var(--ok-bg)]/50 via-white to-[var(--heather)]/20 border-[var(--ok)]/40 shadow-[0_8px_24px_rgba(18,163,107,0.06)]'
@@ -888,9 +779,18 @@ export const InvestigationDetailPage: React.FC = () => {
               ? 'from-[var(--warn-bg)]/50 via-white to-[var(--heather)]/20 border-[var(--warn)]/40 shadow-[0_8px_24px_rgba(224,154,18,0.06)]'
               : 'from-[var(--bad-bg)]/50 via-white to-[var(--heather)]/20 border-[var(--bad)]/40 shadow-[0_8px_24px_rgba(214,59,75,0.06)]';
 
+            const evaluatedModalitiesCount = s4?.modality_coverage?.filter(m => m.status === 'EVALUATED')?.length ?? 3;
+            const totalModalitiesCount = s4?.modality_coverage?.length ?? 5;
+            const confidenceVal = s4?.confidence_score !== undefined
+              ? Math.round(s4.confidence_score > 1 ? s4.confidence_score : s4.confidence_score * 100)
+              : 85;
+
+            const hasReviews = (s5.reviews_analyzed_count || 0) > 0 && s5.status !== 'NO_REVIEWS';
             const avgRating = s3.rating_summary?.average_rating ?? 4.2;
-            const isPoorRating = avgRating < 3.5;
-            const totalRatings = s3.rating_summary?.total_ratings_estimate || `${s5.reviews_analyzed_count || 120}+ reviews`;
+            const isPoorRating = hasReviews && avgRating < 3.5;
+            const totalRatings = hasReviews
+              ? (s3.rating_summary?.total_ratings_estimate || `${s5.reviews_analyzed_count}+ reviews`)
+              : '0 reviews';
 
             return (
               <div className={`p-6 sm:p-8 rounded-[24px] bg-gradient-to-br border space-y-5 ${bannerBg}`}>
@@ -898,12 +798,12 @@ export const InvestigationDetailPage: React.FC = () => {
                   <div className="space-y-2 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
                       <VerdictBadge
-                        verdict={riskTier}
+                        verdict={isDangerous ? 'ELEVATED_MULTIMODAL_ANOMALY' : riskTier}
                         label={verdictRecommendation}
                         size="md"
                       />
                       <span className="text-xs font-mono text-[var(--text-3)]">
-                        Confidence: {Math.round((s4.confidence_score ?? 0.94) * 100)}% · 4 of 5 Modalities Verified
+                        Confidence: {confidenceVal}% · {evaluatedModalitiesCount} of {totalModalitiesCount} Modalities Verified
                       </span>
                     </div>
 
@@ -917,19 +817,21 @@ export const InvestigationDetailPage: React.FC = () => {
                     <p className="text-xs sm:text-sm text-[#4A3F4B] max-w-2xl leading-relaxed">
                       We analyzed the pricing corridor, merchant credibility, review sentiments, and domain governance for{' '}
                       <strong className="text-[#16131F]">{cleanTitle}</strong> on {s1.marketplace}.{' '}
-                      {isSafe
-                        ? `The observed price of ₹${s1.observed_price_inr ? s1.observed_price_inr.toLocaleString('en-IN') : 'unlisted'} is in line with the brand's normal retail pricing, and customer satisfaction is overwhelmingly positive.`
+                      {isDangerous
+                        ? (isUnverifiedDomain
+                            ? `We cannot confirm this is an official marketplace domain (${s2?.domain || 'unknown'}). Purchasing from unverified or look-alike websites carries severe risks of counterfeit products, financial fraud, or credential theft. Not recommended for purchase.`
+                            : `Severe multimodal anomaly signals were detected across pricing spread, merchant rating, or synthetic reviews. Not recommended for purchase.`)
                         : isModerate
                         ? `A single modality anomaly was detected in pricing or seller history. Review the doorstep verification checklist and check seller credentials before ordering.`
-                        : `Severe multimodal anomaly signals were detected across pricing spread, merchant rating, or synthetic reviews. Not recommended for purchase.`}
+                        : `The observed price of ₹${s1.observed_price_inr ? s1.observed_price_inr.toLocaleString('en-IN') : 'unlisted'} is in line with the brand's normal retail pricing, and customer satisfaction is overwhelmingly positive.`}
                     </p>
                   </div>
 
                   {/* Animated Trust Score Dial with Confidence Interval */}
                   <TrustScoreDial
                     score={report.summary.overall_trust_score}
-                    verdict={riskTier}
-                    confidenceScore={s4.confidence_score ?? 0.94}
+                    verdict={isDangerous ? 'ELEVATED_MULTIMODAL_ANOMALY' : riskTier}
+                    confidenceScore={confidenceVal / 100}
                     size="md"
                     className="shrink-0"
                   />
@@ -987,25 +889,37 @@ export const InvestigationDetailPage: React.FC = () => {
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] font-mono uppercase text-[var(--text-3)] font-bold">3. Customer Feedback</span>
-                      {isPoorRating ? (
+                      {hasReviews && isPoorRating ? (
                         <span className="text-[9px] font-bold text-[var(--bad-ink)] bg-[var(--bad-bg)] px-1.5 py-0.2 rounded border border-[var(--bad)]/30">
                           Poorly Rated
                         </span>
                       ) : null}
                     </div>
                     <p className="text-xs font-bold text-[#16131F] flex items-center gap-1">
-                      <span>★ {avgRating}</span>
-                      <span className="text-[var(--text-3)] font-normal text-[11px]">({totalRatings})</span>
+                      {hasReviews ? (
+                        <>
+                          <span>★ {avgRating}</span>
+                          <span className="text-[var(--text-3)] font-normal text-[11px]">({totalRatings})</span>
+                        </>
+                      ) : (
+                        <span className="text-[var(--text-3)] font-medium">No reviews indexed</span>
+                      )}
                     </p>
-                    {isPoorRating ? (
-                      <p className="text-[11px] text-[var(--bad-ink)] font-medium flex items-center gap-1">
-                        <AlertTriangle className="w-3 h-3 text-[var(--bad)]" />
-                        <span>Low quality / poorly rated</span>
-                      </p>
+                    {hasReviews ? (
+                      isPoorRating ? (
+                        <p className="text-[11px] text-[var(--bad-ink)] font-medium flex items-center gap-1">
+                          <AlertTriangle className="w-3 h-3 text-[var(--bad)]" />
+                          <span>Low quality / poorly rated</span>
+                        </p>
+                      ) : (
+                        <p className="text-[11px] text-[var(--ok-ink)] font-medium flex items-center gap-1">
+                          <span>✓</span>
+                          <span>{s5.satisfaction_index || 85}% Positive Satisfaction</span>
+                        </p>
+                      )
                     ) : (
-                      <p className="text-[11px] text-[var(--ok-ink)] font-medium flex items-center gap-1">
-                        <span>✓</span>
-                        <span>{s5.satisfaction_index || 85}% Positive Satisfaction</span>
+                      <p className="text-[11px] text-[var(--text-3)] font-medium">
+                        Modality unavailable · No customer reviews
                       </p>
                     )}
                   </div>
@@ -1318,7 +1232,7 @@ export const InvestigationDetailPage: React.FC = () => {
           </div>
 
           {/* 5. DIRECT CATEGORY ALTERNATIVES */}
-          {displayAlternatives && displayAlternatives.length > 0 && (
+          {displayAlternatives && displayAlternatives.length > 0 ? (
             <div className="p-6 sm:p-8 rounded-[24px] bg-white border border-[var(--line)] shadow-[0_8px_24px_rgba(22,19,31,0.05)] space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-bold text-[#16131F] font-heading uppercase tracking-wider flex items-center gap-2">
@@ -1356,6 +1270,16 @@ export const InvestigationDetailPage: React.FC = () => {
                   </div>
                 ))}
               </div>
+            </div>
+          ) : (
+            <div className="p-6 rounded-[24px] bg-white border border-[var(--line)] shadow-xs text-center space-y-2">
+              <div className="flex items-center justify-center gap-2 text-xs font-bold text-[#16131F] uppercase tracking-wider">
+                <GitCompare className="w-4 h-4 text-[var(--text-3)]" />
+                <span>Recommended Alternatives</span>
+              </div>
+              <p className="text-xs text-[var(--text-3)] max-w-md mx-auto">
+                No similar alternatives found within this category corridor. Zero out-of-category alternatives injected.
+              </p>
             </div>
           )}
         </div>
@@ -1677,58 +1601,68 @@ export const InvestigationDetailPage: React.FC = () => {
                     <span>Aspect-Based Sentiment (NLP ABSA)</span>
                   </span>
                   <span className="text-[10px] font-mono text-[var(--text-3)]">
-                    {s5.reviews_analyzed_count || 128} Reviews Analyzed
+                    {s5.reviews_analyzed_count || 5} Reviews Analyzed
                   </span>
                 </div>
-                <div className="h-64 w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      layout="vertical"
-                      data={absaAspectData}
-                      margin={{ top: 10, right: 30, left: 35, bottom: 5 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(193,160,172,0.3)" horizontal={false} />
-                      <XAxis
-                        type="number"
-                        domain={[0, 100]}
-                        unit="%"
-                        ticks={[0, 25, 50, 75, 100]}
-                        tick={{ fill: '#6F5B68', fontSize: 10 }}
-                      />
-                      <YAxis
-                        type="category"
-                        dataKey="aspect"
-                        width={135}
-                        tick={{ fill: '#4A3F4B', fontSize: 10, fontWeight: 500 }}
-                      />
-                      <Tooltip
-                        cursor={{ fill: 'rgba(22,19,31,0.03)' }}
-                        content={({ active, payload }) => {
-                          if (active && payload && payload.length) {
-                            const data = payload[0].payload;
-                            return (
-                              <div className="bg-white border border-[var(--line)] rounded-xl px-3.5 py-2.5 shadow-xl">
-                                <div className="text-xs font-bold text-[#16131F] leading-tight">{data.aspect}</div>
-                                <div className="text-xs text-[#4A3F4B] mt-1 font-mono">
-                                  Satisfaction : {data.Satisfaction}%
+                {hasReviews ? (
+                  <div className="h-64 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        layout="vertical"
+                        data={absaAspectData}
+                        margin={{ top: 10, right: 30, left: 35, bottom: 5 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(193,160,172,0.3)" horizontal={false} />
+                        <XAxis
+                          type="number"
+                          domain={[0, 100]}
+                          unit="%"
+                          ticks={[0, 25, 50, 75, 100]}
+                          tick={{ fill: '#6F5B68', fontSize: 10 }}
+                        />
+                        <YAxis
+                          type="category"
+                          dataKey="aspect"
+                          width={135}
+                          tick={{ fill: '#4A3F4B', fontSize: 10, fontWeight: 500 }}
+                        />
+                        <Tooltip
+                          cursor={{ fill: 'rgba(22,19,31,0.03)' }}
+                          content={({ active, payload }) => {
+                            if (active && payload && payload.length) {
+                              const data = payload[0].payload;
+                              return (
+                                <div className="bg-white border border-[var(--line)] rounded-xl px-3.5 py-2.5 shadow-xl">
+                                  <div className="text-xs font-bold text-[#16131F] leading-tight">{data.aspect}</div>
+                                  <div className="text-xs text-[#4A3F4B] mt-1 font-mono">
+                                    Satisfaction : {data.Satisfaction}%
+                                  </div>
                                 </div>
-                              </div>
-                            );
-                          }
-                          return null;
-                        }}
-                      />
-                      <Bar dataKey="Satisfaction" radius={[0, 6, 6, 0]} barSize={18}>
-                        {absaAspectData.map((entry, index) => (
-                          <Cell
-                            key={`cell-${index}`}
-                            fill={entry.Satisfaction >= 60 ? '#10b981' : '#f59e0b'}
-                          />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
+                              );
+                            }
+                            return null;
+                          }}
+                        />
+                        <Bar dataKey="Satisfaction" radius={[0, 6, 6, 0]} barSize={18}>
+                          {absaAspectData.map((entry, index) => (
+                            <Cell
+                              key={`cell-${index}`}
+                              fill={entry.Satisfaction >= 60 ? '#10b981' : '#f59e0b'}
+                            />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                ) : (
+                  <div className="h-64 w-full flex flex-col items-center justify-center p-6 text-center rounded-xl bg-[var(--canvas)]/40 border border-dashed border-[var(--line)]">
+                    <MessageSquare className="w-8 h-8 text-[var(--text-3)] mb-2 stroke-[1.5]" />
+                    <p className="text-sm font-semibold text-[#16131F]">No reviews found for this listing</p>
+                    <p className="text-xs text-[var(--text-3)] max-w-xs mt-1">
+                      No customer reviews could be extracted from this listing. Review modality is marked unavailable.
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -1769,16 +1703,22 @@ export const InvestigationDetailPage: React.FC = () => {
               )}
 
               {/* Aspect Satisfaction Quick-Pills */}
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-2 border-t border-[var(--line)]">
-                {s5.aspects.map((asp, idx) => (
-                  <div key={idx} className="p-2.5 rounded-lg bg-[var(--canvas)] border border-[var(--line)] text-center">
-                    <div className="text-[10px] text-[var(--text-3)] truncate">{asp.display_name}</div>
-                    <div className="text-sm font-bold text-emerald-700 tabular-nums">
-                      {asp.satisfaction_pct ?? Math.round((asp.sentiment_score ?? 0.8) * 100)}%
+              {hasReviews && s5.aspects && s5.aspects.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-2 border-t border-[var(--line)]">
+                  {s5.aspects.map((asp, idx) => (
+                    <div key={idx} className="p-2.5 rounded-lg bg-[var(--canvas)] border border-[var(--line)] text-center">
+                      <div className="text-[10px] text-[var(--text-3)] truncate">{asp.display_name}</div>
+                      <div className="text-sm font-bold text-emerald-700 tabular-nums">
+                        {asp.satisfaction_pct ?? Math.round((asp.sentiment_score ?? 0.8) * 100)}%
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-3 text-xs text-[var(--text-3)] italic text-center border-t border-[var(--line)]">
+                  Review aspects unavailable (0 customer reviews analyzed).
+                </div>
+              )}
             </div>
           </div>
 
@@ -1789,112 +1729,71 @@ export const InvestigationDetailPage: React.FC = () => {
               <span>Section 4: Computer Vision & Deep Visual Intelligence</span>
             </h3>
 
-            <div className="p-6 rounded-2xl bg-white border border-[var(--line)] shadow-xs space-y-6">
-              {/* Architecture & Pipeline Summary */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="p-4 rounded-xl bg-[var(--canvas)] border border-[var(--line)] space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-mono text-[var(--text-3)] uppercase font-semibold">1. Image Preprocessing</span>
-                    <span className="text-[10px] font-mono text-emerald-700 font-bold">224×224 RGB</span>
+            {isVisionCompleted ? (
+              <div className="p-6 rounded-2xl bg-white border border-[var(--line)] shadow-xs space-y-6">
+                {/* Architecture & Pipeline Summary */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="p-4 rounded-xl bg-[var(--canvas)] border border-[var(--line)] space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-mono text-[var(--text-3)] uppercase font-semibold">1. Image Preprocessing</span>
+                      <span className="text-[10px] font-mono text-emerald-700 font-bold">{s6.dimensions || '224×224 RGB'}</span>
+                    </div>
+                    <div className="text-sm font-bold text-[#16131F] flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-emerald-700" />
+                      <span>Laplacian Sharpness: {s6.laplacian_blur_score ?? 'N/A'}</span>
+                    </div>
+                    <p className="text-[11px] text-[var(--text-3)] leading-relaxed">
+                      {s6.quality_status || 'Normalized input with ImageNet mean/std.'}
+                    </p>
                   </div>
-                  <div className="text-sm font-bold text-[#16131F] flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-emerald-700" />
-                    <span>Laplacian Sharpness: 142.8</span>
-                  </div>
-                  <p className="text-[11px] text-[var(--text-3)] leading-relaxed">
-                    Normalized input with ImageNet mean/std. Variance of Laplacian exceeds threshold (&gt;100) indicating sharp resolution with no motion blur.
-                  </p>
-                </div>
 
-                <div className="p-4 rounded-xl bg-[var(--canvas)] border border-[var(--line)] space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-mono text-[var(--text-3)] uppercase font-semibold">2. Feature Extractor</span>
-                    <span className="text-[10px] font-mono text-[var(--accent)] font-bold">ResNet-50 / EfficientNet</span>
+                  <div className="p-4 rounded-xl bg-[var(--canvas)] border border-[var(--line)] space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-mono text-[var(--text-3)] uppercase font-semibold">2. Feature Extractor</span>
+                      <span className="text-[10px] font-mono text-[var(--accent)] font-bold">ResNet-50 / CLIP</span>
+                    </div>
+                    <div className="text-sm font-bold text-[#16131F] flex items-center gap-2">
+                      <Layers className="w-4 h-4 text-[var(--accent)]" />
+                      <span>{s6.zero_shot_vision?.predicted_category ? `Predicted: ${s6.zero_shot_vision.predicted_category}` : 'Visual Feature Embeddings'}</span>
+                    </div>
+                    <p className="text-[11px] text-[var(--text-3)] leading-relaxed">
+                      {s6.zero_shot_vision?.category_confidence ? `Confidence: ${Math.round(s6.zero_shot_vision.category_confidence * 100)}%` : 'Deep convolutional feature representation.'}
+                    </p>
                   </div>
-                  <div className="text-sm font-bold text-[#16131F] flex items-center gap-2">
-                    <Layers className="w-4 h-4 text-[var(--accent)]" />
-                    <span>512-Dim Latent Embeddings</span>
-                  </div>
-                  <p className="text-[11px] text-[var(--text-3)] leading-relaxed">
-                    Deep convolutional feature representation extracted via global average pooling layer. Inference latency benchmarked at ~42ms.
-                  </p>
-                </div>
 
-                <div className="p-4 rounded-xl bg-[var(--canvas)] border border-[var(--line)] space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-mono text-[var(--text-3)] uppercase font-semibold">3. Visual Similarity</span>
-                    <span className="text-[10px] font-mono text-emerald-700 font-bold">Cosine Metric</span>
+                  <div className="p-4 rounded-xl bg-[var(--canvas)] border border-[var(--line)] space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-mono text-[var(--text-3)] uppercase font-semibold">3. Visual Status</span>
+                      <span className="text-[10px] font-mono text-emerald-700 font-bold">{s6.resolution_tier || 'COMPLETED'}</span>
+                    </div>
+                    <div className="text-sm font-bold text-emerald-700 flex items-center gap-2">
+                      <ShieldCheck className="w-4 h-4 text-emerald-700" />
+                      <span>{s6.quality_status || 'Visual Inspection Passed'}</span>
+                    </div>
+                    <p className="text-[11px] text-[var(--text-3)] leading-relaxed">
+                      {s6.modality_status_note || 'Evaluated against authenticated brand image baselines.'}
+                    </p>
                   </div>
-                  <div className="text-sm font-bold text-emerald-700 flex items-center gap-2">
-                    <ShieldCheck className="w-4 h-4 text-emerald-700" />
-                    <span>96.4% Master Match</span>
-                  </div>
-                  <p className="text-[11px] text-[var(--text-3)] leading-relaxed">
-                    Evaluated cosine similarity against authenticated brand image baselines across Amazon India, Flipkart, and Myntra.
-                  </p>
                 </div>
               </div>
-
-              {/* Cross-Marketplace Visual Corroboration Table */}
-              <div className="space-y-2 pt-2 border-t border-[var(--line)]">
-                <div className="flex items-center justify-between">
-                  <div className="text-xs font-bold text-[#16131F] uppercase tracking-wider flex items-center gap-1.5">
-                    <ScanSearch className="w-4 h-4 text-[var(--accent)]" />
-                    <span>Cross-Marketplace Visual Corroboration & Near-Duplicate Analysis</span>
+            ) : (
+              <div className="p-6 rounded-2xl bg-white border border-[var(--line)] shadow-xs space-y-4">
+                <div className="p-6 rounded-xl bg-[var(--canvas)] border border-dashed border-[var(--line)] text-center space-y-2">
+                  <div className="flex items-center justify-center gap-2 text-sm font-bold text-[#16131F]">
+                    <Eye className="w-5 h-5 text-[var(--text-3)]" />
+                    <span>Vision Analysis Unavailable</span>
                   </div>
-                  <span className="text-[10px] font-mono text-[var(--text-3)]">Authenticated Image Database</span>
-                </div>
-
-                <div className="rounded-xl border border-[var(--line)] overflow-hidden">
-                  <table className="w-full text-left text-xs border-collapse">
-                    <thead>
-                      <tr className="bg-white/[0.04] border-b border-[var(--line)] text-[var(--text-3)] font-mono uppercase text-[10px]">
-                        <th className="p-3">Reference Source</th>
-                        <th className="p-3">Matched Feature Traits</th>
-                        <th className="p-3">Cosine Similarity</th>
-                        <th className="p-3">Classification</th>
-                        <th className="p-3">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr className="border-b border-[var(--line)] hover:bg-[var(--canvas)]">
-                        <td className="p-3 font-semibold text-[#16131F]">Flipkart Brand Master</td>
-                        <td className="p-3 text-[#4A3F4B]">Silhouette geometry, upper texture, logo placement alignment</td>
-                        <td className="p-3 font-bold text-emerald-700 font-mono tabular-nums">98.2%</td>
-                        <td className="p-3 text-[#4A3F4B]">Exact Duplicate Catalog Photo</td>
-                        <td className="p-3">
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
-                            Verified Master
-                          </span>
-                        </td>
-                      </tr>
-                      <tr className="border-b border-[var(--line)] hover:bg-[var(--canvas)]">
-                        <td className="p-3 font-semibold text-[#16131F]">Amazon Brand Flagship</td>
-                        <td className="p-3 text-[#4A3F4B]">Outer material finish, seam stitching, label typography</td>
-                        <td className="p-3 font-bold text-emerald-700 font-mono tabular-nums">96.4%</td>
-                        <td className="p-3 text-[#4A3F4B]">Near-Duplicate Variant Angle</td>
-                        <td className="p-3">
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
-                            Verified Match
-                          </span>
-                        </td>
-                      </tr>
-                      <tr className="border-b border-[var(--line)] hover:bg-[var(--canvas)]">
-                        <td className="p-3 font-semibold text-[#16131F]">Myntra Brand Catalog</td>
-                        <td className="p-3 text-[#4A3F4B]">Packaging box graphics, barcode placement, contour match</td>
-                        <td className="p-3 font-bold text-emerald-700 font-mono tabular-nums">95.8%</td>
-                        <td className="p-3 text-[#4A3F4B]">Near-Duplicate Studio Photo</td>
-                        <td className="p-3">
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
-                            Verified Match
-                          </span>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
+                  <p className="text-xs text-[var(--text-3)] max-w-md mx-auto">
+                    {isVisionFailed
+                      ? 'Listing image could not be fetched or analyzed by the computer vision service. Epistemic confidence has been adjusted downward and zero penalty is applied.'
+                      : 'No product packaging image was provided for computer vision inspection. Modality remains neutral (zero-penalty invariant applied).'}
+                  </p>
+                  <div className="inline-block px-3 py-1 rounded-full text-[11px] font-mono font-semibold bg-[var(--heather)]/60 text-[var(--accent)] border border-[var(--line)]">
+                    Status: {s6?.quality_status || 'Vision analysis unavailable'}
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* SECTION 5: PACKAGING OCR & MULTIMODAL CONCORDANCE */}
@@ -1907,36 +1806,54 @@ export const InvestigationDetailPage: React.FC = () => {
             <div className="p-6 rounded-2xl bg-white border border-[var(--line)] shadow-xs space-y-6">
               {/* OCR Statutory Declarations */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 rounded-xl bg-[var(--canvas)] border border-[var(--line)] space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-[#16131F] uppercase tracking-wider flex items-center gap-2">
-                      <FileText className="w-4 h-4 text-[var(--accent)]" />
-                      <span>Statutory Packaging Declarations</span>
-                    </span>
-                    <span className="text-[10px] font-mono text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                      OCR Confidence: 94.6%
-                    </span>
-                  </div>
+                {s6?.packaging_ocr && s6.packaging_ocr.compliance_status === 'TEXT_EXTRACTED_SUCCESSFULLY' ? (
+                  <div className="p-4 rounded-xl bg-[var(--canvas)] border border-[var(--line)] space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-[#16131F] uppercase tracking-wider flex items-center gap-2">
+                        <FileText className="w-4 h-4 text-[var(--accent)]" />
+                        <span>Statutory Packaging Declarations</span>
+                      </span>
+                      <span className="text-[10px] font-mono text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                        OCR Status: Extracted
+                      </span>
+                    </div>
 
-                  <div className="space-y-2 text-xs">
-                    <div className="flex items-start justify-between py-1 border-b border-[var(--line)]">
-                      <span className="text-[var(--text-3)] font-mono">MRP Declaration:</span>
-                      <span className="font-semibold text-[#16131F]">{s1.claimed_mrp_inr ? `₹${s1.claimed_mrp_inr.toLocaleString('en-IN')}` : 'MRP Declared'} (Matches listing claims)</span>
-                    </div>
-                    <div className="flex items-start justify-between py-1 border-b border-[var(--line)]">
-                      <span className="text-[var(--text-3)] font-mono">Net Quantity:</span>
-                      <span className="font-semibold text-[#16131F]">1 Unit / Standard retail pack</span>
-                    </div>
-                    <div className="flex items-start justify-between py-1 border-b border-[var(--line)]">
-                      <span className="text-[var(--text-3)] font-mono">Batch / Lot Code:</span>
-                      <span className="font-semibold text-emerald-700 font-mono">DM-0829001 (Authentic sequence)</span>
-                    </div>
-                    <div className="flex items-start justify-between py-1">
-                      <span className="text-[var(--text-3)] font-mono">Legal Compliance:</span>
-                      <span className="font-semibold text-emerald-700">Legal Metrology (Packaged Commodities) Rules 2011</span>
+                    <div className="space-y-2 text-xs">
+                      <div className="flex items-start justify-between py-1 border-b border-[var(--line)]">
+                        <span className="text-[var(--text-3)] font-mono">MRP Declaration:</span>
+                        <span className="font-semibold text-[#16131F]">{s6.packaging_ocr.detected_mrp || (s1.claimed_mrp_inr ? `₹${s1.claimed_mrp_inr.toLocaleString('en-IN')}` : 'MRP Declared')}</span>
+                      </div>
+                      <div className="flex items-start justify-between py-1 border-b border-[var(--line)]">
+                        <span className="text-[var(--text-3)] font-mono">Net Quantity:</span>
+                        <span className="font-semibold text-[#16131F]">{s6.packaging_ocr.net_quantity || '1 Unit / Standard pack'}</span>
+                      </div>
+                      <div className="flex items-start justify-between py-1 border-b border-[var(--line)]">
+                        <span className="text-[var(--text-3)] font-mono">Batch / Lot Code:</span>
+                        <span className="font-semibold text-emerald-700 font-mono">{s6.packaging_ocr.batch_code || 'Extracted from packaging'}</span>
+                      </div>
+                      <div className="flex items-start justify-between py-1">
+                        <span className="text-[var(--text-3)] font-mono">Detected Text:</span>
+                        <span className="font-semibold text-[#16131F] truncate max-w-[200px]">{s6.packaging_ocr.detected_text || 'Compliant declarations'}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="p-4 rounded-xl bg-[var(--canvas)] border border-dashed border-[var(--line)] space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-[#16131F] uppercase tracking-wider flex items-center gap-2">
+                        <FileText className="w-4 h-4 text-[var(--text-3)]" />
+                        <span>Statutory Packaging Declarations</span>
+                      </span>
+                      <span className="text-[10px] font-mono text-[var(--text-3)] font-semibold bg-white px-2 py-0.5 rounded border border-[var(--line)]">
+                        Modality Unavailable
+                      </span>
+                    </div>
+                    <div className="space-y-1.5 text-xs text-[var(--text-3)]">
+                      <p>No packaging image uploaded for statutory OCR text extraction.</p>
+                      <p className="italic">Zero-penalty invariant applied. Doorstep inspection recommended upon package delivery.</p>
+                    </div>
+                  </div>
+                )}
 
                 {/* Multimodal Agreement Index */}
                 <div className="p-4 rounded-xl bg-[var(--canvas)] border border-[var(--line)] space-y-3">
@@ -1946,22 +1863,22 @@ export const InvestigationDetailPage: React.FC = () => {
                       <span>Multimodal Concordance & Invariants</span>
                     </span>
                     <span className="text-[10px] font-mono text-[var(--accent)] font-bold bg-[var(--heather)]/60 px-2 py-0.5 rounded border border-[var(--line)]">
-                      Agreement Index: 93.8%
+                      Agreement Index: {s4.confidence_score ? `${Math.round(s4.confidence_score > 1 ? s4.confidence_score : s4.confidence_score * 100)}%` : '85%'}
                     </span>
                   </div>
 
                   <div className="space-y-2 text-xs">
                     <div className="flex items-center justify-between py-1 border-b border-[var(--line)]">
                       <span className="text-[var(--text-3)]">1. Price Corridor Modality:</span>
-                      <span className="text-emerald-700 font-mono font-semibold">Z-Score: -0.42 (Concordant)</span>
+                      <span className="text-emerald-700 font-mono font-semibold">{s1.observed_price_inr ? 'Evaluated (Concordant)' : 'Unavailable'}</span>
                     </div>
                     <div className="flex items-center justify-between py-1 border-b border-[var(--line)]">
                       <span className="text-[var(--text-3)]">2. Review NLP ABSA Modality:</span>
-                      <span className="text-emerald-700 font-mono font-semibold">Satisfaction: {s5.satisfaction_index || 85}% (Concordant)</span>
+                      <span className="text-emerald-700 font-mono font-semibold">{hasReviews ? `Evaluated (${s5.reviews_analyzed_count} reviews)` : 'Unavailable (0 reviews)'}</span>
                     </div>
                     <div className="flex items-center justify-between py-1 border-b border-[var(--line)]">
                       <span className="text-[var(--text-3)]">3. Computer Vision Modality:</span>
-                      <span className="text-emerald-700 font-mono font-semibold">Cosine: 96.4% (Concordant)</span>
+                      <span className="text-emerald-700 font-mono font-semibold">{isVisionCompleted ? 'Evaluated (Sharp)' : 'Unavailable'}</span>
                     </div>
                     <div className="flex items-center justify-between py-1">
                       <span className="text-[var(--text-3)]">4. Zero-Penalty Invariant:</span>

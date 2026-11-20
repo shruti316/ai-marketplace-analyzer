@@ -455,7 +455,7 @@ export const DashboardPage: React.FC = () => {
             </div>
           </div>
           <p className="text-[11px] text-[var(--text-2)] leading-tight pt-1">
-            <strong className="text-[var(--ink)] font-semibold">{totalCount} total scans</strong> · Click to show all
+            <strong className="text-[var(--ink)] font-semibold">{totalCount} total scans</strong>
           </p>
         </div>
 

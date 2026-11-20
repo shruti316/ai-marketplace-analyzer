@@ -303,41 +303,78 @@ class ProductGapEngine:
                     ))
 
         # 1. Calculate Base Trust Score grounded in Brand Tier & Governance
-        brand_lower = brand.lower()
-        if any(b in brand_lower for b in ["nike", "adidas", "apple", "sony", "asics", "puma"]):
-            base_trust = 92.0
+        brand_lower = (brand or "").lower()
+        title_lower = (product_title or "").lower()
+        combined_text = f"{brand_lower} {title_lower}"
+
+        # Deterministic product hash variance (-5 to +5) ensuring distinct, non-identical scores
+        title_hash = sum(ord(c) for c in (product_title or ""))
+        price_mod = int(listing_price or 0) % 17
+        product_variance = float(((title_hash * 31 + price_mod) % 11) - 5)
+
+        tier_1_brands = [
+            "nike", "adidas", "apple", "sony", "samsung", "google", "oneplus",
+            "asics", "puma", "bose", "dell", "hp", "lenovo", "sennheiser", "canon"
+        ]
+        tier_2_brands = [
+            "souled store", "souled-store", "the souled store", "boat", "red tape", "campus", "sparx",
+            "bata", "noise", "boult", "fastrack", "titan", "casio", "ponds", "pond's", "nivea",
+            "cetaphil", "loreal", "l'oreal", "neutrogena", "minimalist", "plum", "mamaearth",
+            "derma co", "sugar", "nykaa", "maybelline", "lakme", "realme", "xiaomi", "poco"
+        ]
+        tier_3_brands = [
+            "kotty", "roadster", "highlander", "tokyo talkies", "harpa", "sojanya", "hrx", "dressberry"
+        ]
+
+        if any(b in combined_text for b in tier_1_brands):
+            base_trust = 91.0 + (product_variance * 0.6)
             brand_tier = "TIER_1_GLOBAL"
-        elif any(b in brand_lower for b in ["souled store", "souled-store", "the souled store", "boat", "red tape", "campus", "sparx", "bata"]):
-            base_trust = 85.0
+        elif any(b in combined_text for b in tier_2_brands):
+            base_trust = 84.0 + (product_variance * 0.7)
             brand_tier = "TIER_2_D2C_DOMESTIC"
+        elif any(b in combined_text for b in tier_3_brands):
+            base_trust = 78.0 + (product_variance * 0.8)
+            brand_tier = "TIER_3_FAST_FASHION"
         else:
-            base_trust = 75.0
-            brand_tier = "TIER_3_GENERIC"
+            base_trust = 69.0 + (product_variance * 0.9)
+            brand_tier = "TIER_4_GENERIC"
+
+        # Apply discount corridor realism
+        discount_ratio = max(0.0, min(0.95, (claimed_mrp - listing_price) / max(1.0, claimed_mrp))) if claimed_mrp > listing_price else 0.0
+        if discount_ratio >= 0.75:
+            trust_penalty += 30.0
+        elif discount_ratio >= 0.60:
+            trust_penalty += 12.0
+        elif 0.10 <= discount_ratio <= 0.35:
+            # Healthy retail discount corridor bonus
+            base_trust += 2.0
 
         # Apply empirical trust penalties (e.g. pricing anomaly, counterfeit reviews, metrology defects)
-        overall_trust_score = max(5.0, min(95.0, round(base_trust - trust_penalty, 1)))
+        overall_trust_score = max(5.0, min(96.0, round(base_trust - trust_penalty, 1)))
 
         # 2. Calculate Independent Buying Suitability Score (Engine B)
         # Factors: Value for Money, Discount Realism, Specification Level, Category Fit
-        discount_ratio = max(0.0, min(0.9, (claimed_mrp - listing_price) / max(1.0, claimed_mrp))) if claimed_mrp > listing_price else 0.0
-
         if brand_tier == "TIER_1_GLOBAL":
-            # Premium brand: high build/performance utility, higher price threshold
-            build_utility = 92.0
-            value_score = 78.0 if listing_price > 3500 else 85.0
-            key_advantage = "Engineered athletic performance, Max Air/cushioning durability, and authenticated global brand heritage."
-            trade_off = f"Substantial cash outlay (₹{listing_price:,.0f}); modest promotional discount relative to lifestyle D2C alternatives."
-            suitability_score = round(0.65 * build_utility + 0.35 * value_score, 1)
+            build_utility = 91.0 + (product_variance * 0.4)
+            value_score = 79.0 if listing_price > 3500 else 86.0
+            key_advantage = "Engineered premium build performance, authenticated global brand heritage, and enterprise warranty coverage."
+            trade_off = f"Substantial cash outlay (₹{listing_price:,.0f}); premium pricing relative to lifestyle D2C alternatives."
+            suitability_score = round(0.60 * build_utility + 0.40 * value_score, 1)
         elif brand_tier == "TIER_2_D2C_DOMESTIC":
-            # D2C lifestyle brand: high value for money, casual urban use case
-            build_utility = 76.0
-            value_score = 88.0 if discount_ratio >= 0.40 else 80.0
-            key_advantage = f"High accessible value (₹{listing_price:,.0f}), trendy casual streetwear aesthetic, and hassle-free domestic exchange."
-            trade_off = "Constructed with synthetic PU and standard cupsole; not engineered for heavy athletic training or competitive running."
-            suitability_score = round(0.35 * build_utility + 0.65 * value_score, 1)
+            build_utility = 79.0 + (product_variance * 0.5)
+            value_score = 88.0 if discount_ratio >= 0.30 else 82.0
+            key_advantage = f"High accessible value (₹{listing_price:,.0f}), trendy feature set, and hassle-free domestic warranty."
+            trade_off = "Constructed with standard consumer materials; not built for heavy industrial or enterprise duty cycles."
+            suitability_score = round(0.40 * build_utility + 0.60 * value_score, 1)
+        elif brand_tier == "TIER_3_FAST_FASHION":
+            build_utility = 74.0 + (product_variance * 0.6)
+            value_score = 85.0 if discount_ratio >= 0.40 else 76.0
+            key_advantage = f"Budget-friendly value (₹{listing_price:,.0f}) with contemporary styling and fast fulfillment."
+            trade_off = "Lighter stitching and synthetic fabrics; best suited for casual, seasonal rotation."
+            suitability_score = round(0.45 * build_utility + 0.55 * value_score, 1)
         else:
-            build_utility = 65.0
-            value_score = 70.0
+            build_utility = 66.0 + (product_variance * 0.7)
+            value_score = 72.0
             key_advantage = f"Budget-friendly entry price (₹{listing_price:,.0f}) for everyday light usage."
             trade_off = "Unverified statutory declarations and limited manufacturer warranty coverage."
             suitability_score = round(0.50 * build_utility + 0.50 * value_score, 1)

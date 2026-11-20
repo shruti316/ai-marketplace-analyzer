@@ -36,6 +36,7 @@ class TrustSphereAIAssistant:
         self,
         product_title: str = "Marketplace Product",
         brand: str = "Generic",
+        category: str = "footwear",
         marketplace: str = "Online Marketplace",
         listing_price: float = 1500.0,
         claimed_mrp: float = 3000.0,
@@ -46,7 +47,7 @@ class TrustSphereAIAssistant:
         # 1. NLP Aspect-Based Sentiment Analysis only if actual reviews are provided
         review_summary = None
         if sample_reviews and len(sample_reviews) > 0:
-            review_summary = self.nlp_analyzer.analyze_reviews(sample_reviews, product_category="footwear")
+            review_summary = self.nlp_analyzer.analyze_reviews(sample_reviews, product_category=category)
 
         # 3. CV Forensics & CLIP Alignment
         visual_report = None
