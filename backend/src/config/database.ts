@@ -20,6 +20,7 @@ function buildBaseConfig(env: Env): PoolOptions {
     user: env.DB_USER,
     password: env.DB_PASSWORD,
     database: env.DB_NAME,
+    ssl: env.DB_SSL ? { rejectUnauthorized: false } : undefined,
     waitForConnections: true,
     connectTimeout: 10000, // 10 second timeout
     timezone: '+00:00', // Enforce UTC
@@ -254,6 +255,7 @@ export function createMigrationPool(overrideConfig?: SafeMigrationPoolOptions): 
     user: migrationUser,
     password: migrationPassword,
     database: env.DB_NAME,
+    ssl: env.DB_SSL ? { rejectUnauthorized: false } : undefined,
     waitForConnections: true,
     connectTimeout: overrideConfig?.connectTimeout ?? 10000,
     timezone: '+00:00',
