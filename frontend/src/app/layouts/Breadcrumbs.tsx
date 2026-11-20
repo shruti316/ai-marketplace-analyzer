@@ -3,7 +3,9 @@ import { useLocation, Link } from 'react-router-dom';
 import { ChevronRight, Home } from 'lucide-react';
 
 const ROUTE_LABELS: Record<string, string> = {
-  '': 'Overview',
+  '': 'Scanner',
+  dashboard: 'Dashboard',
+  scanner: 'Scanner',
   products: 'Product Intelligence',
   evidence: 'Evidence Explorer',
   comparisons: 'Comparisons',

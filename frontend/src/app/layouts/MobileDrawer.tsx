@@ -43,11 +43,11 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose }) =
       />
 
       {/* Drawer Content */}
-      <div className="relative w-4/5 max-w-xs bg-white text-[#4A3F4B] flex flex-col h-full shadow-2xl z-10 animate-slideRight border-r border-[#ECE8F2]">
+      <div className="relative w-4/5 max-w-xs bg-white text-[#4A3F4B] flex flex-col h-full shadow-2xl z-10 animate-slideRight border-r border-[rgba(193,160,172,0.35)]">
         {/* Header */}
-        <div className="flex items-center justify-between h-16 px-4 border-b border-[#ECE8F2]">
+        <div className="flex items-center justify-between h-16 px-4 border-b border-[rgba(193,160,172,0.35)]">
           <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#7C5DFA] text-white shadow-xs">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#16131F] text-[#F0D9E4] shadow-xs">
               <ShieldCheck className="h-5 w-5" />
             </div>
             <div className="flex flex-col">
@@ -74,13 +74,13 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose }) =
               <NavLink
                 key={item.to}
                 to={item.to}
-                end={item.to === '/'}
+                end={item.to === '/' || item.to === '/dashboard'}
                 className={({ isActive }) =>
                   cn(
                     'flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-colors min-h-[44px]',
                     isActive
-                      ? 'bg-[#EDE9FE] text-[#7C5DFA] shadow-xs font-semibold'
-                      : 'text-[#4A3F4B] hover:bg-[#F6F5FA] hover:text-[#16131F]'
+                      ? 'bg-[#F0D9E4] text-[#16131F] shadow-xs font-semibold border border-[rgba(193,160,172,0.40)]'
+                      : 'text-[#4A3F4B] hover:bg-[#F8EDF2] hover:text-[#16131F]'
                   )
                 }
               >
@@ -92,10 +92,10 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose }) =
         </nav>
 
         {/* Footer with User info & Logout */}
-        <div className="p-4 border-t border-[#ECE8F2] bg-[#FDFCFE]">
+        <div className="p-4 border-t border-[rgba(193,160,172,0.35)] bg-[#FDFBFC]">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5 truncate">
-              <div className="h-9 w-9 rounded-full bg-[#EDE9FE] border border-[#ECE8F2] flex items-center justify-center text-xs font-bold text-[#7C5DFA] shrink-0">
+              <div className="h-9 w-9 rounded-full bg-[#F0D9E4] border border-[#C1A0AC]/40 flex items-center justify-center text-xs font-bold text-[#16131F] shrink-0">
                 {user?.fullName?.charAt(0) || user?.email?.charAt(0) || 'U'}
               </div>
               <div className="flex flex-col truncate">

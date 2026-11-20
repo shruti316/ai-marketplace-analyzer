@@ -7,13 +7,13 @@ export default {
   theme: {
     extend: {
       colors: {
-        canvas: '#F6F5FA',
+        canvas: '#F8EDF2',
         surface: {
           DEFAULT: '#FFFFFF',
           card: '#FFFFFF',
-          raised: '#F9F8FC',
-          elevated: '#FDFCFE',
-          border: '#ECE8F2',
+          raised: '#FDFBFC',
+          elevated: '#FDFBFC',
+          border: 'rgba(193, 160, 172, 0.35)',
         },
         plum: {
           charcoal: '#16131F',
@@ -21,9 +21,9 @@ export default {
           muted: '#806C79',
           blush: '#F0D9E4',
           mauve: '#C1A0AC',
-          lavender: '#EDE9FE',
-          accent: '#7C5DFA',
-          'accent-hover': '#6A49F2',
+          lavender: '#F0D9E4',
+          accent: '#16131F',
+          'accent-hover': '#4A3F4B',
         },
         brand: {
           navy: '#16131F',

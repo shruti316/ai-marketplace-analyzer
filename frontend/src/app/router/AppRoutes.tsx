@@ -7,6 +7,7 @@ import { InvestigationWorkspacePage } from '../../features/investigation/Investi
 import { InvestigationDetailPage } from '../../features/investigation/InvestigationDetailPage';
 import { InvestigationsHistoryPage } from '../../features/investigation/InvestigationsHistoryPage';
 import { OverviewPage } from '../../features/dashboard/OverviewPage';
+import { DashboardPage } from '../../features/dashboard/DashboardPage';
 import { ProductIntelligencePage } from '../../features/products/ProductIntelligencePage';
 import { EvidenceExplorerPage } from '../../features/evidence/EvidenceExplorerPage';
 import { ComparisonsPage } from '../../features/comparisons/ComparisonsPage';
@@ -25,6 +26,8 @@ export const AppRoutes: React.FC = () => {
       <Route element={<AppLayout />}>
         {/* Open Consumer Hub & Intelligence Experiences */}
         <Route path="/" element={<InvestigationWorkspacePage />} />
+        <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/scanner" element={<InvestigationWorkspacePage />} />
         <Route path="/investigate" element={<InvestigationWorkspacePage />} />
         <Route path="/investigate/:id" element={<InvestigationDetailPage />} />
         <Route path="/products" element={<ProductIntelligencePage />} />

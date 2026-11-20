@@ -1390,8 +1390,8 @@ export const InvestigationDetailPage: React.FC = () => {
                   ))}
                 </ul>
               ) : (
-                <div className="p-3 rounded-xl bg-emerald-950/30 border border-emerald-800/40 text-xs text-emerald-300 flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-emerald-700 shrink-0" />
+                <div className="p-3.5 rounded-xl bg-[#ECFDF5] border border-[#A7F3D0] text-xs text-[#065F46] font-medium flex items-center gap-2.5 shadow-xs">
+                  <CheckCircle className="w-4 h-4 text-[#065F46] shrink-0" />
                   <span>No critical risk blockers detected across active modalities. Normal retail variance.</span>
                 </div>
               )}

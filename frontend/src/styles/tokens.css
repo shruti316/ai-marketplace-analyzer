@@ -1,35 +1,35 @@
 :root {
-  /* Soft Light Pastel Enterprise Design Tokens (Reference Palette) */
-  --color-canvas-bg: #F6F5FA;
-  --color-canvas-subtle: #F9F8FC;
+  /* Exact Plum & Mountain Heather Color Theme (Reference Palette) */
+  --color-canvas-bg: #F8EDF2;
+  --color-canvas-subtle: #FAF3F6;
   --color-surface-white: #FFFFFF;
-  --color-surface-tint: #FDFCFE;
-  --color-border-subtle: #ECE8F2;
-  --color-border-focus: #7C5DFA;
+  --color-surface-tint: #FDFBFC;
+  --color-border-subtle: rgba(193, 160, 172, 0.35);
+  --color-border-focus: #16131F;
 
   /* Reference Palette Tokens */
-  --color-plum-charcoal: #16131F; /* Back in Black / Primary Text */
-  --color-plum-dark: #4A3F4B;     /* Funkie Friday / Secondary Text */
-  --color-plum-muted: #806C79;    /* Moonscape / Subtitles & Muted */
-  --color-plum-blush: #F0D9E4;    /* Mountain Heather / Soft Blush */
-  --color-plum-mauve: #C1A0AC;    /* Decanting / Dusty Mauve */
-  --color-plum-lavender: #EDE9FE; /* Soft Lavender Accent Tint */
-  --color-plum-accent: #7C5DFA;   /* Primary Interactive Purple */
-  --color-plum-accent-hover: #6A49F2;
+  --color-plum-charcoal: #16131F; /* Back in Black / Primary Headings, Text, Dark CTAs */
+  --color-plum-dark: #4A3F4B;     /* Funkie Friday / Secondary Text, Descriptions */
+  --color-plum-muted: #806C79;    /* Moonscape / Captions, Placeholders, Subtle Meta */
+  --color-plum-blush: #F0D9E4;    /* Mountain Heather / Soft Tint Canvas, Highlights */
+  --color-plum-mauve: #C1A0AC;    /* Decanting / Borders, Dividers, Secondary Badges */
+  --color-plum-lavender: #F0D9E4; /* Mountain Heather Pill Tint */
+  --color-plum-accent: #16131F;   /* Primary Dark Button Accent */
+  --color-plum-accent-hover: #4A3F4B;
 
-  /* Semantic Anomaly & Risk Tiers (Soft pastel backgrounds + dark text) */
-  --color-risk-low: #047857;
+  /* Semantic Anomaly & Risk Tiers (High-contrast legible fills) */
+  --color-risk-low: #065F46;
   --color-risk-low-bg: #ECFDF5;
   --color-risk-low-border: #A7F3D0;
-  --color-risk-moderate: #B45309;
-  --color-risk-moderate-bg: #FFFBEB;
+  --color-risk-moderate: #92400E;
+  --color-risk-moderate-bg: #FEF3C7;
   --color-risk-moderate-border: #FDE68A;
-  --color-risk-elevated: #BE123C;
-  --color-risk-elevated-bg: #FFF1F2;
+  --color-risk-elevated: #9F1239;
+  --color-risk-elevated-bg: #FFE4E6;
   --color-risk-elevated-border: #FECDD3;
-  --color-risk-sparse: #475569;
-  --color-risk-sparse-bg: #F8FAFC;
-  --color-risk-sparse-border: #E2E8F0;
+  --color-risk-sparse: #4A3F4B;
+  --color-risk-sparse-bg: #F8EDF2;
+  --color-risk-sparse-border: rgba(193, 160, 172, 0.35);
 
   /* Surfaces & Elevations */
   --radius-card: 24px;
@@ -37,7 +37,7 @@
   --radius-modal: 24px;
   --radius-button: 12px;
   --shadow-soft: 0 2px 8px rgba(22, 19, 31, 0.04);
-  --shadow-card: 0 8px 24px rgba(22, 19, 31, 0.05);
+  --shadow-card: 0 8px 24px rgba(22, 19, 31, 0.06);
   --shadow-card-elevated: 0 16px 36px rgba(22, 19, 31, 0.08);
 
   /* Animation Timings */

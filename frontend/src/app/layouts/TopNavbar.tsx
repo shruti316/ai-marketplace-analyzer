@@ -31,12 +31,12 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onOpenMobileMenu }) => {
     : 'degraded';
 
   return (
-    <header className="h-16 bg-white/90 backdrop-blur-md border-b border-[#ECE8F2] px-4 sm:px-6 flex items-center justify-between sticky top-0 z-20">
+    <header className="h-16 bg-white/95 backdrop-blur-md border-b border-[rgba(193,160,172,0.35)] px-4 sm:px-6 flex items-center justify-between sticky top-0 z-20 shadow-xs">
       {/* Left: Mobile hamburger menu & Breadcrumbs */}
       <div className="flex items-center gap-3">
         <button
           onClick={onOpenMobileMenu}
-          className="md:hidden p-2 -ml-1 text-[#806C79] hover:text-[#16131F] hover:bg-[#F6F5FA] rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C5DFA] transition-colors"
+          className="md:hidden p-2 -ml-1 text-[#806C79] hover:text-[#16131F] hover:bg-[#F8EDF2] rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16131F] transition-colors"
           aria-label="Open navigation menu"
         >
           <Menu className="w-5 h-5" />
@@ -48,7 +48,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onOpenMobileMenu }) => {
 
         {/* Mobile brand text */}
         <div className="sm:hidden flex items-center gap-2">
-          <div className="h-7 w-7 rounded-xl bg-[#7C5DFA] text-white flex items-center justify-center shadow-xs">
+          <div className="h-7 w-7 rounded-xl bg-[#16131F] text-[#F0D9E4] flex items-center justify-center shadow-xs">
             <ShieldCheck className="h-4 w-4" />
           </div>
           <span className="font-heading font-bold text-sm text-[#16131F]">TrustSphere</span>
@@ -62,10 +62,10 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onOpenMobileMenu }) => {
           className={cn(
             'hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-medium',
             dbStatus === 'healthy'
-              ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+              ? 'bg-[#E6F4EA] text-[#065F46] border-[#A7F3D0]'
               : dbStatus === 'degraded'
-              ? 'bg-amber-50 text-amber-800 border-amber-200'
-              : 'bg-rose-50 text-rose-800 border-rose-200'
+              ? 'bg-[#FEF3C7] text-[#92400E] border-[#FDE68A]'
+              : 'bg-[#FCE7F3] text-[#9F1239] border-[#FECDD3]'
           )}
           title={`Backend: ${healthData?.status || 'checking'}, MySQL: ${healthData?.database?.status || 'probing'}`}
         >
@@ -78,23 +78,23 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onOpenMobileMenu }) => {
         {/* Quick Check Action */}
         <Link
           to="/"
-          className="hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#7C5DFA] hover:bg-[#6A49F2] text-white text-xs font-semibold shadow-xs transition-all hover:translate-y-[-1px]"
+          className="hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#16131F] hover:bg-[#4A3F4B] text-white text-xs font-semibold shadow-xs transition-all hover:translate-y-[-1px]"
         >
-          <ScanSearch className="w-3.5 h-3.5" />
+          <ScanSearch className="w-3.5 h-3.5 text-[#F0D9E4]" />
           <span>Check a Product</span>
         </Link>
 
         {/* User state / Auth action */}
         {isAuthenticated && user ? (
-          <div className="flex items-center gap-2 pl-2 border-l border-[#ECE8F2]">
-            <div className="h-8 w-8 rounded-full bg-[#EDE9FE] text-[#7C5DFA] flex items-center justify-center text-xs font-bold border border-[#ECE8F2]">
+          <div className="flex items-center gap-2 pl-2 border-l border-[rgba(193,160,172,0.35)]">
+            <div className="h-8 w-8 rounded-full bg-[#F0D9E4] text-[#16131F] flex items-center justify-center text-xs font-bold border border-[#C1A0AC]/40">
               {user.fullName?.charAt(0) || user.email?.charAt(0) || 'U'}
             </div>
             <div className="hidden xl:flex flex-col text-left">
               <span className="text-xs font-semibold text-[#16131F] leading-tight">
-                {user.fullName || 'Consumer'}
+                {user.fullName || 'Shruti'}
               </span>
-              <span className="text-[10px] text-[#806C79] capitalize">
+              <span className="text-[10px] text-[#806C79] capitalize font-mono">
                 {user.role?.toLowerCase() || 'Viewer'}
               </span>
             </div>

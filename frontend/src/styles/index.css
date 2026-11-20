@@ -11,7 +11,7 @@
   }
 
   body {
-    background-color: #F6F5FA;
+    background-color: #F8EDF2;
     color: #16131F;
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
     overflow-x: hidden;
@@ -27,16 +27,16 @@
 @layer components {
   /* Restrained modern soft light glassmorphism */
   .glass-card {
-    background: rgba(255, 255, 255, 0.95);
+    background: rgba(255, 255, 255, 0.96);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border: 1px solid #ECE8F2;
-    box-shadow: 0 8px 24px rgba(22, 19, 31, 0.05);
+    border: 1px solid rgba(193, 160, 172, 0.35);
+    box-shadow: 0 8px 24px rgba(22, 19, 31, 0.06);
   }
 
   .glass-sidebar {
     background: #FFFFFF;
-    border-right: 1px solid #ECE8F2;
+    border-right: 1px solid rgba(193, 160, 172, 0.35);
   }
 
   /* Sleek modern soft light scrollbars */

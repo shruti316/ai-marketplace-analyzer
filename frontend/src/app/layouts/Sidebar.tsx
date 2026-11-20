@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import {
+  LayoutDashboard,
   ScanSearch,
   GitCompare,
   Sparkles,
@@ -21,6 +22,7 @@ export interface NavItem {
 }
 
 export const NAV_ITEMS: NavItem[] = [
+  { name: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
   { name: 'Scanner', to: '/', icon: ScanSearch },
   { name: 'Comparisons', to: '/comparisons', icon: GitCompare },
   { name: 'AI Assistant', to: '/assistant', icon: Sparkles },
@@ -43,15 +45,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <aside
       className={cn(
-        'hidden md:flex flex-col m-4 mr-0 rounded-[24px] bg-white text-[#4A3F4B] border border-[#ECE8F2] shadow-[0_8px_24px_rgba(22,19,31,0.05)] transition-all duration-200 select-none shrink-0 relative z-30 overflow-hidden',
+        'hidden md:flex flex-col m-4 mr-0 rounded-[24px] bg-white text-[#4A3F4B] border border-[rgba(193,160,172,0.35)] shadow-[0_8px_24px_rgba(22,19,31,0.06)] transition-all duration-200 select-none shrink-0 relative z-30 overflow-hidden',
         isCollapsed ? 'w-[74px]' : 'w-64',
         className
       )}
     >
-      {/* Brand Header */}
-      <div className="flex items-center justify-between h-16 px-4 border-b border-[#ECE8F2]">
-        <div className="flex items-center gap-3 overflow-hidden">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[12px] bg-[#7C5DFA] text-white shadow-xs">
+      {/* Brand Header - Unclipped logo & centered controls */}
+      <div
+        className={cn(
+          'flex border-b border-[rgba(193,160,172,0.35)] transition-all duration-200',
+          isCollapsed
+            ? 'flex-col items-center justify-center py-3 gap-2 px-2'
+            : 'items-center justify-between h-16 px-4'
+        )}
+      >
+        <div className="flex items-center gap-3 overflow-visible">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[12px] bg-[#16131F] text-[#F0D9E4] shadow-xs">
             <ShieldCheck className="h-5 w-5" />
           </div>
           {!isCollapsed && (
@@ -69,11 +78,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Collapse Toggle */}
         <button
           onClick={onToggleCollapse}
-          className="p-1.5 rounded-lg text-[#806C79] hover:text-[#16131F] hover:bg-[#F6F5FA] transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#7C5DFA]"
+          className={cn(
+            'p-1.5 rounded-lg text-[#806C79] hover:text-[#16131F] hover:bg-[#F8EDF2] transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#16131F]',
+            isCollapsed && 'mt-0.5'
+          )}
           title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
-          {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4 text-[#806C79]" />}
+          {isCollapsed ? <ChevronRight className="w-4 h-4 text-[#806C79]" /> : <ChevronLeft className="w-4 h-4 text-[#806C79]" />}
         </button>
       </div>
 
@@ -85,13 +97,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <NavLink
               key={item.to}
               to={item.to}
-              end={item.to === '/'}
+              end={item.to === '/' || item.to === '/dashboard'}
               className={({ isActive }) =>
                 cn(
                   'flex items-center gap-3 px-3.5 py-2.5 rounded-[12px] text-xs font-medium transition-all duration-150 group relative',
                   isActive
-                    ? 'bg-[#EDE9FE] text-[#7C5DFA] font-semibold shadow-xs'
-                    : 'text-[#4A3F4B] hover:bg-[#F6F5FA] hover:text-[#16131F]',
+                    ? 'bg-[#F0D9E4] text-[#16131F] font-semibold border border-[rgba(193,160,172,0.40)] shadow-xs'
+                    : 'text-[#4A3F4B] hover:bg-[#F8EDF2] hover:text-[#16131F]',
                   isCollapsed && 'justify-center px-2'
                 )
               }
@@ -108,24 +120,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </nav>
 
       {/* User Profile & Account Area */}
-      <div className="p-3 border-t border-[#ECE8F2] bg-[#FDFCFE]">
+      <div className="p-3 border-t border-[rgba(193,160,172,0.35)] bg-[#FDFBFC]">
         <div
           className={cn(
-            'flex items-center gap-2.5 p-2 rounded-[16px] bg-[#F9F8FC] border border-[#ECE8F2] transition-colors',
+            'flex items-center gap-2.5 p-2 rounded-[16px] bg-[#F8EDF2] border border-[rgba(193,160,172,0.35)] transition-colors',
             isCollapsed ? 'justify-center' : 'justify-between'
           )}
         >
           <div className="flex items-center gap-2.5 overflow-hidden">
-            <div className="h-8 w-8 rounded-full bg-[#EDE9FE] text-[#7C5DFA] flex items-center justify-center text-xs font-bold shrink-0">
+            <div className="h-8 w-8 rounded-full bg-[#F0D9E4] text-[#16131F] border border-[#C1A0AC]/40 flex items-center justify-center text-xs font-bold shrink-0">
               {user?.fullName?.charAt(0) || user?.email?.charAt(0) || 'U'}
             </div>
             {!isCollapsed && (
               <div className="flex flex-col truncate">
                 <span className="text-xs font-semibold text-[#16131F] truncate">
-                  {user?.fullName || (isAuthenticated ? 'Consumer' : 'Guest')}
+                  {user?.fullName || (isAuthenticated ? 'Consumer' : 'Shruti')}
                 </span>
                 <span className="text-[10px] text-[#806C79] uppercase tracking-wider font-medium truncate font-mono">
-                  {user?.role || 'Visitor'}
+                  {user?.role || 'Viewer'}
                 </span>
               </div>
             )}
