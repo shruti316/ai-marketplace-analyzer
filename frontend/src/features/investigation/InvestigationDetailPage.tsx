@@ -379,11 +379,11 @@ export const InvestigationDetailPage: React.FC = () => {
   if (isLoading) {
     return (
       <div className="p-8 max-w-6xl mx-auto space-y-6 animate-pulse">
-        <div className="h-6 bg-[#181D2E] rounded w-1/4" />
-        <div className="h-44 bg-[#111522] rounded-3xl" />
+        <div className="h-6 bg-[#ECE8F2] rounded w-1/4" />
+        <div className="h-44 bg-white border border-[#ECE8F2] rounded-[24px]" />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div className="h-36 bg-[#111522] rounded-2xl" />
-          <div className="h-36 bg-[#111522] rounded-2xl" />
+          <div className="h-36 bg-white border border-[#ECE8F2] rounded-2xl" />
+          <div className="h-36 bg-white border border-[#ECE8F2] rounded-2xl" />
         </div>
       </div>
     );
@@ -392,11 +392,11 @@ export const InvestigationDetailPage: React.FC = () => {
   if (!report) {
     return (
       <div className="p-12 max-w-3xl mx-auto text-center space-y-4">
-        <div className="h-12 w-12 rounded-2xl bg-amber-500/10 text-amber-400 flex items-center justify-center mx-auto">
+        <div className="h-12 w-12 rounded-2xl bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center mx-auto">
           <AlertTriangle className="w-6 h-6" />
         </div>
-        <h2 className="text-xl font-bold text-white font-heading">Investigation Not Found</h2>
-        <p className="text-xs text-slate-400">
+        <h2 className="text-xl font-bold text-[#16131F] font-heading">Investigation Not Found</h2>
+        <p className="text-xs text-[#806C79]">
           The requested investigation ID could not be loaded from database history.
         </p>
         <Button variant="primary" onClick={() => navigate('/')}>
@@ -636,25 +636,25 @@ export const InvestigationDetailPage: React.FC = () => {
       {/* =========================================================================
           TOP ACTION BAR & TITLE
          ========================================================================= */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/[0.08]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#ECE8F2]">
         <div className="flex items-center gap-3">
           <Link
             to="/"
-            className="p-2 rounded-xl bg-[#181D2E] border border-white/[0.08] hover:bg-white/[0.06] text-slate-300 transition-colors shadow-xs"
+            className="p-2 rounded-xl bg-white border border-[#ECE8F2] hover:bg-[#F9F8FC] text-[#806C79] hover:text-[#16131F] transition-colors shadow-xs"
             title="Return to Scanner"
           >
             <ArrowLeft className="w-4 h-4" />
           </Link>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-[11px] font-mono text-slate-400 uppercase tracking-wider">
+              <span className="text-[11px] font-mono text-[#806C79] uppercase tracking-wider">
                 Investigation: {report.investigation_id}
               </span>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#EDE9FE] text-[#7C5DFA] border border-[#DDD6FE] font-semibold">
                 {s1.provenance}
               </span>
             </div>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white font-heading line-clamp-1">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#16131F] font-heading line-clamp-1">
               {cleanTitle}
             </h1>
           </div>
@@ -662,14 +662,14 @@ export const InvestigationDetailPage: React.FC = () => {
 
         <div className="flex items-center gap-2 flex-wrap">
           {/* View Mode Toggle: User View (Default) vs Technical View */}
-          <div className="flex items-center p-1 bg-[#181D2E] rounded-xl border border-white/[0.08]">
+          <div className="flex items-center p-1 bg-white rounded-xl border border-[#ECE8F2] shadow-xs">
             <button
               type="button"
               onClick={() => setViewMode('user')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                 viewMode === 'user'
-                  ? 'bg-indigo-600 text-white shadow-xs'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-[#7C5DFA] text-white shadow-xs'
+                  : 'text-[#806C79] hover:text-[#16131F]'
               }`}
             >
               <User className="w-3.5 h-3.5" />
@@ -680,8 +680,8 @@ export const InvestigationDetailPage: React.FC = () => {
               onClick={() => setViewMode('technical')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                 viewMode === 'technical'
-                  ? 'bg-indigo-600 text-white shadow-xs'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-[#7C5DFA] text-white shadow-xs'
+                  : 'text-[#806C79] hover:text-[#16131F]'
               }`}
             >
               <Terminal className="w-3.5 h-3.5" />
@@ -694,6 +694,7 @@ export const InvestigationDetailPage: React.FC = () => {
             size="sm"
             onClick={handleDownloadHtml}
             leftIcon={<Download className="w-3.5 h-3.5" />}
+            className="bg-white border-[#ECE8F2] text-[#16131F] hover:bg-[#F9F8FC]"
           >
             Download Report
           </Button>
@@ -703,6 +704,7 @@ export const InvestigationDetailPage: React.FC = () => {
             size="sm"
             onClick={() => window.print()}
             leftIcon={<Printer className="w-3.5 h-3.5" />}
+            className="bg-white border-[#ECE8F2] text-[#16131F] hover:bg-[#F9F8FC]"
           >
             Print / PDF
           </Button>
@@ -711,8 +713,8 @@ export const InvestigationDetailPage: React.FC = () => {
             variant="primary"
             size="sm"
             onClick={() => setIsAssistantOpen(true)}
-            leftIcon={<Sparkles className="w-3.5 h-3.5 text-indigo-300" />}
-            className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold"
+            leftIcon={<Sparkles className="w-3.5 h-3.5 text-white" />}
+            className="bg-[#7C5DFA] hover:bg-[#6A49F2] text-white font-semibold"
           >
             Ask AI Assistant
           </Button>
@@ -725,109 +727,109 @@ export const InvestigationDetailPage: React.FC = () => {
       {viewMode === 'user' && (
         <div className="space-y-8 animate-fadeIn">
           {/* 1. HERO VERDICT BANNER (Easy to understand verdict & summary) */}
-          <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-[#111522] to-[#181D2E] border border-indigo-500/30 shadow-2xl space-y-5">
+          <div className="p-6 sm:p-8 rounded-[24px] bg-gradient-to-br from-[#EDE9FE]/50 via-white to-[#F0D9E4]/40 border border-[#ECE8F2] shadow-[0_8px_24px_rgba(22,19,31,0.05)] space-y-5">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold uppercase tracking-wider text-emerald-400 bg-emerald-950/60 px-3 py-1 rounded-full border border-emerald-500/30 flex items-center gap-1.5">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200 flex items-center gap-1.5">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                     <span>Looks Reasonable to Buy</span>
                   </span>
-                  <span className="text-xs font-mono text-slate-400">
+                  <span className="text-xs font-mono text-[#806C79]">
                     Confidence: 94% · 4 of 5 Modalities Verified
                   </span>
                 </div>
 
-                <h2 className="text-2xl sm:text-3xl font-extrabold text-white font-heading">
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-[#16131F] font-heading">
                   Verified Authentic Deal
                 </h2>
 
-                <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
+                <p className="text-xs sm:text-sm text-[#4A3F4B] max-w-2xl leading-relaxed">
                   We analyzed the pricing corridor, merchant credibility, review sentiments, and domain governance for{' '}
-                  <strong className="text-white">{cleanTitle}</strong> on {s1.marketplace}. The observed price of{' '}
-                  <strong className="text-emerald-400">{s1.observed_price_inr ? `₹${s1.observed_price_inr.toLocaleString('en-IN')}` : 'Price unlisted'}</strong> {s1.discount_percentage ? `(${s1.discount_percentage}% OFF)` : ''} is in line with the brand's normal retail pricing, and customer satisfaction is overwhelmingly positive.
+                  <strong className="text-[#16131F]">{cleanTitle}</strong> on {s1.marketplace}. The observed price of{' '}
+                  <strong className="text-emerald-700">{s1.observed_price_inr ? `₹${s1.observed_price_inr.toLocaleString('en-IN')}` : 'Price unlisted'}</strong> {s1.discount_percentage ? `(${s1.discount_percentage}% OFF)` : ''} is in line with the brand's normal retail pricing, and customer satisfaction is overwhelmingly positive.
                 </p>
               </div>
 
               {/* Trust Score Dial */}
-              <div className="p-4 rounded-2xl bg-[#0B0D14] border border-white/[0.08] text-center shrink-0 min-w-[140px] space-y-1">
-                <span className="text-[10px] font-mono text-slate-400 uppercase font-bold tracking-wider">
+              <div className="p-4 rounded-2xl bg-white border border-[#ECE8F2] text-center shrink-0 min-w-[140px] space-y-1 shadow-xs">
+                <span className="text-[10px] font-mono text-[#806C79] uppercase font-bold tracking-wider">
                   Trust Score
                 </span>
-                <div className="text-3xl font-black text-emerald-400 font-heading">
+                <div className="text-3xl font-black text-emerald-600 font-heading">
                   {report.summary.overall_trust_score}
-                  <span className="text-sm text-slate-500 font-normal">/100</span>
+                  <span className="text-sm text-[#806C79] font-normal">/100</span>
                 </div>
-                <span className="text-[10px] font-mono text-slate-400 block">
+                <span className="text-[10px] font-mono text-[#806C79] block">
                   Low Observed Anomaly
                 </span>
               </div>
             </div>
 
             {/* Quick 3 Simple Key Takeaways */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-3 border-t border-white/[0.08]">
-              <div className="p-3.5 rounded-xl bg-[#111522] border border-white/[0.06] space-y-1">
-                <span className="text-[10px] font-mono uppercase text-slate-400 font-bold">1. Merchant & Fulfillment</span>
-                <p className="text-xs font-bold text-white truncate">{s3.seller_name}</p>
-                <p className="text-[11px] text-emerald-400">✓ Platform-Managed Fulfillment</p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-3 border-t border-[#ECE8F2]">
+              <div className="p-3.5 rounded-xl bg-white/80 border border-[#ECE8F2] space-y-1 shadow-xs">
+                <span className="text-[10px] font-mono uppercase text-[#806C79] font-bold">1. Merchant & Fulfillment</span>
+                <p className="text-xs font-bold text-[#16131F] truncate">{s3.seller_name}</p>
+                <p className="text-[11px] text-emerald-700 font-medium">✓ Platform-Managed Fulfillment</p>
               </div>
 
-              <div className="p-3.5 rounded-xl bg-[#111522] border border-white/[0.06] space-y-1">
-                <span className="text-[10px] font-mono uppercase text-slate-400 font-bold">2. Price Deal</span>
-                <p className="text-xs font-bold text-white">
+              <div className="p-3.5 rounded-xl bg-white/80 border border-[#ECE8F2] space-y-1 shadow-xs">
+                <span className="text-[10px] font-mono uppercase text-[#806C79] font-bold">2. Price Deal</span>
+                <p className="text-xs font-bold text-[#16131F]">
                   {s1.observed_price_inr ? `₹${s1.observed_price_inr.toLocaleString('en-IN')}` : 'Price unlisted'}{' '}
                   {s1.claimed_mrp_inr && (
-                    <span className="line-through text-slate-500 font-normal">₹{s1.claimed_mrp_inr.toLocaleString('en-IN')}</span>
+                    <span className="line-through text-[#806C79] font-normal">₹{s1.claimed_mrp_inr.toLocaleString('en-IN')}</span>
                   )}
                 </p>
-                <p className="text-[11px] text-emerald-400">✓ Within Normal Retail Corridor</p>
+                <p className="text-[11px] text-emerald-700 font-medium">✓ Within Normal Retail Corridor</p>
               </div>
 
-              <div className="p-3.5 rounded-xl bg-[#111522] border border-white/[0.06] space-y-1">
-                <span className="text-[10px] font-mono uppercase text-slate-400 font-bold">3. Customer Feedback</span>
-                <p className="text-xs font-bold text-white">{s5.satisfaction_index || 85}% Positive Satisfaction</p>
-                <p className="text-[11px] text-indigo-300">Based on {s5.reviews_analyzed_count} buyer reviews</p>
+              <div className="p-3.5 rounded-xl bg-white/80 border border-[#ECE8F2] space-y-1 shadow-xs">
+                <span className="text-[10px] font-mono uppercase text-[#806C79] font-bold">3. Customer Feedback</span>
+                <p className="text-xs font-bold text-[#16131F]">{s5.satisfaction_index || 85}% Positive Satisfaction</p>
+                <p className="text-[11px] text-[#7C5DFA] font-medium">Based on {s5.reviews_analyzed_count} buyer reviews</p>
               </div>
             </div>
           </div>
 
           {/* 2. PRODUCT OVERVIEW & PRICING BAR */}
-          <div className="p-6 sm:p-8 rounded-3xl bg-[#111522] border border-white/[0.08] shadow-soft space-y-5">
+          <div className="p-6 sm:p-8 rounded-[24px] bg-white border border-[#ECE8F2] shadow-[0_8px_24px_rgba(22,19,31,0.05)] space-y-5">
             <div className="flex flex-col sm:flex-row sm:items-start gap-6">
-              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-[#181D2E] border border-white/[0.08] shrink-0 flex items-center justify-center p-2">
-                <ShoppingBag className="w-8 h-8 text-indigo-400" />
+              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-[#F9F8FC] border border-[#ECE8F2] shrink-0 flex items-center justify-center p-2">
+                <ShoppingBag className="w-8 h-8 text-[#7C5DFA]" />
               </div>
 
               <div className="flex-1 space-y-2">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-xs font-mono font-bold text-indigo-400 uppercase bg-indigo-500/10 px-2.5 py-0.5 rounded-md border border-indigo-500/20">
+                  <span className="text-xs font-mono font-bold text-[#7C5DFA] uppercase bg-[#EDE9FE] px-2.5 py-0.5 rounded-md border border-[#DDD6FE]">
                     {s1.brand}
                   </span>
-                  <span className="text-xs text-slate-400">•</span>
-                  <span className="text-xs text-slate-300">{s1.category}</span>
-                  <span className="text-xs text-slate-400">•</span>
-                  <span className="text-xs font-mono text-slate-400 bg-[#181D2E] px-2 py-0.5 rounded border border-white/[0.08]">
+                  <span className="text-xs text-[#806C79]">•</span>
+                  <span className="text-xs text-[#4A3F4B] font-medium">{s1.category}</span>
+                  <span className="text-xs text-[#806C79]">•</span>
+                  <span className="text-xs font-mono text-[#806C79] bg-[#F9F8FC] px-2 py-0.5 rounded border border-[#ECE8F2]">
                     {s1.marketplace}
                   </span>
                 </div>
 
-                <h3 className="text-lg font-bold text-white font-heading leading-snug">
+                <h3 className="text-lg font-bold text-[#16131F] font-heading leading-snug">
                   {cleanTitle}
                 </h3>
 
                 <div className="flex flex-wrap items-baseline gap-4 pt-1">
                   <div className="flex items-baseline gap-1.5">
-                    <span className="text-xs text-slate-400 font-medium font-mono">Listing Price:</span>
-                    <span className="text-2xl font-black text-white font-heading">
+                    <span className="text-xs text-[#806C79] font-medium font-mono">Listing Price:</span>
+                    <span className="text-2xl font-black text-[#16131F] font-heading">
                       {s1.observed_price_inr ? `₹${s1.observed_price_inr.toLocaleString('en-IN')}` : 'Price unavailable'}
                     </span>
                   </div>
                   {s1.claimed_mrp_inr && (
-                    <div className="flex items-baseline gap-1 text-xs text-slate-400 font-mono">
+                    <div className="flex items-baseline gap-1 text-xs text-[#806C79] font-mono">
                       <span>Claimed MRP:</span>
-                      <span className="line-through text-slate-500">₹{s1.claimed_mrp_inr.toLocaleString('en-IN')}</span>
+                      <span className="line-through text-[#806C79]">₹{s1.claimed_mrp_inr.toLocaleString('en-IN')}</span>
                       {s1.discount_percentage ? (
-                        <span className="text-emerald-400 font-semibold bg-emerald-950/40 px-2 py-0.5 rounded text-[11px] ml-1.5 border border-emerald-500/30">
+                        <span className="text-emerald-800 font-semibold bg-emerald-50 px-2 py-0.5 rounded text-[11px] ml-1.5 border border-emerald-200">
                           {s1.discount_percentage}% OFF
                         </span>
                       ) : null}
@@ -841,66 +843,66 @@ export const InvestigationDetailPage: React.FC = () => {
           {/* 3. WHAT LOOKS GOOD vs WHAT TO WATCH OUT FOR (Clear Side-by-Side Comparison) */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {/* Good Signs */}
-            <div className="p-6 rounded-3xl bg-[#111522] border border-emerald-500/20 shadow-soft space-y-4">
-              <div className="flex items-center gap-2 pb-2 border-b border-white/[0.08]">
-                <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                <h3 className="text-sm font-bold text-white font-heading uppercase tracking-wider">
+            <div className="p-6 rounded-[24px] bg-white border border-emerald-200 shadow-[0_8px_24px_rgba(22,19,31,0.05)] space-y-4">
+              <div className="flex items-center gap-2 pb-2 border-b border-[#ECE8F2]">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                <h3 className="text-sm font-bold text-[#16131F] font-heading uppercase tracking-wider">
                   Positive Authenticity Signs
                 </h3>
               </div>
-              <ul className="space-y-2.5 text-xs text-slate-300">
+              <ul className="space-y-2.5 text-xs text-[#4A3F4B]">
                 <li className="flex items-start gap-2.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5 shrink-0" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
                   <span>
-                    <strong>Authorized Marketplace Domain:</strong> Tested on official flagship domain ({s2.domain}) with active HTTPS and TLS 1.3 security.
+                    <strong className="text-[#16131F]">Authorized Marketplace Domain:</strong> Tested on official flagship domain ({s2.domain}) with active HTTPS and TLS 1.3 security.
                   </span>
                 </li>
                 <li className="flex items-start gap-2.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5 shrink-0" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
                   <span>
-                    <strong>Safe Pricing Corridor:</strong> Discount is {s1.discount_percentage}%, which aligns with genuine seasonal discounts and avoids fake pricing traps.
+                    <strong className="text-[#16131F]">Safe Pricing Corridor:</strong> Discount is {s1.discount_percentage}%, which aligns with genuine seasonal discounts and avoids fake pricing traps.
                   </span>
                 </li>
                 <li className="flex items-start gap-2.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5 shrink-0" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
                   <span>
-                    <strong>Established Merchant:</strong> {s3.seller_name} maintains a ★ {s3.rating_summary.average_rating} rating with platform-managed Prime / F-Assured logistics.
+                    <strong className="text-[#16131F]">Established Merchant:</strong> {s3.seller_name} maintains a ★ {s3.rating_summary.average_rating} rating with platform-managed Prime / F-Assured logistics.
                   </span>
                 </li>
                 <li className="flex items-start gap-2.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5 shrink-0" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
                   <span>
-                    <strong>Positive Customer Reviews:</strong> Over {s5.satisfaction_index || 85}% positive sentiment regarding fabric, stitching, and packaging.
+                    <strong className="text-[#16131F]">Positive Customer Reviews:</strong> Over {s5.satisfaction_index || 85}% positive sentiment regarding fabric, stitching, and packaging.
                   </span>
                 </li>
               </ul>
             </div>
 
             {/* Things to Check */}
-            <div className="p-6 rounded-3xl bg-[#111522] border border-amber-500/20 shadow-soft space-y-4">
-              <div className="flex items-center gap-2 pb-2 border-b border-white/[0.08]">
-                <AlertTriangle className="w-5 h-5 text-amber-400" />
-                <h3 className="text-sm font-bold text-white font-heading uppercase tracking-wider">
+            <div className="p-6 rounded-[24px] bg-white border border-amber-200 shadow-[0_8px_24px_rgba(22,19,31,0.05)] space-y-4">
+              <div className="flex items-center gap-2 pb-2 border-b border-[#ECE8F2]">
+                <AlertTriangle className="w-5 h-5 text-amber-600" />
+                <h3 className="text-sm font-bold text-[#16131F] font-heading uppercase tracking-wider">
                   Things to Double-Check
                 </h3>
               </div>
-              <ul className="space-y-2.5 text-xs text-slate-300">
+              <ul className="space-y-2.5 text-xs text-[#4A3F4B]">
                 <li className="flex items-start gap-2.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1.5 shrink-0" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
                   <span>
-                    <strong>Inspect Doorstep Seal:</strong> Ensure the courier's outer tamper-evident tape is intact before signing delivery receipt.
+                    <strong className="text-[#16131F]">Inspect Doorstep Seal:</strong> Ensure the courier's outer tamper-evident tape is intact before signing delivery receipt.
                   </span>
                 </li>
                 <li className="flex items-start gap-2.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1.5 shrink-0" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
                   <span>
-                    <strong>Check Printed MRP Tag:</strong> Ensure the packaging MRP tag matches the digital declaration of ₹{s1.claimed_mrp_inr}.
+                    <strong className="text-[#16131F]">Check Printed MRP Tag:</strong> Ensure the packaging MRP tag matches the digital declaration of ₹{s1.claimed_mrp_inr}.
                   </span>
                 </li>
                 <li className="flex items-start gap-2.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1.5 shrink-0" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
                   <span>
-                    <strong>Confirm Return Window:</strong> Keep original tags attached until you confirm the fit and quality match listing photos.
+                    <strong className="text-[#16131F]">Confirm Return Window:</strong> Keep original tags attached until you confirm the fit and quality match listing photos.
                   </span>
                 </li>
               </ul>
@@ -908,39 +910,39 @@ export const InvestigationDetailPage: React.FC = () => {
           </div>
 
           {/* 4. DOORSTEP DELIVERY CHECKLIST (Simple 1-2-3 Guide) */}
-          <div className="p-6 sm:p-8 rounded-3xl bg-[#111522] border border-white/[0.08] shadow-soft space-y-4">
-            <h3 className="text-sm font-bold text-white font-heading uppercase tracking-wider flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-indigo-400" />
+          <div className="p-6 sm:p-8 rounded-[24px] bg-white border border-[#ECE8F2] shadow-[0_8px_24px_rgba(22,19,31,0.05)] space-y-4">
+            <h3 className="text-sm font-bold text-[#16131F] font-heading uppercase tracking-wider flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-[#7C5DFA]" />
               <span>Doorstep Delivery Verification Protocol</span>
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-              <div className="p-4 rounded-2xl bg-[#181D2E] border border-white/[0.06] space-y-2">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-600 text-xs font-bold text-white font-mono">
+              <div className="p-4 rounded-2xl bg-[#F9F8FC] border border-[#ECE8F2] space-y-2">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#7C5DFA] text-xs font-bold text-white font-mono">
                   1
                 </span>
-                <p className="font-bold text-white">Inspect Outer Package</p>
-                <p className="text-slate-400 leading-relaxed">
+                <p className="font-bold text-[#16131F]">Inspect Outer Package</p>
+                <p className="text-[#806C79] leading-relaxed">
                   Look for genuine platform security tape. Refuse parcel if outer carton is cut or resealed with clear tape.
                 </p>
               </div>
 
-              <div className="p-4 rounded-2xl bg-[#181D2E] border border-white/[0.06] space-y-2">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-600 text-xs font-bold text-white font-mono">
+              <div className="p-4 rounded-2xl bg-[#F9F8FC] border border-[#ECE8F2] space-y-2">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#7C5DFA] text-xs font-bold text-white font-mono">
                   2
                 </span>
-                <p className="font-bold text-white">Cross-Check MRP & Barcode</p>
-                <p className="text-slate-400 leading-relaxed">
+                <p className="font-bold text-[#16131F]">Cross-Check MRP & Barcode</p>
+                <p className="text-[#806C79] leading-relaxed">
                   Verify the Legal Metrology sticker on the inner packaging matches the seller invoice price.
                 </p>
               </div>
 
-              <div className="p-4 rounded-2xl bg-[#181D2E] border border-white/[0.06] space-y-2">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-600 text-xs font-bold text-white font-mono">
+              <div className="p-4 rounded-2xl bg-[#F9F8FC] border border-[#ECE8F2] space-y-2">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#7C5DFA] text-xs font-bold text-white font-mono">
                   3
                 </span>
-                <p className="font-bold text-white">Confirm Brand Manufacturer</p>
-                <p className="text-slate-400 leading-relaxed">
+                <p className="font-bold text-[#16131F]">Confirm Brand Manufacturer</p>
+                <p className="text-[#806C79] leading-relaxed">
                   Confirm statutory manufacturer details, care label, and batch code are printed legibly.
                 </p>
               </div>
@@ -949,13 +951,13 @@ export const InvestigationDetailPage: React.FC = () => {
 
           {/* 5. DIRECT CATEGORY ALTERNATIVES */}
           {displayAlternatives && displayAlternatives.length > 0 && (
-            <div className="p-6 sm:p-8 rounded-3xl bg-[#111522] border border-white/[0.08] shadow-soft space-y-4">
+            <div className="p-6 sm:p-8 rounded-[24px] bg-white border border-[#ECE8F2] shadow-[0_8px_24px_rgba(22,19,31,0.05)] space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-bold text-white font-heading uppercase tracking-wider flex items-center gap-2">
-                  <GitCompare className="w-4 h-4 text-indigo-400" />
+                <h3 className="text-sm font-bold text-[#16131F] font-heading uppercase tracking-wider flex items-center gap-2">
+                  <GitCompare className="w-4 h-4 text-[#7C5DFA]" />
                   <span>Recommended Alternatives — Products You Can Buy Instead</span>
                 </h3>
-                <span className="text-xs font-mono text-slate-400">
+                <span className="text-xs font-mono text-[#806C79]">
                   {displayAlternatives.length} verified offerings · Suitability: {s9.overall_suitability_score}/100
                 </span>
               </div>
@@ -964,21 +966,21 @@ export const InvestigationDetailPage: React.FC = () => {
                 {displayAlternatives.map((alt) => (
                   <div
                     key={alt.product_id}
-                    className="p-4 rounded-2xl bg-[#181D2E] border border-white/[0.08] flex flex-col justify-between space-y-3"
+                    className="p-4 rounded-2xl bg-[#F9F8FC] border border-[#ECE8F2] flex flex-col justify-between space-y-3"
                   >
                     <div>
-                      <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono">
-                        <span className="text-indigo-300 font-semibold">{alt.brand}</span>
-                        <span className="text-emerald-400">{alt.trust_score_estimate}/100 Trust</span>
+                      <div className="flex items-center justify-between text-[10px] text-[#806C79] font-mono">
+                        <span className="text-[#7C5DFA] font-semibold">{alt.brand}</span>
+                        <span className="text-emerald-700 font-bold">{alt.trust_score_estimate}/100 Trust</span>
                       </div>
-                      <h4 className="font-bold text-xs text-white line-clamp-1 mt-1 font-heading">{alt.title}</h4>
-                      <p className="text-sm font-black text-white font-heading mt-1">₹{alt.observed_price_inr.toLocaleString('en-IN')}</p>
+                      <h4 className="font-bold text-xs text-[#16131F] line-clamp-1 mt-1 font-heading">{alt.title}</h4>
+                      <p className="text-sm font-black text-[#16131F] font-heading mt-1">₹{alt.observed_price_inr.toLocaleString('en-IN')}</p>
                     </div>
 
                     <button
                       type="button"
                       onClick={() => navigate(`/comparisons?add=${encodeURIComponent(alt.product_id)}`)}
-                      className="w-full py-1.5 px-3 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                      className="w-full py-1.5 px-3 rounded-xl bg-[#EDE9FE] hover:bg-[#DDD6FE] text-[#7C5DFA] border border-[#DDD6FE] text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                     >
                       <GitCompare className="w-3.5 h-3.5" />
                       <span>Compare in Studio</span>
@@ -991,33 +993,33 @@ export const InvestigationDetailPage: React.FC = () => {
         </div>
       )}
 
-            {/* =========================================================================
+      {/* =========================================================================
           VIEW B: TECHNICAL VIEW (Forensic Intelligence Report — 9 Sections)
          ========================================================================= */}
       {viewMode === 'technical' && (
-        <div className="space-y-8 animate-fadeIn text-slate-200">
+        <div className="space-y-8 animate-fadeIn text-[#4A3F4B]">
           {/* Forensic Header matching Attached HTML Report */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-3xl bg-[#111522] border border-indigo-500/30 shadow-xl">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-[24px] bg-white border border-[#ECE8F2] shadow-[0_8px_24px_rgba(22,19,31,0.05)]">
             <div>
-              <div className="text-2xl font-black text-white font-heading tracking-tight flex items-center gap-1.5">
+              <div className="text-2xl font-black text-[#16131F] font-heading tracking-tight flex items-center gap-1.5">
                 <span>Trust</span>
-                <span className="text-indigo-400">Sphere</span>
-                <span className="text-xs px-2.5 py-0.5 rounded-full bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 font-sans font-semibold ml-2">
+                <span className="text-[#7C5DFA]">Sphere</span>
+                <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#EDE9FE] text-[#7C5DFA] border border-[#DDD6FE] font-sans font-semibold ml-2">
                   Forensic Suite
                 </span>
               </div>
-              <div className="text-xs text-slate-400 mt-1">
+              <div className="text-xs text-[#806C79] mt-1">
                 Automated URL-First Shopping Intelligence Engine
               </div>
             </div>
             <div className="text-left sm:text-right space-y-1 text-xs">
               <div>
-                <span className="text-slate-400 font-mono">Investigation ID: </span>
-                <strong className="text-white font-mono">{report.investigation_id}</strong>
+                <span className="text-[#806C79] font-mono">Investigation ID: </span>
+                <strong className="text-[#16131F] font-mono">{report.investigation_id}</strong>
               </div>
               <div>
-                <span className="text-slate-400 font-mono">Generated: </span>
-                <strong className="text-slate-300 font-mono">{new Date().toLocaleString()}</strong>
+                <span className="text-[#806C79] font-mono">Generated: </span>
+                <strong className="text-[#4A3F4B] font-mono">{new Date().toLocaleString()}</strong>
               </div>
               <div className="pt-1">
                 <Button
@@ -1025,7 +1027,7 @@ export const InvestigationDetailPage: React.FC = () => {
                   size="sm"
                   onClick={() => window.print()}
                   leftIcon={<Printer className="w-3.5 h-3.5" />}
-                  className="bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border-indigo-500/30"
+                  className="bg-white border-[#ECE8F2] text-[#16131F] hover:bg-[#F9F8FC]"
                 >
                   Print / Save PDF
                 </Button>
@@ -1034,16 +1036,16 @@ export const InvestigationDetailPage: React.FC = () => {
           </div>
 
           {/* HERO SUMMARY CARD */}
-          <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-indigo-950/30 via-[#111522] to-[#151b2e] border border-indigo-500/30 shadow-xl space-y-6">
+          <div className="p-6 sm:p-8 rounded-[24px] bg-white border border-[#ECE8F2] shadow-[0_8px_24px_rgba(22,19,31,0.05)] space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
               <div>
-                <span className="inline-block text-[10px] font-mono font-bold uppercase tracking-wider text-indigo-300 bg-indigo-950/60 border border-indigo-500/30 px-3 py-1 rounded-full mb-2">
+                <span className="inline-block text-[10px] font-mono font-bold uppercase tracking-wider text-[#7C5DFA] bg-[#EDE9FE] border border-[#DDD6FE] px-3 py-1 rounded-full mb-2">
                   PROVENANCE: {s1.provenance || 'LIVE_STRUCTURED_PAGE'}
                 </span>
-                <h2 className="text-2xl sm:text-3xl font-extrabold text-white font-heading tracking-tight">
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-[#16131F] font-heading tracking-tight">
                   {cleanTitle}
                 </h2>
-                <div className="text-xs sm:text-sm text-slate-400 mt-1">
+                <div className="text-xs sm:text-sm text-[#806C79] mt-1">
                   {s1.brand} · {s1.category} · {s1.marketplace}
                 </div>
               </div>
@@ -1051,10 +1053,10 @@ export const InvestigationDetailPage: React.FC = () => {
                 <span
                   className={`inline-block text-xs font-bold uppercase tracking-wider px-3.5 py-1.5 rounded-full border ${
                     report.summary.overall_risk_tier === 'HIGH' || report.summary.overall_risk_tier === 'CRITICAL'
-                      ? 'bg-rose-950/60 text-rose-400 border-rose-500/40'
+                      ? 'bg-rose-50 text-rose-800 border-rose-200'
                       : report.summary.overall_risk_tier === 'MODERATE'
-                      ? 'bg-amber-950/60 text-amber-400 border-amber-500/40'
-                      : 'bg-emerald-950/60 text-emerald-400 border-emerald-500/40'
+                      ? 'bg-amber-50 text-amber-800 border-amber-200'
+                      : 'bg-emerald-50 text-emerald-800 border-emerald-200'
                   }`}
                 >
                   {report.summary.overall_risk_tier || 'LOW_RISK'} RISK
@@ -1064,58 +1066,58 @@ export const InvestigationDetailPage: React.FC = () => {
 
             {/* 4 KPI Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="p-4 rounded-2xl bg-[#0B0E17] border border-white/[0.08] space-y-1">
-                <div className="text-[10px] font-mono text-slate-400 uppercase font-semibold">
+              <div className="p-4 rounded-2xl bg-[#F9F8FC] border border-[#ECE8F2] space-y-1">
+                <div className="text-[10px] font-mono text-[#806C79] uppercase font-semibold">
                   Observed Listing Price
                 </div>
-                <div className="text-2xl font-black text-white font-heading">
+                <div className="text-2xl font-black text-[#16131F] font-heading">
                   {s1.observed_price_inr ? `₹${s1.observed_price_inr.toLocaleString('en-IN')}` : 'Price unavailable'}
                 </div>
-                <div className="text-xs text-slate-400">
+                <div className="text-xs text-[#806C79]">
                   {s1.claimed_mrp_inr ? `MRP: ₹${s1.claimed_mrp_inr.toLocaleString('en-IN')}` : 'MRP unlisted'} {s1.discount_percentage ? `(${s1.discount_percentage}% off)` : ''}
                 </div>
               </div>
 
-              <div className="p-4 rounded-2xl bg-[#0B0E17] border border-white/[0.08] space-y-1">
-                <div className="text-[10px] font-mono text-slate-400 uppercase font-semibold">
+              <div className="p-4 rounded-2xl bg-[#F9F8FC] border border-[#ECE8F2] space-y-1">
+                <div className="text-[10px] font-mono text-[#806C79] uppercase font-semibold">
                   Engine A: Trust Score
                 </div>
                 <div
                   className={`text-2xl font-black font-heading ${
                     report.summary.overall_trust_score >= 80
-                      ? 'text-emerald-400'
+                      ? 'text-emerald-700'
                       : report.summary.overall_trust_score >= 60
-                      ? 'text-amber-400'
-                      : 'text-rose-400'
+                      ? 'text-amber-700'
+                      : 'text-rose-700'
                   }`}
                 >
                   {report.summary.overall_trust_score}/100
                 </div>
-                <div className="text-xs text-slate-400">
+                <div className="text-xs text-[#806C79]">
                   Confidence: {Math.round((s4.confidence_score ?? 0.94) * 100)}%
                 </div>
               </div>
 
-              <div className="p-4 rounded-2xl bg-[#0B0E17] border border-white/[0.08] space-y-1">
-                <div className="text-[10px] font-mono text-slate-400 uppercase font-semibold">
+              <div className="p-4 rounded-2xl bg-[#F9F8FC] border border-[#ECE8F2] space-y-1">
+                <div className="text-[10px] font-mono text-[#806C79] uppercase font-semibold">
                   Engine B: Buying Suitability
                 </div>
-                <div className="text-2xl font-black text-indigo-300 font-heading">
+                <div className="text-2xl font-black text-[#7C5DFA] font-heading">
                   {s9.overall_suitability_score}/100
                 </div>
-                <div className="text-xs text-slate-400">
+                <div className="text-xs text-[#806C79]">
                   {s9.recommendation_tier || 'STRONG_OPTION'}
                 </div>
               </div>
 
-              <div className="p-4 rounded-2xl bg-[#0B0E17] border border-white/[0.08] space-y-1">
-                <div className="text-[10px] font-mono text-slate-400 uppercase font-semibold">
+              <div className="p-4 rounded-2xl bg-[#F9F8FC] border border-[#ECE8F2] space-y-1">
+                <div className="text-[10px] font-mono text-[#806C79] uppercase font-semibold">
                   NLP Review Satisfaction
                 </div>
-                <div className="text-2xl font-black text-emerald-400 font-heading">
+                <div className="text-2xl font-black text-emerald-700 font-heading">
                   {Math.round(s5.satisfaction_index ?? 85)}%
                 </div>
-                <div className="text-xs text-slate-400">
+                <div className="text-xs text-[#806C79]">
                   Aspect ABSA Positive Polarity
                 </div>
               </div>
@@ -1124,54 +1126,54 @@ export const InvestigationDetailPage: React.FC = () => {
 
           {/* SECTION 1: PRODUCT OVERVIEW & LISTING PROVENANCE */}
           <div className="space-y-3">
-            <h3 className="text-lg font-bold text-white font-heading flex items-center gap-2">
-              <Package className="w-5 h-5 text-indigo-400" />
+            <h3 className="text-lg font-bold text-[#16131F] font-heading flex items-center gap-2">
+              <Package className="w-5 h-5 text-[#7C5DFA]" />
               <span>Section 1: Product Overview & Listing Provenance</span>
             </h3>
-            <div className="rounded-2xl bg-[#111522] border border-white/[0.08] overflow-hidden">
+            <div className="rounded-2xl bg-white border border-[#ECE8F2] shadow-xs overflow-hidden">
               <table className="w-full text-left text-xs border-collapse">
                 <tbody>
-                  <tr className="border-b border-white/[0.06]">
-                    <td className="w-1/4 p-3.5 font-semibold text-slate-400 bg-white/[0.02]">Title</td>
-                    <td className="p-3.5 text-white font-medium">{cleanTitle}</td>
+                  <tr className="border-b border-[#ECE8F2]">
+                    <td className="w-1/4 p-3.5 font-semibold text-[#806C79] bg-[#F9F8FC]">Title</td>
+                    <td className="p-3.5 text-[#16131F] font-medium">{cleanTitle}</td>
                   </tr>
-                  <tr className="border-b border-white/[0.06]">
-                    <td className="p-3.5 font-semibold text-slate-400 bg-white/[0.02]">Brand / Manufacturer</td>
-                    <td className="p-3.5 text-white">{s1.brand}</td>
+                  <tr className="border-b border-[#ECE8F2]">
+                    <td className="p-3.5 font-semibold text-[#806C79] bg-[#F9F8FC]">Brand / Manufacturer</td>
+                    <td className="p-3.5 text-[#16131F]">{s1.brand}</td>
                   </tr>
-                  <tr className="border-b border-white/[0.06]">
-                    <td className="p-3.5 font-semibold text-slate-400 bg-white/[0.02]">Marketplace / Platform</td>
-                    <td className="p-3.5 text-white">{s1.marketplace}</td>
+                  <tr className="border-b border-[#ECE8F2]">
+                    <td className="p-3.5 font-semibold text-[#806C79] bg-[#F9F8FC]">Marketplace / Platform</td>
+                    <td className="p-3.5 text-[#16131F]">{s1.marketplace}</td>
                   </tr>
-                  <tr className="border-b border-white/[0.06]">
-                    <td className="p-3.5 font-semibold text-slate-400 bg-white/[0.02]">Identifier (ASIN / PID / SKU)</td>
-                    <td className="p-3.5 font-mono text-indigo-300">
+                  <tr className="border-b border-[#ECE8F2]">
+                    <td className="p-3.5 font-semibold text-[#806C79] bg-[#F9F8FC]">Identifier (ASIN / PID / SKU)</td>
+                    <td className="p-3.5 font-mono text-[#7C5DFA]">
                       {s1.sku_identifier || (s1 as any).sku_or_id || 'UNINDEXED_SKU'}
                     </td>
                   </tr>
-                  <tr className="border-b border-white/[0.06]">
-                    <td className="p-3.5 font-semibold text-slate-400 bg-white/[0.02]">Data Extraction Provenance</td>
+                  <tr className="border-b border-[#ECE8F2]">
+                    <td className="p-3.5 font-semibold text-[#806C79] bg-[#F9F8FC]">Data Extraction Provenance</td>
                     <td className="p-3.5">
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#EDE9FE] text-[#7C5DFA] border border-[#DDD6FE]">
                         {s1.provenance}
                       </span>
                     </td>
                   </tr>
                   <tr>
-                    <td className="p-3.5 font-semibold text-slate-400 bg-white/[0.02]">Listing URL</td>
+                    <td className="p-3.5 font-semibold text-[#806C79] bg-[#F9F8FC]">Listing URL</td>
                     <td className="p-3.5">
                       {s1.listing_url ? (
                         <a
                           href={s1.listing_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-indigo-400 hover:text-indigo-300 break-all flex items-center gap-1.5"
+                          className="text-[#7C5DFA] hover:text-[#7C5DFA] break-all flex items-center gap-1.5"
                         >
                           <span className="line-clamp-1">{s1.listing_url}</span>
                           <ExternalLink className="w-3.5 h-3.5 shrink-0" />
                         </a>
                       ) : (
-                        <span className="text-slate-500">Not provided</span>
+                        <span className="text-[#806C79]">Not provided</span>
                       )}
                     </td>
                   </tr>
@@ -1182,65 +1184,65 @@ export const InvestigationDetailPage: React.FC = () => {
 
           {/* SECTION 2: DOMAIN, LEGAL & SELLER AUTHENTICITY */}
           <div className="space-y-3">
-            <h3 className="text-lg font-bold text-white font-heading flex items-center gap-2">
-              <Globe className="w-5 h-5 text-indigo-400" />
+            <h3 className="text-lg font-bold text-[#16131F] font-heading flex items-center gap-2">
+              <Globe className="w-5 h-5 text-[#7C5DFA]" />
               <span>Section 2: Domain, Legal & Seller Authenticity</span>
             </h3>
-            <div className="p-6 rounded-2xl bg-[#111522] border border-white/[0.08] space-y-5">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/[0.06]">
+            <div className="p-6 rounded-2xl bg-white border border-[#ECE8F2] shadow-xs space-y-5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#ECE8F2]">
                 <div>
-                  <div className="text-base font-bold text-white flex items-center gap-2">
+                  <div className="text-base font-bold text-[#16131F] flex items-center gap-2">
                     <span>{s2.domain}</span>
                     {s2.is_https && (
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-950/60 text-emerald-400 border border-emerald-800">
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">
                         HTTPS / TLS 1.3
                       </span>
                     )}
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 font-bold">
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#EDE9FE] text-[#7C5DFA] border border-[#DDD6FE] font-bold">
                       {s2.trust_tier}
                     </span>
                   </div>
-                  <div className="text-xs text-slate-400 mt-0.5">
+                  <div className="text-xs text-[#806C79] mt-0.5">
                     {s2.registered_entity || s2.organization_identity || 'Official Registered Entity'}
                   </div>
                 </div>
-                <span className="text-xs font-bold text-emerald-400 bg-emerald-950/60 px-3 py-1 rounded-full border border-emerald-800">
+                <span className="text-xs font-bold text-emerald-700 bg-emerald-950/60 px-3 py-1 rounded-full border border-emerald-800">
                   Domain Trust: {s2.trust_score}/100
                 </span>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 rounded-xl bg-[#181D2E] border border-white/[0.06] space-y-2">
-                  <div className="text-xs font-bold text-white flex items-center gap-2">
-                    <Store className="w-4 h-4 text-indigo-400" />
+                <div className="p-4 rounded-xl bg-[#F9F8FC] border border-[#ECE8F2] space-y-2">
+                  <div className="text-xs font-bold text-[#16131F] flex items-center gap-2">
+                    <Store className="w-4 h-4 text-[#7C5DFA]" />
                     <span>Merchant & Fulfillment Governance</span>
                   </div>
-                  <div className="text-xs text-slate-300 space-y-1">
-                    <div><span className="text-slate-400">Merchant:</span> <strong className="text-white">{s3.seller_name}</strong></div>
-                    <div><span className="text-slate-400">Tier:</span> <span className="font-mono text-indigo-300">{s3.seller_tier}</span> · <span className="text-slate-400">Channel:</span> {s3.fulfillment_channel}</div>
-                    <div><span className="text-slate-400">Seller Score:</span> <span className="text-emerald-400 font-bold">{s3.seller_trust_score}/100</span> ({s3.risk_tier} RISK)</div>
+                  <div className="text-xs text-[#4A3F4B] space-y-1">
+                    <div><span className="text-[#806C79]">Merchant:</span> <strong className="text-[#16131F]">{s3.seller_name}</strong></div>
+                    <div><span className="text-[#806C79]">Tier:</span> <span className="font-mono text-[#7C5DFA]">{s3.seller_tier}</span> · <span className="text-[#806C79]">Channel:</span> {s3.fulfillment_channel}</div>
+                    <div><span className="text-[#806C79]">Seller Score:</span> <span className="text-emerald-700 font-bold">{s3.seller_trust_score}/100</span> ({s3.risk_tier} RISK)</div>
                   </div>
                 </div>
 
-                <div className="p-4 rounded-xl bg-[#181D2E] border border-white/[0.06] space-y-2">
-                  <div className="text-xs font-bold text-white flex items-center gap-2">
-                    <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                <div className="p-4 rounded-xl bg-[#F9F8FC] border border-[#ECE8F2] space-y-2">
+                  <div className="text-xs font-bold text-[#16131F] flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-emerald-700" />
                     <span>Statutory & Pricing Integrity</span>
                   </div>
-                  <div className="text-xs text-slate-300 space-y-1">
+                  <div className="text-xs text-[#4A3F4B] space-y-1">
                     <div>
-                      <span className="text-slate-400">Corridor Status: </span>
-                      <span className="text-emerald-400 font-semibold font-mono">
+                      <span className="text-[#806C79]">Corridor Status: </span>
+                      <span className="text-emerald-700 font-semibold font-mono">
                         {s3.pricing_integrity?.category_corridor_status || 'WITHIN_GENUINE_RETAIL_CORRIDOR'}
                       </span>
                     </div>
-                    <div><span className="text-slate-400">Observed Discount:</span> {s3.pricing_integrity?.discount_percentage ?? s1.discount_percentage}% (Normal Brand Range)</div>
-                    <div><span className="text-slate-400">Consumer Rules:</span> Statutory Grievance Redressal & Standard Return Active</div>
+                    <div><span className="text-[#806C79]">Observed Discount:</span> {s3.pricing_integrity?.discount_percentage ?? s1.discount_percentage}% (Normal Brand Range)</div>
+                    <div><span className="text-[#806C79]">Consumer Rules:</span> Statutory Grievance Redressal & Standard Return Active</div>
                   </div>
                 </div>
               </div>
 
-              <p className="text-xs text-slate-300 leading-relaxed border-t border-white/[0.06] pt-3">
+              <p className="text-xs text-[#4A3F4B] leading-relaxed border-t border-[#ECE8F2] pt-3">
                 {s2.explanation}
               </p>
             </div>
@@ -1248,61 +1250,61 @@ export const InvestigationDetailPage: React.FC = () => {
 
           {/* SECTION 3: SCIENTIFIC VISUALIZATIONS & SIGNAL CORROBORATION */}
           <div className="space-y-4">
-            <h3 className="text-lg font-bold text-white font-heading flex items-center gap-2">
-              <Cpu className="w-5 h-5 text-indigo-400" />
+            <h3 className="text-lg font-bold text-[#16131F] font-heading flex items-center gap-2">
+              <Cpu className="w-5 h-5 text-[#7C5DFA]" />
               <span>Section 3: Scientific Visualizations & Signal Corroboration</span>
             </h3>
 
             {/* Side-by-Side Scientific Graphs */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Left Graph: Price vs Anomaly Risk Scatter Plot */}
-              <div className="p-5 rounded-2xl bg-[#111522] border border-white/[0.08] space-y-3">
-                <div className="flex items-center justify-between pb-2 border-b border-white/[0.06]">
-                  <span className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
-                    <TrendingUp className="w-4 h-4 text-emerald-400" />
+              <div className="p-5 rounded-2xl bg-white border border-[#ECE8F2] shadow-xs space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-[#ECE8F2]">
+                  <span className="text-xs font-bold text-[#16131F] uppercase tracking-wider flex items-center gap-1.5">
+                    <TrendingUp className="w-4 h-4 text-emerald-700" />
                     <span>Price vs. Anomaly Risk Corridor</span>
                   </span>
-                  <span className="text-[10px] font-mono text-slate-400">Category Cluster</span>
+                  <span className="text-[10px] font-mono text-[#806C79]">Category Cluster</span>
                 </div>
                 <div className="h-64 w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <ScatterChart margin={{ top: 10, right: 20, left: -10, bottom: 10 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#222B42" />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#ECE8F2" />
                       <XAxis
                         type="number"
                         dataKey="price"
                         name="Price"
                         unit="₹"
-                        tick={{ fill: '#94A3B8', fontSize: 10 }}
+                        tick={{ fill: '#806C79', fontSize: 10 }}
                         domain={['auto', 'auto']}
                       />
                       <YAxis
                         type="number"
                         dataKey="anomalyScore"
                         name="Anomaly Score"
-                        tick={{ fill: '#94A3B8', fontSize: 10 }}
+                        tick={{ fill: '#806C79', fontSize: 10 }}
                         domain={[0, 1.0]}
                       />
                       <Tooltip
                         cursor={{ strokeDasharray: '3 3' }}
-                        contentStyle={{ backgroundColor: '#111522', borderColor: '#2A334D', borderRadius: '12px', fontSize: '11px', color: '#fff' }}
+                        contentStyle={{ backgroundColor: '#FFFFFF', borderColor: '#ECE8F2', borderRadius: '12px', fontSize: '11px', color: '#16131F', boxShadow: '0 8px 24px rgba(22, 19, 31, 0.08)' }}
                       />
-                      <Legend wrapperStyle={{ fontSize: '11px', color: '#94A3B8', paddingTop: '10px' }} />
-                      <Scatter name="Peer Listings in Category" data={scatterPeers} fill="#64748b" />
-                      <Scatter name="This Investigated Product" data={scatterCurrent} fill="#34d399" shape="circle" />
+                      <Legend wrapperStyle={{ fontSize: '11px', color: '#4A3F4B', paddingTop: '10px' }} />
+                      <Scatter name="Peer Listings in Category" data={scatterPeers} fill="#806C79" />
+                      <Scatter name="This Investigated Product" data={scatterCurrent} fill="#10B981" shape="circle" />
                     </ScatterChart>
                   </ResponsiveContainer>
                 </div>
               </div>
 
               {/* Right Graph: Aspect-Based Sentiment Polarity (NLP ABSA) matching Image 2 */}
-              <div className="p-5 rounded-2xl bg-[#111522] border border-white/[0.08] space-y-3">
-                <div className="flex items-center justify-between pb-2 border-b border-white/[0.06]">
-                  <span className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
-                    <MessageSquare className="w-4 h-4 text-indigo-400" />
+              <div className="p-5 rounded-2xl bg-white border border-[#ECE8F2] shadow-xs space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-[#ECE8F2]">
+                  <span className="text-xs font-bold text-[#16131F] uppercase tracking-wider flex items-center gap-1.5">
+                    <MessageSquare className="w-4 h-4 text-[#7C5DFA]" />
                     <span>Aspect-Based Sentiment (NLP ABSA)</span>
                   </span>
-                  <span className="text-[10px] font-mono text-slate-400">
+                  <span className="text-[10px] font-mono text-[#806C79]">
                     {s5.reviews_analyzed_count || 128} Reviews Analyzed
                   </span>
                 </div>
@@ -1313,29 +1315,29 @@ export const InvestigationDetailPage: React.FC = () => {
                       data={absaAspectData}
                       margin={{ top: 10, right: 30, left: 35, bottom: 5 }}
                     >
-                      <CartesianGrid strokeDasharray="3 3" stroke="#222B42" horizontal={false} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#ECE8F2" horizontal={false} />
                       <XAxis
                         type="number"
                         domain={[0, 100]}
                         unit="%"
                         ticks={[0, 25, 50, 75, 100]}
-                        tick={{ fill: '#94A3B8', fontSize: 10 }}
+                        tick={{ fill: '#806C79', fontSize: 10 }}
                       />
                       <YAxis
                         type="category"
                         dataKey="aspect"
                         width={135}
-                        tick={{ fill: '#CBD5E1', fontSize: 10, fontWeight: 500 }}
+                        tick={{ fill: '#4A3F4B', fontSize: 10, fontWeight: 500 }}
                       />
                       <Tooltip
-                        cursor={{ fill: 'rgba(255,255,255,0.03)' }}
+                        cursor={{ fill: 'rgba(22,19,31,0.03)' }}
                         content={({ active, payload }) => {
                           if (active && payload && payload.length) {
                             const data = payload[0].payload;
                             return (
-                              <div className="bg-[#101424] border border-indigo-500/50 rounded-xl px-3.5 py-2.5 shadow-2xl">
-                                <div className="text-xs font-bold text-white leading-tight">{data.aspect}</div>
-                                <div className="text-xs text-slate-300 mt-1 font-mono">
+                              <div className="bg-white border border-[#ECE8F2] rounded-xl px-3.5 py-2.5 shadow-xl">
+                                <div className="text-xs font-bold text-[#16131F] leading-tight">{data.aspect}</div>
+                                <div className="text-xs text-[#4A3F4B] mt-1 font-mono">
                                   Satisfaction : {data.Satisfaction}%
                                 </div>
                               </div>
@@ -1359,17 +1361,17 @@ export const InvestigationDetailPage: React.FC = () => {
             </div>
 
             {/* Signal Corroboration Summary Card */}
-            <div className="p-5 rounded-2xl bg-[#111522] border border-white/[0.08] space-y-3">
+            <div className="p-5 rounded-2xl bg-white border border-[#ECE8F2] shadow-xs space-y-3">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <div className="text-xs font-bold text-white uppercase tracking-wider">
+                  <div className="text-xs font-bold text-[#16131F] uppercase tracking-wider">
                     Modality Signal Verification:
                   </div>
-                  <div className="text-xs text-slate-400 mt-0.5">
+                  <div className="text-xs text-[#806C79] mt-0.5">
                     Evaluated: Price Anomaly Engine, NLP ABSA Sentiment, Seller Governance Graph, Statutory Packaging OCR
                   </div>
                 </div>
-                <span className="text-[10px] font-mono px-2.5 py-1 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 font-bold shrink-0">
+                <span className="text-[10px] font-mono px-2.5 py-1 rounded-full bg-[#EDE9FE] text-[#7C5DFA] border border-[#DDD6FE] font-bold shrink-0">
                   Zero-Penalty Guarantee Active
                 </span>
               </div>
@@ -1378,8 +1380,8 @@ export const InvestigationDetailPage: React.FC = () => {
               {s4.defect_matrix && s4.defect_matrix.length > 0 ? (
                 <ul className="space-y-1.5 text-xs pt-1">
                   {s4.defect_matrix.map((defect, idx) => (
-                    <li key={idx} className="flex items-start gap-2 text-rose-300">
-                      <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                    <li key={idx} className="flex items-start gap-2 text-rose-700">
+                      <AlertTriangle className="w-4 h-4 text-rose-700 shrink-0 mt-0.5" />
                       <div>
                         <strong>[{defect.severity}] {defect.title}: </strong>
                         <span>{defect.description}</span>
@@ -1389,17 +1391,17 @@ export const InvestigationDetailPage: React.FC = () => {
                 </ul>
               ) : (
                 <div className="p-3 rounded-xl bg-emerald-950/30 border border-emerald-800/40 text-xs text-emerald-300 flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <CheckCircle className="w-4 h-4 text-emerald-700 shrink-0" />
                   <span>No critical risk blockers detected across active modalities. Normal retail variance.</span>
                 </div>
               )}
 
               {/* Aspect Satisfaction Quick-Pills */}
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-2 border-t border-white/[0.06]">
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-2 border-t border-[#ECE8F2]">
                 {s5.aspects.map((asp, idx) => (
-                  <div key={idx} className="p-2.5 rounded-lg bg-[#181D2E] border border-white/[0.06] text-center">
-                    <div className="text-[10px] text-slate-400 truncate">{asp.display_name}</div>
-                    <div className="text-sm font-bold text-emerald-400">
+                  <div key={idx} className="p-2.5 rounded-lg bg-[#F9F8FC] border border-[#ECE8F2] text-center">
+                    <div className="text-[10px] text-[#806C79] truncate">{asp.display_name}</div>
+                    <div className="text-sm font-bold text-emerald-700">
                       {asp.satisfaction_pct ?? Math.round((asp.sentiment_score ?? 0.8) * 100)}%
                     </div>
                   </div>
@@ -1410,71 +1412,71 @@ export const InvestigationDetailPage: React.FC = () => {
 
           {/* SECTION 4: COMPUTER VISION & DEEP VISUAL INTELLIGENCE */}
           <div className="space-y-4">
-            <h3 className="text-lg font-bold text-white font-heading flex items-center gap-2">
-              <Eye className="w-5 h-5 text-indigo-400" />
+            <h3 className="text-lg font-bold text-[#16131F] font-heading flex items-center gap-2">
+              <Eye className="w-5 h-5 text-[#7C5DFA]" />
               <span>Section 4: Computer Vision & Deep Visual Intelligence</span>
             </h3>
 
-            <div className="p-6 rounded-2xl bg-[#111522] border border-white/[0.08] space-y-6">
+            <div className="p-6 rounded-2xl bg-white border border-[#ECE8F2] shadow-xs space-y-6">
               {/* Architecture & Pipeline Summary */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="p-4 rounded-xl bg-[#181D2E] border border-white/[0.06] space-y-2">
+                <div className="p-4 rounded-xl bg-[#F9F8FC] border border-[#ECE8F2] space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-mono text-slate-400 uppercase font-semibold">1. Image Preprocessing</span>
-                    <span className="text-[10px] font-mono text-emerald-400 font-bold">224×224 RGB</span>
+                    <span className="text-[10px] font-mono text-[#806C79] uppercase font-semibold">1. Image Preprocessing</span>
+                    <span className="text-[10px] font-mono text-emerald-700 font-bold">224×224 RGB</span>
                   </div>
-                  <div className="text-sm font-bold text-white flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-emerald-400" />
+                  <div className="text-sm font-bold text-[#16131F] flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-emerald-700" />
                     <span>Laplacian Sharpness: 142.8</span>
                   </div>
-                  <p className="text-[11px] text-slate-400 leading-relaxed">
+                  <p className="text-[11px] text-[#806C79] leading-relaxed">
                     Normalized input with ImageNet mean/std. Variance of Laplacian exceeds threshold (&gt;100) indicating sharp resolution with no motion blur.
                   </p>
                 </div>
 
-                <div className="p-4 rounded-xl bg-[#181D2E] border border-white/[0.06] space-y-2">
+                <div className="p-4 rounded-xl bg-[#F9F8FC] border border-[#ECE8F2] space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-mono text-slate-400 uppercase font-semibold">2. Feature Extractor</span>
-                    <span className="text-[10px] font-mono text-indigo-400 font-bold">ResNet-50 / EfficientNet</span>
+                    <span className="text-[10px] font-mono text-[#806C79] uppercase font-semibold">2. Feature Extractor</span>
+                    <span className="text-[10px] font-mono text-[#7C5DFA] font-bold">ResNet-50 / EfficientNet</span>
                   </div>
-                  <div className="text-sm font-bold text-white flex items-center gap-2">
-                    <Layers className="w-4 h-4 text-indigo-400" />
+                  <div className="text-sm font-bold text-[#16131F] flex items-center gap-2">
+                    <Layers className="w-4 h-4 text-[#7C5DFA]" />
                     <span>512-Dim Latent Embeddings</span>
                   </div>
-                  <p className="text-[11px] text-slate-400 leading-relaxed">
+                  <p className="text-[11px] text-[#806C79] leading-relaxed">
                     Deep convolutional feature representation extracted via global average pooling layer. Inference latency benchmarked at ~42ms.
                   </p>
                 </div>
 
-                <div className="p-4 rounded-xl bg-[#181D2E] border border-white/[0.06] space-y-2">
+                <div className="p-4 rounded-xl bg-[#F9F8FC] border border-[#ECE8F2] space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-mono text-slate-400 uppercase font-semibold">3. Visual Similarity</span>
-                    <span className="text-[10px] font-mono text-emerald-400 font-bold">Cosine Metric</span>
+                    <span className="text-[10px] font-mono text-[#806C79] uppercase font-semibold">3. Visual Similarity</span>
+                    <span className="text-[10px] font-mono text-emerald-700 font-bold">Cosine Metric</span>
                   </div>
-                  <div className="text-sm font-bold text-emerald-400 flex items-center gap-2">
-                    <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                  <div className="text-sm font-bold text-emerald-700 flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-emerald-700" />
                     <span>96.4% Master Match</span>
                   </div>
-                  <p className="text-[11px] text-slate-400 leading-relaxed">
+                  <p className="text-[11px] text-[#806C79] leading-relaxed">
                     Evaluated cosine similarity against authenticated brand image baselines across Amazon India, Flipkart, and Myntra.
                   </p>
                 </div>
               </div>
 
               {/* Cross-Marketplace Visual Corroboration Table */}
-              <div className="space-y-2 pt-2 border-t border-white/[0.06]">
+              <div className="space-y-2 pt-2 border-t border-[#ECE8F2]">
                 <div className="flex items-center justify-between">
-                  <div className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
-                    <ScanSearch className="w-4 h-4 text-indigo-400" />
+                  <div className="text-xs font-bold text-[#16131F] uppercase tracking-wider flex items-center gap-1.5">
+                    <ScanSearch className="w-4 h-4 text-[#7C5DFA]" />
                     <span>Cross-Marketplace Visual Corroboration & Near-Duplicate Analysis</span>
                   </div>
-                  <span className="text-[10px] font-mono text-slate-400">Authenticated Image Database</span>
+                  <span className="text-[10px] font-mono text-[#806C79]">Authenticated Image Database</span>
                 </div>
 
-                <div className="rounded-xl border border-white/[0.08] overflow-hidden">
+                <div className="rounded-xl border border-[#ECE8F2] overflow-hidden">
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
-                      <tr className="bg-white/[0.04] border-b border-white/[0.08] text-slate-400 font-mono uppercase text-[10px]">
+                      <tr className="bg-white/[0.04] border-b border-[#ECE8F2] text-[#806C79] font-mono uppercase text-[10px]">
                         <th className="p-3">Reference Source</th>
                         <th className="p-3">Matched Feature Traits</th>
                         <th className="p-3">Cosine Similarity</th>
@@ -1483,35 +1485,35 @@ export const InvestigationDetailPage: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      <tr className="border-b border-white/[0.06] hover:bg-white/[0.02]">
-                        <td className="p-3 font-semibold text-white">Flipkart Brand Master</td>
-                        <td className="p-3 text-slate-300">Silhouette geometry, upper texture, logo placement alignment</td>
-                        <td className="p-3 font-bold text-emerald-400 font-mono">98.2%</td>
-                        <td className="p-3 text-slate-300">Exact Duplicate Catalog Photo</td>
+                      <tr className="border-b border-[#ECE8F2] hover:bg-[#F9F8FC]">
+                        <td className="p-3 font-semibold text-[#16131F]">Flipkart Brand Master</td>
+                        <td className="p-3 text-[#4A3F4B]">Silhouette geometry, upper texture, logo placement alignment</td>
+                        <td className="p-3 font-bold text-emerald-700 font-mono">98.2%</td>
+                        <td className="p-3 text-[#4A3F4B]">Exact Duplicate Catalog Photo</td>
                         <td className="p-3">
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-950/60 text-emerald-400 border border-emerald-800">
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
                             Verified Master
                           </span>
                         </td>
                       </tr>
-                      <tr className="border-b border-white/[0.06] hover:bg-white/[0.02]">
-                        <td className="p-3 font-semibold text-white">Amazon Brand Flagship</td>
-                        <td className="p-3 text-slate-300">Outer material finish, seam stitching, label typography</td>
-                        <td className="p-3 font-bold text-emerald-400 font-mono">96.4%</td>
-                        <td className="p-3 text-slate-300">Near-Duplicate Variant Angle</td>
+                      <tr className="border-b border-[#ECE8F2] hover:bg-[#F9F8FC]">
+                        <td className="p-3 font-semibold text-[#16131F]">Amazon Brand Flagship</td>
+                        <td className="p-3 text-[#4A3F4B]">Outer material finish, seam stitching, label typography</td>
+                        <td className="p-3 font-bold text-emerald-700 font-mono">96.4%</td>
+                        <td className="p-3 text-[#4A3F4B]">Near-Duplicate Variant Angle</td>
                         <td className="p-3">
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-950/60 text-emerald-400 border border-emerald-800">
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
                             Verified Match
                           </span>
                         </td>
                       </tr>
-                      <tr className="border-b border-white/[0.06] hover:bg-white/[0.02]">
-                        <td className="p-3 font-semibold text-white">Myntra Brand Catalog</td>
-                        <td className="p-3 text-slate-300">Packaging box graphics, barcode placement, contour match</td>
-                        <td className="p-3 font-bold text-emerald-400 font-mono">95.8%</td>
-                        <td className="p-3 text-slate-300">Near-Duplicate Studio Photo</td>
+                      <tr className="border-b border-[#ECE8F2] hover:bg-[#F9F8FC]">
+                        <td className="p-3 font-semibold text-[#16131F]">Myntra Brand Catalog</td>
+                        <td className="p-3 text-[#4A3F4B]">Packaging box graphics, barcode placement, contour match</td>
+                        <td className="p-3 font-bold text-emerald-700 font-mono">95.8%</td>
+                        <td className="p-3 text-[#4A3F4B]">Near-Duplicate Studio Photo</td>
                         <td className="p-3">
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-950/60 text-emerald-400 border border-emerald-800">
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
                             Verified Match
                           </span>
                         </td>
@@ -1525,73 +1527,73 @@ export const InvestigationDetailPage: React.FC = () => {
 
           {/* SECTION 5: PACKAGING OCR & MULTIMODAL CONCORDANCE */}
           <div className="space-y-4">
-            <h3 className="text-lg font-bold text-white font-heading flex items-center gap-2">
-              <FileCheck className="w-5 h-5 text-indigo-400" />
+            <h3 className="text-lg font-bold text-[#16131F] font-heading flex items-center gap-2">
+              <FileCheck className="w-5 h-5 text-[#7C5DFA]" />
               <span>Section 5: Packaging Optical Character Recognition (OCR) & Multimodal Agreement</span>
             </h3>
 
-            <div className="p-6 rounded-2xl bg-[#111522] border border-white/[0.08] space-y-6">
+            <div className="p-6 rounded-2xl bg-white border border-[#ECE8F2] shadow-xs space-y-6">
               {/* OCR Statutory Declarations */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 rounded-xl bg-[#181D2E] border border-white/[0.06] space-y-3">
+                <div className="p-4 rounded-xl bg-[#F9F8FC] border border-[#ECE8F2] space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                      <FileText className="w-4 h-4 text-indigo-400" />
+                    <span className="text-xs font-bold text-[#16131F] uppercase tracking-wider flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-[#7C5DFA]" />
                       <span>Statutory Packaging Declarations</span>
                     </span>
-                    <span className="text-[10px] font-mono text-emerald-400 font-bold bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800">
+                    <span className="text-[10px] font-mono text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
                       OCR Confidence: 94.6%
                     </span>
                   </div>
 
                   <div className="space-y-2 text-xs">
-                    <div className="flex items-start justify-between py-1 border-b border-white/[0.04]">
-                      <span className="text-slate-400 font-mono">MRP Declaration:</span>
-                      <span className="font-semibold text-white">{s1.claimed_mrp_inr ? `₹${s1.claimed_mrp_inr.toLocaleString('en-IN')}` : 'MRP Declared'} (Matches listing claims)</span>
+                    <div className="flex items-start justify-between py-1 border-b border-[#ECE8F2]">
+                      <span className="text-[#806C79] font-mono">MRP Declaration:</span>
+                      <span className="font-semibold text-[#16131F]">{s1.claimed_mrp_inr ? `₹${s1.claimed_mrp_inr.toLocaleString('en-IN')}` : 'MRP Declared'} (Matches listing claims)</span>
                     </div>
-                    <div className="flex items-start justify-between py-1 border-b border-white/[0.04]">
-                      <span className="text-slate-400 font-mono">Net Quantity:</span>
-                      <span className="font-semibold text-white">1 Unit / Standard retail pack</span>
+                    <div className="flex items-start justify-between py-1 border-b border-[#ECE8F2]">
+                      <span className="text-[#806C79] font-mono">Net Quantity:</span>
+                      <span className="font-semibold text-[#16131F]">1 Unit / Standard retail pack</span>
                     </div>
-                    <div className="flex items-start justify-between py-1 border-b border-white/[0.04]">
-                      <span className="text-slate-400 font-mono">Batch / Lot Code:</span>
-                      <span className="font-semibold text-emerald-400 font-mono">DM-0829001 (Authentic sequence)</span>
+                    <div className="flex items-start justify-between py-1 border-b border-[#ECE8F2]">
+                      <span className="text-[#806C79] font-mono">Batch / Lot Code:</span>
+                      <span className="font-semibold text-emerald-700 font-mono">DM-0829001 (Authentic sequence)</span>
                     </div>
                     <div className="flex items-start justify-between py-1">
-                      <span className="text-slate-400 font-mono">Legal Compliance:</span>
-                      <span className="font-semibold text-emerald-400">Legal Metrology (Packaged Commodities) Rules 2011</span>
+                      <span className="text-[#806C79] font-mono">Legal Compliance:</span>
+                      <span className="font-semibold text-emerald-700">Legal Metrology (Packaged Commodities) Rules 2011</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Multimodal Agreement Index */}
-                <div className="p-4 rounded-xl bg-[#181D2E] border border-white/[0.06] space-y-3">
+                <div className="p-4 rounded-xl bg-[#F9F8FC] border border-[#ECE8F2] space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                      <Layers className="w-4 h-4 text-indigo-400" />
+                    <span className="text-xs font-bold text-[#16131F] uppercase tracking-wider flex items-center gap-2">
+                      <Layers className="w-4 h-4 text-[#7C5DFA]" />
                       <span>Multimodal Concordance & Invariants</span>
                     </span>
-                    <span className="text-[10px] font-mono text-indigo-300 font-bold bg-indigo-950/60 px-2 py-0.5 rounded border border-indigo-800">
+                    <span className="text-[10px] font-mono text-[#7C5DFA] font-bold bg-[#EDE9FE] px-2 py-0.5 rounded border border-[#DDD6FE]">
                       Agreement Index: 93.8%
                     </span>
                   </div>
 
                   <div className="space-y-2 text-xs">
-                    <div className="flex items-center justify-between py-1 border-b border-white/[0.04]">
-                      <span className="text-slate-400">1. Price Corridor Modality:</span>
-                      <span className="text-emerald-400 font-mono font-semibold">Z-Score: -0.42 (Concordant)</span>
+                    <div className="flex items-center justify-between py-1 border-b border-[#ECE8F2]">
+                      <span className="text-[#806C79]">1. Price Corridor Modality:</span>
+                      <span className="text-emerald-700 font-mono font-semibold">Z-Score: -0.42 (Concordant)</span>
                     </div>
-                    <div className="flex items-center justify-between py-1 border-b border-white/[0.04]">
-                      <span className="text-slate-400">2. Review NLP ABSA Modality:</span>
-                      <span className="text-emerald-400 font-mono font-semibold">Satisfaction: {s5.satisfaction_index || 85}% (Concordant)</span>
+                    <div className="flex items-center justify-between py-1 border-b border-[#ECE8F2]">
+                      <span className="text-[#806C79]">2. Review NLP ABSA Modality:</span>
+                      <span className="text-emerald-700 font-mono font-semibold">Satisfaction: {s5.satisfaction_index || 85}% (Concordant)</span>
                     </div>
-                    <div className="flex items-center justify-between py-1 border-b border-white/[0.04]">
-                      <span className="text-slate-400">3. Computer Vision Modality:</span>
-                      <span className="text-emerald-400 font-mono font-semibold">Cosine: 96.4% (Concordant)</span>
+                    <div className="flex items-center justify-between py-1 border-b border-[#ECE8F2]">
+                      <span className="text-[#806C79]">3. Computer Vision Modality:</span>
+                      <span className="text-emerald-700 font-mono font-semibold">Cosine: 96.4% (Concordant)</span>
                     </div>
                     <div className="flex items-center justify-between py-1">
-                      <span className="text-slate-400">4. Zero-Penalty Invariant:</span>
-                      <span className="text-emerald-400 font-semibold">Verified Active (No False Positives)</span>
+                      <span className="text-[#806C79]">4. Zero-Penalty Invariant:</span>
+                      <span className="text-emerald-700 font-semibold">Verified Active (No False Positives)</span>
                     </div>
                   </div>
                 </div>
@@ -1601,16 +1603,16 @@ export const InvestigationDetailPage: React.FC = () => {
 
           {/* SECTION 6: BUYING VERDICT & DOORSTEP ACTION PLAN */}
           <div className="space-y-3">
-            <h3 className="text-lg font-bold text-white font-heading flex items-center gap-2">
-              <ShieldCheck className="w-5 h-5 text-indigo-400" />
+            <h3 className="text-lg font-bold text-[#16131F] font-heading flex items-center gap-2">
+              <ShieldCheck className="w-5 h-5 text-[#7C5DFA]" />
               <span>Section 6: Buying Verdict & Doorstep Action Plan</span>
             </h3>
-            <div className="p-6 sm:p-7 rounded-2xl bg-[#111522] border-2 border-indigo-500/40 shadow-xl space-y-6">
+            <div className="p-6 sm:p-7 rounded-[24px] bg-white border-2 border-[#ECE8F2] shadow-[0_8px_24px_rgba(22,19,31,0.05)] space-y-6">
               <div>
-                <h4 className="text-2xl font-bold text-white font-heading">
+                <h4 className="text-2xl font-bold text-[#16131F] font-heading">
                   {s9.verdict_title || 'Strong Buying Option'}
                 </h4>
-                <p className="text-xs sm:text-sm text-slate-300 mt-1 leading-relaxed">
+                <p className="text-xs sm:text-sm text-[#4A3F4B] mt-1 leading-relaxed">
                   {s9.summary_reasoning}
                 </p>
               </div>
@@ -1618,13 +1620,13 @@ export const InvestigationDetailPage: React.FC = () => {
               {/* Reasons Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
                 <div className="space-y-2">
-                  <div className="text-xs font-bold text-emerald-400 uppercase tracking-wider">
+                  <div className="text-xs font-bold text-emerald-700 uppercase tracking-wider">
                     Reasons to Consider:
                   </div>
-                  <ul className="space-y-1.5 text-xs text-slate-300">
+                  <ul className="space-y-1.5 text-xs text-[#4A3F4B]">
                     {s9.reasons_to_consider.map((reason, idx) => (
                       <li key={idx} className="flex items-start gap-2">
-                        <span className="text-emerald-400 font-bold">•</span>
+                        <span className="text-emerald-700 font-bold">•</span>
                         <span>{reason}</span>
                       </li>
                     ))}
@@ -1632,20 +1634,20 @@ export const InvestigationDetailPage: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <div className="text-xs font-bold text-rose-400 uppercase tracking-wider">
+                  <div className="text-xs font-bold text-rose-700 uppercase tracking-wider">
                     Reasons for Caution:
                   </div>
                   {s9.reasons_for_caution && s9.reasons_for_caution.length > 0 ? (
-                    <ul className="space-y-1.5 text-xs text-slate-300">
+                    <ul className="space-y-1.5 text-xs text-[#4A3F4B]">
                       {s9.reasons_for_caution.map((reason, idx) => (
                         <li key={idx} className="flex items-start gap-2">
-                          <span className="text-rose-400 font-bold">•</span>
+                          <span className="text-rose-700 font-bold">•</span>
                           <span>{reason}</span>
                         </li>
                       ))}
                     </ul>
                   ) : (
-                    <p className="text-xs text-slate-500 italic">
+                    <p className="text-xs text-[#806C79] italic">
                       No explicit merchant or listing integrity red flags detected.
                     </p>
                   )}
@@ -1653,9 +1655,9 @@ export const InvestigationDetailPage: React.FC = () => {
               </div>
 
               {/* Doorstep Verification Checklist */}
-              <div className="pt-4 border-t border-white/[0.08] space-y-3">
-                <div className="text-xs font-bold text-white flex items-center gap-2 uppercase tracking-wider">
-                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
+              <div className="pt-4 border-t border-[#ECE8F2] space-y-3">
+                <div className="text-xs font-bold text-[#16131F] flex items-center gap-2 uppercase tracking-wider">
+                  <ShieldCheck className="w-4 h-4 text-emerald-700" />
                   <span>Doorstep Verification Checklist (Consumer Protection Protocol):</span>
                 </div>
                 <div className="space-y-2.5">
@@ -1665,11 +1667,11 @@ export const InvestigationDetailPage: React.FC = () => {
                     'Verify brand serial number or anti-counterfeit QR code using the official brand authenticity portal.',
                     'For high-value items, capture continuous unboxing video from package receipt.',
                   ]).map((step, idx) => (
-                    <div key={idx} className="flex items-start gap-3 p-3 rounded-xl bg-[#181D2E] border border-white/[0.06]">
-                      <div className="w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[11px] font-bold shrink-0 mt-0.5">
+                    <div key={idx} className="flex items-start gap-3 p-3 rounded-xl bg-[#F9F8FC] border border-[#ECE8F2]">
+                      <div className="w-5 h-5 rounded-full bg-[#7C5DFA] text-[#16131F] flex items-center justify-center text-[11px] font-bold shrink-0 mt-0.5">
                         {idx + 1}
                       </div>
-                      <div className="text-xs text-slate-300 leading-relaxed">{step}</div>
+                      <div className="text-xs text-[#4A3F4B] leading-relaxed">{step}</div>
                     </div>
                   ))}
                 </div>
@@ -1680,7 +1682,7 @@ export const InvestigationDetailPage: React.FC = () => {
       )}
 
       {/* Standing Honesty Footer */}
-      <div className="text-center text-xs text-slate-500 font-medium py-4">
+      <div className="text-center text-xs text-[#806C79] font-medium py-4">
         Based on anomaly signals from the data provided. Not a guarantee of authenticity.
       </div>
 

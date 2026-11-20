@@ -131,45 +131,45 @@ export const AssistantPage: React.FC = () => {
   return (
     <div className="space-y-6 animate-fadeIn pb-12 max-w-4xl mx-auto">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/[0.08]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#ECE8F2]">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white font-heading flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-indigo-400" />
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#16131F] font-heading flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-[#7C5DFA]" />
             <span>TrustSphere Intelligence Assistant</span>
           </h1>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-[#806C79] mt-0.5">
             Grounded multimodal reasoning, pricing corridor analysis, and evidence synthesis across marketplace investigations
           </p>
         </div>
 
-        <div className="flex items-center gap-2 text-xs text-slate-300 bg-[#181D2E] px-3 py-1.5 rounded-xl border border-white/[0.08]">
-          <ShieldCheck className="w-4 h-4 text-emerald-400" />
+        <div className="flex items-center gap-2 text-xs text-emerald-800 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200">
+          <ShieldCheck className="w-4 h-4 text-emerald-600" />
           <span>Knowledge-Grounded Reasoning Active</span>
         </div>
       </div>
 
-      {/* Full-Width Conversational Canvas (Left context panel completely removed per UX correction) */}
-      <div className="bg-[#111522] rounded-3xl border border-white/[0.08] shadow-2xl flex flex-col h-[700px] overflow-hidden">
+      {/* Full-Width Conversational Canvas */}
+      <div className="bg-white rounded-[24px] border border-[#ECE8F2] shadow-[0_8px_24px_rgba(22,19,31,0.05)] flex flex-col h-[700px] overflow-hidden">
         {/* Thread Header with Active Grounding Context */}
-        <div className="px-6 py-4 border-b border-white/[0.08] bg-[#181D2E]/80 flex items-center justify-between gap-4">
+        <div className="px-6 py-4 border-b border-[#ECE8F2] bg-[#FDFCFE] flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+            <div className="p-2 rounded-xl bg-[#EDE9FE] text-[#7C5DFA] border border-[#7C5DFA]/20">
               <Bot className="w-4 h-4" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-white">TrustSphere Assistant</span>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <span className="text-xs font-bold text-[#16131F]">TrustSphere Assistant</span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 font-semibold">
                   Online
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400 font-mono mt-0.5">
-                Active Grounding Context: <span className="text-indigo-300 font-semibold">{activeProduct?.product_title || selectedProductId}</span>
+              <p className="text-[11px] text-[#806C79] font-mono mt-0.5">
+                Active Grounding Context: <span className="text-[#7C5DFA] font-semibold">{activeProduct?.product_title || selectedProductId}</span>
               </p>
             </div>
           </div>
 
-          <span className="text-[10px] font-mono text-slate-400 bg-[#111522] px-2.5 py-1 rounded-lg border border-white/[0.08]">
+          <span className="text-[10px] font-mono text-[#806C79] bg-[#F9F8FC] px-2.5 py-1 rounded-lg border border-[#ECE8F2]">
             Evidence Engine v1.7
           </span>
         </div>
@@ -182,32 +182,32 @@ export const AssistantPage: React.FC = () => {
               className={`flex gap-3 ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               {m.sender === 'assistant' && (
-                <div className="h-8 w-8 rounded-xl bg-[#181D2E] text-indigo-400 border border-white/[0.08] flex items-center justify-center shrink-0 shadow-xs mt-0.5">
+                <div className="h-8 w-8 rounded-xl bg-[#EDE9FE] text-[#7C5DFA] border border-[#ECE8F2] flex items-center justify-center shrink-0 shadow-xs mt-0.5">
                   <Bot className="w-4 h-4" />
                 </div>
               )}
               <div
-                className={`max-w-[85%] rounded-2xl p-4 text-xs leading-relaxed ${
+                className={`max-w-[85%] rounded-[18px] p-4 text-xs leading-relaxed ${
                   m.sender === 'user'
-                    ? 'bg-indigo-600 text-white rounded-tr-none'
-                    : 'bg-[#181D2E] border border-white/[0.08] text-slate-200 rounded-tl-none shadow-xs'
+                    ? 'bg-[#7C5DFA] text-white rounded-tr-none shadow-xs'
+                    : 'bg-[#F9F8FC] border border-[#ECE8F2] text-[#16131F] rounded-tl-none shadow-xs'
                 }`}
               >
                 <div className="whitespace-pre-line font-normal">{m.text}</div>
 
                 {/* Evidence Citations */}
                 {m.evidence && m.evidence.length > 0 && (
-                  <div className="mt-3 pt-3 border-t border-white/[0.08] space-y-1.5">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block font-mono">
+                  <div className="mt-3 pt-3 border-t border-[#ECE8F2] space-y-1.5">
+                    <span className="text-[10px] font-bold text-[#806C79] uppercase tracking-wider block font-mono">
                       Corroborating Evidence Citations:
                     </span>
                     <ul className="space-y-1">
                       {m.evidence.map((ev, idx) => (
                         <li
                           key={idx}
-                          className="flex items-center gap-1.5 text-[11px] text-indigo-300 bg-[#111522] px-2 py-1 rounded-md border border-white/[0.05]"
+                          className="flex items-center gap-1.5 text-[11px] text-[#7C5DFA] bg-white px-2 py-1 rounded-md border border-[#ECE8F2]"
                         >
-                          <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" />
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
                           <span className="font-mono truncate">{ev}</span>
                         </li>
                       ))}
@@ -215,7 +215,7 @@ export const AssistantPage: React.FC = () => {
                   </div>
                 )}
 
-                <div className="mt-2 text-[10px] text-slate-400 text-right font-mono">
+                <div className={`mt-2 text-[10px] text-right font-mono ${m.sender === 'user' ? 'text-white/70' : 'text-[#806C79]'}`}>
                   {m.timestamp}
                 </div>
               </div>
@@ -224,16 +224,16 @@ export const AssistantPage: React.FC = () => {
 
           {isTyping && (
             <div className="flex gap-3 justify-start">
-              <div className="h-8 w-8 rounded-xl bg-[#181D2E] text-indigo-400 border border-white/[0.08] flex items-center justify-center shrink-0 shadow-xs">
+              <div className="h-8 w-8 rounded-xl bg-[#EDE9FE] text-[#7C5DFA] border border-[#ECE8F2] flex items-center justify-center shrink-0 shadow-xs">
                 <Bot className="w-4 h-4" />
               </div>
-              <div className="bg-[#181D2E] border border-white/[0.08] text-slate-200 rounded-2xl rounded-tl-none p-4 text-xs shadow-xs flex items-center gap-2">
+              <div className="bg-[#F9F8FC] border border-[#ECE8F2] text-[#4A3F4B] rounded-[18px] rounded-tl-none p-4 text-xs shadow-xs flex items-center gap-2">
                 <div className="flex gap-1.5">
-                  <div className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <div className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <div className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce" style={{ animationDelay: '300ms' }} />
+                  <div className="w-2 h-2 rounded-full bg-[#7C5DFA] animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <div className="w-2 h-2 rounded-full bg-[#7C5DFA] animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <div className="w-2 h-2 rounded-full bg-[#7C5DFA] animate-bounce" style={{ animationDelay: '300ms' }} />
                 </div>
-                <span className="text-[11px] text-slate-400 font-mono ml-2">Grounded reasoning in progress...</span>
+                <span className="text-[11px] text-[#806C79] font-mono ml-2">Grounded reasoning in progress...</span>
               </div>
             </div>
           )}
@@ -242,9 +242,9 @@ export const AssistantPage: React.FC = () => {
         </div>
 
         {/* Suggested Quick Prompts */}
-        <div className="px-6 py-2.5 border-t border-white/[0.05] bg-[#141826] overflow-x-auto">
+        <div className="px-6 py-2.5 border-t border-[#ECE8F2] bg-[#FDFCFE] overflow-x-auto">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-mono text-slate-400 shrink-0 uppercase tracking-wider font-semibold">
+            <span className="text-[10px] font-mono text-[#806C79] shrink-0 uppercase tracking-wider font-semibold">
               Suggested:
             </span>
             <div className="flex items-center gap-2 flex-nowrap">
@@ -254,7 +254,7 @@ export const AssistantPage: React.FC = () => {
                   type="button"
                   onClick={() => handleSend(prompt)}
                   disabled={isTyping}
-                  className="px-3 py-1 rounded-lg bg-[#181D2E] hover:bg-white/[0.08] border border-white/[0.08] text-[11px] text-slate-300 hover:text-white transition-all whitespace-nowrap cursor-pointer disabled:opacity-50"
+                  className="px-3 py-1 rounded-lg bg-[#F9F8FC] hover:bg-[#EDE9FE]/50 border border-[#ECE8F2] text-[11px] text-[#4A3F4B] hover:text-[#16131F] transition-all whitespace-nowrap cursor-pointer disabled:opacity-50"
                 >
                   {prompt}
                 </button>
@@ -264,7 +264,7 @@ export const AssistantPage: React.FC = () => {
         </div>
 
         {/* Input Bar */}
-        <div className="p-4 border-t border-white/[0.08] bg-[#181D2E]/80">
+        <div className="p-4 border-t border-[#ECE8F2] bg-[#FDFCFE]">
           <div className="flex items-center gap-3">
             <input
               type="text"
@@ -273,7 +273,7 @@ export const AssistantPage: React.FC = () => {
               onKeyDown={handleKeyDown}
               disabled={isTyping}
               placeholder="Ask a question about this product's trust signals, reviews, or price corridor..."
-              className="flex-1 bg-[#111522] border border-white/[0.08] rounded-xl px-4 py-3 text-xs sm:text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+              className="flex-1 bg-[#F9F8FC] border border-[#ECE8F2] rounded-xl px-4 py-3 text-xs sm:text-sm text-[#16131F] placeholder:text-[#806C79] focus:outline-none focus:border-[#7C5DFA] focus:ring-1 focus:ring-[#7C5DFA] transition-all"
             />
             <Button
               variant="primary"
@@ -281,7 +281,7 @@ export const AssistantPage: React.FC = () => {
               onClick={() => handleSend()}
               disabled={!input.trim() || isTyping}
               rightIcon={<Send className="w-3.5 h-3.5" />}
-              className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold"
+              className="bg-[#7C5DFA] hover:bg-[#6A49F2] text-white font-semibold"
             >
               Send
             </Button>

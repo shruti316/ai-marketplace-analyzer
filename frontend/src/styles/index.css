@@ -5,40 +5,41 @@
 
 @layer base {
   html {
-    color-scheme: dark;
+    color-scheme: light;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
   body {
-    background-color: #0B0D14;
-    color: #F8FAFC;
+    background-color: #F6F5FA;
+    color: #16131F;
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
     overflow-x: hidden;
   }
 
   /* Accessible high-contrast focus rings */
   :focus-visible {
-    outline: 2px solid #6366F1;
+    outline: 2px solid #7C5DFA;
     outline-offset: 2px;
   }
 }
 
 @layer components {
-  /* Restrained modern dark glassmorphism */
+  /* Restrained modern soft light glassmorphism */
   .glass-card {
-    background: rgba(18, 22, 36, 0.85);
+    background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid #ECE8F2;
+    box-shadow: 0 8px 24px rgba(22, 19, 31, 0.05);
   }
 
   .glass-sidebar {
-    background: #0D101A;
-    border-right: 1px solid rgba(255, 255, 255, 0.07);
+    background: #FFFFFF;
+    border-right: 1px solid #ECE8F2;
   }
 
-  /* Sleek modern dark scrollbars */
+  /* Sleek modern soft light scrollbars */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -49,12 +50,12 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: #2A3147;
+    background: #E2DCED;
     border-radius: 9999px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: #3B4461;
+    background: #C1A0AC;
   }
 }
 

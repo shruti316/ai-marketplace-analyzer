@@ -10,6 +10,8 @@ const ROUTE_LABELS: Record<string, string> = {
   annotations: 'Annotation Studio',
   'model-insights': 'Model Insights',
   settings: 'Settings',
+  investigate: 'Investigation Report',
+  assistant: 'AI Assistant',
 };
 
 export const Breadcrumbs: React.FC = () => {
@@ -17,12 +19,12 @@ export const Breadcrumbs: React.FC = () => {
   const pathnames = location.pathname.split('/').filter((x) => x);
 
   return (
-    <nav aria-label="Breadcrumb" className="flex items-center space-x-1.5 text-xs text-slate-400">
+    <nav aria-label="Breadcrumb" className="flex items-center space-x-1.5 text-xs text-[#806C79]">
       <Link
         to="/"
-        className="flex items-center gap-1 hover:text-indigo-400 transition-colors focus-visible:outline-none focus-visible:underline"
+        className="flex items-center gap-1 hover:text-[#7C5DFA] transition-colors focus-visible:outline-none focus-visible:underline"
       >
-        <Home className="w-3.5 h-3.5" />
+        <Home className="w-3.5 h-3.5 text-[#806C79]" />
         <span className="sr-only">Home</span>
       </Link>
 
@@ -33,15 +35,15 @@ export const Breadcrumbs: React.FC = () => {
 
         return (
           <React.Fragment key={routeTo}>
-            <ChevronRight className="w-3 h-3 text-slate-500 shrink-0" />
+            <ChevronRight className="w-3 h-3 text-[#C1A0AC] shrink-0" />
             {isLast ? (
-              <span className="font-semibold text-slate-100 truncate max-w-[200px]" aria-current="page">
+              <span className="font-semibold text-[#16131F] truncate max-w-[200px]" aria-current="page">
                 {label}
               </span>
             ) : (
               <Link
                 to={routeTo}
-                className="hover:text-indigo-400 transition-colors truncate max-w-[150px] focus-visible:outline-none focus-visible:underline"
+                className="hover:text-[#7C5DFA] transition-colors truncate max-w-[150px] focus-visible:outline-none focus-visible:underline"
               >
                 {label}
               </Link>

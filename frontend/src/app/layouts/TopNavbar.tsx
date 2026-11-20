@@ -1,11 +1,12 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, ShieldCheck, ScanSearch, LogIn, LogOut } from 'lucide-react';
+import { Menu, ShieldCheck, ScanSearch, LogOut } from 'lucide-react';
 import { Breadcrumbs } from './Breadcrumbs';
 import { StatusIndicator } from '../../components/common/StatusIndicator';
 import { useQuery } from '@tanstack/react-query';
 import { healthService } from '../../services/healthService';
 import { useAuth } from '../../hooks/useAuth';
+import { cn } from '../../lib/utils';
 
 export interface TopNavbarProps {
   onOpenMobileMenu: () => void;
@@ -30,12 +31,12 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onOpenMobileMenu }) => {
     : 'degraded';
 
   return (
-    <header className="h-16 bg-[#0B0D14]/90 backdrop-blur-md border-b border-white/[0.08] px-4 sm:px-6 flex items-center justify-between sticky top-0 z-20">
+    <header className="h-16 bg-white/90 backdrop-blur-md border-b border-[#ECE8F2] px-4 sm:px-6 flex items-center justify-between sticky top-0 z-20">
       {/* Left: Mobile hamburger menu & Breadcrumbs */}
       <div className="flex items-center gap-3">
         <button
           onClick={onOpenMobileMenu}
-          className="md:hidden p-2 -ml-1 text-slate-400 hover:text-white hover:bg-white/[0.06] rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 transition-colors"
+          className="md:hidden p-2 -ml-1 text-[#806C79] hover:text-[#16131F] hover:bg-[#F6F5FA] rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C5DFA] transition-colors"
           aria-label="Open navigation menu"
         >
           <Menu className="w-5 h-5" />
@@ -47,10 +48,10 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onOpenMobileMenu }) => {
 
         {/* Mobile brand text */}
         <div className="sm:hidden flex items-center gap-2">
-          <div className="h-7 w-7 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-xs">
+          <div className="h-7 w-7 rounded-xl bg-[#7C5DFA] text-white flex items-center justify-center shadow-xs">
             <ShieldCheck className="h-4 w-4" />
           </div>
-          <span className="font-heading font-bold text-sm text-white">TrustSphere</span>
+          <span className="font-heading font-bold text-sm text-[#16131F]">TrustSphere</span>
         </div>
       </div>
 
@@ -58,11 +59,18 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onOpenMobileMenu }) => {
       <div className="flex items-center gap-3 sm:gap-4">
         {/* System Health Status Indicator */}
         <div
-          className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#121624] border border-white/[0.08] text-xs"
+          className={cn(
+            'hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-medium',
+            dbStatus === 'healthy'
+              ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+              : dbStatus === 'degraded'
+              ? 'bg-amber-50 text-amber-800 border-amber-200'
+              : 'bg-rose-50 text-rose-800 border-rose-200'
+          )}
           title={`Backend: ${healthData?.status || 'checking'}, MySQL: ${healthData?.database?.status || 'probing'}`}
         >
           <StatusIndicator status={dbStatus} />
-          <span className="text-[11px] font-medium text-slate-400">
+          <span className="text-[11px] font-semibold">
             {dbStatus === 'healthy' ? 'Engine Live' : dbStatus === 'degraded' ? 'Degraded' : 'Offline'}
           </span>
         </div>
@@ -70,7 +78,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onOpenMobileMenu }) => {
         {/* Quick Check Action */}
         <Link
           to="/"
-          className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-xs shadow-indigo-500/20 transition-all hover:translate-y-[-1px]"
+          className="hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#7C5DFA] hover:bg-[#6A49F2] text-white text-xs font-semibold shadow-xs transition-all hover:translate-y-[-1px]"
         >
           <ScanSearch className="w-3.5 h-3.5" />
           <span>Check a Product</span>
@@ -78,15 +86,15 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onOpenMobileMenu }) => {
 
         {/* User state / Auth action */}
         {isAuthenticated && user ? (
-          <div className="flex items-center gap-2 pl-2 border-l border-white/[0.08]">
-            <div className="h-8 w-8 rounded-full bg-[#181D2E] text-indigo-400 flex items-center justify-center text-xs font-bold border border-white/[0.08]">
+          <div className="flex items-center gap-2 pl-2 border-l border-[#ECE8F2]">
+            <div className="h-8 w-8 rounded-full bg-[#EDE9FE] text-[#7C5DFA] flex items-center justify-center text-xs font-bold border border-[#ECE8F2]">
               {user.fullName?.charAt(0) || user.email?.charAt(0) || 'U'}
             </div>
             <div className="hidden xl:flex flex-col text-left">
-              <span className="text-xs font-semibold text-white leading-tight">
+              <span className="text-xs font-semibold text-[#16131F] leading-tight">
                 {user.fullName || 'Consumer'}
               </span>
-              <span className="text-[10px] text-slate-400 capitalize">
+              <span className="text-[10px] text-[#806C79] capitalize">
                 {user.role?.toLowerCase() || 'Viewer'}
               </span>
             </div>
@@ -95,7 +103,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onOpenMobileMenu }) => {
                 await logout();
                 navigate('/');
               }}
-              className="p-1.5 text-slate-400 hover:text-white hover:bg-white/[0.06] rounded-xl transition-colors ml-1"
+              className="p-1.5 text-[#806C79] hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors ml-1"
               title="Sign Out"
               aria-label="Sign Out"
             >
@@ -103,12 +111,11 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onOpenMobileMenu }) => {
             </button>
           </div>
         ) : (
-          <div className="pl-2 border-l border-white/[0.08]">
+          <div className="flex items-center gap-2 pl-2 border-l border-[#ECE8F2]">
             <Link
               to="/login"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#121624] hover:bg-[#181D2E] border border-white/[0.08] text-xs font-semibold text-white transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-[#4A3F4B] hover:text-[#16131F] hover:bg-[#F6F5FA] border border-[#ECE8F2] transition-colors"
             >
-              <LogIn className="w-3.5 h-3.5 text-indigo-400" />
               <span>Sign In</span>
             </Link>
           </div>

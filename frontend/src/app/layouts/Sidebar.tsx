@@ -43,23 +43,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <aside
       className={cn(
-        'hidden md:flex flex-col bg-[#0D101A] text-slate-400 border-r border-white/[0.08] transition-all duration-200 select-none shrink-0 relative z-30',
+        'hidden md:flex flex-col m-4 mr-0 rounded-[24px] bg-white text-[#4A3F4B] border border-[#ECE8F2] shadow-[0_8px_24px_rgba(22,19,31,0.05)] transition-all duration-200 select-none shrink-0 relative z-30 overflow-hidden',
         isCollapsed ? 'w-[74px]' : 'w-64',
         className
       )}
     >
       {/* Brand Header */}
-      <div className="flex items-center justify-between h-16 px-4 border-b border-white/[0.08]">
+      <div className="flex items-center justify-between h-16 px-4 border-b border-[#ECE8F2]">
         <div className="flex items-center gap-3 overflow-hidden">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-xs shadow-indigo-500/20">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[12px] bg-[#7C5DFA] text-white shadow-xs">
             <ShieldCheck className="h-5 w-5" />
           </div>
           {!isCollapsed && (
             <div className="flex flex-col truncate">
-              <span className="font-heading font-bold text-white text-sm tracking-tight leading-tight">
+              <span className="font-heading font-bold text-[#16131F] text-sm tracking-tight leading-tight">
                 TrustSphere
               </span>
-              <span className="text-[10px] text-slate-400 tracking-wider uppercase font-medium">
+              <span className="text-[10px] text-[#806C79] tracking-wider uppercase font-semibold">
                 Shopping Intelligence
               </span>
             </div>
@@ -69,16 +69,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Collapse Toggle */}
         <button
           onClick={onToggleCollapse}
-          className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-500"
+          className="p-1.5 rounded-lg text-[#806C79] hover:text-[#16131F] hover:bg-[#F6F5FA] transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#7C5DFA]"
           title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
-          {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4 text-slate-400" />}
+          {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4 text-[#806C79]" />}
         </button>
       </div>
 
       {/* Main Navigation */}
-      <nav aria-label="Main Navigation" className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+      <nav aria-label="Main Navigation" className="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto">
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
           return (
@@ -88,10 +88,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
               end={item.to === '/'}
               className={({ isActive }) =>
                 cn(
-                  'flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium transition-all duration-150 group relative',
+                  'flex items-center gap-3 px-3.5 py-2.5 rounded-[12px] text-xs font-medium transition-all duration-150 group relative',
                   isActive
-                    ? 'bg-indigo-600 text-white font-semibold shadow-xs shadow-indigo-500/20'
-                    : 'text-slate-400 hover:bg-white/[0.06] hover:text-white',
+                    ? 'bg-[#EDE9FE] text-[#7C5DFA] font-semibold shadow-xs'
+                    : 'text-[#4A3F4B] hover:bg-[#F6F5FA] hover:text-[#16131F]',
                   isCollapsed && 'justify-center px-2'
                 )
               }
@@ -108,23 +108,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </nav>
 
       {/* User Profile & Account Area */}
-      <div className="p-3 border-t border-white/[0.08] bg-[#090C14]">
+      <div className="p-3 border-t border-[#ECE8F2] bg-[#FDFCFE]">
         <div
           className={cn(
-            'flex items-center gap-3 p-2 rounded-xl transition-colors',
+            'flex items-center gap-2.5 p-2 rounded-[16px] bg-[#F9F8FC] border border-[#ECE8F2] transition-colors',
             isCollapsed ? 'justify-center' : 'justify-between'
           )}
         >
           <div className="flex items-center gap-2.5 overflow-hidden">
-            <div className="h-8 w-8 rounded-full bg-[#181D2E] border border-white/[0.08] flex items-center justify-center text-xs font-bold text-indigo-400 shrink-0">
+            <div className="h-8 w-8 rounded-full bg-[#EDE9FE] text-[#7C5DFA] flex items-center justify-center text-xs font-bold shrink-0">
               {user?.fullName?.charAt(0) || user?.email?.charAt(0) || 'U'}
             </div>
             {!isCollapsed && (
               <div className="flex flex-col truncate">
-                <span className="text-xs font-semibold text-white truncate">
+                <span className="text-xs font-semibold text-[#16131F] truncate">
                   {user?.fullName || (isAuthenticated ? 'Consumer' : 'Guest')}
                 </span>
-                <span className="text-[10px] text-slate-400 uppercase tracking-wider font-medium truncate font-mono">
+                <span className="text-[10px] text-[#806C79] uppercase tracking-wider font-medium truncate font-mono">
                   {user?.role || 'Visitor'}
                 </span>
               </div>
@@ -135,7 +135,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <button
               onClick={() => logout()}
               className={cn(
-                'text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 p-1.5 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-rose-500',
+                'text-[#806C79] hover:text-rose-600 hover:bg-rose-50 p-1.5 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-rose-500',
                 isCollapsed && 'mt-2'
               )}
               title="Log out"

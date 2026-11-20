@@ -1,41 +1,44 @@
 :root {
-  /* Soft Modern Enterprise Design Tokens */
-  --color-brand-navy: #0D1B2A;
-  --color-brand-navy-surface: #15263A;
-  --color-brand-teal: #3D7584;
-  --color-brand-teal-hover: #32606D;
-  --color-brand-teal-light: #EBF2F4;
-  --color-brand-blue: #89BBBE;
-  --color-brand-mist: #E8EFF0;
-  --color-brand-mist-border: #DCE5E7;
-  --color-brand-ivory: #F6EFE3;
-  --color-brand-ivory-light: #FAF7F2;
-  --color-brand-sage: #A3B18A;
-  --color-brand-sage-light: #F0F4EC;
-  --color-brand-lavender: #B8B2D8;
-  --color-brand-lavender-light: #F3F1F9;
+  /* Soft Light Pastel Enterprise Design Tokens (Reference Palette) */
+  --color-canvas-bg: #F6F5FA;
+  --color-canvas-subtle: #F9F8FC;
+  --color-surface-white: #FFFFFF;
+  --color-surface-tint: #FDFCFE;
+  --color-border-subtle: #ECE8F2;
+  --color-border-focus: #7C5DFA;
 
-  /* Semantic Anomaly & Risk Tiers */
-  --color-risk-low: #4D7C5B;
-  --color-risk-low-bg: #EEF6F0;
-  --color-risk-low-border: #C3DFCA;
-  --color-risk-moderate: #C67D3B;
-  --color-risk-moderate-bg: #FDF4EB;
-  --color-risk-moderate-border: #F3D4B6;
-  --color-risk-elevated: #B84A4A;
-  --color-risk-elevated-bg: #FBECEC;
-  --color-risk-elevated-border: #F3BFBF;
-  --color-risk-sparse: #64748B;
-  --color-risk-sparse-bg: #F1F5F9;
-  --color-risk-sparse-border: #CBD5E1;
+  /* Reference Palette Tokens */
+  --color-plum-charcoal: #16131F; /* Back in Black / Primary Text */
+  --color-plum-dark: #4A3F4B;     /* Funkie Friday / Secondary Text */
+  --color-plum-muted: #806C79;    /* Moonscape / Subtitles & Muted */
+  --color-plum-blush: #F0D9E4;    /* Mountain Heather / Soft Blush */
+  --color-plum-mauve: #C1A0AC;    /* Decanting / Dusty Mauve */
+  --color-plum-lavender: #EDE9FE; /* Soft Lavender Accent Tint */
+  --color-plum-accent: #7C5DFA;   /* Primary Interactive Purple */
+  --color-plum-accent-hover: #6A49F2;
+
+  /* Semantic Anomaly & Risk Tiers (Soft pastel backgrounds + dark text) */
+  --color-risk-low: #047857;
+  --color-risk-low-bg: #ECFDF5;
+  --color-risk-low-border: #A7F3D0;
+  --color-risk-moderate: #B45309;
+  --color-risk-moderate-bg: #FFFBEB;
+  --color-risk-moderate-border: #FDE68A;
+  --color-risk-elevated: #BE123C;
+  --color-risk-elevated-bg: #FFF1F2;
+  --color-risk-elevated-border: #FECDD3;
+  --color-risk-sparse: #475569;
+  --color-risk-sparse-bg: #F8FAFC;
+  --color-risk-sparse-border: #E2E8F0;
 
   /* Surfaces & Elevations */
-  --radius-card: 14px;
-  --radius-modal: 18px;
-  --radius-button: 10px;
-  --shadow-soft: 0 2px 8px -1px rgba(13, 27, 42, 0.05), 0 1px 3px -1px rgba(13, 27, 42, 0.03);
-  --shadow-soft-md: 0 4px 16px -2px rgba(13, 27, 42, 0.08), 0 2px 6px -2px rgba(13, 27, 42, 0.04);
-  --shadow-soft-lg: 0 10px 25px -3px rgba(13, 27, 42, 0.1), 0 4px 10px -4px rgba(13, 27, 42, 0.05);
+  --radius-card: 24px;
+  --radius-card-sm: 16px;
+  --radius-modal: 24px;
+  --radius-button: 12px;
+  --shadow-soft: 0 2px 8px rgba(22, 19, 31, 0.04);
+  --shadow-card: 0 8px 24px rgba(22, 19, 31, 0.05);
+  --shadow-card-elevated: 0 16px 36px rgba(22, 19, 31, 0.08);
 
   /* Animation Timings */
   --duration-interaction: 150ms;

@@ -15,8 +15,8 @@ export const AppLayout: React.FC = () => {
   }, [isCollapsed]);
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#0B0D14] text-[#F8FAFC]">
-      {/* Desktop Left Sidebar */}
+    <div className="flex h-screen w-screen overflow-hidden bg-[#F6F5FA] text-[#16131F]">
+      {/* Desktop Left Floating Sidebar */}
       <Sidebar
         isCollapsed={isCollapsed}
         onToggleCollapse={() => setIsCollapsed((prev) => !prev)}

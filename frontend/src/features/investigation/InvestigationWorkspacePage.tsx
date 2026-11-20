@@ -347,40 +347,35 @@ export const InvestigationWorkspacePage: React.FC = () => {
   return (
     <div className="space-y-8 animate-fadeIn pb-16 max-w-6xl mx-auto">
       {/* =========================================================================
-          1. HERO SECTION: Multimodal Trust Intelligence Scanner
+          1. HERO BANNER: Multimodal Intelligence Platform
          ========================================================================= */}
-      <div className="relative rounded-3xl bg-[#111522] text-white p-6 sm:p-10 border border-white/[0.08] shadow-2xl overflow-hidden">
-        {/* Soft elegant ambient lighting */}
-        <div className="absolute -right-20 -top-20 w-96 h-96 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none" />
-        <div className="absolute -left-20 -bottom-20 w-96 h-96 rounded-full bg-purple-500/10 blur-3xl pointer-events-none" />
-
-        <div className="relative z-10 max-w-3xl space-y-4">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold">
-            <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+      <div className="relative rounded-[24px] bg-gradient-to-br from-[#EDE9FE]/50 via-white to-[#F0D9E4]/40 border border-[#ECE8F2] shadow-[0_8px_24px_rgba(22,19,31,0.05)] p-6 sm:p-8 overflow-hidden">
+        <div className="relative z-10 space-y-3">
+          {/* Badge */}
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/90 border border-[#ECE8F2] text-xs font-semibold text-[#7C5DFA] shadow-xs">
+            <Sparkles className="w-3.5 h-3.5" />
             <span>Multimodal Trust Intelligence Engine</span>
           </div>
 
-          <h1 className="font-heading text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-white leading-tight">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#16131F] font-heading">
             Start a New Product Investigation
           </h1>
-
-          <p className="text-xs sm:text-sm lg:text-base text-slate-400 leading-relaxed font-normal">
-            Investigate authenticity signals, pricing anomalies, visual packaging consistency, and merchant governance
-            across Amazon India, Flipkart, and Myntra using explainable multimodal evidence.
+          <p className="text-xs sm:text-sm text-[#4A3F4B] max-w-2xl leading-relaxed">
+            Investigate authenticity signals, pricing anomalies, visual packaging consistency, and merchant governance across Amazon India, Flipkart, and Myntra using explainable multimodal evidence.
           </p>
 
           {/* Platform Invariants Footer */}
-          <div className="flex flex-wrap items-center gap-4 pt-2 text-xs text-slate-400 font-medium">
+          <div className="flex flex-wrap items-center gap-4 pt-2 text-xs text-[#806C79] font-medium">
             <span className="flex items-center gap-1.5">
-              <Layers className="w-4 h-4 text-indigo-400" /> 5 Learned Signal Modalities
+              <Layers className="w-4 h-4 text-[#7C5DFA]" /> 5 Learned Signal Modalities
             </span>
-            <span className="text-slate-600">•</span>
+            <span className="text-[#C1A0AC]">•</span>
             <span className="flex items-center gap-1.5">
-              <Database className="w-4 h-4 text-indigo-400" /> Multi-Marketplace Surveillance
+              <Database className="w-4 h-4 text-[#7C5DFA]" /> Multi-Marketplace Surveillance
             </span>
-            <span className="text-slate-600">•</span>
+            <span className="text-[#C1A0AC]">•</span>
             <span className="flex items-center gap-1.5">
-              <ShieldCheck className="w-4 h-4 text-emerald-400" /> Zero-Penalty Guarantee Active
+              <ShieldCheck className="w-4 h-4 text-emerald-600" /> Zero-Penalty Guarantee Active
             </span>
           </div>
         </div>
@@ -395,25 +390,25 @@ export const InvestigationWorkspacePage: React.FC = () => {
           onClick={() => {
             scannerFormRef.current?.scrollIntoView({ behavior: 'smooth' });
           }}
-          className="p-6 rounded-3xl bg-[#111522] border-2 border-indigo-500/80 shadow-xl shadow-indigo-500/10 cursor-pointer transition-all hover:border-indigo-400 group relative overflow-hidden"
+          className="p-6 rounded-[24px] bg-white border-2 border-[#7C5DFA] shadow-[0_8px_24px_rgba(124,93,250,0.12)] cursor-pointer transition-all hover:border-[#6A49F2] group relative overflow-hidden"
         >
           <div className="flex items-center justify-between mb-3">
-            <div className="p-3 rounded-2xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30">
-              <ScanSearch className="w-6 h-6 text-indigo-400" />
+            <div className="p-3 rounded-2xl bg-[#EDE9FE] text-[#7C5DFA] border border-[#7C5DFA]/30">
+              <ScanSearch className="w-6 h-6 text-[#7C5DFA]" />
             </div>
-            <span className="text-[10px] font-mono uppercase tracking-wider font-bold px-2.5 py-1 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
+            <span className="text-[10px] font-mono uppercase tracking-wider font-bold px-2.5 py-1 rounded-full bg-[#EDE9FE] text-[#7C5DFA] border border-[#7C5DFA]/20">
               Active Mode · Single Item
             </span>
           </div>
 
-          <h3 className="text-lg font-bold text-white font-heading group-hover:text-indigo-300 transition-colors">
+          <h3 className="text-lg font-bold text-[#16131F] font-heading group-hover:text-[#7C5DFA] transition-colors">
             Product Scanner
           </h3>
-          <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">
+          <p className="text-xs text-[#4A3F4B] mt-1.5 leading-relaxed">
             Scan an individual marketplace product link, verify seller legitimacy, check pricing corridor deviations, and inspect physical packaging.
           </p>
 
-          <div className="mt-4 pt-3 border-t border-white/[0.08] flex items-center justify-between text-xs font-semibold text-indigo-400">
+          <div className="mt-4 pt-3 border-t border-[#ECE8F2] flex items-center justify-between text-xs font-semibold text-[#7C5DFA]">
             <span>Inspect Single Product Below</span>
             <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
           </div>
@@ -422,25 +417,25 @@ export const InvestigationWorkspacePage: React.FC = () => {
         {/* Card 2: Comparison Analysis (Switches to Comparison tab) */}
         <div
           onClick={() => navigate('/comparisons')}
-          className="p-6 rounded-3xl bg-[#111522] border border-white/[0.08] hover:border-indigo-500/50 hover:bg-[#161B2E] shadow-xl cursor-pointer transition-all group relative overflow-hidden"
+          className="p-6 rounded-[24px] bg-white border border-[#ECE8F2] hover:border-[#7C5DFA]/50 hover:bg-[#FDFCFE] shadow-[0_8px_24px_rgba(22,19,31,0.05)] cursor-pointer transition-all group relative overflow-hidden"
         >
           <div className="flex items-center justify-between mb-3">
-            <div className="p-3 rounded-2xl bg-[#181D2E] text-slate-400 group-hover:text-indigo-400 border border-white/[0.08] transition-colors">
+            <div className="p-3 rounded-2xl bg-[#F9F8FC] text-[#806C79] group-hover:text-[#7C5DFA] group-hover:bg-[#EDE9FE] border border-[#ECE8F2] transition-colors">
               <GitCompare className="w-6 h-6" />
             </div>
-            <span className="text-[10px] font-mono uppercase tracking-wider font-bold px-2.5 py-1 rounded-full bg-white/[0.05] text-slate-400 border border-white/[0.08] group-hover:text-indigo-300 group-hover:border-indigo-500/30 transition-colors">
+            <span className="text-[10px] font-mono uppercase tracking-wider font-bold px-2.5 py-1 rounded-full bg-[#F9F8FC] text-[#806C79] border border-[#ECE8F2] group-hover:text-[#7C5DFA] group-hover:border-[#7C5DFA]/30 transition-colors">
               Compare Mode · 2-5 Offerings
             </span>
           </div>
 
-          <h3 className="text-lg font-bold text-white font-heading group-hover:text-indigo-300 transition-colors">
+          <h3 className="text-lg font-bold text-[#16131F] font-heading group-hover:text-[#7C5DFA] transition-colors">
             Comparison Studio
           </h3>
-          <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">
+          <p className="text-xs text-[#4A3F4B] mt-1.5 leading-relaxed">
             Compare multiple marketplace products side-by-side. Uncover hidden pricing dispersion, seller credibility differences, and receive AI recommendations.
           </p>
 
-          <div className="mt-4 pt-3 border-t border-white/[0.08] flex items-center justify-between text-xs font-semibold text-slate-400 group-hover:text-indigo-400 transition-colors">
+          <div className="mt-4 pt-3 border-t border-[#ECE8F2] flex items-center justify-between text-xs font-semibold text-[#806C79] group-hover:text-[#7C5DFA] transition-colors">
             <span>Switch to Comparison Tab</span>
             <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
           </div>
@@ -453,23 +448,23 @@ export const InvestigationWorkspacePage: React.FC = () => {
       <form
         ref={scannerFormRef}
         onSubmit={handleAnalyzeListing}
-        className="bg-[#111522] rounded-3xl border border-white/[0.08] shadow-xl p-6 sm:p-8 space-y-6 scroll-mt-6"
+        className="bg-white rounded-[24px] border border-[#ECE8F2] shadow-[0_8px_24px_rgba(22,19,31,0.05)] p-6 sm:p-8 space-y-6 scroll-mt-6"
       >
         {/* Section 1: Product Listing URL with Auto-Fill Button */}
         <div className="space-y-2">
-          <label className="text-xs font-semibold text-slate-300 flex items-center justify-between">
+          <label className="text-xs font-semibold text-[#4A3F4B] flex items-center justify-between">
             <span className="flex items-center gap-1.5">
-              <Globe className="w-4 h-4 text-indigo-400" />
+              <Globe className="w-4 h-4 text-[#7C5DFA]" />
               <span>1. Product Listing URL</span>
             </span>
-            <span className="text-[11px] font-mono text-slate-400">
+            <span className="text-[11px] font-mono text-[#806C79]">
               Supported: Amazon.in · Flipkart · Myntra
             </span>
           </label>
 
           <div className="relative flex items-center">
-            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-              <Globe className="w-5 h-5 text-indigo-400/80" />
+            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#806C79]">
+              <Globe className="w-5 h-5 text-[#7C5DFA]" />
             </div>
             <input
               type="url"
@@ -477,13 +472,13 @@ export const InvestigationWorkspacePage: React.FC = () => {
               onChange={(e) => handleUrlChange(e.target.value)}
               disabled={isAnalyzing || isAutoFilling}
               placeholder="Paste marketplace product link (e.g. https://www.flipkart.com/... or https://www.amazon.in/dp/...)"
-              className="w-full pl-11 pr-28 py-3.5 rounded-xl border border-white/[0.08] focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none text-xs sm:text-sm text-slate-100 placeholder:text-slate-500 transition-all bg-[#181D2E]"
+              className="w-full pl-11 pr-28 py-3.5 rounded-xl border border-[#ECE8F2] focus:border-[#7C5DFA] focus:ring-2 focus:ring-[#7C5DFA]/20 outline-none text-xs sm:text-sm text-[#16131F] placeholder:text-[#806C79] transition-all bg-[#F9F8FC]"
             />
             <button
               type="button"
               onClick={handleAutoFill}
               disabled={!url.trim() || isAutoFilling || isAnalyzing}
-              className="absolute right-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition-all shadow-xs disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
+              className="absolute right-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[#7C5DFA] hover:bg-[#6A49F2] text-white transition-all shadow-xs disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
             >
               {isAutoFilling ? (
                 <>
@@ -498,13 +493,13 @@ export const InvestigationWorkspacePage: React.FC = () => {
 
           {/* Auto-fill indicator note */}
           {autoFillSuccessNote ? (
-            <p className="text-xs text-emerald-400 font-medium flex items-center gap-1.5 pt-1">
-              <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <p className="text-xs text-emerald-700 font-medium flex items-center gap-1.5 pt-1">
+              <span className="inline-block w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
               <span>{autoFillSuccessNote}</span>
             </p>
           ) : detectedPlatform ? (
-            <p className="text-xs text-indigo-400 font-medium flex items-center gap-1.5 pt-1">
-              <span className="inline-block w-2 h-2 rounded-full bg-indigo-400" />
+            <p className="text-xs text-[#7C5DFA] font-medium flex items-center gap-1.5 pt-1">
+              <span className="inline-block w-2 h-2 rounded-full bg-[#7C5DFA]" />
               <span>Detected: {detectedPlatform} (Click Auto-Fill to populate parameters)</span>
             </p>
           ) : null}
@@ -514,21 +509,21 @@ export const InvestigationWorkspacePage: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 pt-2">
           {/* Section 2 (Left Column, 5 cols): Packaging / Product Photo (Optional) */}
           <div className="lg:col-span-5 space-y-2">
-            <h3 className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-              <Camera className="w-4 h-4 text-indigo-400" />
+            <h3 className="text-xs font-semibold text-[#4A3F4B] flex items-center gap-1.5">
+              <Camera className="w-4 h-4 text-[#7C5DFA]" />
               <span>2. Packaging / Product Photo (Optional)</span>
             </h3>
 
             {attachedImageBase64 ? (
-              <div className="relative p-3 rounded-2xl bg-[#181D2E] border border-indigo-500/30 flex items-center gap-3">
+              <div className="relative p-3 rounded-2xl bg-[#F9F8FC] border border-[#7C5DFA]/30 flex items-center gap-3">
                 <img
                   src={attachedImageBase64}
                   alt="Packaging preview"
-                  className="h-20 w-20 rounded-xl object-cover border border-white/[0.08]"
+                  className="h-20 w-20 rounded-xl object-cover border border-[#ECE8F2]"
                 />
                 <div className="truncate flex-1">
-                  <p className="text-xs font-medium text-slate-200 truncate">{attachedImageName}</p>
-                  <p className="text-[10px] text-emerald-400 font-medium mt-1">
+                  <p className="text-xs font-medium text-[#16131F] truncate">{attachedImageName}</p>
+                  <p className="text-[10px] text-emerald-700 font-medium mt-1">
                     Ready for OCR & Visual Inspection
                   </p>
                 </div>
@@ -536,7 +531,7 @@ export const InvestigationWorkspacePage: React.FC = () => {
                   type="button"
                   onClick={handleRemoveImage}
                   disabled={isAnalyzing}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                  className="p-1.5 rounded-lg text-[#806C79] hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
                   title="Remove image"
                 >
                   <X className="w-4 h-4" />
@@ -559,18 +554,18 @@ export const InvestigationWorkspacePage: React.FC = () => {
                 onClick={() => fileInputRef.current?.click()}
                 className={`p-6 rounded-2xl border-2 border-dashed transition-all cursor-pointer flex flex-col items-center justify-center text-center space-y-2 min-h-[175px] ${
                   isDragging
-                    ? 'border-indigo-500 bg-indigo-500/10 text-indigo-300'
-                    : 'border-indigo-500/30 hover:border-indigo-500/60 bg-[#181D2E]/60 text-slate-400 hover:text-slate-300'
+                    ? 'border-[#7C5DFA] bg-[#EDE9FE]/30 text-[#7C5DFA]'
+                    : 'border-[#ECE8F2] hover:border-[#7C5DFA]/50 bg-[#F9F8FC] hover:bg-[#EDE9FE]/20 text-[#806C79] hover:text-[#4A3F4B]'
                 }`}
               >
-                <div className="p-3 rounded-full bg-indigo-600/20 text-indigo-400">
+                <div className="p-3 rounded-full bg-[#EDE9FE] text-[#7C5DFA]">
                   <UploadCloud className="w-6 h-6" />
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-slate-200">Drag & drop product photo</p>
-                  <p className="text-[10px] text-slate-500 mt-0.5">PNG, JPEG, WebP up to 10MB</p>
+                  <p className="text-xs font-bold text-[#16131F]">Drag & drop product photo</p>
+                  <p className="text-[10px] text-[#806C79] mt-0.5">PNG, JPEG, WebP up to 10MB</p>
                 </div>
-                <span className="text-[11px] text-indigo-400 underline font-medium">
+                <span className="text-[11px] text-[#7C5DFA] underline font-medium">
                   or browse from device
                 </span>
                 <input
@@ -590,46 +585,46 @@ export const InvestigationWorkspacePage: React.FC = () => {
 
           {/* Section 3 (Right Column, 7 cols): Listing Parameters & Price Corridor */}
           <div className="lg:col-span-7 space-y-4">
-            <h3 className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-              <Tag className="w-4 h-4 text-indigo-400" />
+            <h3 className="text-xs font-semibold text-[#4A3F4B] flex items-center gap-1.5">
+              <Tag className="w-4 h-4 text-[#7C5DFA]" />
               <span>3. Listing Parameters & Price Corridor</span>
             </h3>
 
             {/* Product Title */}
             <div className="space-y-1">
-              <label className="text-[11px] font-mono text-slate-400">Product Title</label>
+              <label className="text-[11px] font-mono text-[#806C79]">Product Title</label>
               <input
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 disabled={isAnalyzing}
                 placeholder="Product Title (e.g. Kotty Full Sleeve Solid Women Jacket)"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-white/[0.08] focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-xs sm:text-sm text-slate-100 bg-[#181D2E]"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-[#ECE8F2] focus:border-[#7C5DFA] focus:ring-1 focus:ring-[#7C5DFA] outline-none text-xs sm:text-sm text-[#16131F] bg-[#F9F8FC] placeholder:text-[#806C79]"
               />
             </div>
 
             {/* Brand & Category */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="text-[11px] font-mono text-slate-400">Brand</label>
+                <label className="text-[11px] font-mono text-[#806C79]">Brand</label>
                 <input
                   type="text"
                   value={brand}
                   onChange={(e) => setBrand(e.target.value)}
                   disabled={isAnalyzing}
                   placeholder="Brand (e.g. Kotty, Nike, Ponds)"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-white/[0.08] focus:border-indigo-500 outline-none text-xs sm:text-sm text-slate-100 bg-[#181D2E]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#ECE8F2] focus:border-[#7C5DFA] outline-none text-xs sm:text-sm text-[#16131F] bg-[#F9F8FC] placeholder:text-[#806C79]"
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-[11px] font-mono text-slate-400">Category</label>
+                <label className="text-[11px] font-mono text-[#806C79]">Category</label>
                 <input
                   type="text"
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
                   disabled={isAnalyzing}
                   placeholder="Category (e.g. Apparel / Clothing)"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-white/[0.08] focus:border-indigo-500 outline-none text-xs sm:text-sm text-slate-100 bg-[#181D2E]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#ECE8F2] focus:border-[#7C5DFA] outline-none text-xs sm:text-sm text-[#16131F] bg-[#F9F8FC] placeholder:text-[#806C79]"
                 />
               </div>
             </div>
@@ -637,39 +632,39 @@ export const InvestigationWorkspacePage: React.FC = () => {
             {/* Price Corridor: Observed Price & Claimed MRP */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="text-[11px] font-mono text-slate-400">Observed Price (₹)</label>
+                <label className="text-[11px] font-mono text-[#806C79]">Observed Price (₹)</label>
                 <input
                   type="number"
                   value={observedPrice}
                   onChange={(e) => setObservedPrice(e.target.value)}
                   disabled={isAnalyzing}
                   placeholder="Observed Price (₹)"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-white/[0.08] focus:border-indigo-500 outline-none text-xs sm:text-sm text-slate-100 bg-[#181D2E] font-mono"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#ECE8F2] focus:border-[#7C5DFA] outline-none text-xs sm:text-sm text-[#16131F] bg-[#F9F8FC] font-mono placeholder:text-[#806C79]"
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-[11px] font-mono text-slate-400">Claimed MRP (₹)</label>
+                <label className="text-[11px] font-mono text-[#806C79]">Claimed MRP (₹)</label>
                 <input
                   type="number"
                   value={mrp}
                   onChange={(e) => setMrp(e.target.value)}
                   disabled={isAnalyzing}
                   placeholder="Claimed MRP (₹)"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-white/[0.08] focus:border-indigo-500 outline-none text-xs sm:text-sm text-slate-100 bg-[#181D2E] font-mono"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#ECE8F2] focus:border-[#7C5DFA] outline-none text-xs sm:text-sm text-[#16131F] bg-[#F9F8FC] font-mono placeholder:text-[#806C79]"
                 />
               </div>
             </div>
 
             {/* Real-time Calculated Discount & Corridor Indicator */}
-            <div className="p-3 rounded-xl bg-[#181D2E] border border-white/[0.08] flex items-center justify-between text-xs font-mono">
-              <span className="text-slate-400">Calculated Discount:</span>
+            <div className="p-3 rounded-xl bg-[#F9F8FC] border border-[#ECE8F2] flex items-center justify-between text-xs font-mono">
+              <span className="text-[#806C79]">Calculated Discount:</span>
               {discountPercent > 0 ? (
-                <span className="font-bold text-emerald-400 flex items-center gap-1.5">
+                <span className="font-bold text-emerald-700 flex items-center gap-1.5">
                   <span>{discountPercent}% OFF</span>
                   <span>✓ (Normal Retail Corridor)</span>
                 </span>
               ) : (
-                <span className="text-slate-500">Enter Price & MRP to compute corridor</span>
+                <span className="text-[#806C79]">Enter Price & MRP to compute corridor</span>
               )}
             </div>
           </div>
@@ -677,39 +672,39 @@ export const InvestigationWorkspacePage: React.FC = () => {
 
         {/* Validation Error Banner */}
         {validationError && (
-          <div className="p-4 rounded-xl bg-rose-950/20 border border-rose-500/30 text-xs text-rose-300 flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+          <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
             <span>{validationError}</span>
           </div>
         )}
 
         {/* Progress / Pipeline Execution Status */}
         {isAnalyzing && (
-          <div className="p-5 rounded-2xl bg-indigo-950/20 border border-indigo-500/30 space-y-3">
+          <div className="p-5 rounded-2xl bg-[#EDE9FE]/40 border border-[#7C5DFA]/30 space-y-3">
             <div className="flex items-center justify-between text-xs">
-              <span className="font-semibold text-indigo-300 flex items-center gap-2">
-                <Loader2 className="w-4 h-4 animate-spin text-indigo-400" />
+              <span className="font-semibold text-[#7C5DFA] flex items-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin text-[#7C5DFA]" />
                 <span>Multimodal Pipeline Stage {analysisStageIndex + 1} of 6</span>
               </span>
-              <span className="font-mono text-indigo-400 font-bold">
+              <span className="font-mono text-[#7C5DFA] font-bold">
                 {Math.round(((analysisStageIndex + 1) / 6) * 100)}%
               </span>
             </div>
-            <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+            <div className="w-full bg-[#ECE8F2] h-2 rounded-full overflow-hidden">
               <div
-                className="bg-indigo-500 h-full rounded-full transition-all duration-500"
+                className="bg-[#7C5DFA] h-full rounded-full transition-all duration-500"
                 style={{ width: `${Math.round(((analysisStageIndex + 1) / 6) * 100)}%` }}
               />
             </div>
-            <p className="text-xs text-slate-300 font-mono animate-pulse">
+            <p className="text-xs text-[#4A3F4B] font-mono animate-pulse">
               {ANALYSIS_STAGES[analysisStageIndex]}
             </p>
           </div>
         )}
 
         {/* Bottom Action: Analyze Product Listing Button */}
-        <div className="pt-4 border-t border-white/[0.08] flex items-center justify-between gap-4">
-          <p className="text-[11px] text-slate-500">
+        <div className="pt-4 border-t border-[#ECE8F2] flex items-center justify-between gap-4">
+          <p className="text-[11px] text-[#806C79]">
             Triggers cross-platform URL resolution, OCR packaging check, and ABSA review sentiment analysis.
           </p>
 
@@ -720,7 +715,7 @@ export const InvestigationWorkspacePage: React.FC = () => {
             disabled={isAnalyzing}
             isLoading={isAnalyzing}
             rightIcon={<ArrowRight className="w-4 h-4" />}
-            className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-8 shadow-lg shadow-indigo-500/25 min-h-[46px]"
+            className="bg-[#7C5DFA] hover:bg-[#6A49F2] text-white font-bold px-8 shadow-md min-h-[46px]"
           >
             {isAnalyzing ? 'Analyzing Product Listing...' : 'Analyze Product Listing'}
           </Button>
