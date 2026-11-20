@@ -30,7 +30,7 @@ describe('StatCard Component', () => {
 
     expect(screen.getByText('Elevated Anomalies')).toBeInTheDocument();
     expect(screen.queryByText('7.2%')).not.toBeInTheDocument();
-    // Verify pulse skeleton element is present
-    expect(container.querySelector('.animate-pulse')).toBeInTheDocument();
+    // Verify pulse/shimmer skeleton element is present
+    expect(container.querySelector('.animate-pulse, .animate-shimmer')).toBeInTheDocument();
   });
 });

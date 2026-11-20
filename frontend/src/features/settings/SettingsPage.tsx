@@ -9,7 +9,7 @@ export const SettingsPage: React.FC = () => {
 
   return (
     <div className="space-y-6 max-w-4xl pb-12 animate-fadeIn">
-      <div className="pb-2 border-b border-[#ECE8F2]">
+      <div className="pb-2 border-b border-[var(--line)]">
         <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#16131F] font-heading">
           Platform Settings
         </h1>
@@ -21,8 +21,8 @@ export const SettingsPage: React.FC = () => {
       <div className="space-y-5">
         {/* User Profile Card */}
         <Card className="space-y-4">
-          <div className="flex items-center gap-3 pb-3 border-b border-[#ECE8F2]">
-            <UserCheck className="w-5 h-5 text-[#7C5DFA]" />
+          <div className="flex items-center gap-3 pb-3 border-b border-[var(--line)]">
+            <UserCheck className="w-5 h-5 text-[var(--accent)]" />
             <div>
               <h3 className="text-sm font-semibold text-[#16131F] font-heading">Analyst Profile</h3>
               <p className="text-xs text-[var(--text-3)]">Currently active session and identity details</p>
@@ -40,7 +40,7 @@ export const SettingsPage: React.FC = () => {
             </div>
             <div>
               <label className="text-[var(--text-3)] font-medium">Role Assignment</label>
-              <p className="font-semibold text-[#7C5DFA] mt-0.5">{user?.role || 'ANALYST'}</p>
+              <p className="font-semibold text-[var(--accent)] mt-0.5">{user?.role || 'ANALYST'}</p>
             </div>
             <div>
               <label className="text-[var(--text-3)] font-medium">Account Identifier</label>
@@ -57,7 +57,7 @@ export const SettingsPage: React.FC = () => {
 
         {/* Security & Authentication Info */}
         <Card className="space-y-4">
-          <div className="flex items-center gap-3 pb-3 border-b border-[#ECE8F2]">
+          <div className="flex items-center gap-3 pb-3 border-b border-[var(--line)]">
             <ShieldCheck className="w-5 h-5 text-emerald-600" />
             <div>
               <h3 className="text-sm font-semibold text-[#16131F] font-heading">Security & Token Policies</h3>
@@ -67,7 +67,7 @@ export const SettingsPage: React.FC = () => {
 
           <div className="space-y-2 text-xs text-[#4A3F4B] leading-relaxed font-mono">
             <div className="flex items-center gap-2">
-              <Key className="w-4 h-4 text-[#7C5DFA] shrink-0" />
+              <Key className="w-4 h-4 text-[var(--accent)] shrink-0" />
               <span>Session tokens are signed with HMAC-SHA256 and expire in 24 hours.</span>
             </div>
             <div className="flex items-center gap-2">
@@ -75,7 +75,7 @@ export const SettingsPage: React.FC = () => {
               <span>Passwords hashed with memory-hard Argon2id (64MB memory, 3 iterations).</span>
             </div>
             <div className="flex items-center gap-2">
-              <Server className="w-4 h-4 text-[#7C5DFA] shrink-0" />
+              <Server className="w-4 h-4 text-[var(--accent)] shrink-0" />
               <span>Strict separation between application runtime credentials and schema migration roles.</span>
             </div>
           </div>
@@ -83,8 +83,8 @@ export const SettingsPage: React.FC = () => {
 
         {/* System Notifications Configuration */}
         <Card className="space-y-4">
-          <div className="flex items-center gap-3 pb-3 border-b border-[#ECE8F2]">
-            <Bell className="w-5 h-5 text-[#7C5DFA]" />
+          <div className="flex items-center gap-3 pb-3 border-b border-[var(--line)]">
+            <Bell className="w-5 h-5 text-[var(--accent)]" />
             <div>
               <h3 className="text-sm font-semibold text-[#16131F] font-heading">Notification Preferences</h3>
               <p className="text-xs text-[var(--text-3)]">Configure real-time alerts for elevated anomalies</p>
@@ -93,15 +93,15 @@ export const SettingsPage: React.FC = () => {
 
           <div className="space-y-3 text-xs">
             <label className="flex items-center gap-3 cursor-pointer">
-              <input type="checkbox" defaultChecked className="rounded bg-[#F9F8FC] border-[#ECE8F2] text-[#7C5DFA] focus:ring-[#7C5DFA]" />
+              <input type="checkbox" defaultChecked className="rounded bg-[var(--canvas)] border-[var(--line)] text-[var(--accent)] focus:ring-[var(--accent)]" />
               <span className="text-[#4A3F4B]">Alert on Tier 3 Elevated Multimodal Anomalies</span>
             </label>
             <label className="flex items-center gap-3 cursor-pointer">
-              <input type="checkbox" defaultChecked className="rounded bg-[#F9F8FC] border-[#ECE8F2] text-[#7C5DFA] focus:ring-[#7C5DFA]" />
+              <input type="checkbox" defaultChecked className="rounded bg-[var(--canvas)] border-[var(--line)] text-[var(--accent)] focus:ring-[var(--accent)]" />
               <span className="text-[#4A3F4B]">Flag cross-platform pricing discrepancies exceeding 35%</span>
             </label>
             <label className="flex items-center gap-3 cursor-pointer">
-              <input type="checkbox" className="rounded bg-[#F9F8FC] border-[#ECE8F2] text-[#7C5DFA] focus:ring-[#7C5DFA]" />
+              <input type="checkbox" className="rounded bg-[var(--canvas)] border-[var(--line)] text-[var(--accent)] focus:ring-[var(--accent)]" />
               <span className="text-[#4A3F4B]">Daily anomaly digest summary</span>
             </label>
           </div>

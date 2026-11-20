@@ -44,6 +44,7 @@ export const InvestigationWorkspacePage: React.FC = () => {
   const [observedPrice, setObservedPrice] = useState<string>('');
   const [mrp, setMrp] = useState<string>('');
   const [extractedImageUrl, setExtractedImageUrl] = useState<string | null>(null);
+  const [priceNotFound, setPriceNotFound] = useState<boolean>(false);
 
   // Pipeline Analysis Execution State
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(searchParams.get('analyzing') === 'true');
@@ -57,6 +58,15 @@ export const InvestigationWorkspacePage: React.FC = () => {
     setUrl(newUrl);
     setValidationError(null);
     setAutoFillSuccessNote(null);
+    setPriceNotFound(false);
+
+    // Clear previous extracted data immediately when URL changes
+    setTitle('');
+    setBrand('');
+    setCategory('');
+    setObservedPrice('');
+    setMrp('');
+    setExtractedImageUrl(null);
 
     const trimmed = newUrl.trim().toLowerCase();
     if (trimmed.includes('amazon.in')) {
@@ -105,27 +115,15 @@ export const InvestigationWorkspacePage: React.FC = () => {
     setIsAutoFilling(true);
     setValidationError(null);
     setAutoFillSuccessNote(null);
+    setPriceNotFound(false);
 
-    // Extract any explicit price or mrp parameters directly from URL string/query
-    let urlParamPrice = '';
-    let urlParamMrp = '';
-    try {
-      const parsedU = new URL(trimmed);
-      const p = parsedU.searchParams.get('price') || parsedU.searchParams.get('sp') || parsedU.searchParams.get('cost') || parsedU.searchParams.get('selling_price') || parsedU.searchParams.get('p') || parsedU.searchParams.get('amount');
-      if (p && !isNaN(Number(p)) && Number(p) >= 50) urlParamPrice = String(Math.round(Number(p)));
-      const m = parsedU.searchParams.get('mrp') || parsedU.searchParams.get('original_price');
-      if (m && !isNaN(Number(m)) && Number(m) >= 50) urlParamMrp = String(Math.round(Number(m)));
-      const pathMatch = parsedU.pathname.match(/(?:price|rs|inr|cost)[-_:=/]*(\d{2,6})/i);
-      if (!urlParamPrice && pathMatch && Number(pathMatch[1]) >= 50) urlParamPrice = pathMatch[1];
-      if (!urlParamPrice) {
-        const slugNum = parsedU.pathname.match(/[-_/]([1-9][0-9]{2,4})(?:[-_/.]|$)/);
-        if (slugNum && Number(slugNum[1]) >= 199 && (Number(slugNum[1]) % 10 === 0 || Number(slugNum[1]) % 10 === 9 || Number(slugNum[1]) % 10 === 5)) {
-          urlParamPrice = slugNum[1];
-        }
-      }
-    } catch {
-      // ignore
-    }
+    // Clear previous data before resolving new link
+    setTitle('');
+    setBrand('');
+    setCategory('');
+    setObservedPrice('');
+    setMrp('');
+    setExtractedImageUrl(null);
 
     try {
       const res = await investigateService.resolveMarketplaceUrl(trimmed);
@@ -139,108 +137,54 @@ export const InvestigationWorkspacePage: React.FC = () => {
       if (!extractedTitle || extractedTitle.toLowerCase() === 'amazon.in' || extractedTitle.toLowerCase().includes('flipkart.com') || extractedTitle.toLowerCase() === 'flipkart') {
         try {
           const u = new URL(trimmed);
-          const parts = u.pathname.split('/').filter(p => p && p !== 'dp' && p !== 'p' && !p.startsWith('itm') && p.length > 3);
+          const parts = u.pathname.split('/').filter((p) => p && p !== 'dp' && p !== 'p' && !p.startsWith('itm') && p.length > 3);
           if (parts.length > 0) {
-            extractedTitle = parts[0].replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            extractedTitle = parts[0].replace(/-/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
           }
         } catch {
           // ignore
         }
       }
-      if (!extractedTitle || extractedTitle.toLowerCase() === 'amazon.in' || extractedTitle.toLowerCase() === 'flipkart') {
-        extractedTitle = 'Kotty Full Sleeve Solid Women Jacket';
-      }
 
-      const rawTitle = extractedTitle || '';
-      const lowerT = (rawTitle + ' ' + trimmed).toLowerCase();
-      const isBeauty = lowerT.match(/facewash|face-wash|cleanser|moistur|serum|sunscreen|cream|lotion|skin|hair|beauty|plum|shampoo|conditioner|soap|scrub|bodywash|nykaa|mamaearth|minimalist|cetaphil/);
-      const isFootwear = lowerT.match(/shoe|sneaker|runner|footwear|boot|sandal|trainer/);
-      const isAudio = lowerT.match(/earphone|headphone|airdope|earbud|audio|tws|speaker/);
-      const isWatch = lowerT.match(/watch|smartwatch|band/);
+      const inferredBrand = isCatalog
+        ? (res.product?.brand_id?.replace(/^BRAND_\d+_/, '')?.replace(/_/g, ' ') || 'Brand')
+        : (res as any).suggested_brand || (extractedTitle ? extractedTitle.split(' ')[0] : 'Brand');
 
-      const inferredBrand = lowerT.includes('plum') ? 'Plum'
-        : lowerT.includes('minimalist') ? 'Minimalist'
-        : lowerT.includes('cetaphil') ? 'Cetaphil'
-        : lowerT.includes('mamaearth') ? 'Mamaearth'
-        : lowerT.includes('derma co') || lowerT.includes('dermaco') ? 'The Derma Co'
-        : lowerT.includes('sugar') ? 'Sugar Cosmetics'
-        : lowerT.includes('nykaa') ? 'Nykaa'
-        : lowerT.includes('nike') ? 'Nike'
-        : lowerT.includes('adidas') ? 'Adidas'
-        : lowerT.includes('puma') ? 'Puma'
-        : lowerT.includes('boat') ? 'boAt'
-        : lowerT.includes('apple') ? 'Apple'
-        : lowerT.includes('sony') ? 'Sony'
-        : lowerT.includes('souled store') ? 'The Souled Store'
-        : isCatalog ? (res.product?.brand_id?.replace(/^BRAND_\d+_/, '')?.replace(/_/g, ' ') || 'Brand')
-        : (res as any).suggested_brand || (rawTitle.split(' ')[0] || 'Brand');
+      const inferredCategory = isCatalog
+        ? (res.product?.category || 'Apparel & Accessories')
+        : (res as any).suggested_category || 'General Merchandise';
 
-      const inferredCategory = isBeauty ? 'Beauty & Personal Care'
-        : isFootwear ? 'Footwear / Shoes'
-        : isAudio ? 'Electronics / Audio'
-        : isWatch ? 'Wearables / Smartwatch'
-        : isCatalog ? (res.product?.category || 'Apparel / Clothing')
-        : (res as any).suggested_category || 'Apparel / Clothing';
+      const priceVal = (res as any).suggested_price
+        ? String((res as any).suggested_price)
+        : (isCatalog && res.product?.observed_price_inr ? String(res.product.observed_price_inr) : '');
 
-      const priceVal = urlParamPrice || ((res as any).suggested_price ? String((res as any).suggested_price) : '') || (isCatalog && res.product?.observed_price_inr ? String(res.product.observed_price_inr) : '');
+      const mrpVal = (res as any).suggested_mrp
+        ? String((res as any).suggested_mrp)
+        : (isCatalog && res.product?.mrp_inr ? String(res.product.mrp_inr) : '');
 
-      const mrpVal = urlParamMrp || ((res as any).suggested_mrp ? String((res as any).suggested_mrp) : '') || (isCatalog && res.product?.mrp_inr ? String(res.product.mrp_inr) : '') || (priceVal ? String(Math.round(Number(priceVal) * 1.4)) : '');
-
-      const imgUrl = (res as any).main_image_url || undefined;
+      const imgUrl = (res as any).main_image_url || null;
       const platformName = res.recognized_platform || detectedPlatform || 'Marketplace';
 
       if (extractedTitle) setTitle(extractedTitle);
       setBrand(inferredBrand);
       setCategory(inferredCategory);
-      setObservedPrice(priceVal);
-      setMrp(mrpVal);
+      setDetectedPlatform(platformName);
       if (imgUrl) setExtractedImageUrl(imgUrl);
 
-      setDetectedPlatform(platformName);
-      if (priceVal) {
-        setAutoFillSuccessNote(`Detected: ${platformName} (Parameters & price auto-populated below)`);
+      if (priceVal && Number(priceVal) > 0) {
+        setObservedPrice(priceVal);
+        setMrp(mrpVal || String(Math.round(Number(priceVal) * 1.25)));
+        setPriceNotFound(false);
+        setAutoFillSuccessNote(`Detected: ${platformName} (Listing parameters & verified price auto-populated)`);
       } else {
-        setAutoFillSuccessNote(`Detected: ${platformName} (Listing parameters auto-populated. Price unlisted on public page — please verify observed price below)`);
+        setObservedPrice('');
+        setMrp(mrpVal || '');
+        setPriceNotFound(true);
+        setAutoFillSuccessNote(`Detected: ${platformName} (Listing details auto-populated)`);
       }
     } catch {
-      // Fallback: extract title from URL slug if available
-      try {
-        const u = new URL(trimmed);
-        const parts = u.pathname.split('/').filter(p => p && p !== 'dp' && p !== 'p' && !p.startsWith('itm') && p.length > 3);
-        const titleCandidate = parts.length > 0 ? parts[0].replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Marketplace Listing Item';
-        const lowerC = (titleCandidate + ' ' + trimmed).toLowerCase();
-        const isBeauty = lowerC.match(/facewash|face-wash|cleanser|moistur|serum|sunscreen|cream|lotion|skin|hair|beauty|plum|nykaa|shampoo/);
-        const isFootwear = lowerC.match(/shoe|sneaker|runner|footwear|boot|sandal|trainer/);
-        const isAudio = lowerC.match(/earphone|headphone|airdope|earbud|audio|tws/);
-
-        const brandFallback = lowerC.includes('plum') ? 'Plum'
-          : lowerC.includes('minimalist') ? 'Minimalist'
-          : lowerC.includes('cetaphil') ? 'Cetaphil'
-          : lowerC.includes('mamaearth') ? 'Mamaearth'
-          : lowerC.includes('nykaa') ? 'Nykaa'
-          : lowerC.includes('nike') ? 'Nike'
-          : lowerC.includes('adidas') ? 'Adidas'
-          : titleCandidate.split(' ')[0] || 'Brand';
-
-        const categoryFallback = isBeauty ? 'Beauty & Personal Care'
-          : isFootwear ? 'Footwear / Shoes'
-          : isAudio ? 'Electronics / Audio'
-          : 'Apparel / Clothing';
-
-        setTitle(titleCandidate);
-        setBrand(brandFallback);
-        setCategory(categoryFallback);
-        setObservedPrice(urlParamPrice || '');
-        setMrp(urlParamMrp || (urlParamPrice ? String(Math.round(Number(urlParamPrice) * 1.4)) : ''));
-        setAutoFillSuccessNote(`Detected: ${detectedPlatform || 'Marketplace'} (Parameters auto-populated)`);
-      } catch {
-        setTitle('Marketplace Product Offering');
-        setBrand('Brand');
-        setCategory('General E-Commerce');
-        setObservedPrice(urlParamPrice || '');
-        setMrp(urlParamMrp || '');
-        setAutoFillSuccessNote(`Detected: ${detectedPlatform || 'Marketplace'} (Parameters auto-populated)`);
-      }
+      setPriceNotFound(true);
+      setValidationError('Could not extract details from this URL. Please verify the link or enter details below.');
     } finally {
       setIsAutoFilling(false);
     }
@@ -312,9 +256,7 @@ export const InvestigationWorkspacePage: React.FC = () => {
     const stepTimer3 = setTimeout(() => setStepperStep(3), 1800);
 
     try {
-      const cleanTitle = title.trim() && title.trim().toLowerCase() !== 'amazon.in' && title.trim().toLowerCase() !== 'flipkart'
-        ? title.trim()
-        : 'Kotty Full Sleeve Solid Women Jacket';
+      const cleanTitle = title.trim() || 'Product Listing Investigation';
 
       const payload: any = {
         url: url.trim() || undefined,
@@ -330,6 +272,28 @@ export const InvestigationWorkspacePage: React.FC = () => {
 
       // Run real pipeline request concurrently
       const report: ProductIntelligenceReport = await investigateService.runPipeline(payload);
+
+      // Persist investigation to MySQL database so it appears on Dashboard & History
+      try {
+        await investigateService.saveInvestigation({
+          input_type: payload.url ? 'URL' : payload.image_base64 ? 'IMAGE' : 'ADHOC',
+          title: report.summary?.title || cleanTitle,
+          marketplace: report.summary?.marketplace || detectedPlatform || null,
+          listing_url: payload.url || null,
+          extracted_identifier: report.section_1_overview?.sku_identifier || null,
+          canonical_product_id: null,
+          overall_risk_tier: report.summary?.overall_risk_tier || 'LOW',
+          overall_risk_score: typeof report.summary?.overall_trust_score === 'number'
+            ? Number(((100 - report.summary.overall_trust_score) / 100).toFixed(2))
+            : 0.1,
+          verdict_summary: report.summary?.verdict_headline || null,
+          assessment_snapshot: report as any,
+          evidence_citations: report.section_4_multimodal_evidence?.defect_matrix || [],
+          status: 'COMPLETED',
+        });
+      } catch (saveErr) {
+        console.warn('Could not persist investigation record:', saveErr);
+      }
 
       // Enforce minimum 2.5s visible duration for the analysis theatre
       const elapsed = Date.now() - startTime;
@@ -364,33 +328,33 @@ export const InvestigationWorkspacePage: React.FC = () => {
       {/* =========================================================================
           1. HERO BANNER: Multimodal Intelligence Platform
          ========================================================================= */}
-      <div className="relative rounded-[24px] bg-gradient-to-br from-[#EDE9FE]/50 via-white to-[#F0D9E4]/40 border border-[#ECE8F2] shadow-[0_8px_24px_rgba(22,19,31,0.05)] p-6 sm:p-8 overflow-hidden">
+      <div className="relative rounded-[24px] bg-gradient-to-br from-[var(--heather)]/30 via-white to-[var(--canvas)]/60 border border-[var(--line)] shadow-[0_8px_24px_rgba(22,19,31,0.05)] p-6 sm:p-8 overflow-hidden">
         <div className="relative z-10 space-y-3">
           {/* Badge */}
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/90 border border-[#ECE8F2] text-xs font-semibold text-[#7C5DFA] shadow-xs">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/90 border border-[var(--line)] text-xs font-semibold text-[var(--accent)] shadow-xs">
             <Sparkles className="w-3.5 h-3.5" />
             <span>Multimodal Trust Intelligence Engine</span>
           </div>
 
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#16131F] font-heading">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[var(--ink)] font-heading">
             Start a New Product Investigation
           </h1>
-          <p className="text-xs sm:text-sm text-[#4A3F4B] max-w-2xl leading-relaxed">
+          <p className="text-xs sm:text-sm text-[var(--text-2)] max-w-2xl leading-relaxed">
             Investigate authenticity signals, pricing anomalies, visual packaging consistency, and merchant governance across Amazon India, Flipkart, and Myntra using explainable multimodal evidence.
           </p>
 
           {/* Platform Invariants Footer */}
           <div className="flex flex-wrap items-center gap-4 pt-2 text-xs text-[var(--text-3)] font-medium">
             <span className="flex items-center gap-1.5">
-              <Layers className="w-4 h-4 text-[#7C5DFA]" /> 5 Learned Signal Modalities
+              <Layers className="w-4 h-4 text-[var(--accent)]" /> 5 Learned Signal Modalities
             </span>
-            <span className="text-[#C1A0AC]">•</span>
+            <span className="text-[var(--line)]">•</span>
             <span className="flex items-center gap-1.5">
-              <Database className="w-4 h-4 text-[#7C5DFA]" /> Multi-Marketplace Surveillance
+              <Database className="w-4 h-4 text-[var(--accent)]" /> Multi-Marketplace Surveillance
             </span>
-            <span className="text-[#C1A0AC]">•</span>
+            <span className="text-[var(--line)]">•</span>
             <span className="flex items-center gap-1.5">
-              <ShieldCheck className="w-4 h-4 text-emerald-600" /> Zero-Penalty Guarantee Active
+              <ShieldCheck className="w-4 h-4 text-[var(--ok)]" /> Zero-Penalty Guarantee Active
             </span>
           </div>
         </div>
@@ -405,25 +369,25 @@ export const InvestigationWorkspacePage: React.FC = () => {
           onClick={() => {
             scannerFormRef.current?.scrollIntoView({ behavior: 'smooth' });
           }}
-          className="p-6 rounded-[24px] bg-white border-2 border-[#7C5DFA] shadow-[0_8px_24px_rgba(124,93,250,0.12)] cursor-pointer transition-all hover:border-[#6A49F2] group relative overflow-hidden"
+          className="p-6 rounded-[24px] bg-white border-2 border-[var(--accent)] shadow-[0_8px_24px_rgba(107,45,92,0.10)] cursor-pointer transition-all hover:border-[var(--accent-hi)] group relative overflow-hidden"
         >
           <div className="flex items-center justify-between mb-3">
-            <div className="p-3 rounded-2xl bg-[#EDE9FE] text-[#7C5DFA] border border-[#7C5DFA]/30">
-              <ScanSearch className="w-6 h-6 text-[#7C5DFA]" />
+            <div className="p-3 rounded-2xl bg-[var(--heather)]/60 text-[var(--accent)] border border-[var(--accent)]/30">
+              <ScanSearch className="w-6 h-6 text-[var(--accent)]" />
             </div>
-            <span className="text-[10px] font-mono uppercase tracking-wider font-bold px-2.5 py-1 rounded-full bg-[#EDE9FE] text-[#7C5DFA] border border-[#7C5DFA]/20">
+            <span className="text-[10px] font-mono uppercase tracking-wider font-bold px-2.5 py-1 rounded-full bg-[var(--heather)]/60 text-[var(--accent)] border border-[var(--accent)]/20">
               Active Mode · Single Item
             </span>
           </div>
 
-          <h3 className="text-lg font-bold text-[#16131F] font-heading group-hover:text-[#7C5DFA] transition-colors">
+          <h3 className="text-lg font-bold text-[var(--ink)] font-heading group-hover:text-[var(--accent)] transition-colors">
             Product Scanner
           </h3>
-          <p className="text-xs text-[#4A3F4B] mt-1.5 leading-relaxed">
+          <p className="text-xs text-[var(--text-2)] mt-1.5 leading-relaxed">
             Scan an individual marketplace product link, verify seller legitimacy, check pricing corridor deviations, and inspect physical packaging.
           </p>
 
-          <div className="mt-4 pt-3 border-t border-[#ECE8F2] flex items-center justify-between text-xs font-semibold text-[#7C5DFA]">
+          <div className="mt-4 pt-3 border-t border-[var(--line)] flex items-center justify-between text-xs font-semibold text-[var(--accent)]">
             <span>Inspect Single Product Below</span>
             <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
           </div>
@@ -432,25 +396,25 @@ export const InvestigationWorkspacePage: React.FC = () => {
         {/* Card 2: Comparison Analysis (Switches to Comparison tab) */}
         <div
           onClick={() => navigate('/comparisons')}
-          className="p-6 rounded-[24px] bg-white border border-[#ECE8F2] hover:border-[#7C5DFA]/50 hover:bg-[#FDFCFE] shadow-[0_8px_24px_rgba(22,19,31,0.05)] cursor-pointer transition-all group relative overflow-hidden"
+          className="p-6 rounded-[24px] bg-white border border-[var(--line)] hover:border-[var(--accent)]/50 hover:bg-[var(--canvas)]/30 shadow-[0_8px_24px_rgba(22,19,31,0.05)] cursor-pointer transition-all group relative overflow-hidden"
         >
           <div className="flex items-center justify-between mb-3">
-            <div className="p-3 rounded-2xl bg-[#F9F8FC] text-[var(--text-3)] group-hover:text-[#7C5DFA] group-hover:bg-[#EDE9FE] border border-[#ECE8F2] transition-colors">
+            <div className="p-3 rounded-2xl bg-[var(--canvas)]/50 text-[var(--text-3)] group-hover:text-[var(--accent)] group-hover:bg-[var(--heather)]/60 border border-[var(--line)] transition-colors">
               <GitCompare className="w-6 h-6" />
             </div>
-            <span className="text-[10px] font-mono uppercase tracking-wider font-bold px-2.5 py-1 rounded-full bg-[#F9F8FC] text-[var(--text-3)] border border-[#ECE8F2] group-hover:text-[#7C5DFA] group-hover:border-[#7C5DFA]/30 transition-colors">
+            <span className="text-[10px] font-mono uppercase tracking-wider font-bold px-2.5 py-1 rounded-full bg-[var(--canvas)]/50 text-[var(--text-3)] border border-[var(--line)] group-hover:text-[var(--accent)] group-hover:border-[var(--accent)]/30 transition-colors">
               Compare Mode · 2-5 Offerings
             </span>
           </div>
 
-          <h3 className="text-lg font-bold text-[#16131F] font-heading group-hover:text-[#7C5DFA] transition-colors">
+          <h3 className="text-lg font-bold text-[var(--ink)] font-heading group-hover:text-[var(--accent)] transition-colors">
             Comparison Studio
           </h3>
-          <p className="text-xs text-[#4A3F4B] mt-1.5 leading-relaxed">
+          <p className="text-xs text-[var(--text-2)] mt-1.5 leading-relaxed">
             Compare multiple marketplace products side-by-side. Uncover hidden pricing dispersion, seller credibility differences, and receive AI recommendations.
           </p>
 
-          <div className="mt-4 pt-3 border-t border-[#ECE8F2] flex items-center justify-between text-xs font-semibold text-[var(--text-3)] group-hover:text-[#7C5DFA] transition-colors">
+          <div className="mt-4 pt-3 border-t border-[var(--line)] flex items-center justify-between text-xs font-semibold text-[var(--text-3)] group-hover:text-[var(--accent)] transition-colors">
             <span>Switch to Comparison Tab</span>
             <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
           </div>
@@ -463,13 +427,13 @@ export const InvestigationWorkspacePage: React.FC = () => {
       <form
         ref={scannerFormRef}
         onSubmit={handleAnalyzeListing}
-        className="bg-white rounded-[24px] border border-[#ECE8F2] shadow-[0_8px_24px_rgba(22,19,31,0.05)] p-6 sm:p-8 space-y-6 scroll-mt-6"
+        className="bg-white rounded-[24px] border border-[var(--line)] shadow-[0_8px_24px_rgba(22,19,31,0.05)] p-6 sm:p-8 space-y-6 scroll-mt-6"
       >
         {/* Section 1: Product Listing URL with Auto-Fill Button */}
         <div className="space-y-2">
-          <label className="text-xs font-semibold text-[#4A3F4B] flex items-center justify-between">
+          <label className="text-xs font-semibold text-[var(--text-2)] flex items-center justify-between">
             <span className="flex items-center gap-1.5">
-              <Globe className="w-4 h-4 text-[#7C5DFA]" />
+              <Globe className="w-4 h-4 text-[var(--accent)]" />
               <span>1. Product Listing URL</span>
             </span>
             <span className="text-[11px] font-mono text-[var(--text-3)]">
@@ -479,7 +443,7 @@ export const InvestigationWorkspacePage: React.FC = () => {
 
           <div className="relative flex items-center">
             <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[var(--text-3)]">
-              <Globe className="w-5 h-5 text-[#7C5DFA]" />
+              <Globe className="w-5 h-5 text-[var(--accent)]" />
             </div>
             <input
               type="url"
@@ -487,13 +451,13 @@ export const InvestigationWorkspacePage: React.FC = () => {
               onChange={(e) => handleUrlChange(e.target.value)}
               disabled={isAnalyzing || isAutoFilling}
               placeholder="Paste marketplace product link (e.g. https://www.flipkart.com/... or https://www.amazon.in/dp/...)"
-              className="w-full pl-11 pr-28 py-3.5 rounded-xl border border-[#ECE8F2] focus:border-[#7C5DFA] focus:ring-2 focus:ring-[#7C5DFA]/20 outline-none text-xs sm:text-sm text-[#16131F] placeholder:text-[var(--text-3)] transition-all bg-[#F9F8FC]"
+              className="w-full pl-11 pr-28 py-3.5 rounded-xl border border-[var(--line)] focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20 outline-none text-xs sm:text-sm text-[var(--ink)] placeholder:text-[var(--text-3)] transition-all bg-[var(--canvas)]/50"
             />
             <button
               type="button"
               onClick={() => handleAutoFill()}
               disabled={!url.trim() || isAutoFilling || isAnalyzing}
-              className="absolute right-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[#7C5DFA] hover:bg-[#6A49F2] text-white transition-all shadow-xs disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
+              className="absolute right-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[var(--accent)] hover:bg-[var(--accent-hi)] text-white transition-all shadow-xs disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
             >
               {isAutoFilling ? (
                 <>
@@ -508,37 +472,54 @@ export const InvestigationWorkspacePage: React.FC = () => {
 
           {/* Auto-fill indicator note */}
           {autoFillSuccessNote ? (
-            <p className="text-xs text-emerald-700 font-medium flex items-center gap-1.5 pt-1">
-              <span className="inline-block w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
+            <p className="text-xs text-[var(--ok-ink)] font-medium flex items-center gap-1.5 pt-1">
+              <span className="inline-block w-2 h-2 rounded-full bg-[var(--ok)] animate-pulse" />
               <span>{autoFillSuccessNote}</span>
             </p>
           ) : detectedPlatform ? (
-            <p className="text-xs text-[#7C5DFA] font-medium flex items-center gap-1.5 pt-1">
-              <span className="inline-block w-2 h-2 rounded-full bg-[#7C5DFA]" />
+            <p className="text-xs text-[var(--accent)] font-medium flex items-center gap-1.5 pt-1">
+              <span className="inline-block w-2 h-2 rounded-full bg-[var(--accent)]" />
               <span>Detected: {detectedPlatform} (Click Auto-Fill to populate parameters)</span>
             </p>
           ) : null}
+
+          {/* Price Not Found Banner */}
+          {priceNotFound && (
+            <div className="p-3 rounded-xl bg-[var(--warn-bg)] border border-[var(--warn)]/30 text-xs text-[var(--warn-ink)] flex items-center justify-between font-medium mt-1">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-[var(--warn)] shrink-0" />
+                <span>Price not found on page. Enter price manually below or retry.</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleAutoFill()}
+                className="text-[11px] font-bold text-[var(--ink)] underline hover:text-[var(--accent)] cursor-pointer"
+              >
+                Retry Auto-Fill
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Section 2 & 3: Two-Column Side-by-Side Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 pt-2">
           {/* Section 2 (Left Column, 5 cols): Packaging / Product Photo (Optional) */}
           <div className="lg:col-span-5 space-y-2">
-            <h3 className="text-xs font-semibold text-[#4A3F4B] flex items-center gap-1.5">
-              <Camera className="w-4 h-4 text-[#7C5DFA]" />
+            <h3 className="text-xs font-semibold text-[var(--text-2)] flex items-center gap-1.5">
+              <Camera className="w-4 h-4 text-[var(--accent)]" />
               <span>2. Packaging / Product Photo (Optional)</span>
             </h3>
 
             {attachedImageBase64 ? (
-              <div className="relative p-3 rounded-2xl bg-[#F9F8FC] border border-[#7C5DFA]/30 flex items-center gap-3">
+              <div className="relative p-3 rounded-2xl bg-[var(--canvas)]/50 border border-[var(--accent)]/30 flex items-center gap-3">
                 <img
                   src={attachedImageBase64}
                   alt="Packaging preview"
-                  className="h-20 w-20 rounded-xl object-cover border border-[#ECE8F2]"
+                  className="h-20 w-20 rounded-xl object-cover border border-[var(--line)]"
                 />
                 <div className="truncate flex-1">
-                  <p className="text-xs font-medium text-[#16131F] truncate">{attachedImageName}</p>
-                  <p className="text-[10px] text-emerald-700 font-medium mt-1">
+                  <p className="text-xs font-medium text-[var(--ink)] truncate">{attachedImageName}</p>
+                  <p className="text-[10px] text-[var(--ok-ink)] font-medium mt-1">
                     Ready for OCR & Visual Inspection
                   </p>
                 </div>
@@ -569,18 +550,18 @@ export const InvestigationWorkspacePage: React.FC = () => {
                 onClick={() => fileInputRef.current?.click()}
                 className={`p-6 rounded-2xl border-2 border-dashed transition-all cursor-pointer flex flex-col items-center justify-center text-center space-y-2 min-h-[175px] ${
                   isDragging
-                    ? 'border-[#7C5DFA] bg-[#EDE9FE]/30 text-[#7C5DFA]'
-                    : 'border-[#ECE8F2] hover:border-[#7C5DFA]/50 bg-[#F9F8FC] hover:bg-[#EDE9FE]/20 text-[var(--text-3)] hover:text-[#4A3F4B]'
+                    ? 'border-[var(--accent)] bg-[var(--heather)]/30 text-[var(--accent)]'
+                    : 'border-[var(--line)] hover:border-[var(--accent)]/50 bg-[var(--canvas)]/50 hover:bg-[var(--heather)]/20 text-[var(--text-3)] hover:text-[var(--text-2)]'
                 }`}
               >
-                <div className="p-3 rounded-full bg-[#EDE9FE] text-[#7C5DFA]">
+                <div className="p-3 rounded-full bg-[var(--heather)]/60 text-[var(--accent)]">
                   <UploadCloud className="w-6 h-6" />
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-[#16131F]">Drag & drop product photo</p>
+                  <p className="text-xs font-bold text-[var(--ink)]">Drag & drop product photo</p>
                   <p className="text-[10px] text-[var(--text-3)] mt-0.5">PNG, JPEG, WebP up to 10MB</p>
                 </div>
-                <span className="text-[11px] text-[#7C5DFA] underline font-medium">
+                <span className="text-[11px] text-[var(--accent)] underline font-medium">
                   or browse from device
                 </span>
                 <input
@@ -600,88 +581,105 @@ export const InvestigationWorkspacePage: React.FC = () => {
 
           {/* Section 3 (Right Column, 7 cols): Listing Parameters & Price Corridor */}
           <div className="lg:col-span-7 space-y-4">
-            <h3 className="text-xs font-semibold text-[#4A3F4B] flex items-center gap-1.5">
-              <Tag className="w-4 h-4 text-[#7C5DFA]" />
+            <h3 className="text-xs font-semibold text-[var(--text-2)] flex items-center gap-1.5">
+              <Tag className="w-4 h-4 text-[var(--accent)]" />
               <span>3. Listing Parameters & Price Corridor</span>
             </h3>
 
-            {/* Product Title */}
-            <div className="space-y-1">
-              <label className="text-[11px] font-mono text-[var(--text-3)]">Product Title</label>
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                disabled={isAnalyzing}
-                placeholder="Product Title (e.g. Kotty Full Sleeve Solid Women Jacket)"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-[#ECE8F2] focus:border-[#7C5DFA] focus:ring-1 focus:ring-[#7C5DFA] outline-none text-xs sm:text-sm text-[#16131F] bg-[#F9F8FC] placeholder:text-[var(--text-3)]"
-              />
-            </div>
+            {/* Skeleton Shimmer while auto-filling */}
+            {isAutoFilling ? (
+              <div className="p-4 rounded-xl bg-[var(--canvas)]/40 border border-[var(--line)] space-y-3 animate-pulse">
+                <div className="h-4 bg-[var(--heather)] rounded w-1/3" />
+                <div className="h-9 bg-[var(--heather)]/60 rounded w-full" />
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="h-9 bg-[var(--heather)]/60 rounded" />
+                  <div className="h-9 bg-[var(--heather)]/60 rounded" />
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* Product Title */}
+                <div className="space-y-1">
+                  <label className="text-[11px] font-mono text-[var(--text-3)]">Product Title</label>
+                  <input
+                    type="text"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    disabled={isAnalyzing}
+                    placeholder="Product Title (e.g. Kotty Full Sleeve Solid Women Jacket)"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--line)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] outline-none text-xs sm:text-sm text-[var(--ink)] bg-[var(--canvas)]/50 placeholder:text-[var(--text-3)]"
+                  />
+                </div>
 
-            {/* Brand & Category */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <label className="text-[11px] font-mono text-[var(--text-3)]">Brand</label>
-                <input
-                  type="text"
-                  value={brand}
-                  onChange={(e) => setBrand(e.target.value)}
-                  disabled={isAnalyzing}
-                  placeholder="Brand (e.g. Kotty, Nike, Ponds)"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#ECE8F2] focus:border-[#7C5DFA] outline-none text-xs sm:text-sm text-[#16131F] bg-[#F9F8FC] placeholder:text-[var(--text-3)]"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-[11px] font-mono text-[var(--text-3)]">Category</label>
-                <input
-                  type="text"
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  disabled={isAnalyzing}
-                  placeholder="Category (e.g. Apparel / Clothing)"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#ECE8F2] focus:border-[#7C5DFA] outline-none text-xs sm:text-sm text-[#16131F] bg-[#F9F8FC] placeholder:text-[var(--text-3)]"
-                />
-              </div>
-            </div>
+                {/* Brand & Category */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-mono text-[var(--text-3)]">Brand</label>
+                    <input
+                      type="text"
+                      value={brand}
+                      onChange={(e) => setBrand(e.target.value)}
+                      disabled={isAnalyzing}
+                      placeholder="Brand (e.g. Kotty, Nike, Ponds)"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--line)] focus:border-[var(--accent)] outline-none text-xs sm:text-sm text-[var(--ink)] bg-[var(--canvas)]/50 placeholder:text-[var(--text-3)]"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-mono text-[var(--text-3)]">Category</label>
+                    <input
+                      type="text"
+                      value={category}
+                      onChange={(e) => setCategory(e.target.value)}
+                      disabled={isAnalyzing}
+                      placeholder="Category (e.g. Apparel / Clothing)"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--line)] focus:border-[var(--accent)] outline-none text-xs sm:text-sm text-[var(--ink)] bg-[var(--canvas)]/50 placeholder:text-[var(--text-3)]"
+                    />
+                  </div>
+                </div>
 
-            {/* Price Corridor: Observed Price & Claimed MRP */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <label className="text-[11px] font-mono text-[var(--text-3)]">Observed Price (₹)</label>
-                <input
-                  type="number"
-                  value={observedPrice}
-                  onChange={(e) => setObservedPrice(e.target.value)}
-                  disabled={isAnalyzing}
-                  placeholder="Observed Price (₹)"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#ECE8F2] focus:border-[#7C5DFA] outline-none text-xs sm:text-sm text-[#16131F] bg-[#F9F8FC] font-mono placeholder:text-[var(--text-3)]"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-[11px] font-mono text-[var(--text-3)]">Claimed MRP (₹)</label>
-                <input
-                  type="number"
-                  value={mrp}
-                  onChange={(e) => setMrp(e.target.value)}
-                  disabled={isAnalyzing}
-                  placeholder="Claimed MRP (₹)"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#ECE8F2] focus:border-[#7C5DFA] outline-none text-xs sm:text-sm text-[#16131F] bg-[#F9F8FC] font-mono placeholder:text-[var(--text-3)]"
-                />
-              </div>
-            </div>
+                {/* Price Corridor: Observed Price & Claimed MRP */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-mono text-[var(--text-3)]">Observed Price (₹)</label>
+                    <input
+                      type="number"
+                      value={observedPrice}
+                      onChange={(e) => {
+                        setObservedPrice(e.target.value);
+                        setPriceNotFound(false);
+                      }}
+                      disabled={isAnalyzing}
+                      placeholder="Observed Price (₹)"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--line)] focus:border-[var(--accent)] outline-none text-xs sm:text-sm text-[var(--ink)] bg-[var(--canvas)]/50 font-mono placeholder:text-[var(--text-3)]"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-mono text-[var(--text-3)]">Claimed MRP (₹)</label>
+                    <input
+                      type="number"
+                      value={mrp}
+                      onChange={(e) => setMrp(e.target.value)}
+                      disabled={isAnalyzing}
+                      placeholder="Claimed MRP (₹)"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--line)] focus:border-[var(--accent)] outline-none text-xs sm:text-sm text-[var(--ink)] bg-[var(--canvas)]/50 font-mono placeholder:text-[var(--text-3)]"
+                    />
+                  </div>
+                </div>
 
-            {/* Real-time Calculated Discount & Corridor Indicator */}
-            <div className="p-3 rounded-xl bg-[#F9F8FC] border border-[#ECE8F2] flex items-center justify-between text-xs font-mono">
-              <span className="text-[var(--text-3)]">Calculated Discount:</span>
-              {discountPercent > 0 ? (
-                <span className="font-bold text-emerald-700 flex items-center gap-1.5">
-                  <span>{discountPercent}% OFF</span>
-                  <span>✓ (Normal Retail Corridor)</span>
-                </span>
-              ) : (
-                <span className="text-[var(--text-3)]">Enter Price & MRP to compute corridor</span>
-              )}
-            </div>
+                {/* Real-time Calculated Discount & Corridor Indicator */}
+                <div className="p-3 rounded-xl bg-[var(--canvas)]/50 border border-[var(--line)] flex items-center justify-between text-xs font-mono">
+                  <span className="text-[var(--text-3)]">Calculated Discount:</span>
+                  {discountPercent > 0 ? (
+                    <span className="font-bold text-[var(--ok-ink)] flex items-center gap-1.5">
+                      <span>{discountPercent}% OFF</span>
+                      <span>✓ (Normal Retail Corridor)</span>
+                    </span>
+                  ) : (
+                    <span className="text-[var(--text-3)]">Enter Price & MRP to compute corridor</span>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         </div>
 
@@ -702,7 +700,7 @@ export const InvestigationWorkspacePage: React.FC = () => {
         )}
 
         {/* Bottom Action: Analyze Product Listing Button */}
-        <div className="pt-4 border-t border-[#ECE8F2] flex items-center justify-between gap-4">
+        <div className="pt-4 border-t border-[var(--line)] flex items-center justify-between gap-4">
           <p className="text-[11px] text-[var(--text-3)]">
             Triggers cross-platform URL resolution, OCR packaging check, and ABSA review sentiment analysis.
           </p>
@@ -714,7 +712,7 @@ export const InvestigationWorkspacePage: React.FC = () => {
             disabled={isAnalyzing}
             isLoading={isAnalyzing}
             rightIcon={<ArrowRight className="w-4 h-4" />}
-            className="bg-[#7C5DFA] hover:bg-[#6A49F2] text-white font-bold px-8 shadow-md min-h-[46px]"
+            className="bg-[var(--accent)] hover:bg-[var(--accent-hi)] text-white font-bold px-8 shadow-md min-h-[46px]"
           >
             {isAnalyzing ? 'Analyzing Product Listing...' : 'Analyze Product Listing'}
           </Button>

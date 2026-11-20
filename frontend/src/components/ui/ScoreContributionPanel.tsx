@@ -98,7 +98,7 @@ export const ScoreContributionPanel: React.FC<ScoreContributionPanelProps> = ({
       aria-label="Score Contribution Breakdown"
     >
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#ECE8F2]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[var(--line)]">
         <div>
           <div className="flex items-center gap-2">
             <h3 className="text-sm font-bold text-[var(--ink)] font-heading uppercase tracking-wider">
@@ -137,12 +137,12 @@ export const ScoreContributionPanel: React.FC<ScoreContributionPanelProps> = ({
               onMouseLeave={() => onHoverModality?.(null)}
               animate={{
                 scale: isHighlighted ? 1.02 : 1,
-                borderColor: isHighlighted ? 'rgba(107, 45, 92, 0.45)' : 'rgba(236, 232, 242, 1)',
+                borderColor: isHighlighted ? 'rgba(107, 45, 92, 0.45)' : 'rgba(193, 160, 172, 0.35)',
               }}
               className={`p-4 rounded-2xl border transition-all cursor-pointer relative overflow-hidden ${
                 isHighlighted
                   ? 'bg-gradient-to-br from-[var(--heather)]/30 to-white shadow-md ring-2 ring-[var(--accent)]/30'
-                  : 'bg-[#FDFCFE] hover:bg-[#F9F8FC]'
+                  : 'bg-white hover:bg-[var(--canvas)]/40'
               }`}
             >
               <div className="flex items-start justify-between gap-3 mb-2">
@@ -173,7 +173,7 @@ export const ScoreContributionPanel: React.FC<ScoreContributionPanelProps> = ({
                       ? 'bg-[var(--ok-bg)] text-[var(--ok-ink)] border-[var(--ok)]/30'
                       : c.delta < 0
                       ? 'bg-[var(--bad-bg)] text-[var(--bad-ink)] border-[var(--bad)]/30'
-                      : 'bg-[#ECE8F2] text-[var(--text-3)] border-[#DDD6FE]'
+                      : 'bg-[var(--heather)]/40 text-[var(--text-3)] border-[var(--line)]'
                   }`}
                 >
                   {c.delta > 0 ? `+${c.delta} pts` : c.delta < 0 ? `${c.delta} pts` : '±0 pts (Neutral)'}
@@ -182,7 +182,7 @@ export const ScoreContributionPanel: React.FC<ScoreContributionPanelProps> = ({
 
               {/* Horizontal Contribution Progress Bar */}
               <div className="space-y-1 mt-2.5">
-                <div className="w-full bg-[#ECE8F2] h-2 rounded-full overflow-hidden">
+                <div className="w-full bg-[var(--line)]/50 h-2 rounded-full overflow-hidden">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${barWidth}%` }}

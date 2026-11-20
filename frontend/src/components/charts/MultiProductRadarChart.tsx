@@ -28,7 +28,7 @@ export interface MultiProductRadarChartProps {
 
 const PALETTE = [
   { stroke: '#6B2D5C', fill: '#6B2D5C', name: 'Plum (Winner)' },
-  { stroke: '#6A63E0', fill: '#6A63E0', name: 'Indigo' },
+  { stroke: '#8E3F7A', fill: '#8E3F7A', name: 'Heather Rose' },
   { stroke: '#12A36B', fill: '#12A36B', name: 'Emerald' },
   { stroke: '#E09A12', fill: '#E09A12', name: 'Amber' },
   { stroke: '#D63B4B', fill: '#D63B4B', name: 'Coral' },
@@ -60,7 +60,7 @@ export const MultiProductRadarChart: React.FC<MultiProductRadarChartProps> = ({
   return (
     <div className={`p-6 rounded-[24px] bg-white border border-[var(--line)] shadow-xs space-y-4 ${className}`}>
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#ECE8F2]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[var(--line)]">
         <div>
           <div className="flex items-center gap-2">
             <h3 className="text-sm font-bold text-[var(--ink)] font-heading uppercase tracking-wider">
@@ -98,7 +98,7 @@ export const MultiProductRadarChart: React.FC<MultiProductRadarChartProps> = ({
       <div className="h-72 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <RadarChart data={radarData} margin={{ top: 10, right: 30, left: 30, bottom: 10 }}>
-            <PolarGrid stroke="#ECE8F2" />
+            <PolarGrid stroke="rgba(193,160,172,0.3)" />
             <PolarAngleAxis
               dataKey="dimension"
               tick={{ fill: '#4A3F4B', fontSize: 11, fontWeight: 600 }}
@@ -107,7 +107,7 @@ export const MultiProductRadarChart: React.FC<MultiProductRadarChartProps> = ({
               angle={90}
               domain={[0, 100]}
               tick={{ fill: '#6F5B68', fontSize: 9 }}
-              stroke="#ECE8F2"
+              stroke="rgba(193,160,172,0.35)"
             />
             <Tooltip
               content={({ active, payload }) => {
@@ -116,7 +116,7 @@ export const MultiProductRadarChart: React.FC<MultiProductRadarChartProps> = ({
                   return (
                     <div className="bg-white border border-[var(--line)] rounded-xl p-3 shadow-xl text-xs space-y-1.5 font-sans">
                       <div className="font-bold text-[var(--ink)] font-heading">{data.dimension}</div>
-                      <div className="space-y-1 pt-1 border-t border-[#ECE8F2]">
+                      <div className="space-y-1 pt-1 border-t border-[var(--line)]">
                         {products.map((p, idx) => (
                           <div key={idx} className="flex items-center justify-between gap-4 font-mono">
                             <span className="flex items-center gap-1.5 text-[var(--text-2)]">
@@ -157,7 +157,7 @@ export const MultiProductRadarChart: React.FC<MultiProductRadarChartProps> = ({
       </div>
 
       {/* Radar Footnote */}
-      <div className="pt-2 border-t border-[#ECE8F2] flex items-center justify-between text-[11px] text-[var(--text-3)] font-mono">
+      <div className="pt-2 border-t border-[var(--line)] flex items-center justify-between text-[11px] text-[var(--text-3)] font-mono">
         <span>Higher polygon coverage indicates stronger overall commercial footprint</span>
         <span>Normalized scale: 0–100</span>
       </div>

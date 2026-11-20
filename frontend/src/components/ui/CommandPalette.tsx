@@ -53,7 +53,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
       >
         <Command label="TrustSphere Command Menu" className="w-full">
           {/* Search Input Bar */}
-          <div className="flex items-center px-4 py-3.5 border-b border-[#ECE8F2] gap-3">
+          <div className="flex items-center px-4 py-3.5 border-b border-[var(--line)] gap-3">
             <Search className="w-4 h-4 text-[var(--text-3)] shrink-0" />
             <Command.Input
               autoFocus
@@ -189,7 +189,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
           </Command.List>
 
           {/* Footer Guide */}
-          <div className="px-4 py-2.5 bg-[#FDFCFE] border-t border-[#ECE8F2] flex items-center justify-between text-[11px] text-[var(--text-3)] font-mono">
+          <div className="px-4 py-2.5 bg-[var(--canvas)]/40 border-t border-[var(--line)] flex items-center justify-between text-[11px] text-[var(--text-3)] font-mono">
             <span>Navigation shortcut</span>
             <div className="flex items-center gap-2">
               <span>↑↓ to navigate</span>

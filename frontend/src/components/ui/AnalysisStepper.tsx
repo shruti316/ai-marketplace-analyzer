@@ -62,7 +62,7 @@ export const AnalysisStepper: React.FC<AnalysisStepperProps> = ({
       aria-label="Multimodal Investigation Progress"
     >
       {/* Header with Title & Live Pulse */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#ECE8F2]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[var(--line)]">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-2xl bg-[var(--heather)] text-[var(--accent)] flex items-center justify-center border border-[var(--line)] shrink-0">
             {isComplete ? (
@@ -100,7 +100,7 @@ export const AnalysisStepper: React.FC<AnalysisStepperProps> = ({
       </div>
 
       {/* Progress Bar Track */}
-      <div className="w-full bg-[#ECE8F2] h-2 rounded-full overflow-hidden relative">
+      <div className="w-full bg-[var(--heather)]/60 h-2 rounded-full overflow-hidden relative">
         <motion.div
           className="bg-gradient-to-r from-[var(--accent)] via-[#8E3F7A] to-[#12A36B] h-full rounded-full"
           initial={{ width: '12%' }}
@@ -154,7 +154,7 @@ export const AnalysisStepper: React.FC<AnalysisStepperProps> = ({
                         ? 'bg-[var(--ok-bg)] text-[var(--ok-ink)] border border-[var(--ok)]/30'
                         : isActive
                         ? 'bg-[var(--accent)] text-white shadow-xs'
-                        : 'bg-[#ECE8F2] text-[var(--text-3)]'
+                        : 'bg-[var(--heather)]/60 text-[var(--text-3)]'
                     }`}
                   >
                     <AnimatePresence mode="wait">
@@ -182,7 +182,7 @@ export const AnalysisStepper: React.FC<AnalysisStepperProps> = ({
                     </AnimatePresence>
                   </div>
 
-                  <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-md bg-white border border-[#ECE8F2] text-[var(--text-3)] font-semibold">
+                  <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-md bg-white border border-[var(--line)] text-[var(--text-3)] font-semibold">
                     {step.modalityTag}
                   </span>
                 </div>

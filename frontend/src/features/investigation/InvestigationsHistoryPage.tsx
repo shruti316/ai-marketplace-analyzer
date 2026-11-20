@@ -67,42 +67,42 @@ export const InvestigationsHistoryPage: React.FC = () => {
     switch (tier.toUpperCase()) {
       case 'LOW':
       case 'LOW_OBSERVED_ANOMALY':
-        return { label: 'Low Risk', bg: 'bg-emerald-950/40 border-emerald-500/30 text-emerald-300' };
+        return { label: 'Low Risk', bg: 'bg-[var(--ok-bg)] border-[var(--ok)]/30 text-[var(--ok-ink)]' };
       case 'MODERATE':
       case 'MODERATE_SINGLE_MODALITY_ANOMALY':
-        return { label: 'Moderate Anomaly', bg: 'bg-amber-950/40 border-amber-500/30 text-amber-300' };
+        return { label: 'Moderate Anomaly', bg: 'bg-[var(--warn-bg)] border-[var(--warn)]/30 text-[var(--warn-ink)]' };
       case 'HIGH':
       case 'CRITICAL':
       case 'ELEVATED_MULTIMODAL_ANOMALY':
-        return { label: 'High Divergence', bg: 'bg-rose-950/40 border-rose-500/30 text-rose-300' };
+        return { label: 'High Divergence', bg: 'bg-[var(--bad-bg)] border-[var(--bad)]/30 text-[var(--bad-ink)]' };
       default:
-        return { label: 'Sparse Signal', bg: 'bg-indigo-950/40 border-indigo-500/30 text-indigo-300' };
+        return { label: 'Sparse Signal', bg: 'bg-[var(--canvas)]/60 border-[var(--line)] text-[var(--text-3)]' };
     }
   };
 
   const getInputTypeIcon = (type: string) => {
     switch (type) {
       case 'IMAGE':
-        return <Camera className="w-3.5 h-3.5 text-indigo-400" />;
+        return <Camera className="w-3.5 h-3.5 text-[var(--accent)]" />;
       case 'URL':
-        return <LinkIcon className="w-3.5 h-3.5 text-indigo-400" />;
+        return <LinkIcon className="w-3.5 h-3.5 text-[var(--accent)]" />;
       case 'ADHOC':
-        return <Sliders className="w-3.5 h-3.5 text-amber-400" />;
+        return <Sliders className="w-3.5 h-3.5 text-[var(--warn)]" />;
       default:
-        return <Store className="w-3.5 h-3.5 text-indigo-400" />;
+        return <Store className="w-3.5 h-3.5 text-[var(--accent)]" />;
     }
   };
 
   return (
     <div className="space-y-6 animate-fadeIn pb-16 max-w-6xl mx-auto">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/[0.08]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[var(--line)]">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-100 font-heading flex items-center gap-2">
-            <History className="w-5 h-5 text-indigo-400" />
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[var(--ink)] font-heading flex items-center gap-2">
+            <History className="w-5 h-5 text-[var(--accent)]" />
             <span>Product Investigations History</span>
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-[var(--text-3)] mt-1">
             Permanent audit trail of your marketplace listings, image packaging scans, and multimodal assessments
           </p>
         </div>
@@ -117,9 +117,9 @@ export const InvestigationsHistoryPage: React.FC = () => {
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-[#111522] p-4 rounded-2xl border border-white/[0.08] shadow-soft">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-[var(--line)] shadow-sm">
         <div className="relative w-full sm:w-80">
-          <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5 pointer-events-none" />
+          <Search className="w-4 h-4 text-[var(--text-3)] absolute left-3 top-2.5 pointer-events-none" />
           <input
             type="text"
             value={search}
@@ -128,7 +128,7 @@ export const InvestigationsHistoryPage: React.FC = () => {
               setPage(1);
             }}
             placeholder="Search by title or identifier..."
-            className="w-full bg-[#181D2E] text-xs text-slate-100 placeholder:text-slate-500 rounded-xl pl-9 pr-3 py-2 border border-white/[0.08] focus:border-indigo-500 outline-none transition-all"
+            className="w-full bg-[var(--canvas)]/40 text-xs text-[var(--ink)] placeholder:text-[var(--text-3)] rounded-xl pl-9 pr-3 py-2 border border-[var(--line)] focus:border-[var(--accent)] outline-none transition-all"
           />
         </div>
 
@@ -142,8 +142,8 @@ export const InvestigationsHistoryPage: React.FC = () => {
               }}
               className={`px-3 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap transition-all ${
                 selectedTier === tier
-                  ? 'bg-indigo-600 text-white shadow-sm'
-                  : 'bg-[#181D2E] text-slate-400 hover:text-slate-200 border border-white/[0.08]'
+                  ? 'bg-[var(--ink)] text-white shadow-sm'
+                  : 'bg-white text-[var(--text-2)] hover:text-[var(--ink)] border border-[var(--line)]'
               }`}
             >
               {tier === 'ALL' ? 'All Tiers' : tier}
@@ -157,9 +157,9 @@ export const InvestigationsHistoryPage: React.FC = () => {
         {isLoading ? (
           <div className="space-y-3">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="p-5 rounded-2xl bg-[#111522] border border-white/[0.08] animate-pulse space-y-2">
-                <div className="h-4 bg-[#181D2E] rounded w-1/3" />
-                <div className="h-3 bg-[#181D2E] rounded w-2/3" />
+              <div key={i} className="p-5 rounded-2xl bg-white border border-[var(--line)] animate-pulse space-y-2">
+                <div className="h-4 bg-[var(--canvas)] rounded w-1/3" />
+                <div className="h-3 bg-[var(--canvas)] rounded w-2/3" />
               </div>
             ))}
           </div>
@@ -177,11 +177,11 @@ export const InvestigationsHistoryPage: React.FC = () => {
             return (
               <div
                 key={inv.id}
-                className="p-5 rounded-2xl bg-[#111522] border border-white/[0.08] hover:border-indigo-500/40 hover:bg-[#151928] transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+                className="p-5 rounded-2xl bg-white border border-[var(--line)] hover:border-[var(--accent)] hover:shadow-xs transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
               >
                 <div className="space-y-1.5 flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="inline-flex items-center gap-1 font-mono text-[10px] text-indigo-300 bg-[#181D2E] border border-white/[0.08] px-2 py-0.5 rounded-full">
+                    <span className="inline-flex items-center gap-1 font-mono text-[10px] text-[var(--accent)] bg-[var(--canvas)]/60 border border-[var(--line)] px-2 py-0.5 rounded-full">
                       {getInputTypeIcon(inv.input_type)}
                       <span>{inv.input_type}</span>
                     </span>
@@ -191,7 +191,7 @@ export const InvestigationsHistoryPage: React.FC = () => {
                       size="sm"
                     />
                     {inv.extracted_identifier && (
-                      <span className="font-mono text-[10px] text-slate-400 bg-white/5 px-2 py-0.5 rounded border border-white/[0.05]">
+                      <span className="font-mono text-[10px] text-[var(--text-3)] bg-[var(--canvas)]/60 px-2 py-0.5 rounded border border-[var(--line)]">
                         ID: {inv.extracted_identifier}
                       </span>
                     )}
@@ -199,20 +199,20 @@ export const InvestigationsHistoryPage: React.FC = () => {
 
                   <h3
                     onClick={() => navigate(inv.canonical_product_id ? `/investigate/${inv.canonical_product_id}` : `/investigate/${inv.id}`)}
-                    className="text-xs sm:text-sm font-semibold text-slate-100 line-clamp-1 hover:text-indigo-400 cursor-pointer font-heading"
+                    className="text-xs sm:text-sm font-semibold text-[var(--ink)] line-clamp-1 hover:text-[var(--accent)] cursor-pointer font-heading"
                   >
                     {inv.title}
                   </h3>
 
                   {inv.verdict_summary && (
-                    <p className="text-xs text-slate-400 line-clamp-1">
+                    <p className="text-xs text-[var(--text-3)] line-clamp-1">
                       {inv.verdict_summary}
                     </p>
                   )}
 
-                  <div className="flex items-center gap-4 text-[11px] text-slate-400 font-mono">
+                  <div className="flex items-center gap-4 text-[11px] text-[var(--text-3)] font-mono">
                     <span className="flex items-center gap-1">
-                      <Store className="w-3 h-3 text-indigo-400" /> {inv.marketplace || 'Marketplace'}
+                      <Store className="w-3 h-3 text-[var(--accent)]" /> {inv.marketplace || 'Marketplace'}
                     </span>
                     <span>•</span>
                     <span className="flex items-center gap-1">
@@ -237,7 +237,7 @@ export const InvestigationsHistoryPage: React.FC = () => {
                         deleteMutation.mutate(inv.id);
                       }
                     }}
-                    className="p-2 rounded-xl text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                    className="p-2 rounded-xl text-[var(--text-3)] hover:text-[var(--bad)] hover:bg-[var(--bad-bg)] transition-colors"
                     title="Delete record"
                     aria-label="Delete investigation"
                   >
@@ -248,13 +248,13 @@ export const InvestigationsHistoryPage: React.FC = () => {
             );
           })
         ) : (
-          <div className="p-8 sm:p-12 text-center bg-[#111522] rounded-2xl border border-white/[0.08] space-y-4">
-            <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center mx-auto">
+          <div className="p-8 sm:p-12 text-center bg-white rounded-2xl border border-[var(--line)] space-y-4">
+            <div className="w-12 h-12 rounded-2xl bg-[var(--heather)] border border-[var(--line)] text-[var(--accent)] flex items-center justify-center mx-auto">
               <History className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="text-base font-semibold text-slate-100 font-heading">No Saved Investigations Yet</h3>
-              <p className="text-xs text-slate-400 max-w-md mx-auto mt-1">
+              <h3 className="text-base font-semibold text-[var(--ink)] font-heading">No Saved Investigations Yet</h3>
+              <p className="text-xs text-[var(--text-3)] max-w-md mx-auto mt-1">
                 {isAuthenticated
                   ? 'When you check a marketplace link or inspect packaging, your assessments are stored securely here.'
                   : 'Sign in to access and store your personal audit trail of product trust assessments.'}
@@ -272,9 +272,9 @@ export const InvestigationsHistoryPage: React.FC = () => {
 
             {/* Catalog Examples */}
             {sampleProductsData && sampleProductsData.items.length > 0 && (
-              <div className="pt-6 border-t border-white/[0.08] text-left">
-                <p className="text-xs font-semibold text-indigo-300 mb-3 flex items-center gap-1.5 font-heading">
-                  <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+              <div className="pt-6 border-t border-[var(--line)] text-left">
+                <p className="text-xs font-semibold text-[var(--accent)] mb-3 flex items-center gap-1.5 font-heading">
+                  <Sparkles className="w-3.5 h-3.5 text-[var(--accent)]" />
                   <span>Sample Verified Catalog Records to Explore:</span>
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -282,13 +282,13 @@ export const InvestigationsHistoryPage: React.FC = () => {
                     <div
                       key={p.canonical_product_id}
                       onClick={() => navigate(`/investigate/${p.canonical_product_id}`)}
-                      className="p-3 rounded-xl bg-[#181D2E] border border-white/[0.08] hover:border-indigo-500/40 cursor-pointer flex items-center justify-between text-xs transition-colors"
+                      className="p-3 rounded-xl bg-[var(--canvas)]/40 border border-[var(--line)] hover:border-[var(--accent)] cursor-pointer flex items-center justify-between text-xs transition-colors"
                     >
                       <div className="truncate pr-2">
-                        <span className="font-semibold text-slate-100 truncate block font-heading">{p.product_title || p.title}</span>
-                        <span className="text-[10px] text-slate-400 font-mono">{p.category || 'Retail Category'}</span>
+                        <span className="font-semibold text-[var(--ink)] truncate block font-heading">{p.product_title || p.title}</span>
+                        <span className="text-[10px] text-[var(--text-3)] font-mono">{p.category || 'Retail Category'}</span>
                       </div>
-                      <ExternalLink className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                      <ExternalLink className="w-3.5 h-3.5 text-[var(--accent)] shrink-0" />
                     </div>
                   ))}
                 </div>

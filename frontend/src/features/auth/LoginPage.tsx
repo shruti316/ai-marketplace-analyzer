@@ -122,7 +122,7 @@ export const LoginPage: React.FC = () => {
   return (
     <div className="min-h-screen w-full flex bg-[#0B0D14] text-slate-100 overflow-x-hidden relative font-sans">
       {/* Ambient background glow orbs */}
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-0 left-1/4 w-96 h-96 bg-[var(--accent)]/5 rounded-full blur-3xl pointer-events-none" />
 
       {/* =========================================================================
           LEFT VISUAL PANEL (Desktop: 48% width)
@@ -131,12 +131,12 @@ export const LoginPage: React.FC = () => {
         {/* Top Header & Brand Identity */}
         <div className="relative z-10 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-md border border-indigo-400/20">
+            <div className="h-10 w-10 rounded-xl bg-[var(--ink)] text-white flex items-center justify-center shadow-md border border-[var(--accent)]/30">
               <ShieldCheck className="h-6 w-6" />
             </div>
             <div>
               <h1 className="text-lg font-bold tracking-tight text-slate-100 leading-tight font-heading">TrustSphere</h1>
-              <p className="text-[11px] text-indigo-300 font-medium tracking-wide">
+              <p className="text-[11px] text-[var(--heather)] font-medium tracking-wide">
                 Shop Smarter • Buy With Confidence
               </p>
             </div>
@@ -149,8 +149,8 @@ export const LoginPage: React.FC = () => {
         {/* Center: Hero Headline & Topology */}
         <div className="relative z-10 space-y-6 my-auto py-6">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-xs font-medium text-indigo-300">
-              <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--heather)]/20 border border-[var(--line)] text-xs font-medium text-[var(--heather)]">
+              <Sparkles className="w-3.5 h-3.5 text-[var(--accent-hi)]" />
               <span>Consumer Shopping Protection</span>
             </div>
             <h2 className="text-3xl xl:text-4xl font-extrabold tracking-tight text-slate-100 leading-tight font-heading">
@@ -170,7 +170,7 @@ export const LoginPage: React.FC = () => {
         {/* Bottom Footer Metadata */}
         <div className="relative z-10 text-xs text-slate-400 flex items-center justify-between border-t border-white/[0.08] pt-4 font-mono">
           <span className="text-[11px] text-slate-500">Amazon India • Flipkart • Myntra</span>
-          <span className="text-[11px] text-indigo-300 flex items-center gap-1.5">
+          <span className="text-[11px] text-[var(--heather)] flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             Surveillance Active
           </span>
@@ -184,12 +184,12 @@ export const LoginPage: React.FC = () => {
         <div className="w-full max-w-md space-y-6">
           {/* Mobile brand header */}
           <div className="lg:hidden flex items-center gap-3 pb-3 border-b border-white/[0.08]">
-            <div className="h-9 w-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-sm">
+            <div className="h-9 w-9 rounded-xl bg-[var(--ink)] text-white flex items-center justify-center shadow-sm">
               <ShieldCheck className="h-5 w-5" />
             </div>
             <div>
               <h2 className="text-base font-bold text-slate-100 font-heading">TrustSphere</h2>
-              <p className="text-[11px] text-indigo-300 font-medium">Shop Smarter. Buy with confidence.</p>
+              <p className="text-[11px] text-[var(--heather)] font-medium">Shop Smarter. Buy with confidence.</p>
             </div>
           </div>
 
@@ -220,7 +220,7 @@ export const LoginPage: React.FC = () => {
                 }}
                 className={`py-2 px-3 rounded-lg transition-all ${
                   mode === 'signin'
-                    ? 'bg-indigo-600 text-white shadow-sm'
+                    ? 'bg-[var(--accent)] text-white shadow-sm'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
@@ -236,7 +236,7 @@ export const LoginPage: React.FC = () => {
                 }}
                 className={`py-2 px-3 rounded-lg transition-all ${
                   mode === 'register'
-                    ? 'bg-indigo-600 text-white shadow-sm'
+                    ? 'bg-[var(--accent)] text-white shadow-sm'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
@@ -263,7 +263,7 @@ export const LoginPage: React.FC = () => {
                 leftIcon={<Mail className="w-4 h-4 text-slate-500" />}
                 error={loginForm.formState.errors.email?.message}
                 disabled={loginForm.formState.isSubmitting}
-                className="bg-[#181D2E] border-white/[0.08] text-slate-100 placeholder:text-slate-500 focus:border-indigo-500"
+                className="bg-[#181D2E] border-white/[0.08] text-slate-100 placeholder:text-slate-500 focus:border-[var(--accent)]"
                 {...loginForm.register('email')}
               />
 
@@ -286,7 +286,7 @@ export const LoginPage: React.FC = () => {
                   }
                   error={loginForm.formState.errors.password?.message}
                   disabled={loginForm.formState.isSubmitting}
-                  className="bg-[#181D2E] border-white/[0.08] text-slate-100 placeholder:text-slate-500 focus:border-indigo-500"
+                  className="bg-[#181D2E] border-white/[0.08] text-slate-100 placeholder:text-slate-500 focus:border-[var(--accent)]"
                   {...loginForm.register('password')}
                 />
               </div>
@@ -295,7 +295,7 @@ export const LoginPage: React.FC = () => {
                 <label className="flex items-center gap-2 cursor-pointer text-slate-400 hover:text-slate-200 select-none">
                   <input
                     type="checkbox"
-                    className="rounded border-white/[0.08] bg-[#181D2E] text-indigo-600 focus:ring-indigo-500 w-4 h-4"
+                    className="rounded border-white/[0.08] bg-[#181D2E] text-[var(--accent)] focus:ring-[var(--accent)] w-4 h-4"
                     disabled={loginForm.formState.isSubmitting}
                     {...loginForm.register('rememberMe')}
                   />
@@ -328,7 +328,7 @@ export const LoginPage: React.FC = () => {
                 leftIcon={<UserIcon className="w-4 h-4 text-slate-500" />}
                 error={registerForm.formState.errors.fullName?.message}
                 disabled={registerForm.formState.isSubmitting}
-                className="bg-[#181D2E] border-white/[0.08] text-slate-100 placeholder:text-slate-500 focus:border-indigo-500"
+                className="bg-[#181D2E] border-white/[0.08] text-slate-100 placeholder:text-slate-500 focus:border-[var(--accent)]"
                 {...registerForm.register('fullName')}
               />
 
@@ -340,7 +340,7 @@ export const LoginPage: React.FC = () => {
                 leftIcon={<Mail className="w-4 h-4 text-slate-500" />}
                 error={registerForm.formState.errors.email?.message}
                 disabled={registerForm.formState.isSubmitting}
-                className="bg-[#181D2E] border-white/[0.08] text-slate-100 placeholder:text-slate-500 focus:border-indigo-500"
+                className="bg-[#181D2E] border-white/[0.08] text-slate-100 placeholder:text-slate-500 focus:border-[var(--accent)]"
                 {...registerForm.register('email')}
               />
 
@@ -363,7 +363,7 @@ export const LoginPage: React.FC = () => {
                   }
                   error={registerForm.formState.errors.password?.message}
                   disabled={registerForm.formState.isSubmitting}
-                  className="bg-[#181D2E] border-white/[0.08] text-slate-100 placeholder:text-slate-500 focus:border-indigo-500"
+                  className="bg-[#181D2E] border-white/[0.08] text-slate-100 placeholder:text-slate-500 focus:border-[var(--accent)]"
                   {...registerForm.register('password')}
                 />
               </div>
@@ -372,7 +372,7 @@ export const LoginPage: React.FC = () => {
                 <label className="flex items-center gap-2 cursor-pointer text-slate-400 hover:text-slate-200 select-none">
                   <input
                     type="checkbox"
-                    className="rounded border-white/[0.08] bg-[#181D2E] text-indigo-600 focus:ring-indigo-500 w-4 h-4"
+                    className="rounded border-white/[0.08] bg-[#181D2E] text-[var(--accent)] focus:ring-[var(--accent)] w-4 h-4"
                     disabled={registerForm.formState.isSubmitting}
                     {...registerForm.register('rememberMe')}
                   />
@@ -396,8 +396,8 @@ export const LoginPage: React.FC = () => {
 
           {/* Quick Notice */}
           <div className="p-4 rounded-xl bg-[#111522] border border-white/[0.08] text-xs text-slate-400 space-y-1">
-            <div className="flex items-center gap-1.5 font-semibold text-indigo-300 font-heading">
-              <ShieldCheck className="w-4 h-4 text-indigo-400 shrink-0" />
+            <div className="flex items-center gap-1.5 font-semibold text-[var(--heather)] font-heading">
+              <ShieldCheck className="w-4 h-4 text-[var(--accent-hi)] shrink-0" />
               <span>Independent Shopping Intelligence</span>
             </div>
             <p className="text-[11px] text-slate-400 leading-relaxed">

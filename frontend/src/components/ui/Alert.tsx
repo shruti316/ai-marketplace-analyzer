@@ -16,8 +16,8 @@ export const Alert: React.FC<AlertProps> = ({
 }) => {
   const configs = {
     info: {
-      container: 'bg-indigo-950/20 text-indigo-300 border-indigo-500/30',
-      icon: <Info className="w-5 h-5 text-indigo-400 shrink-0 mt-0.5" />,
+      container: 'bg-[var(--heather)]/50 text-[var(--ink)] border-[var(--line)]',
+      icon: <Info className="w-5 h-5 text-[var(--accent)] shrink-0 mt-0.5" />,
     },
     success: {
       container: 'bg-emerald-950/20 text-emerald-300 border-emerald-500/30',

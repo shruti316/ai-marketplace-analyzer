@@ -27,7 +27,7 @@ export const StatCard: React.FC<StatCardProps> = ({
 }) => {
   const badgeStyles = {
     sage: 'bg-emerald-950/40 text-emerald-300 border-emerald-500/30',
-    teal: 'bg-indigo-950/40 text-indigo-300 border-indigo-500/30',
+    teal: 'bg-[var(--heather)]/60 text-[var(--accent)] border-[var(--line)]',
     'risk-moderate': 'bg-amber-950/40 text-amber-300 border-amber-500/30',
     'risk-elevated': 'bg-rose-950/40 text-rose-300 border-rose-500/30',
     default: 'bg-[#181D2E] text-slate-300 border-white/[0.08]',
@@ -45,7 +45,7 @@ export const StatCard: React.FC<StatCardProps> = ({
           )}
         </div>
         {icon && (
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#181D2E] text-indigo-400 border border-white/[0.08]">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#181D2E] text-[var(--accent)] border border-white/[0.08]">
             {icon}
           </div>
         )}

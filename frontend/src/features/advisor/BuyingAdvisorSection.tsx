@@ -57,21 +57,18 @@ export const BuyingAdvisorSection: React.FC = () => {
   };
 
   return (
-    <div className="rounded-3xl bg-[#111522] border border-white/[0.08] p-6 sm:p-8 space-y-6 shadow-xl relative overflow-hidden">
-      {/* Decorative subtle ambient glow */}
-      <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none" />
-
+    <div className="glow-card rounded-[24px] bg-white border border-[var(--line)] p-6 sm:p-8 space-y-6 shadow-[0_8px_24px_rgba(22,19,31,0.06)] relative overflow-hidden">
       {/* Header */}
-      <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/[0.08]">
+      <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[var(--line)]">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-semibold mb-2">
-            <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--heather)] border border-[var(--line)] text-[var(--accent)] text-xs font-semibold mb-2">
+            <Sparkles className="w-3.5 h-3.5 text-[var(--accent)]" />
             <span>AI Buying Advisor</span>
           </div>
-          <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-100 font-heading">
+          <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-[var(--ink)] font-heading">
             Help Me Choose: Smart Product Recommendations
           </h2>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-[var(--text-2)] mt-1">
             Specify your requirements and budget. TrustSphere evaluates listing trust separately from product suitability to suggest the safest, best-value choices.
           </p>
         </div>
@@ -82,7 +79,7 @@ export const BuyingAdvisorSection: React.FC = () => {
             size="sm"
             onClick={handleCompareAll}
             className="text-xs shrink-0"
-            rightIcon={<GitCompare className="w-3.5 h-3.5 text-indigo-400" />}
+            rightIcon={<GitCompare className="w-3.5 h-3.5 text-[var(--accent)]" />}
           >
             Compare Candidates Matrix
           </Button>
@@ -90,10 +87,10 @@ export const BuyingAdvisorSection: React.FC = () => {
       </div>
 
       {/* Interactive Criteria Bar */}
-      <div className="relative z-10 grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 rounded-2xl bg-[#181D2E] border border-white/[0.08] text-xs">
+      <div className="relative z-10 grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 rounded-2xl bg-[var(--canvas)]/40 border border-[var(--line)] text-xs">
         {/* Category selector */}
         <div className="space-y-1.5">
-          <label className="text-[11px] font-semibold text-slate-400 block font-mono">Select Category</label>
+          <label className="text-[11px] font-semibold text-[var(--text-3)] block font-mono">Select Category</label>
           <div className="flex flex-wrap gap-1.5">
             {CATEGORIES.map((c) => (
               <button
@@ -101,8 +98,8 @@ export const BuyingAdvisorSection: React.FC = () => {
                 onClick={() => setSelectedCategory(c.label)}
                 className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all ${
                   selectedCategory === c.label
-                    ? 'bg-indigo-600 text-white shadow-xs'
-                    : 'bg-[#111522] text-slate-400 hover:text-slate-200 border border-white/[0.08]'
+                    ? 'bg-[var(--ink)] text-white shadow-xs'
+                    : 'bg-white text-[var(--text-2)] hover:text-[var(--ink)] border border-[var(--line)]'
                 }`}
               >
                 {c.label}
@@ -113,7 +110,7 @@ export const BuyingAdvisorSection: React.FC = () => {
 
         {/* Budget tier */}
         <div className="space-y-1.5">
-          <label className="text-[11px] font-semibold text-slate-400 block font-mono">Budget Range</label>
+          <label className="text-[11px] font-semibold text-[var(--text-3)] block font-mono">Budget Range</label>
           <div className="flex flex-wrap gap-1.5">
             {Object.entries(BUDGET_RANGES).map(([tierKey, tier]) => (
               <button
@@ -121,8 +118,8 @@ export const BuyingAdvisorSection: React.FC = () => {
                 onClick={() => setBudgetTier(tierKey)}
                 className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all ${
                   budgetTier === tierKey
-                    ? 'bg-indigo-600 text-white shadow-xs'
-                    : 'bg-[#111522] text-slate-400 hover:text-slate-200 border border-white/[0.08]'
+                    ? 'bg-[var(--ink)] text-white shadow-xs'
+                    : 'bg-white text-[var(--text-2)] hover:text-[var(--ink)] border border-[var(--line)]'
                 }`}
               >
                 {tier.label}
@@ -133,7 +130,7 @@ export const BuyingAdvisorSection: React.FC = () => {
 
         {/* Priority preference */}
         <div className="space-y-1.5">
-          <label className="text-[11px] font-semibold text-slate-400 block font-mono">Primary Goal</label>
+          <label className="text-[11px] font-semibold text-[var(--text-3)] block font-mono">Primary Goal</label>
           <div className="flex flex-wrap gap-1.5">
             {[
               { id: 'trust', label: 'Safest Listing Trust' },
@@ -145,8 +142,8 @@ export const BuyingAdvisorSection: React.FC = () => {
                 onClick={() => setPriority(p.id as any)}
                 className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all ${
                   priority === p.id
-                    ? 'bg-indigo-600 text-white shadow-xs'
-                    : 'bg-[#111522] text-slate-400 hover:text-slate-200 border border-white/[0.08]'
+                    ? 'bg-[var(--ink)] text-white shadow-xs'
+                    : 'bg-white text-[var(--text-2)] hover:text-[var(--ink)] border border-[var(--line)]'
                 }`}
               >
                 {p.label}
@@ -159,21 +156,21 @@ export const BuyingAdvisorSection: React.FC = () => {
       {/* Recommendations Display */}
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-pulse">
-          <div className="md:col-span-2 h-44 rounded-2xl bg-[#181D2E] border border-white/[0.08]" />
-          <div className="h-44 rounded-2xl bg-[#181D2E] border border-white/[0.08]" />
+          <div className="md:col-span-2 h-44 rounded-2xl bg-[var(--canvas)]/50 border border-[var(--line)]" />
+          <div className="h-44 rounded-2xl bg-[var(--canvas)]/50 border border-[var(--line)]" />
         </div>
       ) : products.length > 0 ? (
         <div className="relative z-10 grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Top Choice Featured Card */}
           {topPick && (
-            <div className="lg:col-span-2 p-5 rounded-2xl bg-[#181D2E] border border-indigo-500/30 flex flex-col justify-between space-y-4 shadow-lg">
+            <div className="lg:col-span-2 p-5 rounded-2xl bg-white border border-[var(--line)] hover:border-[var(--accent)] flex flex-col justify-between space-y-4 shadow-sm transition-all">
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold">
-                    <Award className="w-4 h-4 text-emerald-400" />
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--ok-bg)] border border-[var(--ok)]/30 text-[var(--ok-ink)] text-xs font-bold">
+                    <Award className="w-4 h-4 text-[var(--ok)]" />
                     <span>Top AI Recommendation</span>
                   </span>
-                  <span className="text-[11px] font-mono text-indigo-300 bg-[#111522] px-2 py-0.5 rounded border border-white/[0.08]">
+                  <span className="text-[11px] font-mono text-[var(--text-3)] bg-[var(--canvas)]/60 px-2 py-0.5 rounded border border-[var(--line)]">
                     {topPick.canonical_product_id}
                   </span>
                 </div>
@@ -181,30 +178,30 @@ export const BuyingAdvisorSection: React.FC = () => {
                 <div>
                   <h3
                     onClick={() => navigate(`/investigate/${topPick.canonical_product_id}`)}
-                    className="text-base sm:text-lg font-bold text-slate-100 hover:text-indigo-400 cursor-pointer line-clamp-2 font-heading transition-colors"
+                    className="text-base sm:text-lg font-bold text-[var(--ink)] hover:text-[var(--accent)] cursor-pointer line-clamp-2 font-heading transition-colors"
                   >
                     {topPick.product_title || topPick.title}
                   </h3>
-                  <p className="text-xs text-slate-400 mt-1 flex items-center gap-2">
-                    <span className="text-indigo-300 font-semibold">{topPick.brand_name || 'Official Brand'}</span>
+                  <p className="text-xs text-[var(--text-3)] mt-1 flex items-center gap-2">
+                    <span className="text-[var(--accent)] font-semibold">{topPick.brand_name || 'Official Brand'}</span>
                     <span>•</span>
                     <span>Category: {topPick.category}</span>
                   </p>
                 </div>
 
-                <div className="p-3 rounded-xl bg-[#111522] border border-white/[0.08] text-xs text-slate-400 space-y-1">
-                  <span className="font-semibold text-slate-200 block font-heading">Recommendation Rationale:</span>
+                <div className="p-3 rounded-xl bg-[var(--canvas)]/50 border border-[var(--line)] text-xs text-[var(--text-2)] space-y-1">
+                  <span className="font-semibold text-[var(--ink)] block font-heading">Recommendation Rationale:</span>
                   <p className="leading-relaxed">
                     Corroborated pricing aligns with historical category corridors. High evidence density across multi-source listings with zero anomalous price spikes.
                   </p>
                 </div>
               </div>
 
-              <div className="pt-3 border-t border-white/[0.08] flex items-center justify-between">
+              <div className="pt-3 border-t border-[var(--line)] flex items-center justify-between">
                 <div className="text-xs">
-                  <span className="text-[10px] text-slate-500 block uppercase tracking-wider font-mono">Suitability vs Trust</span>
-                  <span className="text-emerald-400 font-bold flex items-center gap-1">
-                    <ShieldCheck className="w-3.5 h-3.5" /> High Trust Baseline
+                  <span className="text-[10px] text-[var(--text-3)] block uppercase tracking-wider font-mono">Suitability vs Trust</span>
+                  <span className="text-[var(--ok-ink)] font-bold flex items-center gap-1">
+                    <ShieldCheck className="w-3.5 h-3.5 text-[var(--ok)]" /> High Trust Baseline
                   </span>
                 </div>
 
@@ -214,7 +211,7 @@ export const BuyingAdvisorSection: React.FC = () => {
                     size="sm"
                     className="text-xs"
                     onClick={() => navigate(`/assistant?query=Why do you recommend ${encodeURIComponent(topPick.product_title || topPick.title || 'Product')}?&productId=${topPick.canonical_product_id}`)}
-                    leftIcon={<MessageSquare className="w-3.5 h-3.5 text-indigo-400" />}
+                    leftIcon={<MessageSquare className="w-3.5 h-3.5 text-[var(--accent)]" />}
                   >
                     Ask AI
                   </Button>
@@ -235,25 +232,25 @@ export const BuyingAdvisorSection: React.FC = () => {
           {/* Alternatives Column */}
           <div className="space-y-3 flex flex-col justify-between">
             <div className="space-y-2">
-              <span className="text-xs font-semibold text-slate-300 block font-heading">
+              <span className="text-xs font-semibold text-[var(--ink)] block font-heading">
                 Viable Alternatives in Category:
               </span>
               {alternatives.slice(0, 2).map((alt) => (
                 <div
                   key={alt.canonical_product_id}
                   onClick={() => navigate(`/investigate/${alt.canonical_product_id}`)}
-                  className="p-3.5 rounded-xl bg-[#181D2E] border border-white/[0.08] hover:border-indigo-500/50 cursor-pointer transition-all space-y-1.5"
+                  className="p-3.5 rounded-xl bg-white border border-[var(--line)] hover:border-[var(--accent)] cursor-pointer transition-all space-y-1.5 shadow-2xs"
                 >
-                  <div className="flex items-center justify-between text-[10px] text-slate-400">
-                    <span className="text-indigo-300 font-medium">{alt.brand_name || 'Brand Verified'}</span>
-                    <span className="font-mono text-slate-500">{alt.canonical_product_id}</span>
+                  <div className="flex items-center justify-between text-[10px] text-[var(--text-3)]">
+                    <span className="text-[var(--accent)] font-medium">{alt.brand_name || 'Brand Verified'}</span>
+                    <span className="font-mono">{alt.canonical_product_id}</span>
                   </div>
-                  <h4 className="text-xs font-semibold text-slate-100 line-clamp-1 hover:text-indigo-400 font-heading">
+                  <h4 className="text-xs font-semibold text-[var(--ink)] line-clamp-1 hover:text-[var(--accent)] font-heading">
                     {alt.product_title || alt.title}
                   </h4>
                   <div className="flex items-center justify-between text-[11px] pt-1">
-                    <span className="text-xs text-slate-400">Alternative Candidate</span>
-                    <span className="text-indigo-400 font-medium flex items-center gap-1">
+                    <span className="text-xs text-[var(--text-3)]">Alternative Candidate</span>
+                    <span className="text-[var(--accent)] font-medium flex items-center gap-1">
                       Inspect <ArrowRight className="w-3 h-3" />
                     </span>
                   </div>
@@ -268,12 +265,12 @@ export const BuyingAdvisorSection: React.FC = () => {
               onClick={() => navigate('/products')}
               rightIcon={<ArrowRight className="w-3.5 h-3.5" />}
             >
-              Browse All 3,643 Catalog Products
+              Browse All Catalog Products
             </Button>
           </div>
         </div>
       ) : (
-        <div className="p-8 text-center text-xs text-slate-400">
+        <div className="p-8 text-center text-xs text-[var(--text-3)]">
           No products matched the active criteria. Try broadening your category or budget tier.
         </div>
       )}

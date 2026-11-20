@@ -62,12 +62,12 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onOpenMobileMenu, onOpenCo
         <button
           type="button"
           onClick={onOpenCommandPalette}
-          className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/80 hover:bg-white border border-[#ECE8F2] hover:border-[var(--line)] text-xs text-[var(--text-3)] hover:text-[var(--ink)] shadow-2xs transition-all cursor-pointer group"
+          className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/80 hover:bg-white border border-[var(--line)] hover:border-[var(--accent)] text-xs text-[var(--text-3)] hover:text-[var(--ink)] shadow-2xs transition-all cursor-pointer group"
           title="Search or jump to command (⌘K / Ctrl+K)"
         >
           <Search className="w-3.5 h-3.5 text-[var(--text-3)] group-hover:text-[var(--accent)] transition-colors" />
           <span className="font-medium">Search / Commands</span>
-          <kbd className="inline-flex items-center px-1.5 py-0.2 rounded bg-[#F8EDF2] border border-[#ECE8F2] text-[10px] font-mono text-[var(--text-3)] font-semibold">
+          <kbd className="inline-flex items-center px-1.5 py-0.2 rounded bg-[var(--canvas)] border border-[var(--line)] text-[10px] font-mono text-[var(--text-3)] font-semibold">
             ⌘K
           </kbd>
         </button>

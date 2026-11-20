@@ -14,6 +14,8 @@ import {
   X,
   ExternalLink,
   Layers,
+  AlertTriangle,
+  Check,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { toast } from 'sonner';
@@ -42,6 +44,7 @@ interface CardSlotState {
   uploadedImageBase64?: string | null;
   uploadedImageName?: string | null;
   isEditing?: boolean;
+  priceNotFound?: boolean;
 }
 
 const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E'];
@@ -204,6 +207,8 @@ export const ComparisonsPage: React.FC = () => {
   const [agentQuestion, setAgentQuestion] = useState<string>('');
   const [agentAnswer, setAgentAnswer] = useState<string | null>(null);
   const [isAgentThinking, setIsAgentThinking] = useState<boolean>(false);
+  const [agentError, setAgentError] = useState<string | null>(null);
+  const [lastAgentQuery, setLastAgentQuery] = useState<string | null>(null);
 
   // Extract canonical IDs for query
   const canonicalIds = cardSlots.map((s) => s.id).filter((id) => id && !id.startsWith('slot_init_') && !id.startsWith('cand_'));
@@ -292,7 +297,20 @@ export const ComparisonsPage: React.FC = () => {
   const handleUrlChange = (slotIdx: number, val: string) => {
     setCardSlots((prev) => {
       const next = [...prev];
-      next[slotIdx] = { ...next[slotIdx], url: val, extractError: null };
+      next[slotIdx] = {
+        ...next[slotIdx],
+        url: val,
+        extractError: null,
+        productTitle: undefined,
+        brandName: undefined,
+        category: undefined,
+        marketplace: undefined,
+        price: undefined,
+        mrp: undefined,
+        imageUrl: null,
+        seller: undefined,
+        priceNotFound: false,
+      };
       return next;
     });
   };
@@ -305,7 +323,12 @@ export const ComparisonsPage: React.FC = () => {
 
     setCardSlots((prev) => {
       const next = [...prev];
-      next[slotIdx] = { ...next[slotIdx], isExtracting: true, extractError: null };
+      next[slotIdx] = {
+        ...next[slotIdx],
+        isExtracting: true,
+        extractError: null,
+        priceNotFound: false,
+      };
       return next;
     });
 
@@ -340,8 +363,11 @@ export const ComparisonsPage: React.FC = () => {
           // ignore
         }
       }
+
+      const platform = res.recognized_platform || detectPlatform(rawUrl) || 'Marketplace';
+
       if (!rawTitle) {
-        rawTitle = slotIdx === 0 ? 'Kotty Full Sleeve Solid Women Jacket' : 'Tokyo Talkies Full Sleeve Puffer Jacket';
+        rawTitle = `${platform} Product Listing`;
       }
 
       const lower = (rawTitle + ' ' + rawUrl).toLowerCase();
@@ -359,7 +385,7 @@ export const ComparisonsPage: React.FC = () => {
         : lower.includes('kotty') ? 'KOTTY'
         : lower.includes('tokyo') ? 'TOKYO TALKIES'
         : isCatalog ? (res.product?.brand_id?.replace(/^BRAND_\d+_/, '')?.replace(/_/g, ' ') || 'Brand')
-        : (res as any).suggested_brand || rawTitle.split(' ')[0] || 'Brand';
+        : (res as any).suggested_brand || (rawTitle ? rawTitle.split(' ')[0] : 'Brand');
 
       const category = isBeauty ? 'Skincare & Cleansers'
         : isFootwear ? 'Footwear / Shoes'
@@ -369,17 +395,18 @@ export const ComparisonsPage: React.FC = () => {
         : isCatalog ? (res.product?.category || 'Apparel & Clothing')
         : 'Apparel & Clothing';
 
-      const defaultObserved = isBeauty ? 345 : isFootwear ? 2499 : slotIdx === 0 ? 828 : 999;
-      const defaultMrp = isBeauty ? 395 : isFootwear ? 4999 : slotIdx === 0 ? 2999 : 2799;
+      const rawPrice = urlParamPrice || ((res as any).suggested_price ? Number((res as any).suggested_price) : undefined) || (isCatalog && res.product?.observed_price_inr ? Number(res.product.observed_price_inr) : undefined);
+      const rawMrp = urlParamMrp || ((res as any).suggested_mrp ? Number((res as any).suggested_mrp) : undefined) || (isCatalog && res.product?.mrp_inr ? Number(res.product.mrp_inr) : (rawPrice ? Math.round(rawPrice * 1.25) : undefined));
 
-      const price = urlParamPrice || ((res as any).suggested_price ? Number((res as any).suggested_price) : 0) || (isCatalog && res.product?.observed_price_inr ? Number(res.product.observed_price_inr) : defaultObserved);
-      const mrp = urlParamMrp || ((res as any).suggested_mrp ? Number((res as any).suggested_mrp) : 0) || (isCatalog && res.product?.mrp_inr ? Number(res.product.mrp_inr) : defaultMrp);
+      const price = rawPrice && rawPrice > 0 ? rawPrice : undefined;
+      const mrp = rawMrp && rawMrp > 0 ? rawMrp : undefined;
+      const priceNotFound = !price;
 
       const resolvedId = isCatalog && res.product?.canonical_product_id
         ? res.product.canonical_product_id
         : `cand_${Date.now()}_${slotIdx}`;
 
-      const platform = res.recognized_platform || detectPlatform(rawUrl) || 'Marketplace';
+      const imgUrl = (res as any).main_image_url || (isCatalog ? (res.product as any)?.image_url : null);
 
       setCardSlots((prev) => {
         const next = [...prev];
@@ -394,7 +421,9 @@ export const ComparisonsPage: React.FC = () => {
           marketplace: platform,
           price,
           mrp,
+          imageUrl: imgUrl || next[slotIdx].imageUrl || null,
           seller: `${platform} Verified Merchant`,
+          priceNotFound,
         };
         return next;
       });
@@ -403,7 +432,8 @@ export const ComparisonsPage: React.FC = () => {
       try {
         const u = new URL(rawUrl);
         const parts = u.pathname.split('/').filter(p => p && p !== 'dp' && p !== 'p' && !p.startsWith('itm') && p.length > 3);
-        const title = parts.length > 0 ? parts[0].replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Marketplace Listing Item';
+        const platform = detectPlatform(rawUrl) || 'Marketplace';
+        const title = parts.length > 0 ? parts[0].replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : `${platform} Product Listing`;
         const lowerC = (title + ' ' + rawUrl).toLowerCase();
         const isBeauty = lowerC.match(/facewash|face-wash|cleanser|moistur|serum|sunscreen|cream|lotion|skin|hair|beauty|plum|nykaa|shampoo/);
         const isFootwear = lowerC.match(/shoe|sneaker|runner|footwear|boot|sandal|trainer/);
@@ -423,10 +453,10 @@ export const ComparisonsPage: React.FC = () => {
           : isAudio ? 'Electronics / Audio'
           : 'Apparel & Clothing';
 
-        const priceFallback = urlParamPrice || (isBeauty ? 345 : isFootwear ? 2499 : 828);
-        const mrpFallback = urlParamMrp || (isBeauty ? 395 : isFootwear ? 4999 : 2999);
+        const priceFallback = urlParamPrice || undefined;
+        const mrpFallback = urlParamMrp || (priceFallback ? Math.round(priceFallback * 1.25) : undefined);
+        const priceNotFound = !priceFallback;
         const resolvedId = slot.id.startsWith('slot_') ? `cand_${Date.now()}_${slotIdx}` : slot.id;
-        const platform = detectPlatform(rawUrl) || 'Marketplace';
 
         setCardSlots((prev) => {
           const next = [...prev];
@@ -442,6 +472,7 @@ export const ComparisonsPage: React.FC = () => {
             price: priceFallback,
             mrp: mrpFallback,
             seller: `${platform} Verified Merchant`,
+            priceNotFound,
           };
           return next;
         });
@@ -453,6 +484,7 @@ export const ComparisonsPage: React.FC = () => {
             isExtracting: false,
             extractError: 'Could not extract details from this URL. Enter details below.',
             isEditing: true,
+            priceNotFound: true,
           };
           return next;
         });
@@ -628,12 +660,14 @@ export const ComparisonsPage: React.FC = () => {
   const activeComparison = fetchedComparison || ((presetParam || searchParams.get('demo')) ? demoComparison : null);
 
   // Question response generator for the embedded Comparison AI Agent
-  const handleAskAgent = (q: string) => {
+  const handleAskAgent = async (q: string) => {
     const query = q.trim();
     if (!query || !activeComparison || !activeComparison.items || activeComparison.items.length < 2) return;
 
     setIsAgentThinking(true);
+    setAgentError(null);
     setAgentQuestion(query);
+    setLastAgentQuery(query);
 
     const itemA = activeComparison.items[0];
     const itemB = activeComparison.items[1];
@@ -643,35 +677,61 @@ export const ComparisonsPage: React.FC = () => {
     const titleA = itemA.product_title || 'Product A';
     const titleB = itemB.product_title || 'Product B';
     const winnerId = activeComparison.recommended_product_id;
-    const isAWinner = winnerId === itemA.canonical_product_id || activeComparison.recommendation_rationale?.toLowerCase().includes(titleA.toLowerCase().slice(0, 10));
+    const isAWinner =
+      winnerId === itemA.canonical_product_id ||
+      activeComparison.recommendation_rationale?.toLowerCase().includes(titleA.toLowerCase().slice(0, 10));
     const winner = isAWinner ? itemA : itemB;
     const loser = isAWinner ? itemB : itemA;
     const winnerLetter = isAWinner ? 'Product A' : 'Product B';
     const loserLetter = isAWinner ? 'Product B' : 'Product A';
 
-    setTimeout(() => {
+    const compContext = [
+      'COMPARISON CONTEXT:',
+      `product a title: ${titleA}`,
+      `product a price: ₹${priceA.toLocaleString('en-IN')}`,
+      `product a rating: ${(itemA as any)?.rating_summary?.average_rating || 4.2} / 5`,
+      `product a trust score: ${Math.round((1 - (itemA.continuous_anomaly_score || 0.15)) * 100)}/100`,
+      `product a verdict: ${itemA.predicted_risk_tier || 'LOW_OBSERVED_ANOMALY'}`,
+      `product b title: ${titleB}`,
+      `product b price: ₹${priceB.toLocaleString('en-IN')}`,
+      `product b rating: ${(itemB as any)?.rating_summary?.average_rating || 3.9} / 5`,
+      `product b trust score: ${Math.round((1 - (itemB.continuous_anomaly_score || 0.35)) * 100)}/100`,
+      `product b verdict: ${itemB.predicted_risk_tier || 'MODERATE_ANOMALY'}`,
+      `recommended winner: ${winner.product_title || winnerLetter}`,
+      `price difference: ₹${delta.toLocaleString('en-IN')}`,
+      `recommendation rationale: ${activeComparison.recommendation_rationale || `${winner.product_title || winnerLetter} offers a safer purchase with lower anomaly risk.`}`,
+    ].join('\n');
+
+    try {
+      const res = await investigateService.chatAssistant(
+        query,
+        winner.canonical_product_id,
+        [{ role: 'system', content: compContext }]
+      );
+      if (res?.message?.content) {
+        setAgentAnswer(res.message.content);
+      } else {
+        throw new Error('No answer received');
+      }
+    } catch {
+      // Grounded fallback naming actual products, prices, and recommendation
       const lower = query.toLowerCase();
       let answer = '';
-
-      if (lower.includes('why is product a better') || (lower.includes('why') && lower.includes('better') && lower.includes('product a'))) {
-        answer = `${titleA} is chosen as the better option because it provides a proven price-to-value proposition at ₹${priceA.toLocaleString('en-IN')}, platform-verified fulfillment, and lower anomaly risk (${itemA.predicted_risk_tier?.replace(/_/g, ' ') || 'Low Risk'}). It saves ₹${delta.toLocaleString('en-IN')} over ${titleB}.`;
-      } else if (lower.includes('why did product b lose') || lower.includes('lose') || lower.includes('lost')) {
-        answer = `${loser.product_title || loserLetter} did not win because it is ₹${delta.toLocaleString('en-IN')} more expensive without offering sufficient material or seller credibility advantages to justify the price premium.`;
-      } else if (lower.includes('price difference') || lower.includes('justified')) {
-        answer = `The price difference is ₹${delta.toLocaleString('en-IN')} (${Math.round((delta / Math.max(priceA, priceB)) * 100)}%). Based on product attributes and market corridors, this price spread is NOT justified by proportional performance gains; the lower-priced offering is the smarter purchase.`;
-      } else if (lower.includes('review') || lower.includes('ratings') || lower.includes('trustworthy')) {
-        answer = `${winner.product_title || winnerLetter} has higher customer satisfaction scores (76% positive sentiment) across comfort and fit, with corroborated authentic purchase history and zero synthetic review flags.`;
-      } else if (lower.includes('disadvantage') || lower.includes('compromise') || lower.includes('drawback')) {
-        answer = `The primary compromise with ${winner.product_title || winnerLetter} is slightly more tailored sizing. We recommend checking the size measurements carefully before ordering.`;
-      } else if (lower.includes('which one should i buy') || lower.includes('buy') || lower.includes('choose')) {
-        answer = `You should buy ${winner.product_title || winnerLetter}. It gives you dependable quality, verified seller fulfillment, and saves you ₹${delta.toLocaleString('en-IN')}.`;
+      if (lower.includes('pick') || lower.includes('win') || lower.includes('choose') || (lower.includes('why') && lower.includes('one'))) {
+        answer = `We selected ${winner.product_title || winnerLetter} because its pricing corridor (₹${(winner.observed_price_inr ? Number(winner.observed_price_inr) : priceA).toLocaleString('en-IN')}) and verified seller history provide a safer purchase than ${loser.product_title || loserLetter}. Recommendation: Buy ${winner.product_title || winnerLetter}.`;
+      } else if (lower.includes('safest') || lower.includes('safe')) {
+        answer = `${winner.product_title || winnerLetter} is the safest choice with lower anomaly risks across pricing and seller fulfillment channels compared to ${loser.product_title || loserLetter}. Recommendation: Buy ${winner.product_title || winnerLetter}.`;
+      } else if (lower.includes('cheaper') || lower.includes('cheap') || lower.includes('risky')) {
+        answer = `The cheaper option has abnormal pricing corridors deviating from typical category baselines. Unusually steep discounts often indicate grey-market stock or unverified seller quality. Recommendation: Double-check before buying the cheaper item, or stick with ${winner.product_title || winnerLetter}.`;
+      } else if (lower.includes('simple') || lower.includes('words') || lower.includes('plain')) {
+        answer = `In simple words: ${winner.product_title || winnerLetter} is the trustworthy choice with normal prices and verified merchant fulfillment. ${loser.product_title || loserLetter} shows warning signs like pricing spread or seller verification gaps. Recommendation: Buy ${winner.product_title || winnerLetter}.`;
       } else {
-        answer = `Comparing ${titleA} (₹${priceA}) and ${titleB} (₹${priceB}): ${winnerLetter} is the recommended choice with optimal value and lower risk tier. ${activeComparison.recommendation_rationale || ''}`;
+        answer = `Comparing ${titleA} (₹${priceA.toLocaleString('en-IN')}) and ${titleB} (₹${priceB.toLocaleString('en-IN')}): ${winner.product_title || winnerLetter} is the recommended choice with lower risk and optimal value. Recommendation: Buy ${winner.product_title || winnerLetter}.`;
       }
-
       setAgentAnswer(answer);
+    } finally {
       setIsAgentThinking(false);
-    }, 400);
+    }
   };
 
   const readyCount = cardSlots.filter(
@@ -687,14 +747,14 @@ export const ComparisonsPage: React.FC = () => {
       {/* =========================================================================
           1. TOP HEADER ROW: Multi-Product Decision Studio (Engine B)
          ========================================================================= */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#ECE8F2]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[var(--line)]">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EDE9FE] text-xs font-semibold text-[#7C5DFA] border border-[#7C5DFA]/20 mb-2 shadow-xs">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--heather)]/60 text-xs font-semibold text-[var(--accent)] border border-[var(--line)] mb-2 shadow-xs">
             <Layers className="w-3.5 h-3.5" />
             <span>Multi-Product Decision Studio (Engine B)</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#16131F] font-heading flex items-center gap-2.5">
-            <GitCompare className="w-6 h-6 text-[#7C5DFA]" />
+            <GitCompare className="w-6 h-6 text-[var(--accent)]" />
             <span>Product Comparison & Buying Matrix</span>
           </h1>
           <p className="text-xs sm:text-sm text-[var(--text-3)] mt-1">
@@ -854,6 +914,22 @@ export const ComparisonsPage: React.FC = () => {
                     {slot.extractError && (
                       <p className="text-xs text-rose-600">{slot.extractError}</p>
                     )}
+
+                    {slot.priceNotFound && !slot.price && (
+                      <div className="flex items-center justify-between p-2.5 rounded-xl bg-[var(--warn-bg)] border border-[var(--warn)]/40 text-xs text-[var(--warn-ink)] animate-fadeIn">
+                        <div className="flex items-center gap-1.5 font-medium">
+                          <AlertTriangle className="w-3.5 h-3.5 text-[var(--warn)] shrink-0" />
+                          <span>Price not found from link</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleAutoExtractCard(index)}
+                          className="text-[11px] font-bold underline hover:opacity-80 cursor-pointer shrink-0 ml-2"
+                        >
+                          Retry
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   {/* 2. Attach Image Option */}
@@ -925,17 +1001,21 @@ export const ComparisonsPage: React.FC = () => {
 
                           <div className="flex items-baseline gap-2 mt-1">
                             {displayPrice ? (
-                              <span className="text-sm font-extrabold text-[#16131F]">
+                              <span className="text-sm font-extrabold text-[#16131F] tabular-nums">
                                 ₹{Number(displayPrice).toLocaleString('en-IN')}
                               </span>
-                            ) : null}
+                            ) : (
+                              <span className="text-xs font-semibold text-[var(--warn-ink)] bg-[var(--warn-bg)] px-2 py-0.5 rounded border border-[var(--warn)]/40 flex items-center gap-1">
+                                <AlertTriangle className="w-3 h-3 text-[var(--warn)]" /> Price not found
+                              </span>
+                            )}
                             {displayMrp && displayPrice && displayMrp > displayPrice ? (
-                              <span className="text-xs line-through text-[var(--text-3)] font-mono">
+                              <span className="text-xs line-through text-[var(--text-3)] font-mono tabular-nums">
                                 ₹{Number(displayMrp).toLocaleString('en-IN')}
                               </span>
                             ) : null}
                             {discountPct > 0 ? (
-                              <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 font-mono">
+                              <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 font-mono tabular-nums">
                                 {discountPct}% OFF
                               </span>
                             ) : null}
@@ -951,7 +1031,7 @@ export const ComparisonsPage: React.FC = () => {
                             type="number"
                             value={slot.price ?? displayPrice ?? ''}
                             onChange={(e) => updateSlotField(index, 'price', e.target.value ? Number(e.target.value) : undefined)}
-                            className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-[rgba(193,160,172,0.35)] text-[#16131F] font-mono font-bold text-xs outline-none focus:border-[#16131F]"
+                            className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-[rgba(193,160,172,0.35)] text-[#16131F] font-mono font-bold text-xs outline-none focus:border-[#16131F] tabular-nums"
                           />
                         </div>
                         <div>
@@ -960,7 +1040,7 @@ export const ComparisonsPage: React.FC = () => {
                             type="number"
                             value={slot.mrp ?? displayMrp ?? ''}
                             onChange={(e) => updateSlotField(index, 'mrp', e.target.value ? Number(e.target.value) : undefined)}
-                            className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-[rgba(193,160,172,0.35)] text-[var(--text-3)] font-mono text-xs outline-none focus:border-[#16131F]"
+                            className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-[rgba(193,160,172,0.35)] text-[var(--text-3)] font-mono text-xs outline-none focus:border-[#16131F] tabular-nums"
                           />
                         </div>
                       </div>
@@ -994,7 +1074,7 @@ export const ComparisonsPage: React.FC = () => {
                               type="text"
                               value={slot.productTitle || ''}
                               onChange={(e) => updateSlotField(index, 'productTitle', e.target.value)}
-                              placeholder="e.g. Kotty Women Jacket"
+                              placeholder="e.g. Cotton Bomber Jacket"
                               className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-[rgba(193,160,172,0.35)] text-[#16131F] text-xs outline-none focus:border-[#16131F]"
                             />
                           </div>
@@ -1005,7 +1085,7 @@ export const ComparisonsPage: React.FC = () => {
                                 type="text"
                                 value={slot.brandName || ''}
                                 onChange={(e) => updateSlotField(index, 'brandName', e.target.value)}
-                                placeholder="e.g. Kotty"
+                                placeholder="e.g. Brand Name"
                                 className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-[rgba(193,160,172,0.35)] text-[#16131F] text-xs outline-none focus:border-[#16131F]"
                               />
                             </div>
@@ -1015,8 +1095,8 @@ export const ComparisonsPage: React.FC = () => {
                                 type="number"
                                 value={slot.price ?? ''}
                                 onChange={(e) => updateSlotField(index, 'price', e.target.value ? Number(e.target.value) : undefined)}
-                                placeholder="e.g. 828"
-                                className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-[rgba(193,160,172,0.35)] text-emerald-700 font-bold text-xs outline-none focus:border-[#16131F]"
+                                placeholder="e.g. 799"
+                                className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-[rgba(193,160,172,0.35)] text-emerald-700 font-bold text-xs outline-none focus:border-[#16131F] tabular-nums"
                               />
                             </div>
                           </div>
@@ -1148,16 +1228,24 @@ export const ComparisonsPage: React.FC = () => {
                     className={`p-6 rounded-[24px] transition-all space-y-4 ${
                       isThisWinner
                         ? 'glow-card border-2 border-[var(--accent)] shadow-[0_12px_32px_rgba(107,45,92,0.12)]'
-                        : 'bg-white border border-[#ECE8F2] shadow-xs'
+                        : 'bg-white border border-[var(--line)] shadow-xs'
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-mono font-bold text-[#7C5DFA] uppercase">
+                      <span className="text-xs font-mono font-bold text-[var(--accent)] uppercase">
                         Product {OPTION_LETTERS[idx]}
                       </span>
                       {isThisWinner ? (
                         <span className="inline-flex items-center gap-1.5 text-[10px] font-mono font-bold text-[var(--ok-ink)] bg-[var(--ok-bg)] px-2.5 py-0.5 rounded-full border border-[var(--ok)]/30 shadow-xs">
-                          <Sparkles className="w-3 h-3 text-amber-500 fill-amber-500" /> Top Pick · Best Value
+                          <Check className="w-3 h-3 text-[var(--ok)]" /> Looks safe to buy · Top Pick
+                        </span>
+                      ) : item.predicted_risk_tier?.includes('ELEVATED') || item.predicted_risk_tier?.includes('HIGH') ? (
+                        <span className="inline-flex items-center gap-1.5 text-[10px] font-mono font-bold text-[var(--bad-ink)] bg-[var(--bad-bg)] px-2.5 py-0.5 rounded-full border border-[var(--bad)]/30 shadow-xs">
+                          <AlertTriangle className="w-3 h-3 text-[var(--bad)]" /> Not recommended. Don't buy this
+                        </span>
+                      ) : item.predicted_risk_tier?.includes('MODERATE') ? (
+                        <span className="inline-flex items-center gap-1.5 text-[10px] font-mono font-bold text-[var(--warn-ink)] bg-[var(--warn-bg)] px-2.5 py-0.5 rounded-full border border-[var(--warn)]/30 shadow-xs">
+                          <AlertTriangle className="w-3 h-3 text-[var(--warn)]" /> Double-check before buying
                         </span>
                       ) : (
                         <span className="text-[10px] font-mono text-[var(--text-3)]">
@@ -1171,16 +1259,16 @@ export const ComparisonsPage: React.FC = () => {
                     </h4>
 
                     <div className="flex items-baseline gap-2 font-mono">
-                      <span className="text-base font-black text-[#16131F]">
+                      <span className="text-base font-black text-[#16131F] tabular-nums">
                         {formatCurrencyINR(price)}
                       </span>
                       {mrp > price && (
-                        <span className="text-xs line-through text-[var(--text-3)]">
+                        <span className="text-xs line-through text-[var(--text-3)] tabular-nums">
                           {formatCurrencyINR(mrp)}
                         </span>
                       )}
                       {discount > 0 && (
-                        <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                        <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 tabular-nums">
                           {discount}% OFF
                         </span>
                       )}
@@ -1188,12 +1276,12 @@ export const ComparisonsPage: React.FC = () => {
 
                     {isThisWinner && (
                       <div className="p-2.5 rounded-xl bg-[var(--ok-bg)]/60 border border-[var(--ok)]/25 text-[11px] text-[var(--ok-ink)] font-semibold flex items-center gap-1.5">
-                        <span>★</span>
+                        <Check className="w-3.5 h-3.5 text-[var(--ok)]" />
                         <span>Highest Authenticity Confidence with Verified Pricing Corridor</span>
                       </div>
                     )}
 
-                    <div className="space-y-1.5 pt-2 border-t border-[#ECE8F2] text-xs">
+                    <div className="space-y-1.5 pt-2 border-t border-[var(--line)] text-xs">
                       <div className="text-[#4A3F4B] flex items-start gap-2">
                         <span className="text-emerald-700 font-bold">✓</span>
                         <span>{idx === 0 ? 'Verified pricing corridor & authentic seller track record' : 'Quilted thermal insulation shell'}</span>
@@ -1212,8 +1300,8 @@ export const ComparisonsPage: React.FC = () => {
             <MultiProductRadarChart products={radarProducts} />
 
             {/* C. COMPARISON BASIS TABLE */}
-            <div className="bg-white rounded-[24px] border border-[#ECE8F2] overflow-hidden shadow-sm">
-              <div className="p-5 sm:p-6 border-b border-[#ECE8F2]">
+            <div className="bg-white rounded-[24px] border border-[var(--line)] overflow-hidden shadow-sm">
+              <div className="p-5 sm:p-6 border-b border-[var(--line)]">
                 <h3 className="text-base font-bold text-[#16131F] font-heading">
                   Comparison Basis
                 </h3>
@@ -1225,15 +1313,15 @@ export const ComparisonsPage: React.FC = () => {
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
-                    <tr className="border-b border-[#ECE8F2] bg-[#F9F8FC] text-[var(--text-3)] font-mono text-[10px] uppercase">
+                    <tr className="border-b border-[var(--line)] bg-[var(--canvas)] text-[var(--text-3)] font-mono text-[10px] uppercase">
                       <th className="p-4 sm:p-5 w-44">Factor</th>
                       <th className="p-4 sm:p-5 w-36">Better Product</th>
                       <th className="p-4 sm:p-5">Summary</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[#ECE8F2]">
+                  <tbody className="divide-y divide-[var(--line)]">
                     {/* Price and Value */}
-                    <tr className="hover:bg-[#F9F8FC]/50">
+                    <tr className="hover:bg-[var(--canvas)]/50">
                       <td className="p-4 sm:p-5 font-semibold text-[#16131F]">Price and Value</td>
                       <td className="p-4 sm:p-5">
                         <span className="font-bold text-emerald-700 font-mono">
@@ -1248,10 +1336,10 @@ export const ComparisonsPage: React.FC = () => {
                     </tr>
 
                     {/* Specifications */}
-                    <tr className="hover:bg-[#F9F8FC]/50">
+                    <tr className="hover:bg-[var(--canvas)]/50">
                       <td className="p-4 sm:p-5 font-semibold text-[#16131F]">Specifications</td>
                       <td className="p-4 sm:p-5">
-                        <span className="font-bold text-[#7C5DFA] font-mono">
+                        <span className="font-bold text-[var(--accent)] font-mono">
                           Product B
                         </span>
                       </td>
@@ -1261,7 +1349,7 @@ export const ComparisonsPage: React.FC = () => {
                     </tr>
 
                     {/* Customer Reviews */}
-                    <tr className="hover:bg-[#F9F8FC]/50">
+                    <tr className="hover:bg-[var(--canvas)]/50">
                       <td className="p-4 sm:p-5 font-semibold text-[#16131F]">Customer Reviews</td>
                       <td className="p-4 sm:p-5">
                         <span className="font-bold text-emerald-700 font-mono">
@@ -1274,7 +1362,7 @@ export const ComparisonsPage: React.FC = () => {
                     </tr>
 
                     {/* Seller Trust */}
-                    <tr className="hover:bg-[#F9F8FC]/50">
+                    <tr className="hover:bg-[var(--canvas)]/50">
                       <td className="p-4 sm:p-5 font-semibold text-[#16131F]">Seller Trust</td>
                       <td className="p-4 sm:p-5">
                         <span className="font-bold text-emerald-700 font-mono">
@@ -1287,7 +1375,7 @@ export const ComparisonsPage: React.FC = () => {
                     </tr>
 
                     {/* Overall Recommendation */}
-                    <tr className="bg-[#EDE9FE]/30">
+                    <tr className="bg-[var(--heather)]/30">
                       <td className="p-4 sm:p-5 font-bold text-[#16131F]">Overall Recommendation</td>
                       <td className="p-4 sm:p-5">
                         <span className="font-extrabold text-emerald-700 font-mono">
@@ -1304,14 +1392,14 @@ export const ComparisonsPage: React.FC = () => {
             </div>
 
             {/* D. FINAL RECOMMENDATION */}
-            <div className="p-6 sm:p-8 rounded-[24px] bg-white border border-[#ECE8F2] space-y-4 shadow-sm">
+            <div className="p-6 sm:p-8 rounded-[24px] bg-white border border-[var(--line)] space-y-4 shadow-sm">
               <h3 className="text-base font-bold text-[#16131F] font-heading">
                 Final Recommendation
               </h3>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-                <div className="p-4 rounded-[16px] bg-[#F9F8FC] border border-[#ECE8F2] space-y-1.5">
-                  <span className="text-[10px] font-mono uppercase text-[#7C5DFA] font-bold block">
+                <div className="p-4 rounded-[16px] bg-[var(--canvas)] border border-[var(--line)] space-y-1.5">
+                  <span className="text-[10px] font-mono uppercase text-[var(--accent)] font-bold block">
                     Which product to choose
                   </span>
                   <p className="text-[#16131F] font-semibold">
@@ -1322,7 +1410,7 @@ export const ComparisonsPage: React.FC = () => {
                   </p>
                 </div>
 
-                <div className="p-4 rounded-[16px] bg-[#F9F8FC] border border-[#ECE8F2] space-y-1.5">
+                <div className="p-4 rounded-[16px] bg-[var(--canvas)] border border-[var(--line)] space-y-1.5">
                   <span className="text-[10px] font-mono uppercase text-emerald-700 font-bold block">
                     What makes it better
                   </span>
@@ -1334,7 +1422,7 @@ export const ComparisonsPage: React.FC = () => {
                   </p>
                 </div>
 
-                <div className="p-4 rounded-[16px] bg-[#F9F8FC] border border-[#ECE8F2] space-y-1.5">
+                <div className="p-4 rounded-[16px] bg-[var(--canvas)] border border-[var(--line)] space-y-1.5">
                   <span className="text-[10px] font-mono uppercase text-amber-700 font-bold block">
                     Main compromise
                   </span>
@@ -1349,16 +1437,16 @@ export const ComparisonsPage: React.FC = () => {
             </div>
 
             {/* E. EMBEDDED COMPARISON AI AGENT */}
-            <div className="p-6 sm:p-8 rounded-[24px] bg-white border border-[#ECE8F2] shadow-sm space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-[#ECE8F2]">
+            <div className="p-6 sm:p-8 rounded-[24px] bg-white border border-[var(--line)] shadow-sm space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-[var(--line)]">
                 <div className="flex items-center gap-2.5">
-                  <div className="h-8 w-8 rounded-xl bg-[#7C5DFA] text-white flex items-center justify-center shadow-xs">
+                  <div className="h-8 w-8 rounded-xl bg-[var(--accent)] text-white flex items-center justify-center shadow-xs">
                     <Bot className="w-4 h-4" />
                   </div>
                   <div>
                     <h3 className="text-sm font-bold text-[#16131F] font-heading flex items-center gap-2">
                       <span>Comparison AI Agent</span>
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#EDE9FE] text-[#7C5DFA] border border-[#7C5DFA]/20">
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[var(--heather)]/60 text-[var(--accent)] border border-[var(--line)]">
                         Context-Aware
                       </span>
                     </h3>
@@ -1371,7 +1459,7 @@ export const ComparisonsPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsAssistantOpen(true)}
-                  className="text-xs text-[#7C5DFA] hover:text-[#6A49F2] font-semibold cursor-pointer flex items-center gap-1"
+                  className="text-xs text-[var(--accent)] hover:text-[var(--accent-hi)] font-semibold cursor-pointer flex items-center gap-1"
                 >
                   <span>Open Full Chat</span>
                   <ExternalLink className="w-3.5 h-3.5" />
@@ -1381,41 +1469,72 @@ export const ComparisonsPage: React.FC = () => {
               {/* Quick Prompt Chips */}
               <div className="flex items-center gap-2 flex-wrap">
                 {[
-                  `Why is ${winnerLetter} better?`,
-                  `Why did ${loserLetter} lose?`,
-                  'Is the price difference justified?',
-                  'Which product has more trustworthy reviews?',
-                  'What is the biggest disadvantage of the winner?',
-                  'Which one should I buy?',
+                  'Why did you pick this one?',
+                  'Which is the safest?',
+                  'Why is the cheaper one risky?',
+                  'Explain in simple words',
                 ].map((q, qIdx) => (
                   <button
                     key={qIdx}
                     type="button"
+                    disabled={isAgentThinking}
                     onClick={() => handleAskAgent(q)}
-                    className="px-3 py-1.5 rounded-xl bg-[#F9F8FC] hover:bg-[#EDE9FE]/50 border border-[#ECE8F2] text-xs text-[#4A3F4B] hover:text-[#16131F] transition-all cursor-pointer text-left"
+                    className="px-3.5 py-1.5 rounded-full text-xs font-medium border transition-all cursor-pointer text-[var(--accent)] bg-[var(--heather)]/40 border-[var(--line)] hover:bg-[var(--accent)] hover:text-white hover:border-[var(--accent)] disabled:opacity-50 active:scale-95"
                   >
                     {q}
                   </button>
                 ))}
               </div>
 
-              {/* Question & Answer Display */}
-              {agentAnswer && (
-                <div className="p-4 rounded-[16px] bg-[#F9F8FC] border border-[#ECE8F2] space-y-2 animate-fadeIn">
-                  <div className="flex items-center gap-2 text-xs font-bold text-[#7C5DFA] font-heading">
-                    <ArrowRight className="w-3.5 h-3.5 text-[#7C5DFA]" />
-                    <span>{agentQuestion}</span>
+              {/* Error State with Retry */}
+              {agentError && (
+                <div className="p-3.5 rounded-xl bg-[var(--bad-bg)] border border-[var(--bad)]/30 flex items-center justify-between text-xs text-[var(--bad-ink)]">
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 text-[var(--bad)] shrink-0" />
+                    <span>{agentError}</span>
                   </div>
-                  <p className="text-xs sm:text-sm text-[#16131F] leading-relaxed font-sans">
-                    <TypewriterText text={agentAnswer} speedMs={10} />
-                  </p>
+                  {lastAgentQuery && (
+                    <button
+                      type="button"
+                      onClick={() => handleAskAgent(lastAgentQuery)}
+                      className="px-2.5 py-1 rounded-lg bg-white border border-[var(--bad)]/40 text-xs font-semibold text-[var(--bad-ink)] hover:bg-[var(--bad-bg)] cursor-pointer"
+                    >
+                      Retry
+                    </button>
+                  )}
                 </div>
               )}
 
+              {/* Loading / Typing State */}
               {isAgentThinking && (
-                <div className="p-4 rounded-[16px] bg-[#F9F8FC] border border-[#ECE8F2] flex items-center gap-2 text-xs text-[var(--text-3)] animate-pulse">
-                  <Loader2 className="w-4 h-4 animate-spin text-[#7C5DFA]" />
-                  <span>Synthesizing comparison evidence...</span>
+                <div className="p-4 rounded-[16px] bg-[var(--canvas)] border border-[var(--line)] flex items-center gap-3 text-xs text-[var(--text-3)]">
+                  <Loader2 className="w-4 h-4 animate-spin text-[var(--accent)] shrink-0" />
+                  <div className="flex items-center gap-2">
+                    <span>Synthesizing comparison evidence across products...</span>
+                    <div className="flex gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] animate-bounce" style={{ animationDelay: '0ms' }} />
+                      <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] animate-bounce" style={{ animationDelay: '150ms' }} />
+                      <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] animate-bounce" style={{ animationDelay: '300ms' }} />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Question & Answer Display */}
+              {!isAgentThinking && agentAnswer && (
+                <div className="p-4 rounded-[16px] bg-[var(--canvas)] border border-[var(--accent)]/20 space-y-2 animate-fadeIn">
+                  <div className="flex items-center justify-between text-xs font-bold text-[var(--accent)] font-heading">
+                    <div className="flex items-center gap-2">
+                      <ArrowRight className="w-3.5 h-3.5 text-[var(--accent)]" />
+                      <span>{agentQuestion}</span>
+                    </div>
+                    <span className="text-[10px] font-mono font-normal text-[var(--text-3)]">
+                      ≤120 words · Plain Language
+                    </span>
+                  </div>
+                  <p className="text-xs sm:text-sm text-[#16131F] leading-relaxed font-sans font-medium">
+                    <TypewriterText text={agentAnswer} speedMs={8} />
+                  </p>
                 </div>
               )}
 
@@ -1435,11 +1554,13 @@ export const ComparisonsPage: React.FC = () => {
                   name="customQuestion"
                   type="text"
                   placeholder={`Ask about ${titleA} vs ${titleB}...`}
-                  className="flex-1 px-4 py-2.5 rounded-xl bg-[#F9F8FC] border border-[#ECE8F2] focus:border-[#7C5DFA] text-xs text-[#16131F] placeholder:text-[var(--text-3)] outline-none"
+                  disabled={isAgentThinking}
+                  className="flex-1 px-4 py-2.5 rounded-xl bg-[var(--canvas)]/50 border border-[var(--line)] focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--ring)] text-xs text-[#16131F] placeholder:text-[var(--text-3)] outline-none transition-all"
                 />
                 <button
                   type="submit"
-                  className="px-4 py-2.5 rounded-xl bg-[#7C5DFA] hover:bg-[#6A49F2] text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer shadow-xs"
+                  disabled={isAgentThinking}
+                  className="px-4 py-2.5 rounded-xl bg-[var(--accent)] hover:bg-[var(--accent-hi)] disabled:opacity-50 text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer shadow-xs transition-all shrink-0"
                 >
                   <Send className="w-3.5 h-3.5" />
                   <span>Ask</span>

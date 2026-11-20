@@ -287,19 +287,19 @@ export const MarketplaceUrlTab: React.FC<MarketplaceUrlTabProps> = () => {
     <div className="space-y-6">
       {/* 1. URL Input Bar */}
       <div className="space-y-2">
-        <label className="text-xs font-semibold text-slate-300 flex items-center justify-between">
+        <label className="text-xs font-semibold text-[var(--ink)] flex items-center justify-between">
           <span className="flex items-center gap-1.5">
-            <Globe className="w-3.5 h-3.5 text-indigo-400" />
+            <Globe className="w-3.5 h-3.5 text-[var(--accent)]" />
             <span>Product Listing URL</span>
           </span>
-          <span className="text-[11px] font-mono text-slate-400">
+          <span className="text-[11px] font-mono text-[var(--text-3)]">
             Supported: Amazon.in · Flipkart · Myntra
           </span>
         </label>
 
         <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-            <Globe className="w-5 h-5 text-indigo-400/80" />
+          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[var(--text-3)]">
+            <Globe className="w-5 h-5 text-[var(--accent)]/80" />
           </div>
           <input
             type="url"
@@ -307,13 +307,13 @@ export const MarketplaceUrlTab: React.FC<MarketplaceUrlTabProps> = () => {
             onChange={(e) => analyzeUrl(e.target.value)}
             disabled={isAnalyzing || isExtractingPreview}
             placeholder="Paste marketplace product link (e.g. https://www.flipkart.com/... or https://www.amazon.in/dp/...)"
-            className="w-full pl-11 pr-24 py-3.5 rounded-xl border border-white/[0.08] focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none text-sm text-slate-100 placeholder:text-slate-500 transition-all bg-[#181D2E]"
+            className="w-full pl-11 pr-24 py-3.5 rounded-xl border border-[var(--line)] focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20 outline-none text-sm text-[var(--ink)] placeholder:text-[var(--text-3)] transition-all bg-[var(--canvas)]/40"
           />
           <button
             type="button"
             onClick={handlePaste}
             disabled={isAnalyzing || isExtractingPreview}
-            className="absolute inset-y-2 right-2 px-3 rounded-lg text-xs font-semibold text-indigo-400 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
+            className="absolute inset-y-2 right-2 px-3 rounded-lg text-xs font-semibold text-[var(--accent)] hover:text-[var(--accent-hi)] hover:bg-white transition-colors cursor-pointer"
           >
             Paste
           </button>
@@ -324,30 +324,30 @@ export const MarketplaceUrlTab: React.FC<MarketplaceUrlTabProps> = () => {
       <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
         {detectedPlatform ? (
           <div className="flex items-center gap-2">
-            <span className="text-slate-400 font-medium">Platform:</span>
-            <span className="inline-flex items-center gap-2 px-2.5 py-1 rounded-lg border border-white/[0.08] bg-[#181D2E] text-slate-200 font-semibold">
+            <span className="text-[var(--text-3)] font-medium">Platform:</span>
+            <span className="inline-flex items-center gap-2 px-2.5 py-1 rounded-lg border border-[var(--line)] bg-white text-[var(--ink)] font-semibold">
               <span className="w-2 h-2 rounded-full" style={{ backgroundColor: detectedPlatform.iconColor }} />
               <span>{detectedPlatform.name}</span>
               {detectedPlatform.detectedId && (
-                <span className="font-mono text-[11px] text-slate-400">
+                <span className="font-mono text-[11px] text-[var(--text-3)]">
                   ({detectedPlatform.idType}: {detectedPlatform.detectedId})
                 </span>
               )}
             </span>
-            <span className="text-emerald-400 font-medium flex items-center gap-1 text-[11px]">
-              <CheckCircle2 className="w-3.5 h-3.5" /> Ready for Automated Ingestion
+            <span className="text-[var(--ok-ink)] font-medium flex items-center gap-1 text-[11px]">
+              <CheckCircle2 className="w-3.5 h-3.5 text-[var(--ok)]" /> Ready for Automated Ingestion
             </span>
           </div>
         ) : (
-          <div className="flex items-center gap-2 text-slate-500">
+          <div className="flex items-center gap-2 text-[var(--text-3)]">
             <span>Surveillance coverage:</span>
-            <span className="px-2 py-0.5 rounded bg-[#181D2E] border border-white/[0.08] text-slate-400 text-[11px]">
+            <span className="px-2 py-0.5 rounded bg-white border border-[var(--line)] text-[var(--text-3)] text-[11px]">
               Amazon India
             </span>
-            <span className="px-2 py-0.5 rounded bg-[#181D2E] border border-white/[0.08] text-slate-400 text-[11px]">
+            <span className="px-2 py-0.5 rounded bg-white border border-[var(--line)] text-[var(--text-3)] text-[11px]">
               Flipkart
             </span>
-            <span className="px-2 py-0.5 rounded bg-[#181D2E] border border-white/[0.08] text-slate-400 text-[11px]">
+            <span className="px-2 py-0.5 rounded bg-white border border-[var(--line)] text-[var(--text-3)] text-[11px]">
               Myntra
             </span>
           </div>
@@ -358,7 +358,7 @@ export const MarketplaceUrlTab: React.FC<MarketplaceUrlTabProps> = () => {
             type="button"
             onClick={handleExtractPreview}
             disabled={isExtractingPreview || isAnalyzing}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-indigo-300 bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/30 transition-all cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-[var(--accent)] bg-[var(--heather)]/40 hover:bg-[var(--heather)]/70 border border-[var(--line)] transition-all cursor-pointer"
           >
             {isExtractingPreview ? (
               <>
@@ -367,7 +367,7 @@ export const MarketplaceUrlTab: React.FC<MarketplaceUrlTabProps> = () => {
               </>
             ) : (
               <>
-                <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+                <Sparkles className="w-3.5 h-3.5 text-[var(--accent)]" />
                 <span>Auto-Extract & Preview Details</span>
               </>
             )}
@@ -377,30 +377,30 @@ export const MarketplaceUrlTab: React.FC<MarketplaceUrlTabProps> = () => {
 
       {/* 3. EDITABLE PRODUCT PREVIEW CARD (When details extracted) */}
       {preview && (
-        <div className="p-5 sm:p-6 rounded-2xl bg-[#141826] border border-indigo-500/30 space-y-4 animate-fadeIn shadow-lg">
-          <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
+        <div className="p-5 sm:p-6 rounded-2xl bg-white border border-[var(--line)] space-y-4 animate-fadeIn shadow-sm">
+          <div className="flex items-center justify-between pb-3 border-b border-[var(--line)]">
             <div className="flex items-center gap-2">
-              <span className="p-1.5 rounded-lg bg-indigo-500/20 text-indigo-300">
-                <Edit3 className="w-4 h-4 text-indigo-400" />
+              <span className="p-1.5 rounded-lg bg-[var(--heather)] text-[var(--accent)]">
+                <Edit3 className="w-4 h-4 text-[var(--accent)]" />
               </span>
               <div>
-                <h3 className="text-sm font-bold text-slate-100 font-heading">
+                <h3 className="text-sm font-bold text-[var(--ink)] font-heading">
                   Editable Product Preview
                 </h3>
-                <p className="text-[11px] text-slate-400">
+                <p className="text-[11px] text-[var(--text-3)]">
                   Review or adjust extracted details before launching the full AI investigation
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-mono px-2.5 py-1 rounded-md bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 flex items-center gap-1">
-                <CheckCircle2 className="w-3 h-3" /> Extracted Successfully
+              <span className="text-[10px] font-mono px-2.5 py-1 rounded-md bg-[var(--ok-bg)] border border-[var(--ok)]/30 text-[var(--ok-ink)] flex items-center gap-1">
+                <CheckCircle2 className="w-3 h-3 text-[var(--ok)]" /> Extracted Successfully
               </span>
               <button
                 type="button"
                 onClick={() => setPreview(null)}
-                className="p-1 rounded-md text-slate-400 hover:text-slate-200 hover:bg-white/[0.06] transition-colors cursor-pointer"
+                className="p-1 rounded-md text-[var(--text-3)] hover:text-[var(--ink)] hover:bg-[var(--canvas)] transition-colors cursor-pointer"
                 title="Clear preview"
               >
                 <X className="w-4 h-4" />
@@ -411,7 +411,7 @@ export const MarketplaceUrlTab: React.FC<MarketplaceUrlTabProps> = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* Product Image preview column */}
             <div className="md:col-span-1 space-y-2">
-              <div className="h-40 rounded-xl bg-[#181D2E] border border-white/[0.08] overflow-hidden flex items-center justify-center relative">
+              <div className="h-40 rounded-xl bg-[var(--canvas)] border border-[var(--line)] overflow-hidden flex items-center justify-center relative">
                 {preview.imageUrl ? (
                   <img
                     src={preview.imageUrl}
@@ -419,18 +419,18 @@ export const MarketplaceUrlTab: React.FC<MarketplaceUrlTabProps> = () => {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="text-center p-4 space-y-1 text-slate-500">
-                    <ShoppingBag className="w-8 h-8 mx-auto text-slate-600" />
+                  <div className="text-center p-4 space-y-1 text-[var(--text-3)]">
+                    <ShoppingBag className="w-8 h-8 mx-auto text-[var(--text-3)]" />
                     <span className="text-[10px] font-mono block">Product Visual</span>
                   </div>
                 )}
-                <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-black/70 backdrop-blur-xs text-[10px] font-mono text-indigo-300 border border-white/10">
+                <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-black/70 backdrop-blur-xs text-[10px] font-mono text-[var(--heather)] border border-white/10">
                   {preview.platformName}
                 </div>
               </div>
               {preview.identifier && (
-                <div className="text-center text-[10px] font-mono text-slate-500">
-                  ID: <span className="text-indigo-400">{preview.identifier}</span>
+                <div className="text-center text-[10px] font-mono text-[var(--text-3)]">
+                  ID: <span className="text-[var(--accent)]">{preview.identifier}</span>
                 </div>
               )}
             </div>
@@ -439,14 +439,14 @@ export const MarketplaceUrlTab: React.FC<MarketplaceUrlTabProps> = () => {
             <div className="md:col-span-3 space-y-3">
               {/* Product Title */}
               <div className="space-y-1">
-                <label className="text-[11px] font-semibold text-slate-300 flex items-center gap-1 font-mono">
-                  <Tag className="w-3 h-3 text-indigo-400" /> Product Title
+                <label className="text-[11px] font-semibold text-[var(--ink)] flex items-center gap-1 font-mono">
+                  <Tag className="w-3 h-3 text-[var(--accent)]" /> Product Title
                 </label>
                 <input
                   type="text"
                   value={preview.title}
                   onChange={(e) => setPreview({ ...preview, title: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-[#181D2E] border border-white/[0.08] focus:border-indigo-500 outline-none text-xs text-slate-100 font-medium"
+                  className="w-full px-3 py-2 rounded-xl bg-white border border-[var(--line)] focus:border-[var(--accent)] outline-none text-xs text-[var(--ink)] font-medium"
                   placeholder="Product Title"
                 />
               </div>
@@ -454,48 +454,48 @@ export const MarketplaceUrlTab: React.FC<MarketplaceUrlTabProps> = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {/* Brand */}
                 <div className="space-y-1">
-                  <label className="text-[11px] font-semibold text-slate-300 font-mono">Brand Name</label>
+                  <label className="text-[11px] font-semibold text-[var(--text-2)] font-mono">Brand Name</label>
                   <input
                     type="text"
                     value={preview.brand}
                     onChange={(e) => setPreview({ ...preview, brand: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl bg-[#181D2E] border border-white/[0.08] focus:border-indigo-500 outline-none text-xs text-slate-100"
+                    className="w-full px-3 py-2 rounded-xl bg-white border border-[var(--line)] focus:border-[var(--accent)] outline-none text-xs text-[var(--ink)]"
                     placeholder="Brand"
                   />
                 </div>
 
                 {/* Category */}
                 <div className="space-y-1">
-                  <label className="text-[11px] font-semibold text-slate-300 font-mono">Product Category</label>
+                  <label className="text-[11px] font-semibold text-[var(--text-2)] font-mono">Product Category</label>
                   <input
                     type="text"
                     value={preview.category}
                     onChange={(e) => setPreview({ ...preview, category: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl bg-[#181D2E] border border-white/[0.08] focus:border-indigo-500 outline-none text-xs text-slate-100"
+                    className="w-full px-3 py-2 rounded-xl bg-white border border-[var(--line)] focus:border-[var(--accent)] outline-none text-xs text-[var(--ink)]"
                     placeholder="Category"
                   />
                 </div>
 
                 {/* Observed Selling Price */}
                 <div className="space-y-1">
-                  <label className="text-[11px] font-semibold text-slate-300 font-mono">Current Selling Price (₹)</label>
+                  <label className="text-[11px] font-semibold text-[var(--text-2)] font-mono">Current Selling Price (₹)</label>
                   <input
                     type="number"
                     value={preview.observedPrice}
                     onChange={(e) => setPreview({ ...preview, observedPrice: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl bg-[#181D2E] border border-white/[0.08] focus:border-indigo-500 outline-none text-xs text-slate-100 font-semibold"
+                    className="w-full px-3 py-2 rounded-xl bg-white border border-[var(--line)] focus:border-[var(--accent)] outline-none text-xs text-[var(--ink)] font-semibold"
                     placeholder="e.g. 828"
                   />
                 </div>
 
                 {/* Claimed MRP */}
                 <div className="space-y-1">
-                  <label className="text-[11px] font-semibold text-slate-300 font-mono">Original MRP (₹)</label>
+                  <label className="text-[11px] font-semibold text-[var(--text-2)] font-mono">Original MRP (₹)</label>
                   <input
                     type="number"
                     value={preview.mrp}
                     onChange={(e) => setPreview({ ...preview, mrp: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl bg-[#181D2E] border border-white/[0.08] focus:border-indigo-500 outline-none text-xs text-slate-100"
+                    className="w-full px-3 py-2 rounded-xl bg-white border border-[var(--line)] focus:border-[var(--accent)] outline-none text-xs text-[var(--ink)]"
                     placeholder="e.g. 2999"
                   />
                 </div>
@@ -506,37 +506,37 @@ export const MarketplaceUrlTab: React.FC<MarketplaceUrlTabProps> = () => {
       )}
 
       {/* 4. Optional Packaging / Product Image Attachment */}
-      <div className="p-4 rounded-2xl bg-[#141826] border border-white/[0.08] space-y-3">
+      <div className="p-4 rounded-2xl bg-white border border-[var(--line)] space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Camera className="w-4 h-4 text-indigo-400" />
-            <span className="text-xs font-semibold text-slate-200">
+            <Camera className="w-4 h-4 text-[var(--accent)]" />
+            <span className="text-xs font-semibold text-[var(--ink)]">
               Packaging / Product Photo (Optional)
             </span>
           </div>
-          <span className="text-[11px] text-slate-400">
+          <span className="text-[11px] text-[var(--text-3)]">
             Enables Physical OCR & Statutory Verification
           </span>
         </div>
 
         {attachedImageBase64 ? (
-          <div className="flex items-center justify-between p-3 rounded-xl bg-[#181D2E] border border-indigo-500/30">
+          <div className="flex items-center justify-between p-3 rounded-xl bg-[var(--canvas)]/40 border border-[var(--line)]">
             <div className="flex items-center gap-3 overflow-hidden">
               <img
                 src={attachedImageBase64}
                 alt="Packaging preview"
-                className="h-10 w-10 rounded-lg object-cover border border-white/[0.08]"
+                className="h-10 w-10 rounded-lg object-cover border border-[var(--line)]"
               />
               <div className="truncate">
-                <p className="text-xs font-medium text-slate-200 truncate">{attachedImageName}</p>
-                <p className="text-[10px] text-emerald-400 font-medium">Ready for OCR & Image Quality Analysis</p>
+                <p className="text-xs font-medium text-[var(--ink)] truncate">{attachedImageName}</p>
+                <p className="text-[10px] text-[var(--ok-ink)] font-medium">Ready for OCR & Image Quality Analysis</p>
               </div>
             </div>
             <button
               type="button"
               onClick={handleRemoveImage}
               disabled={isAnalyzing}
-              className="p-1 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+              className="p-1 rounded-lg text-[var(--text-3)] hover:text-[var(--bad)] hover:bg-[var(--bad-bg)] transition-colors cursor-pointer"
               title="Remove image"
             >
               <X className="w-4 h-4" />
@@ -559,13 +559,13 @@ export const MarketplaceUrlTab: React.FC<MarketplaceUrlTabProps> = () => {
             onClick={() => fileInputRef.current?.click()}
             className={`p-3.5 rounded-xl border border-dashed transition-all cursor-pointer flex items-center justify-center gap-3 text-xs ${
               isDragging
-                ? 'border-indigo-500 bg-indigo-500/10 text-indigo-300'
-                : 'border-white/[0.12] hover:border-indigo-500/40 bg-[#181D2E]/60 text-slate-400 hover:text-slate-300'
+                ? 'border-[var(--accent)] bg-[var(--heather)]/20 text-[var(--accent)]'
+                : 'border-[var(--line)] hover:border-[var(--accent)] bg-white text-[var(--text-3)] hover:text-[var(--ink)]'
             }`}
           >
-            <UploadCloud className="w-4 h-4 text-indigo-400" />
+            <UploadCloud className="w-4 h-4 text-[var(--accent)]" />
             <span>
-              Drop packaging photo here, or <strong className="text-indigo-400 underline">browse</strong> (PNG, JPG up to 10MB)
+              Drop packaging photo here, or <strong className="text-[var(--accent)] underline">browse</strong> (PNG, JPG up to 10MB)
             </span>
             <input
               ref={fileInputRef}
@@ -584,30 +584,30 @@ export const MarketplaceUrlTab: React.FC<MarketplaceUrlTabProps> = () => {
 
       {/* 5. Validation Error Alert */}
       {validationError && (
-        <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs">
-          <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-amber-400" />
+        <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-[var(--warn-bg)] border border-[var(--warn)]/30 text-[var(--warn-ink)] text-xs">
+          <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-[var(--warn)]" />
           <p className="leading-relaxed">{validationError}</p>
         </div>
       )}
 
       {/* 6. Live Multi-Stage Progress Banner */}
       {isAnalyzing && (
-        <div className="p-4 rounded-2xl bg-indigo-950/30 border border-indigo-500/30 text-xs space-y-2.5 animate-fadeIn">
-          <div className="flex items-center justify-between text-indigo-300 font-semibold">
+        <div className="p-4 rounded-2xl bg-[var(--heather)]/30 border border-[var(--line)] text-xs space-y-2.5 animate-fadeIn">
+          <div className="flex items-center justify-between text-[var(--accent)] font-semibold">
             <span className="flex items-center gap-2">
-              <Loader2 className="w-4 h-4 text-indigo-400 animate-spin" />
+              <Loader2 className="w-4 h-4 text-[var(--accent)] animate-spin" />
               <span>Running Automated Investigation Pipeline</span>
             </span>
             <span className="font-mono text-[11px]">
               Stage {analysisStageIndex + 1} of {ANALYSIS_STAGES.length}
             </span>
           </div>
-          <p className="text-slate-300 text-[11px] font-mono leading-relaxed pl-6">
+          <p className="text-[var(--text-2)] text-[11px] font-mono leading-relaxed pl-6">
             {ANALYSIS_STAGES[analysisStageIndex]}
           </p>
-          <div className="w-full bg-[#181D2E] rounded-full h-1.5 overflow-hidden">
+          <div className="w-full bg-white rounded-full h-1.5 overflow-hidden border border-[var(--line)]">
             <div
-              className="bg-indigo-500 h-full transition-all duration-500"
+              className="bg-[var(--accent)] h-full transition-all duration-500"
               style={{ width: `${((analysisStageIndex + 1) / ANALYSIS_STAGES.length) * 100}%` }}
             />
           </div>
@@ -616,7 +616,7 @@ export const MarketplaceUrlTab: React.FC<MarketplaceUrlTabProps> = () => {
 
       {/* 7. Action Buttons */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
-        <div className="text-[11px] text-slate-500">
+        <div className="text-[11px] text-[var(--text-3)]">
           {preview ? (
             <span>Details confirmed. Proceed to generate the 9-section report.</span>
           ) : (
@@ -633,7 +633,7 @@ export const MarketplaceUrlTab: React.FC<MarketplaceUrlTabProps> = () => {
               disabled={!url.trim() || isExtractingPreview || isAnalyzing}
               onClick={handleExtractPreview}
               isLoading={isExtractingPreview}
-              rightIcon={<Edit3 className="w-3.5 h-3.5 text-indigo-400" />}
+              rightIcon={<Edit3 className="w-3.5 h-3.5 text-[var(--accent)]" />}
               className="w-full sm:w-auto"
             >
               Preview & Edit Details
@@ -648,7 +648,7 @@ export const MarketplaceUrlTab: React.FC<MarketplaceUrlTabProps> = () => {
             onClick={() => handleProceedWithInvestigation()}
             isLoading={isAnalyzing}
             rightIcon={<ArrowRight className="w-4 h-4" />}
-            className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-500 text-white font-semibold shadow-xs shadow-indigo-500/20 min-h-[42px]"
+            className="w-full sm:w-auto bg-[#16131F] hover:bg-[#252033] text-white font-semibold shadow-xs min-h-[42px]"
           >
             {isAnalyzing
               ? 'Conducting Deep Investigation...'

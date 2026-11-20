@@ -24,7 +24,7 @@ export const Breadcrumbs: React.FC = () => {
     <nav aria-label="Breadcrumb" className="flex items-center space-x-1.5 text-xs text-[var(--text-3)]">
       <Link
         to="/"
-        className="flex items-center gap-1 hover:text-[#7C5DFA] transition-colors focus-visible:outline-none focus-visible:underline"
+        className="flex items-center gap-1 hover:text-[var(--accent)] transition-colors focus-visible:outline-none focus-visible:underline"
       >
         <Home className="w-3.5 h-3.5 text-[var(--text-3)]" />
         <span className="sr-only">Home</span>
@@ -45,7 +45,7 @@ export const Breadcrumbs: React.FC = () => {
             ) : (
               <Link
                 to={routeTo}
-                className="hover:text-[#7C5DFA] transition-colors truncate max-w-[150px] focus-visible:outline-none focus-visible:underline"
+                className="hover:text-[var(--accent)] transition-colors truncate max-w-[150px] focus-visible:outline-none focus-visible:underline"
               >
                 {label}
               </Link>

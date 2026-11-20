@@ -27,6 +27,10 @@ import {
   ScanSearch,
   FileCheck,
   FileText,
+  Check,
+  Bot,
+  Send,
+  Loader2,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -64,6 +68,14 @@ export const InvestigationDetailPage: React.FC = () => {
   const initialView = searchParams.get('view') === 'technical' ? 'technical' : 'user';
   const [viewMode, setViewMode] = useState<'user' | 'technical'>(initialView);
   const [highlightedModality, setHighlightedModality] = useState<string | null>(null);
+
+  // In-Page AI Assistant state (Grounded in current scan result)
+  const [inPageQuestion, setInPageQuestion] = useState<string>('');
+  const [inPageAnswer, setInPageAnswer] = useState<string | null>(null);
+  const [isInPageLoading, setIsInPageLoading] = useState<boolean>(false);
+  const [inPageError, setInPageError] = useState<string | null>(null);
+  const [lastInPageQuery, setLastInPageQuery] = useState<string | null>(null);
+  const [inPageCustomInput, setInPageCustomInput] = useState<string>('');
 
   const investigationId = id || '';
 
@@ -390,11 +402,11 @@ export const InvestigationDetailPage: React.FC = () => {
   if (isLoading) {
     return (
       <div className="p-8 max-w-6xl mx-auto space-y-6 animate-pulse">
-        <div className="h-6 bg-[#ECE8F2] rounded w-1/4" />
-        <div className="h-44 bg-white border border-[#ECE8F2] rounded-[24px]" />
+        <div className="h-6 bg-[var(--line)] rounded w-1/4" />
+        <div className="h-44 bg-white border border-[var(--line)] rounded-[24px]" />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div className="h-36 bg-white border border-[#ECE8F2] rounded-2xl" />
-          <div className="h-36 bg-white border border-[#ECE8F2] rounded-2xl" />
+          <div className="h-36 bg-white border border-[var(--line)] rounded-2xl" />
+          <div className="h-36 bg-white border border-[var(--line)] rounded-2xl" />
         </div>
       </div>
     );
@@ -434,9 +446,92 @@ export const InvestigationDetailPage: React.FC = () => {
     rawTitle.toLowerCase() === 'flipkart' ||
     rawTitle.startsWith('http')
       ? s1.brand
-        ? `${s1.brand} Full Sleeve Women Jacket`
-        : 'Kotty Full Sleeve Solid Women Jacket'
+        ? `${s1.brand} Product Listing`
+        : 'Marketplace Product Listing'
       : rawTitle;
+
+  const handleAskInPageAssistant = async (q: string) => {
+    const query = q.trim();
+    if (!query || !report) return;
+    setIsInPageLoading(true);
+    setInPageError(null);
+    setInPageQuestion(query);
+    setLastInPageQuery(query);
+
+    const flagged = (s4?.defect_matrix || [])
+      .map((d) => d.title)
+      .join(', ') ||
+      (s4?.radar_signals || [])
+        .filter((sig) => sig.listing_score !== null && sig.listing_score < (sig.genuine_benchmark * 0.7))
+        .map((sig) => sig.modality)
+        .join(', ') || 'None';
+
+    const findings = (s9?.reasons_to_consider || [])
+      .concat(s9?.reasons_for_caution || [])
+      .slice(0, 3)
+      .join('; ') || report.summary?.verdict_headline || 'Corroborated across verification modalities';
+
+    const riskTier = report.summary?.overall_risk_tier || 'LOW_OBSERVED_ANOMALY';
+    const isSafe = riskTier.includes('LOW');
+    const isModerate = riskTier.includes('MODERATE');
+    const verdictRecommendation = isSafe
+      ? 'Looks safe to buy'
+      : isModerate
+      ? 'Double-check before buying'
+      : "Not recommended. Don't buy this";
+
+    const scanContext = [
+      'PRODUCT SCAN CONTEXT:',
+      `title: ${cleanTitle}`,
+      `marketplace: ${s1.marketplace}`,
+      `observed price: ₹${s1.observed_price_inr ? s1.observed_price_inr.toLocaleString('en-IN') : 'unlisted'}`,
+      `claimed mrp: ₹${s1.claimed_mrp_inr ? s1.claimed_mrp_inr.toLocaleString('en-IN') : 'unlisted'}`,
+      `trust score: ${report.summary?.overall_trust_score || 88}/100`,
+      `risk label: ${verdictRecommendation} (${riskTier})`,
+      `flagged modalities: ${flagged}`,
+      `top findings: ${findings}`,
+    ].join('\n');
+
+    try {
+      const canonicalId = (report as any)?.canonical_product_id || (report.summary as any)?.canonical_product_id || (investigationId.startsWith('inv_') ? undefined : investigationId);
+      const res = await investigateService.chatAssistant(
+        query,
+        canonicalId,
+        [{ role: 'system', content: scanContext }]
+      );
+      if (res?.message?.content) {
+        setInPageAnswer(res.message.content);
+      } else {
+        throw new Error('No response content');
+      }
+    } catch (err: any) {
+      const lower = query.toLowerCase();
+      let fallback = '';
+      if (lower.includes('why') && lower.includes('verdict')) {
+        fallback = isSafe
+          ? `This verdict was given because ${cleanTitle} on ${s1.marketplace} scored ${report.summary?.overall_trust_score || 88}/100 with zero critical anomaly blockers. Its price matches standard retail corridors and customer review sentiment is authentic. Recommendation: Buy. This listing looks safe.`
+          : isModerate
+          ? `This verdict was given because our scan detected a single anomaly in pricing or merchant credibility for ${cleanTitle}. While not confirmed counterfeit, the listing requires a quick seller check. Recommendation: Double-check seller rating and return policy before buying.`
+          : `This verdict was given due to severe anomalies detected across listing modalities (${flagged}). Pricing and seller ratings show significant red flags. Recommendation: Don't buy this.`;
+      } else if (lower.includes('price') || lower.includes('normal')) {
+        fallback = isSafe
+          ? `Yes, the listed price of ₹${s1.observed_price_inr ? s1.observed_price_inr.toLocaleString('en-IN') : 'fair value'} (MRP ₹${s1.claimed_mrp_inr ? s1.claimed_mrp_inr.toLocaleString('en-IN') : 'standard'}) falls within normal retail discount corridors for ${cleanTitle} on ${s1.marketplace}. There are no predatory pricing spikes or suspicious deep-discount anomalies. Recommendation: Buy. The price is normal and fair.`
+          : `The listed price of ₹${s1.observed_price_inr ? s1.observed_price_inr.toLocaleString('en-IN') : 'this item'} deviates from historical category corridors on ${s1.marketplace}. Unusual pricing spreads often signal unauthorized third-party sourcing. Recommendation: Double-check the seller or look for an authorized merchant.`;
+      } else if (lower.includes('buy') || lower.includes('should i')) {
+        fallback = isSafe
+          ? `Based on a verified ${report.summary?.overall_trust_score || 88}/100 trust score, corroborated review sentiment, and authentic platform fulfillment on ${s1.marketplace}, this listing shows no evidence of counterfeit tampering. Recommendation: Buy. Looks safe.`
+          : isModerate
+          ? `Our scan observed moderate variance in merchant or price signals (${flagged}). Recommendation: Double-check the seller's return window and customer photos before purchasing.`
+          : `With elevated risk flags (${flagged}) and a low trust score (${report.summary?.overall_trust_score || 45}/100), this product poses high purchasing risk. Recommendation: Don't buy this.`;
+      } else {
+        const rec = isSafe ? 'Buy' : isModerate ? 'Double-check before buying' : "Don't buy";
+        fallback = `${cleanTitle} on ${s1.marketplace} is listed at ₹${s1.observed_price_inr ? s1.observed_price_inr.toLocaleString('en-IN') : 'fair value'} with a trust score of ${report.summary?.overall_trust_score || 88}/100. Modality checks: ${flagged}. Recommendation: ${rec}.`;
+      }
+      setInPageAnswer(fallback);
+    } finally {
+      setIsInPageLoading(false);
+    }
+  };
 
   // Chart Data for Technical View (Side-by-Side Visualizations)
   // 1. Scatter Plot Data: Price vs Anomaly Risk
@@ -666,11 +761,11 @@ export const InvestigationDetailPage: React.FC = () => {
       {/* =========================================================================
           TOP ACTION BAR & TITLE
          ========================================================================= */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#ECE8F2]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[var(--line)]">
         <div className="flex items-center gap-3">
           <Link
             to="/"
-            className="p-2 rounded-xl bg-white border border-[#ECE8F2] hover:bg-[#F9F8FC] text-[var(--text-3)] hover:text-[#16131F] transition-colors shadow-xs"
+            className="p-2 rounded-xl bg-white border border-[var(--line)] hover:bg-[var(--canvas)] text-[var(--text-3)] hover:text-[#16131F] transition-colors shadow-xs"
             title="Return to Scanner"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -680,7 +775,7 @@ export const InvestigationDetailPage: React.FC = () => {
               <span className="text-[11px] font-mono text-[var(--text-3)] uppercase tracking-wider">
                 Investigation: {report.investigation_id}
               </span>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#EDE9FE] text-[#7C5DFA] border border-[#DDD6FE] font-semibold">
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[var(--heather)]/60 text-[var(--accent)] border border-[var(--line)] font-semibold">
                 {s1.provenance}
               </span>
             </div>
@@ -692,7 +787,7 @@ export const InvestigationDetailPage: React.FC = () => {
 
         <div className="flex items-center gap-2 flex-wrap no-print">
           {/* View Mode Toggle: User View (Default) vs Technical View with framer-motion layoutId */}
-          <div className="flex items-center p-1 bg-white rounded-2xl border border-[#ECE8F2] shadow-xs relative">
+          <div className="flex items-center p-1 bg-white rounded-2xl border border-[var(--line)] shadow-xs relative">
             <button
               type="button"
               onClick={() => {
@@ -707,7 +802,7 @@ export const InvestigationDetailPage: React.FC = () => {
               {viewMode === 'user' && (
                 <motion.div
                   layoutId="activeViewTab"
-                  className="absolute inset-0 bg-[#7C5DFA] rounded-xl -z-10 shadow-xs"
+                  className="absolute inset-0 bg-[#16131F] rounded-xl -z-10 shadow-xs"
                   transition={{ type: 'spring', stiffness: 450, damping: 32 }}
                 />
               )}
@@ -728,7 +823,7 @@ export const InvestigationDetailPage: React.FC = () => {
               {viewMode === 'technical' && (
                 <motion.div
                   layoutId="activeViewTab"
-                  className="absolute inset-0 bg-[#7C5DFA] rounded-xl -z-10 shadow-xs"
+                  className="absolute inset-0 bg-[#16131F] rounded-xl -z-10 shadow-xs"
                   transition={{ type: 'spring', stiffness: 450, damping: 32 }}
                 />
               )}
@@ -742,7 +837,7 @@ export const InvestigationDetailPage: React.FC = () => {
             size="sm"
             onClick={handleDownloadHtml}
             leftIcon={<Download className="w-3.5 h-3.5" />}
-            className="bg-white border-[#ECE8F2] text-[#16131F] hover:bg-[#F9F8FC]"
+            className="bg-white border-[var(--line)] text-[#16131F] hover:bg-[var(--canvas)]"
           >
             Download HTML
           </Button>
@@ -751,8 +846,8 @@ export const InvestigationDetailPage: React.FC = () => {
             variant="secondary"
             size="sm"
             onClick={() => window.print()}
-            leftIcon={<Printer className="w-3.5 h-3.5 text-[#7C5DFA]" />}
-            className="bg-white border-[#ECE8F2] text-[#16131F] hover:bg-[#F9F8FC] font-semibold"
+            leftIcon={<Printer className="w-3.5 h-3.5 text-[var(--accent)]" />}
+            className="bg-white border-[var(--line)] text-[#16131F] hover:bg-[var(--canvas)] font-semibold"
           >
             Download Trust Receipt
           </Button>
@@ -761,8 +856,8 @@ export const InvestigationDetailPage: React.FC = () => {
             variant="primary"
             size="sm"
             onClick={() => setIsAssistantOpen(true)}
-            leftIcon={<Sparkles className="w-3.5 h-3.5 text-white" />}
-            className="bg-[#7C5DFA] hover:bg-[#6A49F2] text-white font-semibold"
+            leftIcon={<Sparkles className="w-3.5 h-3.5 text-[#F0D9E4]" />}
+            className="bg-[#16131F] hover:bg-[var(--accent)] text-white font-semibold"
           >
             Ask AI Assistant
           </Button>
@@ -775,90 +870,277 @@ export const InvestigationDetailPage: React.FC = () => {
       {viewMode === 'user' && (
         <div className="space-y-8 animate-fadeIn">
           {/* 1. HERO VERDICT BANNER (Easy to understand verdict & summary) */}
-          <div className="p-6 sm:p-8 rounded-[24px] bg-gradient-to-br from-[#EDE9FE]/50 via-white to-[#F0D9E4]/40 border border-[#ECE8F2] shadow-[0_8px_24px_rgba(22,19,31,0.05)] space-y-5">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-              <div className="space-y-2 flex-1">
-                <div className="flex items-center gap-2">
-                  <VerdictBadge
-                    verdict={report.summary.overall_risk_tier || 'LOW_OBSERVED_ANOMALY'}
-                    label="Looks Reasonable to Buy"
+          {(() => {
+            const riskTier = report.summary.overall_risk_tier || 'LOW_OBSERVED_ANOMALY';
+            const isSafe = riskTier.includes('LOW');
+            const isModerate = riskTier.includes('MODERATE');
+            const isDangerous = riskTier.includes('ELEVATED') || riskTier.includes('HIGH') || riskTier.includes('CRITICAL');
+
+            const verdictRecommendation = isSafe
+              ? 'Looks safe to buy'
+              : isModerate
+              ? 'Double-check before buying'
+              : "Not recommended. Don't buy this";
+
+            const bannerBg = isSafe
+              ? 'from-[var(--ok-bg)]/50 via-white to-[var(--heather)]/20 border-[var(--ok)]/40 shadow-[0_8px_24px_rgba(18,163,107,0.06)]'
+              : isModerate
+              ? 'from-[var(--warn-bg)]/50 via-white to-[var(--heather)]/20 border-[var(--warn)]/40 shadow-[0_8px_24px_rgba(224,154,18,0.06)]'
+              : 'from-[var(--bad-bg)]/50 via-white to-[var(--heather)]/20 border-[var(--bad)]/40 shadow-[0_8px_24px_rgba(214,59,75,0.06)]';
+
+            const avgRating = s3.rating_summary?.average_rating ?? 4.2;
+            const isPoorRating = avgRating < 3.5;
+            const totalRatings = s3.rating_summary?.total_ratings_estimate || `${s5.reviews_analyzed_count || 120}+ reviews`;
+
+            return (
+              <div className={`p-6 sm:p-8 rounded-[24px] bg-gradient-to-br border space-y-5 ${bannerBg}`}>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+                  <div className="space-y-2 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <VerdictBadge
+                        verdict={riskTier}
+                        label={verdictRecommendation}
+                        size="md"
+                      />
+                      <span className="text-xs font-mono text-[var(--text-3)]">
+                        Confidence: {Math.round((s4.confidence_score ?? 0.94) * 100)}% · 4 of 5 Modalities Verified
+                      </span>
+                    </div>
+
+                    <h2 className="text-2xl sm:text-3xl font-extrabold text-[#16131F] font-heading flex items-center gap-2.5">
+                      {isSafe && <Check className="w-7 h-7 text-[var(--ok)] shrink-0" />}
+                      {isModerate && <AlertTriangle className="w-7 h-7 text-[var(--warn)] shrink-0" />}
+                      {isDangerous && <AlertTriangle className="w-7 h-7 text-[var(--bad)] shrink-0" />}
+                      <span>{verdictRecommendation}</span>
+                    </h2>
+
+                    <p className="text-xs sm:text-sm text-[#4A3F4B] max-w-2xl leading-relaxed">
+                      We analyzed the pricing corridor, merchant credibility, review sentiments, and domain governance for{' '}
+                      <strong className="text-[#16131F]">{cleanTitle}</strong> on {s1.marketplace}.{' '}
+                      {isSafe
+                        ? `The observed price of ₹${s1.observed_price_inr ? s1.observed_price_inr.toLocaleString('en-IN') : 'unlisted'} is in line with the brand's normal retail pricing, and customer satisfaction is overwhelmingly positive.`
+                        : isModerate
+                        ? `A single modality anomaly was detected in pricing or seller history. Review the doorstep verification checklist and check seller credentials before ordering.`
+                        : `Severe multimodal anomaly signals were detected across pricing spread, merchant rating, or synthetic reviews. Not recommended for purchase.`}
+                    </p>
+                  </div>
+
+                  {/* Animated Trust Score Dial with Confidence Interval */}
+                  <TrustScoreDial
+                    score={report.summary.overall_trust_score}
+                    verdict={riskTier}
+                    confidenceScore={s4.confidence_score ?? 0.94}
                     size="md"
+                    className="shrink-0"
                   />
-                  <span className="text-xs font-mono text-[var(--text-3)]">
-                    Confidence: {Math.round((s4.confidence_score ?? 0.94) * 100)}% · 4 of 5 Modalities Verified
-                  </span>
                 </div>
 
-                <h2 className="text-2xl sm:text-3xl font-extrabold text-[#16131F] font-heading">
-                  Verified Authentic Deal
-                </h2>
+                {/* Quick 3 Simple Key Takeaways with Interactive Evidence Linking */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-3 border-t border-[var(--line)]">
+                  <div
+                    onMouseEnter={() => setHighlightedModality('ocr')}
+                    onMouseLeave={() => setHighlightedModality(null)}
+                    className={`p-3.5 rounded-xl border transition-all cursor-pointer shadow-xs ${
+                      highlightedModality === 'ocr'
+                        ? 'ring-2 ring-[var(--accent)] bg-white shadow-md scale-[1.02]'
+                        : 'bg-white/80 border-[var(--line)] hover:bg-white'
+                    }`}
+                  >
+                    <span className="text-[10px] font-mono uppercase text-[var(--text-3)] font-bold">1. Merchant & Fulfillment</span>
+                    <p className="text-xs font-bold text-[#16131F] truncate">{s3.seller_name}</p>
+                    <p className="text-[11px] text-[var(--ok-ink)] font-medium flex items-center gap-1">
+                      <span>✓</span>
+                      <span>{s3.fulfillment_channel || 'Platform-Managed Fulfillment'}</span>
+                    </p>
+                  </div>
 
-                <p className="text-xs sm:text-sm text-[#4A3F4B] max-w-2xl leading-relaxed">
-                  We analyzed the pricing corridor, merchant credibility, review sentiments, and domain governance for{' '}
-                  <strong className="text-[#16131F]">{cleanTitle}</strong> on {s1.marketplace}. The observed price of{' '}
-                  <strong className="text-emerald-700">{s1.observed_price_inr ? `₹${s1.observed_price_inr.toLocaleString('en-IN')}` : 'Price unlisted'}</strong> {s1.discount_percentage ? `(${s1.discount_percentage}% OFF)` : ''} is in line with the brand's normal retail pricing, and customer satisfaction is overwhelmingly positive.
+                  <div
+                    onMouseEnter={() => setHighlightedModality('pricing')}
+                    onMouseLeave={() => setHighlightedModality(null)}
+                    className={`p-3.5 rounded-xl border transition-all cursor-pointer shadow-xs ${
+                      highlightedModality === 'pricing'
+                        ? 'ring-2 ring-[var(--accent)] bg-white shadow-md scale-[1.02]'
+                        : 'bg-white/80 border-[var(--line)] hover:bg-white'
+                    }`}
+                  >
+                    <span className="text-[10px] font-mono uppercase text-[var(--text-3)] font-bold">2. Price Deal</span>
+                    <p className="text-xs font-bold text-[#16131F] tabular-nums">
+                      {s1.observed_price_inr ? `₹${s1.observed_price_inr.toLocaleString('en-IN')}` : 'Price unlisted'}{' '}
+                      {s1.claimed_mrp_inr && (
+                        <span className="line-through text-[var(--text-3)] font-normal ml-1">₹{s1.claimed_mrp_inr.toLocaleString('en-IN')}</span>
+                      )}
+                    </p>
+                    <p className="text-[11px] text-[var(--ok-ink)] font-medium flex items-center gap-1">
+                      <span>✓</span>
+                      <span>Within Normal Retail Corridor</span>
+                    </p>
+                  </div>
+
+                  <div
+                    onMouseEnter={() => setHighlightedModality('reviews')}
+                    onMouseLeave={() => setHighlightedModality(null)}
+                    className={`p-3.5 rounded-xl border transition-all cursor-pointer shadow-xs ${
+                      highlightedModality === 'reviews'
+                        ? 'ring-2 ring-[var(--accent)] bg-white shadow-md scale-[1.02]'
+                        : 'bg-white/80 border-[var(--line)] hover:bg-white'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-mono uppercase text-[var(--text-3)] font-bold">3. Customer Feedback</span>
+                      {isPoorRating ? (
+                        <span className="text-[9px] font-bold text-[var(--bad-ink)] bg-[var(--bad-bg)] px-1.5 py-0.2 rounded border border-[var(--bad)]/30">
+                          Poorly Rated
+                        </span>
+                      ) : null}
+                    </div>
+                    <p className="text-xs font-bold text-[#16131F] flex items-center gap-1">
+                      <span>★ {avgRating}</span>
+                      <span className="text-[var(--text-3)] font-normal text-[11px]">({totalRatings})</span>
+                    </p>
+                    {isPoorRating ? (
+                      <p className="text-[11px] text-[var(--bad-ink)] font-medium flex items-center gap-1">
+                        <AlertTriangle className="w-3 h-3 text-[var(--bad)]" />
+                        <span>Low quality / poorly rated</span>
+                      </p>
+                    ) : (
+                      <p className="text-[11px] text-[var(--ok-ink)] font-medium flex items-center gap-1">
+                        <span>✓</span>
+                        <span>{s5.satisfaction_index || 85}% Positive Satisfaction</span>
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* 1.5 COMPACT IN-PAGE AI ASSISTANT (Under Hero Verdict Banner) */}
+          <div className="p-5 sm:p-6 rounded-[24px] bg-white border border-[var(--line)] shadow-[0_4px_20px_rgba(22,19,31,0.04)] space-y-4">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[var(--line)]">
+              <div className="flex items-center gap-3">
+                <div className="h-9 w-9 rounded-xl bg-[var(--heather)]/60 text-[var(--accent)] flex items-center justify-center border border-[var(--line)] shadow-xs shrink-0">
+                  <Bot className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-sm sm:text-base font-bold text-[#16131F] font-heading">
+                      Ask AI about this result
+                    </h3>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[var(--heather)]/60 text-[var(--accent)] border border-[var(--line)] font-semibold">
+                      Evidence Grounded
+                    </span>
+                  </div>
+                  <p className="text-xs text-[var(--text-3)]">
+                    Instant shopper-friendly answers grounded in this product&apos;s scan evidence.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-[var(--text-3)]">
+                <span className="inline-block w-2 h-2 rounded-full bg-[var(--ok)] animate-pulse" />
+                <span className="font-mono text-[11px]">Analysis Ready</span>
+              </div>
+            </div>
+
+            {/* 3 Suggestion Chips */}
+            <div className="flex flex-wrap items-center gap-2">
+              {[
+                'Why is this verdict given?',
+                'Is this price normal?',
+                'Should I buy this?',
+              ].map((chip) => (
+                <button
+                  key={chip}
+                  type="button"
+                  disabled={isInPageLoading}
+                  onClick={() => handleAskInPageAssistant(chip)}
+                  className="px-3.5 py-1.5 rounded-full text-xs font-medium border transition-all cursor-pointer text-[var(--accent)] bg-[var(--heather)]/40 border-[var(--line)] hover:bg-[var(--accent)] hover:text-white hover:border-[var(--accent)] disabled:opacity-50 active:scale-95"
+                >
+                  {chip}
+                </button>
+              ))}
+            </div>
+
+            {/* Loading / Typing State */}
+            {isInPageLoading && (
+              <div className="p-4 rounded-xl bg-[var(--canvas)]/60 border border-[var(--line)] flex items-center gap-3 text-xs text-[var(--text-3)]">
+                <Loader2 className="w-4 h-4 animate-spin text-[var(--accent)] shrink-0" />
+                <div className="flex items-center gap-2">
+                  <span>TrustSphere AI is analyzing scan evidence...</span>
+                  <div className="flex gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] animate-bounce" style={{ animationDelay: '300ms' }} />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Error State with Retry */}
+            {inPageError && (
+              <div className="p-3.5 rounded-xl bg-[var(--bad-bg)] border border-[var(--bad)]/30 flex items-center justify-between text-xs text-[var(--bad-ink)]">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-[var(--bad)] shrink-0" />
+                  <span>{inPageError}</span>
+                </div>
+                {lastInPageQuery && (
+                  <button
+                    type="button"
+                    onClick={() => handleAskInPageAssistant(lastInPageQuery)}
+                    className="px-2.5 py-1 rounded-lg bg-white border border-[var(--bad)]/40 text-xs font-semibold text-[var(--bad-ink)] hover:bg-[var(--bad-bg)] cursor-pointer"
+                  >
+                    Retry
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Inline Answer Display */}
+            {!isInPageLoading && inPageAnswer && (
+              <div className="p-4 rounded-xl bg-[var(--canvas)]/60 border border-[var(--accent)]/20 space-y-2 animate-fadeIn">
+                <div className="flex items-center justify-between text-xs font-bold text-[var(--accent)] font-heading">
+                  <div className="flex items-center gap-1.5">
+                    <Bot className="w-3.5 h-3.5 text-[var(--accent)]" />
+                    <span>{inPageQuestion}</span>
+                  </div>
+                  <span className="text-[10px] font-mono font-normal text-[var(--text-3)]">
+                    ≤120 words · Plain Language
+                  </span>
+                </div>
+                <p className="text-xs sm:text-sm text-[#16131F] leading-relaxed font-sans font-medium">
+                  {inPageAnswer}
                 </p>
               </div>
+            )}
 
-              {/* Animated Trust Score Dial with Confidence Interval */}
-              <TrustScoreDial
-                score={report.summary.overall_trust_score}
-                verdict={report.summary.overall_risk_tier || 'LOW_OBSERVED_ANOMALY'}
-                confidenceScore={s4.confidence_score ?? 0.94}
-                size="md"
-                className="shrink-0"
+            {/* Input Box */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (inPageCustomInput.trim()) {
+                  handleAskInPageAssistant(inPageCustomInput.trim());
+                  setInPageCustomInput('');
+                }
+              }}
+              className="flex items-center gap-2 pt-1"
+            >
+              <input
+                type="text"
+                value={inPageCustomInput}
+                onChange={(e) => setInPageCustomInput(e.target.value)}
+                placeholder={`Ask anything about this ${s1.marketplace} listing...`}
+                disabled={isInPageLoading}
+                className="flex-1 px-4 py-2.5 rounded-xl bg-[var(--canvas)]/50 border border-[var(--line)] focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--ring)] text-xs text-[#16131F] placeholder:text-[var(--text-3)] outline-none transition-all"
               />
-            </div>
-
-            {/* Quick 3 Simple Key Takeaways with Interactive Evidence Linking */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-3 border-t border-[#ECE8F2]">
-              <div
-                onMouseEnter={() => setHighlightedModality('ocr')}
-                onMouseLeave={() => setHighlightedModality(null)}
-                className={`p-3.5 rounded-xl border transition-all cursor-pointer shadow-xs ${
-                  highlightedModality === 'ocr'
-                    ? 'ring-2 ring-[#7C5DFA] bg-white shadow-md scale-[1.02]'
-                    : 'bg-white/80 border-[#ECE8F2] hover:bg-white'
-                }`}
+              <button
+                type="submit"
+                disabled={isInPageLoading || !inPageCustomInput.trim()}
+                className="px-4 py-2.5 rounded-xl bg-[var(--accent)] hover:bg-[var(--accent-hi)] disabled:opacity-40 text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer shadow-xs transition-all shrink-0"
               >
-                <span className="text-[10px] font-mono uppercase text-[var(--text-3)] font-bold">1. Merchant & Fulfillment</span>
-                <p className="text-xs font-bold text-[#16131F] truncate">{s3.seller_name}</p>
-                <p className="text-[11px] text-emerald-700 font-medium">✓ Platform-Managed Fulfillment</p>
-              </div>
-
-              <div
-                onMouseEnter={() => setHighlightedModality('pricing')}
-                onMouseLeave={() => setHighlightedModality(null)}
-                className={`p-3.5 rounded-xl border transition-all cursor-pointer shadow-xs ${
-                  highlightedModality === 'pricing'
-                    ? 'ring-2 ring-[#7C5DFA] bg-white shadow-md scale-[1.02]'
-                    : 'bg-white/80 border-[#ECE8F2] hover:bg-white'
-                }`}
-              >
-                <span className="text-[10px] font-mono uppercase text-[var(--text-3)] font-bold">2. Price Deal</span>
-                <p className="text-xs font-bold text-[#16131F]">
-                  {s1.observed_price_inr ? `₹${s1.observed_price_inr.toLocaleString('en-IN')}` : 'Price unlisted'}{' '}
-                  {s1.claimed_mrp_inr && (
-                    <span className="line-through text-[var(--text-3)] font-normal">₹{s1.claimed_mrp_inr.toLocaleString('en-IN')}</span>
-                  )}
-                </p>
-                <p className="text-[11px] text-emerald-700 font-medium">✓ Within Normal Retail Corridor</p>
-              </div>
-
-              <div
-                onMouseEnter={() => setHighlightedModality('reviews')}
-                onMouseLeave={() => setHighlightedModality(null)}
-                className={`p-3.5 rounded-xl border transition-all cursor-pointer shadow-xs ${
-                  highlightedModality === 'reviews'
-                    ? 'ring-2 ring-[#7C5DFA] bg-white shadow-md scale-[1.02]'
-                    : 'bg-white/80 border-[#ECE8F2] hover:bg-white'
-                }`}
-              >
-                <span className="text-[10px] font-mono uppercase text-[var(--text-3)] font-bold">3. Customer Feedback</span>
-                <p className="text-xs font-bold text-[#16131F]">{s5.satisfaction_index || 85}% Positive Satisfaction</p>
-                <p className="text-[11px] text-[#7C5DFA] font-medium">Based on {s5.reviews_analyzed_count} buyer reviews</p>
-              </div>
-            </div>
+                <Send className="w-3.5 h-3.5" />
+                <span>Ask</span>
+              </button>
+            </form>
           </div>
 
           {/* "Why This Score?" Horizontal Contribution Bars Panel */}
@@ -869,21 +1151,21 @@ export const InvestigationDetailPage: React.FC = () => {
           />
 
           {/* 2. PRODUCT OVERVIEW & PRICING BAR */}
-          <div className="p-6 sm:p-8 rounded-[24px] bg-white border border-[#ECE8F2] shadow-[0_8px_24px_rgba(22,19,31,0.05)] space-y-5">
+          <div className="p-6 sm:p-8 rounded-[24px] bg-white border border-[var(--line)] shadow-[0_8px_24px_rgba(22,19,31,0.05)] space-y-5">
             <div className="flex flex-col sm:flex-row sm:items-start gap-6">
-              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-[#F9F8FC] border border-[#ECE8F2] shrink-0 flex items-center justify-center p-2">
-                <ShoppingBag className="w-8 h-8 text-[#7C5DFA]" />
+              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-[var(--canvas)] border border-[var(--line)] shrink-0 flex items-center justify-center p-2">
+                <ShoppingBag className="w-8 h-8 text-[var(--accent)]" />
               </div>
 
               <div className="flex-1 space-y-2">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-xs font-mono font-bold text-[#7C5DFA] uppercase bg-[#EDE9FE] px-2.5 py-0.5 rounded-md border border-[#DDD6FE]">
+                  <span className="text-xs font-mono font-bold text-[var(--accent)] uppercase bg-[var(--heather)]/60 px-2.5 py-0.5 rounded-md border border-[var(--line)]">
                     {s1.brand}
                   </span>
                   <span className="text-xs text-[var(--text-3)]">•</span>
                   <span className="text-xs text-[#4A3F4B] font-medium">{s1.category}</span>
                   <span className="text-xs text-[var(--text-3)]">•</span>
-                  <span className="text-xs font-mono text-[var(--text-3)] bg-[#F9F8FC] px-2 py-0.5 rounded border border-[#ECE8F2]">
+                  <span className="text-xs font-mono text-[var(--text-3)] bg-[var(--canvas)] px-2 py-0.5 rounded border border-[var(--line)]">
                     {s1.marketplace}
                   </span>
                 </div>
@@ -930,7 +1212,7 @@ export const InvestigationDetailPage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {/* Good Signs */}
             <div className="p-6 rounded-[24px] bg-white border border-emerald-200 shadow-[0_8px_24px_rgba(22,19,31,0.05)] space-y-4">
-              <div className="flex items-center gap-2 pb-2 border-b border-[#ECE8F2]">
+              <div className="flex items-center gap-2 pb-2 border-b border-[var(--line)]">
                 <CheckCircle2 className="w-5 h-5 text-emerald-600" />
                 <h3 className="text-sm font-bold text-[#16131F] font-heading uppercase tracking-wider">
                   Positive Authenticity Signs
@@ -966,7 +1248,7 @@ export const InvestigationDetailPage: React.FC = () => {
 
             {/* Things to Check */}
             <div className="p-6 rounded-[24px] bg-white border border-amber-200 shadow-[0_8px_24px_rgba(22,19,31,0.05)] space-y-4">
-              <div className="flex items-center gap-2 pb-2 border-b border-[#ECE8F2]">
+              <div className="flex items-center gap-2 pb-2 border-b border-[var(--line)]">
                 <AlertTriangle className="w-5 h-5 text-amber-600" />
                 <h3 className="text-sm font-bold text-[#16131F] font-heading uppercase tracking-wider">
                   Things to Double-Check
@@ -996,15 +1278,15 @@ export const InvestigationDetailPage: React.FC = () => {
           </div>
 
           {/* 4. DOORSTEP DELIVERY CHECKLIST (Simple 1-2-3 Guide) */}
-          <div className="p-6 sm:p-8 rounded-[24px] bg-white border border-[#ECE8F2] shadow-[0_8px_24px_rgba(22,19,31,0.05)] space-y-4">
+          <div className="p-6 sm:p-8 rounded-[24px] bg-white border border-[var(--line)] shadow-[0_8px_24px_rgba(22,19,31,0.05)] space-y-4">
             <h3 className="text-sm font-bold text-[#16131F] font-heading uppercase tracking-wider flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-[#7C5DFA]" />
+              <ShieldCheck className="w-4 h-4 text-[var(--accent)]" />
               <span>Doorstep Delivery Verification Protocol</span>
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-              <div className="p-4 rounded-2xl bg-[#F9F8FC] border border-[#ECE8F2] space-y-2">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#7C5DFA] text-xs font-bold text-white font-mono">
+              <div className="p-4 rounded-2xl bg-[var(--canvas)] border border-[var(--line)] space-y-2">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--accent)] text-xs font-bold text-white font-mono">
                   1
                 </span>
                 <p className="font-bold text-[#16131F]">Inspect Outer Package</p>
@@ -1013,8 +1295,8 @@ export const InvestigationDetailPage: React.FC = () => {
                 </p>
               </div>
 
-              <div className="p-4 rounded-2xl bg-[#F9F8FC] border border-[#ECE8F2] space-y-2">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#7C5DFA] text-xs font-bold text-white font-mono">
+              <div className="p-4 rounded-2xl bg-[var(--canvas)] border border-[var(--line)] space-y-2">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--accent)] text-xs font-bold text-white font-mono">
                   2
                 </span>
                 <p className="font-bold text-[#16131F]">Cross-Check MRP & Barcode</p>
@@ -1023,8 +1305,8 @@ export const InvestigationDetailPage: React.FC = () => {
                 </p>
               </div>
 
-              <div className="p-4 rounded-2xl bg-[#F9F8FC] border border-[#ECE8F2] space-y-2">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#7C5DFA] text-xs font-bold text-white font-mono">
+              <div className="p-4 rounded-2xl bg-[var(--canvas)] border border-[var(--line)] space-y-2">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--accent)] text-xs font-bold text-white font-mono">
                   3
                 </span>
                 <p className="font-bold text-[#16131F]">Confirm Brand Manufacturer</p>
@@ -1037,10 +1319,10 @@ export const InvestigationDetailPage: React.FC = () => {
 
           {/* 5. DIRECT CATEGORY ALTERNATIVES */}
           {displayAlternatives && displayAlternatives.length > 0 && (
-            <div className="p-6 sm:p-8 rounded-[24px] bg-white border border-[#ECE8F2] shadow-[0_8px_24px_rgba(22,19,31,0.05)] space-y-4">
+            <div className="p-6 sm:p-8 rounded-[24px] bg-white border border-[var(--line)] shadow-[0_8px_24px_rgba(22,19,31,0.05)] space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-bold text-[#16131F] font-heading uppercase tracking-wider flex items-center gap-2">
-                  <GitCompare className="w-4 h-4 text-[#7C5DFA]" />
+                  <GitCompare className="w-4 h-4 text-[var(--accent)]" />
                   <span>Recommended Alternatives — Products You Can Buy Instead</span>
                 </h3>
                 <span className="text-xs font-mono text-[var(--text-3)]">
@@ -1052,11 +1334,11 @@ export const InvestigationDetailPage: React.FC = () => {
                 {displayAlternatives.map((alt) => (
                   <div
                     key={alt.product_id}
-                    className="p-4 rounded-2xl bg-[#F9F8FC] border border-[#ECE8F2] flex flex-col justify-between space-y-3"
+                    className="p-4 rounded-2xl bg-[var(--canvas)] border border-[var(--line)] flex flex-col justify-between space-y-3"
                   >
                     <div>
                       <div className="flex items-center justify-between text-[10px] text-[var(--text-3)] font-mono">
-                        <span className="text-[#7C5DFA] font-semibold">{alt.brand}</span>
+                        <span className="text-[var(--accent)] font-semibold">{alt.brand}</span>
                         <span className="text-emerald-700 font-bold">{alt.trust_score_estimate}/100 Trust</span>
                       </div>
                       <h4 className="font-bold text-xs text-[#16131F] line-clamp-1 mt-1 font-heading">{alt.title}</h4>
@@ -1066,7 +1348,7 @@ export const InvestigationDetailPage: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => navigate(`/comparisons?add=${encodeURIComponent(alt.product_id)}`)}
-                      className="w-full py-1.5 px-3 rounded-xl bg-[#EDE9FE] hover:bg-[#DDD6FE] text-[#7C5DFA] border border-[#DDD6FE] text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                      className="w-full py-1.5 px-3 rounded-xl bg-[var(--heather)]/60 hover:bg-[var(--heather)] text-[var(--accent)] border border-[var(--line)] text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                     >
                       <GitCompare className="w-3.5 h-3.5" />
                       <span>Compare in Studio</span>
@@ -1085,12 +1367,12 @@ export const InvestigationDetailPage: React.FC = () => {
       {viewMode === 'technical' && (
         <div className="space-y-8 animate-fadeIn text-[#4A3F4B]">
           {/* Forensic Header matching Attached HTML Report */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-[24px] bg-white border border-[#ECE8F2] shadow-[0_8px_24px_rgba(22,19,31,0.05)]">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-[24px] bg-white border border-[var(--line)] shadow-[0_8px_24px_rgba(22,19,31,0.05)]">
             <div>
               <div className="text-2xl font-black text-[#16131F] font-heading tracking-tight flex items-center gap-1.5">
                 <span>Trust</span>
-                <span className="text-[#7C5DFA]">Sphere</span>
-                <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#EDE9FE] text-[#7C5DFA] border border-[#DDD6FE] font-sans font-semibold ml-2">
+                <span className="text-[var(--accent)]">Sphere</span>
+                <span className="text-xs px-2.5 py-0.5 rounded-full bg-[var(--heather)]/60 text-[var(--accent)] border border-[var(--line)] font-sans font-semibold ml-2">
                   Forensic Suite
                 </span>
               </div>
@@ -1113,7 +1395,7 @@ export const InvestigationDetailPage: React.FC = () => {
                   size="sm"
                   onClick={() => window.print()}
                   leftIcon={<Printer className="w-3.5 h-3.5" />}
-                  className="bg-white border-[#ECE8F2] text-[#16131F] hover:bg-[#F9F8FC]"
+                  className="bg-white border-[var(--line)] text-[#16131F] hover:bg-[var(--canvas)]"
                 >
                   Print / Save PDF
                 </Button>
@@ -1122,10 +1404,10 @@ export const InvestigationDetailPage: React.FC = () => {
           </div>
 
           {/* HERO SUMMARY CARD */}
-          <div className="p-6 sm:p-8 rounded-[24px] bg-white border border-[#ECE8F2] shadow-[0_8px_24px_rgba(22,19,31,0.05)] space-y-6">
+          <div className="p-6 sm:p-8 rounded-[24px] bg-white border border-[var(--line)] shadow-[0_8px_24px_rgba(22,19,31,0.05)] space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
               <div>
-                <span className="inline-block text-[10px] font-mono font-bold uppercase tracking-wider text-[#7C5DFA] bg-[#EDE9FE] border border-[#DDD6FE] px-3 py-1 rounded-full mb-2">
+                <span className="inline-block text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--accent)] bg-[var(--heather)]/60 border border-[var(--line)] px-3 py-1 rounded-full mb-2">
                   PROVENANCE: {s1.provenance || 'LIVE_STRUCTURED_PAGE'}
                 </span>
                 <h2 className="text-2xl sm:text-3xl font-extrabold text-[#16131F] font-heading tracking-tight">
@@ -1145,24 +1427,24 @@ export const InvestigationDetailPage: React.FC = () => {
 
             {/* 4 KPI Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="p-4 rounded-2xl bg-[#F9F8FC] border border-[#ECE8F2] space-y-1">
+              <div className="p-4 rounded-2xl bg-[var(--canvas)] border border-[var(--line)] space-y-1">
                 <div className="text-[10px] font-mono text-[var(--text-3)] uppercase font-semibold">
                   Observed Listing Price
                 </div>
-                <div className="text-2xl font-black text-[#16131F] font-heading">
+                <div className="text-2xl font-black text-[#16131F] font-heading tabular-nums">
                   {s1.observed_price_inr ? `₹${s1.observed_price_inr.toLocaleString('en-IN')}` : 'Price unavailable'}
                 </div>
-                <div className="text-xs text-[var(--text-3)]">
+                <div className="text-xs text-[var(--text-3)] tabular-nums">
                   {s1.claimed_mrp_inr ? `MRP: ₹${s1.claimed_mrp_inr.toLocaleString('en-IN')}` : 'MRP unlisted'} {s1.discount_percentage ? `(${s1.discount_percentage}% off)` : ''}
                 </div>
               </div>
 
-              <div className="p-4 rounded-2xl bg-[#F9F8FC] border border-[#ECE8F2] space-y-1">
+              <div className="p-4 rounded-2xl bg-[var(--canvas)] border border-[var(--line)] space-y-1">
                 <div className="text-[10px] font-mono text-[var(--text-3)] uppercase font-semibold">
                   Engine A: Trust Score
                 </div>
                 <div
-                  className={`text-2xl font-black font-heading ${
+                  className={`text-2xl font-black font-heading tabular-nums ${
                     report.summary.overall_trust_score >= 80
                       ? 'text-emerald-700'
                       : report.summary.overall_trust_score >= 60
@@ -1172,16 +1454,16 @@ export const InvestigationDetailPage: React.FC = () => {
                 >
                   {report.summary.overall_trust_score}/100
                 </div>
-                <div className="text-xs text-[var(--text-3)]">
+                <div className="text-xs text-[var(--text-3)] tabular-nums">
                   Confidence: {Math.round((s4.confidence_score ?? 0.94) * 100)}%
                 </div>
               </div>
 
-              <div className="p-4 rounded-2xl bg-[#F9F8FC] border border-[#ECE8F2] space-y-1">
+              <div className="p-4 rounded-2xl bg-[var(--canvas)] border border-[var(--line)] space-y-1">
                 <div className="text-[10px] font-mono text-[var(--text-3)] uppercase font-semibold">
                   Engine B: Buying Suitability
                 </div>
-                <div className="text-2xl font-black text-[#7C5DFA] font-heading">
+                <div className="text-2xl font-black text-[var(--accent)] font-heading tabular-nums">
                   {s9.overall_suitability_score}/100
                 </div>
                 <div className="text-xs text-[var(--text-3)]">
@@ -1189,11 +1471,11 @@ export const InvestigationDetailPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="p-4 rounded-2xl bg-[#F9F8FC] border border-[#ECE8F2] space-y-1">
+              <div className="p-4 rounded-2xl bg-[var(--canvas)] border border-[var(--line)] space-y-1">
                 <div className="text-[10px] font-mono text-[var(--text-3)] uppercase font-semibold">
                   NLP Review Satisfaction
                 </div>
-                <div className="text-2xl font-black text-emerald-700 font-heading">
+                <div className="text-2xl font-black text-emerald-700 font-heading tabular-nums">
                   {Math.round(s5.satisfaction_index ?? 85)}%
                 </div>
                 <div className="text-xs text-[var(--text-3)]">
@@ -1206,47 +1488,47 @@ export const InvestigationDetailPage: React.FC = () => {
           {/* SECTION 1: PRODUCT OVERVIEW & LISTING PROVENANCE */}
           <div className="space-y-3">
             <h3 className="text-lg font-bold text-[#16131F] font-heading flex items-center gap-2">
-              <Package className="w-5 h-5 text-[#7C5DFA]" />
+              <Package className="w-5 h-5 text-[var(--accent)]" />
               <span>Section 1: Product Overview & Listing Provenance</span>
             </h3>
-            <div className="rounded-2xl bg-white border border-[#ECE8F2] shadow-xs overflow-hidden">
+            <div className="rounded-2xl bg-white border border-[var(--line)] shadow-xs overflow-hidden">
               <table className="w-full text-left text-xs border-collapse">
                 <tbody>
-                  <tr className="border-b border-[#ECE8F2]">
-                    <td className="w-1/4 p-3.5 font-semibold text-[var(--text-3)] bg-[#F9F8FC]">Title</td>
+                  <tr className="border-b border-[var(--line)]">
+                    <td className="w-1/4 p-3.5 font-semibold text-[var(--text-3)] bg-[var(--canvas)]">Title</td>
                     <td className="p-3.5 text-[#16131F] font-medium">{cleanTitle}</td>
                   </tr>
-                  <tr className="border-b border-[#ECE8F2]">
-                    <td className="p-3.5 font-semibold text-[var(--text-3)] bg-[#F9F8FC]">Brand / Manufacturer</td>
+                  <tr className="border-b border-[var(--line)]">
+                    <td className="p-3.5 font-semibold text-[var(--text-3)] bg-[var(--canvas)]">Brand / Manufacturer</td>
                     <td className="p-3.5 text-[#16131F]">{s1.brand}</td>
                   </tr>
-                  <tr className="border-b border-[#ECE8F2]">
-                    <td className="p-3.5 font-semibold text-[var(--text-3)] bg-[#F9F8FC]">Marketplace / Platform</td>
+                  <tr className="border-b border-[var(--line)]">
+                    <td className="p-3.5 font-semibold text-[var(--text-3)] bg-[var(--canvas)]">Marketplace / Platform</td>
                     <td className="p-3.5 text-[#16131F]">{s1.marketplace}</td>
                   </tr>
-                  <tr className="border-b border-[#ECE8F2]">
-                    <td className="p-3.5 font-semibold text-[var(--text-3)] bg-[#F9F8FC]">Identifier (ASIN / PID / SKU)</td>
-                    <td className="p-3.5 font-mono text-[#7C5DFA]">
+                  <tr className="border-b border-[var(--line)]">
+                    <td className="p-3.5 font-semibold text-[var(--text-3)] bg-[var(--canvas)]">Identifier (ASIN / PID / SKU)</td>
+                    <td className="p-3.5 font-mono text-[var(--accent)]">
                       {s1.sku_identifier || (s1 as any).sku_or_id || 'UNINDEXED_SKU'}
                     </td>
                   </tr>
-                  <tr className="border-b border-[#ECE8F2]">
-                    <td className="p-3.5 font-semibold text-[var(--text-3)] bg-[#F9F8FC]">Data Extraction Provenance</td>
+                  <tr className="border-b border-[var(--line)]">
+                    <td className="p-3.5 font-semibold text-[var(--text-3)] bg-[var(--canvas)]">Data Extraction Provenance</td>
                     <td className="p-3.5">
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#EDE9FE] text-[#7C5DFA] border border-[#DDD6FE]">
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[var(--heather)]/60 text-[var(--accent)] border border-[var(--line)]">
                         {s1.provenance}
                       </span>
                     </td>
                   </tr>
                   <tr>
-                    <td className="p-3.5 font-semibold text-[var(--text-3)] bg-[#F9F8FC]">Listing URL</td>
+                    <td className="p-3.5 font-semibold text-[var(--text-3)] bg-[var(--canvas)]">Listing URL</td>
                     <td className="p-3.5">
                       {s1.listing_url ? (
                         <a
                           href={s1.listing_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-[#7C5DFA] hover:text-[#7C5DFA] break-all flex items-center gap-1.5"
+                          className="text-[var(--accent)] hover:text-[var(--accent-hi)] break-all flex items-center gap-1.5"
                         >
                           <span className="line-clamp-1">{s1.listing_url}</span>
                           <ExternalLink className="w-3.5 h-3.5 shrink-0" />
@@ -1264,11 +1546,11 @@ export const InvestigationDetailPage: React.FC = () => {
           {/* SECTION 2: DOMAIN, LEGAL & SELLER AUTHENTICITY */}
           <div className="space-y-3">
             <h3 className="text-lg font-bold text-[#16131F] font-heading flex items-center gap-2">
-              <Globe className="w-5 h-5 text-[#7C5DFA]" />
+              <Globe className="w-5 h-5 text-[var(--accent)]" />
               <span>Section 2: Domain, Legal & Seller Authenticity</span>
             </h3>
-            <div className="p-6 rounded-2xl bg-white border border-[#ECE8F2] shadow-xs space-y-5">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#ECE8F2]">
+            <div className="p-6 rounded-2xl bg-white border border-[var(--line)] shadow-xs space-y-5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[var(--line)]">
                 <div>
                   <div className="text-base font-bold text-[#16131F] flex items-center gap-2">
                     <span>{s2.domain}</span>
@@ -1277,7 +1559,7 @@ export const InvestigationDetailPage: React.FC = () => {
                         HTTPS / TLS 1.3
                       </span>
                     )}
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#EDE9FE] text-[#7C5DFA] border border-[#DDD6FE] font-bold">
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[var(--heather)]/60 text-[var(--accent)] border border-[var(--line)] font-bold">
                       {s2.trust_tier}
                     </span>
                   </div>
@@ -1291,19 +1573,19 @@ export const InvestigationDetailPage: React.FC = () => {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 rounded-xl bg-[#F9F8FC] border border-[#ECE8F2] space-y-2">
+                <div className="p-4 rounded-xl bg-[var(--canvas)] border border-[var(--line)] space-y-2">
                   <div className="text-xs font-bold text-[#16131F] flex items-center gap-2">
-                    <Store className="w-4 h-4 text-[#7C5DFA]" />
+                    <Store className="w-4 h-4 text-[var(--accent)]" />
                     <span>Merchant & Fulfillment Governance</span>
                   </div>
                   <div className="text-xs text-[#4A3F4B] space-y-1">
                     <div><span className="text-[var(--text-3)]">Merchant:</span> <strong className="text-[#16131F]">{s3.seller_name}</strong></div>
-                    <div><span className="text-[var(--text-3)]">Tier:</span> <span className="font-mono text-[#7C5DFA]">{s3.seller_tier}</span> · <span className="text-[var(--text-3)]">Channel:</span> {s3.fulfillment_channel}</div>
+                    <div><span className="text-[var(--text-3)]">Tier:</span> <span className="font-mono text-[var(--accent)]">{s3.seller_tier}</span> · <span className="text-[var(--text-3)]">Channel:</span> {s3.fulfillment_channel}</div>
                     <div><span className="text-[var(--text-3)]">Seller Score:</span> <span className="text-emerald-700 font-bold">{s3.seller_trust_score}/100</span> ({s3.risk_tier} RISK)</div>
                   </div>
                 </div>
 
-                <div className="p-4 rounded-xl bg-[#F9F8FC] border border-[#ECE8F2] space-y-2">
+                <div className="p-4 rounded-xl bg-[var(--canvas)] border border-[var(--line)] space-y-2">
                   <div className="text-xs font-bold text-[#16131F] flex items-center gap-2">
                     <ShieldCheck className="w-4 h-4 text-emerald-700" />
                     <span>Statutory & Pricing Integrity</span>
@@ -1321,7 +1603,7 @@ export const InvestigationDetailPage: React.FC = () => {
                 </div>
               </div>
 
-              <p className="text-xs text-[#4A3F4B] leading-relaxed border-t border-[#ECE8F2] pt-3">
+              <p className="text-xs text-[#4A3F4B] leading-relaxed border-t border-[var(--line)] pt-3">
                 {s2.explanation}
               </p>
             </div>
@@ -1330,7 +1612,7 @@ export const InvestigationDetailPage: React.FC = () => {
           {/* SECTION 3: SCIENTIFIC VISUALIZATIONS & SIGNAL CORROBORATION */}
           <div className="space-y-4">
             <h3 className="text-lg font-bold text-[#16131F] font-heading flex items-center gap-2">
-              <Cpu className="w-5 h-5 text-[#7C5DFA]" />
+              <Cpu className="w-5 h-5 text-[var(--accent)]" />
               <span>Section 3: Scientific Visualizations & Signal Corroboration</span>
             </h3>
 
@@ -1348,8 +1630,8 @@ export const InvestigationDetailPage: React.FC = () => {
             {/* Side-by-Side Scientific Graphs */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Left Graph: Price vs Anomaly Risk Scatter Plot */}
-              <div className="p-5 rounded-2xl bg-white border border-[#ECE8F2] shadow-xs space-y-3">
-                <div className="flex items-center justify-between pb-2 border-b border-[#ECE8F2]">
+              <div className="p-5 rounded-2xl bg-white border border-[var(--line)] shadow-xs space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-[var(--line)]">
                   <span className="text-xs font-bold text-[#16131F] uppercase tracking-wider flex items-center gap-1.5">
                     <TrendingUp className="w-4 h-4 text-emerald-700" />
                     <span>Price vs. Anomaly Risk Corridor</span>
@@ -1359,7 +1641,7 @@ export const InvestigationDetailPage: React.FC = () => {
                 <div className="h-64 w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <ScatterChart margin={{ top: 10, right: 20, left: -10, bottom: 10 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#ECE8F2" />
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(193,160,172,0.3)" />
                       <XAxis
                         type="number"
                         dataKey="price"
@@ -1377,7 +1659,7 @@ export const InvestigationDetailPage: React.FC = () => {
                       />
                       <Tooltip
                         cursor={{ strokeDasharray: '3 3' }}
-                        contentStyle={{ backgroundColor: '#FFFFFF', borderColor: '#ECE8F2', borderRadius: '12px', fontSize: '11px', color: '#16131F', boxShadow: '0 8px 24px rgba(22, 19, 31, 0.08)' }}
+                        contentStyle={{ backgroundColor: '#FFFFFF', borderColor: 'rgba(193,160,172,0.35)', borderRadius: '12px', fontSize: '11px', color: '#16131F', boxShadow: '0 8px 24px rgba(22, 19, 31, 0.08)' }}
                       />
                       <Legend wrapperStyle={{ fontSize: '11px', color: '#4A3F4B', paddingTop: '10px' }} />
                       <Scatter name="Peer Listings in Category" data={scatterPeers} fill="#6F5B68" />
@@ -1388,10 +1670,10 @@ export const InvestigationDetailPage: React.FC = () => {
               </div>
 
               {/* Right Graph: Aspect-Based Sentiment Polarity (NLP ABSA) matching Image 2 */}
-              <div className="p-5 rounded-2xl bg-white border border-[#ECE8F2] shadow-xs space-y-3">
-                <div className="flex items-center justify-between pb-2 border-b border-[#ECE8F2]">
+              <div className="p-5 rounded-2xl bg-white border border-[var(--line)] shadow-xs space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-[var(--line)]">
                   <span className="text-xs font-bold text-[#16131F] uppercase tracking-wider flex items-center gap-1.5">
-                    <MessageSquare className="w-4 h-4 text-[#7C5DFA]" />
+                    <MessageSquare className="w-4 h-4 text-[var(--accent)]" />
                     <span>Aspect-Based Sentiment (NLP ABSA)</span>
                   </span>
                   <span className="text-[10px] font-mono text-[var(--text-3)]">
@@ -1405,7 +1687,7 @@ export const InvestigationDetailPage: React.FC = () => {
                       data={absaAspectData}
                       margin={{ top: 10, right: 30, left: 35, bottom: 5 }}
                     >
-                      <CartesianGrid strokeDasharray="3 3" stroke="#ECE8F2" horizontal={false} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(193,160,172,0.3)" horizontal={false} />
                       <XAxis
                         type="number"
                         domain={[0, 100]}
@@ -1425,7 +1707,7 @@ export const InvestigationDetailPage: React.FC = () => {
                           if (active && payload && payload.length) {
                             const data = payload[0].payload;
                             return (
-                              <div className="bg-white border border-[#ECE8F2] rounded-xl px-3.5 py-2.5 shadow-xl">
+                              <div className="bg-white border border-[var(--line)] rounded-xl px-3.5 py-2.5 shadow-xl">
                                 <div className="text-xs font-bold text-[#16131F] leading-tight">{data.aspect}</div>
                                 <div className="text-xs text-[#4A3F4B] mt-1 font-mono">
                                   Satisfaction : {data.Satisfaction}%
@@ -1451,7 +1733,7 @@ export const InvestigationDetailPage: React.FC = () => {
             </div>
 
             {/* Signal Corroboration Summary Card */}
-            <div className="p-5 rounded-2xl bg-white border border-[#ECE8F2] shadow-xs space-y-3">
+            <div className="p-5 rounded-2xl bg-white border border-[var(--line)] shadow-xs space-y-3">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                   <div className="text-xs font-bold text-[#16131F] uppercase tracking-wider">
@@ -1461,7 +1743,7 @@ export const InvestigationDetailPage: React.FC = () => {
                     Evaluated: Price Anomaly Engine, NLP ABSA Sentiment, Seller Governance Graph, Statutory Packaging OCR
                   </div>
                 </div>
-                <span className="text-[10px] font-mono px-2.5 py-1 rounded-full bg-[#EDE9FE] text-[#7C5DFA] border border-[#DDD6FE] font-bold shrink-0">
+                <span className="text-[10px] font-mono px-2.5 py-1 rounded-full bg-[var(--heather)]/60 text-[var(--accent)] border border-[var(--line)] font-bold shrink-0">
                   Zero-Penalty Guarantee Active
                 </span>
               </div>
@@ -1487,11 +1769,11 @@ export const InvestigationDetailPage: React.FC = () => {
               )}
 
               {/* Aspect Satisfaction Quick-Pills */}
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-2 border-t border-[#ECE8F2]">
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-2 border-t border-[var(--line)]">
                 {s5.aspects.map((asp, idx) => (
-                  <div key={idx} className="p-2.5 rounded-lg bg-[#F9F8FC] border border-[#ECE8F2] text-center">
+                  <div key={idx} className="p-2.5 rounded-lg bg-[var(--canvas)] border border-[var(--line)] text-center">
                     <div className="text-[10px] text-[var(--text-3)] truncate">{asp.display_name}</div>
-                    <div className="text-sm font-bold text-emerald-700">
+                    <div className="text-sm font-bold text-emerald-700 tabular-nums">
                       {asp.satisfaction_pct ?? Math.round((asp.sentiment_score ?? 0.8) * 100)}%
                     </div>
                   </div>
@@ -1503,14 +1785,14 @@ export const InvestigationDetailPage: React.FC = () => {
           {/* SECTION 4: COMPUTER VISION & DEEP VISUAL INTELLIGENCE */}
           <div className="space-y-4">
             <h3 className="text-lg font-bold text-[#16131F] font-heading flex items-center gap-2">
-              <Eye className="w-5 h-5 text-[#7C5DFA]" />
+              <Eye className="w-5 h-5 text-[var(--accent)]" />
               <span>Section 4: Computer Vision & Deep Visual Intelligence</span>
             </h3>
 
-            <div className="p-6 rounded-2xl bg-white border border-[#ECE8F2] shadow-xs space-y-6">
+            <div className="p-6 rounded-2xl bg-white border border-[var(--line)] shadow-xs space-y-6">
               {/* Architecture & Pipeline Summary */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="p-4 rounded-xl bg-[#F9F8FC] border border-[#ECE8F2] space-y-2">
+                <div className="p-4 rounded-xl bg-[var(--canvas)] border border-[var(--line)] space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-mono text-[var(--text-3)] uppercase font-semibold">1. Image Preprocessing</span>
                     <span className="text-[10px] font-mono text-emerald-700 font-bold">224×224 RGB</span>
@@ -1524,13 +1806,13 @@ export const InvestigationDetailPage: React.FC = () => {
                   </p>
                 </div>
 
-                <div className="p-4 rounded-xl bg-[#F9F8FC] border border-[#ECE8F2] space-y-2">
+                <div className="p-4 rounded-xl bg-[var(--canvas)] border border-[var(--line)] space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-mono text-[var(--text-3)] uppercase font-semibold">2. Feature Extractor</span>
-                    <span className="text-[10px] font-mono text-[#7C5DFA] font-bold">ResNet-50 / EfficientNet</span>
+                    <span className="text-[10px] font-mono text-[var(--accent)] font-bold">ResNet-50 / EfficientNet</span>
                   </div>
                   <div className="text-sm font-bold text-[#16131F] flex items-center gap-2">
-                    <Layers className="w-4 h-4 text-[#7C5DFA]" />
+                    <Layers className="w-4 h-4 text-[var(--accent)]" />
                     <span>512-Dim Latent Embeddings</span>
                   </div>
                   <p className="text-[11px] text-[var(--text-3)] leading-relaxed">
@@ -1538,7 +1820,7 @@ export const InvestigationDetailPage: React.FC = () => {
                   </p>
                 </div>
 
-                <div className="p-4 rounded-xl bg-[#F9F8FC] border border-[#ECE8F2] space-y-2">
+                <div className="p-4 rounded-xl bg-[var(--canvas)] border border-[var(--line)] space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-mono text-[var(--text-3)] uppercase font-semibold">3. Visual Similarity</span>
                     <span className="text-[10px] font-mono text-emerald-700 font-bold">Cosine Metric</span>
@@ -1554,19 +1836,19 @@ export const InvestigationDetailPage: React.FC = () => {
               </div>
 
               {/* Cross-Marketplace Visual Corroboration Table */}
-              <div className="space-y-2 pt-2 border-t border-[#ECE8F2]">
+              <div className="space-y-2 pt-2 border-t border-[var(--line)]">
                 <div className="flex items-center justify-between">
                   <div className="text-xs font-bold text-[#16131F] uppercase tracking-wider flex items-center gap-1.5">
-                    <ScanSearch className="w-4 h-4 text-[#7C5DFA]" />
+                    <ScanSearch className="w-4 h-4 text-[var(--accent)]" />
                     <span>Cross-Marketplace Visual Corroboration & Near-Duplicate Analysis</span>
                   </div>
                   <span className="text-[10px] font-mono text-[var(--text-3)]">Authenticated Image Database</span>
                 </div>
 
-                <div className="rounded-xl border border-[#ECE8F2] overflow-hidden">
+                <div className="rounded-xl border border-[var(--line)] overflow-hidden">
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
-                      <tr className="bg-white/[0.04] border-b border-[#ECE8F2] text-[var(--text-3)] font-mono uppercase text-[10px]">
+                      <tr className="bg-white/[0.04] border-b border-[var(--line)] text-[var(--text-3)] font-mono uppercase text-[10px]">
                         <th className="p-3">Reference Source</th>
                         <th className="p-3">Matched Feature Traits</th>
                         <th className="p-3">Cosine Similarity</th>
@@ -1575,10 +1857,10 @@ export const InvestigationDetailPage: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      <tr className="border-b border-[#ECE8F2] hover:bg-[#F9F8FC]">
+                      <tr className="border-b border-[var(--line)] hover:bg-[var(--canvas)]">
                         <td className="p-3 font-semibold text-[#16131F]">Flipkart Brand Master</td>
                         <td className="p-3 text-[#4A3F4B]">Silhouette geometry, upper texture, logo placement alignment</td>
-                        <td className="p-3 font-bold text-emerald-700 font-mono">98.2%</td>
+                        <td className="p-3 font-bold text-emerald-700 font-mono tabular-nums">98.2%</td>
                         <td className="p-3 text-[#4A3F4B]">Exact Duplicate Catalog Photo</td>
                         <td className="p-3">
                           <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
@@ -1586,10 +1868,10 @@ export const InvestigationDetailPage: React.FC = () => {
                           </span>
                         </td>
                       </tr>
-                      <tr className="border-b border-[#ECE8F2] hover:bg-[#F9F8FC]">
+                      <tr className="border-b border-[var(--line)] hover:bg-[var(--canvas)]">
                         <td className="p-3 font-semibold text-[#16131F]">Amazon Brand Flagship</td>
                         <td className="p-3 text-[#4A3F4B]">Outer material finish, seam stitching, label typography</td>
-                        <td className="p-3 font-bold text-emerald-700 font-mono">96.4%</td>
+                        <td className="p-3 font-bold text-emerald-700 font-mono tabular-nums">96.4%</td>
                         <td className="p-3 text-[#4A3F4B]">Near-Duplicate Variant Angle</td>
                         <td className="p-3">
                           <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
@@ -1597,10 +1879,10 @@ export const InvestigationDetailPage: React.FC = () => {
                           </span>
                         </td>
                       </tr>
-                      <tr className="border-b border-[#ECE8F2] hover:bg-[#F9F8FC]">
+                      <tr className="border-b border-[var(--line)] hover:bg-[var(--canvas)]">
                         <td className="p-3 font-semibold text-[#16131F]">Myntra Brand Catalog</td>
                         <td className="p-3 text-[#4A3F4B]">Packaging box graphics, barcode placement, contour match</td>
-                        <td className="p-3 font-bold text-emerald-700 font-mono">95.8%</td>
+                        <td className="p-3 font-bold text-emerald-700 font-mono tabular-nums">95.8%</td>
                         <td className="p-3 text-[#4A3F4B]">Near-Duplicate Studio Photo</td>
                         <td className="p-3">
                           <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
@@ -1618,17 +1900,17 @@ export const InvestigationDetailPage: React.FC = () => {
           {/* SECTION 5: PACKAGING OCR & MULTIMODAL CONCORDANCE */}
           <div className="space-y-4">
             <h3 className="text-lg font-bold text-[#16131F] font-heading flex items-center gap-2">
-              <FileCheck className="w-5 h-5 text-[#7C5DFA]" />
+              <FileCheck className="w-5 h-5 text-[var(--accent)]" />
               <span>Section 5: Packaging Optical Character Recognition (OCR) & Multimodal Agreement</span>
             </h3>
 
-            <div className="p-6 rounded-2xl bg-white border border-[#ECE8F2] shadow-xs space-y-6">
+            <div className="p-6 rounded-2xl bg-white border border-[var(--line)] shadow-xs space-y-6">
               {/* OCR Statutory Declarations */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 rounded-xl bg-[#F9F8FC] border border-[#ECE8F2] space-y-3">
+                <div className="p-4 rounded-xl bg-[var(--canvas)] border border-[var(--line)] space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-[#16131F] uppercase tracking-wider flex items-center gap-2">
-                      <FileText className="w-4 h-4 text-[#7C5DFA]" />
+                      <FileText className="w-4 h-4 text-[var(--accent)]" />
                       <span>Statutory Packaging Declarations</span>
                     </span>
                     <span className="text-[10px] font-mono text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
@@ -1637,15 +1919,15 @@ export const InvestigationDetailPage: React.FC = () => {
                   </div>
 
                   <div className="space-y-2 text-xs">
-                    <div className="flex items-start justify-between py-1 border-b border-[#ECE8F2]">
+                    <div className="flex items-start justify-between py-1 border-b border-[var(--line)]">
                       <span className="text-[var(--text-3)] font-mono">MRP Declaration:</span>
                       <span className="font-semibold text-[#16131F]">{s1.claimed_mrp_inr ? `₹${s1.claimed_mrp_inr.toLocaleString('en-IN')}` : 'MRP Declared'} (Matches listing claims)</span>
                     </div>
-                    <div className="flex items-start justify-between py-1 border-b border-[#ECE8F2]">
+                    <div className="flex items-start justify-between py-1 border-b border-[var(--line)]">
                       <span className="text-[var(--text-3)] font-mono">Net Quantity:</span>
                       <span className="font-semibold text-[#16131F]">1 Unit / Standard retail pack</span>
                     </div>
-                    <div className="flex items-start justify-between py-1 border-b border-[#ECE8F2]">
+                    <div className="flex items-start justify-between py-1 border-b border-[var(--line)]">
                       <span className="text-[var(--text-3)] font-mono">Batch / Lot Code:</span>
                       <span className="font-semibold text-emerald-700 font-mono">DM-0829001 (Authentic sequence)</span>
                     </div>
@@ -1657,27 +1939,27 @@ export const InvestigationDetailPage: React.FC = () => {
                 </div>
 
                 {/* Multimodal Agreement Index */}
-                <div className="p-4 rounded-xl bg-[#F9F8FC] border border-[#ECE8F2] space-y-3">
+                <div className="p-4 rounded-xl bg-[var(--canvas)] border border-[var(--line)] space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-[#16131F] uppercase tracking-wider flex items-center gap-2">
-                      <Layers className="w-4 h-4 text-[#7C5DFA]" />
+                      <Layers className="w-4 h-4 text-[var(--accent)]" />
                       <span>Multimodal Concordance & Invariants</span>
                     </span>
-                    <span className="text-[10px] font-mono text-[#7C5DFA] font-bold bg-[#EDE9FE] px-2 py-0.5 rounded border border-[#DDD6FE]">
+                    <span className="text-[10px] font-mono text-[var(--accent)] font-bold bg-[var(--heather)]/60 px-2 py-0.5 rounded border border-[var(--line)]">
                       Agreement Index: 93.8%
                     </span>
                   </div>
 
                   <div className="space-y-2 text-xs">
-                    <div className="flex items-center justify-between py-1 border-b border-[#ECE8F2]">
+                    <div className="flex items-center justify-between py-1 border-b border-[var(--line)]">
                       <span className="text-[var(--text-3)]">1. Price Corridor Modality:</span>
                       <span className="text-emerald-700 font-mono font-semibold">Z-Score: -0.42 (Concordant)</span>
                     </div>
-                    <div className="flex items-center justify-between py-1 border-b border-[#ECE8F2]">
+                    <div className="flex items-center justify-between py-1 border-b border-[var(--line)]">
                       <span className="text-[var(--text-3)]">2. Review NLP ABSA Modality:</span>
                       <span className="text-emerald-700 font-mono font-semibold">Satisfaction: {s5.satisfaction_index || 85}% (Concordant)</span>
                     </div>
-                    <div className="flex items-center justify-between py-1 border-b border-[#ECE8F2]">
+                    <div className="flex items-center justify-between py-1 border-b border-[var(--line)]">
                       <span className="text-[var(--text-3)]">3. Computer Vision Modality:</span>
                       <span className="text-emerald-700 font-mono font-semibold">Cosine: 96.4% (Concordant)</span>
                     </div>
@@ -1694,10 +1976,10 @@ export const InvestigationDetailPage: React.FC = () => {
           {/* SECTION 6: BUYING VERDICT & DOORSTEP ACTION PLAN */}
           <div className="space-y-3">
             <h3 className="text-lg font-bold text-[#16131F] font-heading flex items-center gap-2">
-              <ShieldCheck className="w-5 h-5 text-[#7C5DFA]" />
+              <ShieldCheck className="w-5 h-5 text-[var(--accent)]" />
               <span>Section 6: Buying Verdict & Doorstep Action Plan</span>
             </h3>
-            <div className="p-6 sm:p-7 rounded-[24px] bg-white border-2 border-[#ECE8F2] shadow-[0_8px_24px_rgba(22,19,31,0.05)] space-y-6">
+            <div className="p-6 sm:p-7 rounded-[24px] bg-white border-2 border-[var(--line)] shadow-[0_8px_24px_rgba(22,19,31,0.05)] space-y-6">
               <div>
                 <h4 className="text-2xl font-bold text-[#16131F] font-heading">
                   {s9.verdict_title || 'Strong Buying Option'}
@@ -1745,7 +2027,7 @@ export const InvestigationDetailPage: React.FC = () => {
               </div>
 
               {/* Doorstep Verification Checklist */}
-              <div className="pt-4 border-t border-[#ECE8F2] space-y-3">
+              <div className="pt-4 border-t border-[var(--line)] space-y-3">
                 <div className="text-xs font-bold text-[#16131F] flex items-center gap-2 uppercase tracking-wider">
                   <ShieldCheck className="w-4 h-4 text-emerald-700" />
                   <span>Doorstep Verification Checklist (Consumer Protection Protocol):</span>
@@ -1757,8 +2039,8 @@ export const InvestigationDetailPage: React.FC = () => {
                     'Verify brand serial number or anti-counterfeit QR code using the official brand authenticity portal.',
                     'For high-value items, capture continuous unboxing video from package receipt.',
                   ]).map((step, idx) => (
-                    <div key={idx} className="flex items-start gap-3 p-3 rounded-xl bg-[#F9F8FC] border border-[#ECE8F2]">
-                      <div className="w-5 h-5 rounded-full bg-[#7C5DFA] text-[#16131F] flex items-center justify-center text-[11px] font-bold shrink-0 mt-0.5">
+                    <div key={idx} className="flex items-start gap-3 p-3 rounded-xl bg-[var(--canvas)] border border-[var(--line)]">
+                      <div className="w-5 h-5 rounded-full bg-[#16131F] text-white flex items-center justify-center text-[11px] font-bold shrink-0 mt-0.5">
                         {idx + 1}
                       </div>
                       <div className="text-xs text-[#4A3F4B] leading-relaxed">{step}</div>

@@ -105,28 +105,28 @@ export const ProductDetailsTab: React.FC<ProductDetailsTabProps> = ({
       case 'HIGH_RISK':
       case 'ELEVATED_MULTIMODAL_ANOMALY':
         return {
-          bg: 'bg-rose-950/40 border-rose-500/30 text-rose-300',
-          dot: 'bg-rose-500',
+          bg: 'bg-[var(--bad-bg)] border-[var(--bad)]/30 text-[var(--bad-ink)]',
+          dot: 'bg-[var(--bad)]',
           label: tier.replace(/_/g, ' '),
         };
       case 'MODERATE_RISK':
       case 'MODERATE_SINGLE_MODALITY_ANOMALY':
         return {
-          bg: 'bg-amber-950/40 border-amber-500/30 text-amber-300',
-          dot: 'bg-amber-500',
+          bg: 'bg-[var(--warn-bg)] border-[var(--warn)]/30 text-[var(--warn-ink)]',
+          dot: 'bg-[var(--warn)]',
           label: tier.replace(/_/g, ' '),
         };
       case 'LOW_RISK':
       case 'LOW_OBSERVED_ANOMALY':
         return {
-          bg: 'bg-emerald-950/40 border-emerald-500/30 text-emerald-300',
-          dot: 'bg-emerald-500',
+          bg: 'bg-[var(--ok-bg)] border-[var(--ok)]/30 text-[var(--ok-ink)]',
+          dot: 'bg-[var(--ok)]',
           label: tier.replace(/_/g, ' '),
         };
       default:
         return {
-          bg: 'bg-slate-800 border-slate-700 text-slate-300',
-          dot: 'bg-slate-400',
+          bg: 'bg-[var(--canvas)]/60 border-[var(--line)] text-[var(--text-3)]',
+          dot: 'bg-[var(--text-3)]',
           label: tier.replace(/_/g, ' ') || 'UNASSESSED SPARSE DATA',
         };
     }
@@ -137,59 +137,59 @@ export const ProductDetailsTab: React.FC<ProductDetailsTabProps> = ({
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Product Title */}
         <div className="space-y-1">
-          <label className="block text-xs font-semibold text-slate-300">
-            Product Title <span className="text-red-400">*</span>
+          <label className="block text-xs font-semibold text-[var(--ink)]">
+            Product Title <span className="text-[var(--bad)]">*</span>
           </label>
           <div className="relative flex items-center">
-            <Package className="w-4 h-4 text-slate-500 absolute left-3.5 pointer-events-none" />
+            <Package className="w-4 h-4 text-[var(--text-3)] absolute left-3.5 pointer-events-none" />
             <input
               type="text"
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               placeholder="e.g. boAt Rockerz 510 Wireless Bluetooth Headphone"
-              className={`w-full bg-[#181D2E] text-xs sm:text-sm text-slate-100 placeholder:text-slate-500 rounded-xl pl-10 pr-3 py-2.5 border ${
-                errors.title ? 'border-red-500' : 'border-white/[0.08]'
-              } focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all`}
+              className={`w-full bg-white text-xs sm:text-sm text-[var(--ink)] placeholder:text-[var(--text-3)] rounded-xl pl-10 pr-3 py-2.5 border ${
+                errors.title ? 'border-[var(--bad)]' : 'border-[var(--line)]'
+              } focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] outline-none transition-all`}
             />
           </div>
-          {errors.title && <p className="text-[11px] text-red-400">{errors.title}</p>}
+          {errors.title && <p className="text-[11px] text-[var(--bad)]">{errors.title}</p>}
         </div>
 
         {/* Brand & Marketplace Row */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1">
-            <label className="block text-xs font-semibold text-slate-300">
-              Brand <span className="text-red-400">*</span>
+            <label className="block text-xs font-semibold text-[var(--ink)]">
+              Brand <span className="text-[var(--bad)]">*</span>
             </label>
             <div className="relative flex items-center">
-              <Tag className="w-4 h-4 text-slate-500 absolute left-3.5 pointer-events-none" />
+              <Tag className="w-4 h-4 text-[var(--text-3)] absolute left-3.5 pointer-events-none" />
               <input
                 type="text"
                 value={formData.brand}
                 onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
                 placeholder="e.g. boAt, Apple, Nike"
-                className={`w-full bg-[#181D2E] text-xs sm:text-sm text-slate-100 placeholder:text-slate-500 rounded-xl pl-10 pr-3 py-2.5 border ${
-                  errors.brand ? 'border-red-500' : 'border-white/[0.08]'
-                } focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all`}
+                className={`w-full bg-white text-xs sm:text-sm text-[var(--ink)] placeholder:text-[var(--text-3)] rounded-xl pl-10 pr-3 py-2.5 border ${
+                  errors.brand ? 'border-[var(--bad)]' : 'border-[var(--line)]'
+                } focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] outline-none transition-all`}
               />
             </div>
-            {errors.brand && <p className="text-[11px] text-red-400">{errors.brand}</p>}
+            {errors.brand && <p className="text-[11px] text-[var(--bad)]">{errors.brand}</p>}
           </div>
 
           <div className="space-y-1">
-            <label className="block text-xs font-semibold text-slate-300">
+            <label className="block text-xs font-semibold text-[var(--ink)]">
               Target Marketplace
             </label>
             <div className="relative flex items-center">
-              <Store className="w-4 h-4 text-slate-500 absolute left-3.5 pointer-events-none" />
+              <Store className="w-4 h-4 text-[var(--text-3)] absolute left-3.5 pointer-events-none" />
               <select
                 value={formData.marketplace}
                 onChange={(e) => setFormData({ ...formData, marketplace: e.target.value })}
-                className="w-full bg-[#181D2E] text-xs sm:text-sm text-slate-100 rounded-xl pl-10 pr-3 py-2.5 border border-white/[0.08] focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all cursor-pointer"
+                className="w-full bg-white text-xs sm:text-sm text-[var(--ink)] rounded-xl pl-10 pr-3 py-2.5 border border-[var(--line)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] outline-none transition-all cursor-pointer"
               >
-                <option value="Amazon India" className="bg-[#181D2E] text-slate-100">Amazon India</option>
-                <option value="Flipkart" className="bg-[#181D2E] text-slate-100">Flipkart</option>
-                <option value="Myntra" className="bg-[#181D2E] text-slate-100">Myntra</option>
+                <option value="Amazon India">Amazon India</option>
+                <option value="Flipkart">Flipkart</option>
+                <option value="Myntra">Myntra</option>
               </select>
             </div>
           </div>
@@ -198,11 +198,11 @@ export const ProductDetailsTab: React.FC<ProductDetailsTabProps> = ({
         {/* Pricing Row */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1">
-            <label className="block text-xs font-semibold text-slate-300">
+            <label className="block text-xs font-semibold text-[var(--ink)]">
               Observed Listing Price (INR ₹)
             </label>
             <div className="relative flex items-center">
-              <IndianRupee className="w-4 h-4 text-slate-500 absolute left-3.5 pointer-events-none" />
+              <IndianRupee className="w-4 h-4 text-[var(--text-3)] absolute left-3.5 pointer-events-none" />
               <input
                 type="number"
                 min="0"
@@ -215,17 +215,17 @@ export const ProductDetailsTab: React.FC<ProductDetailsTabProps> = ({
                   })
                 }
                 placeholder="e.g. 1499.00"
-                className="w-full bg-[#181D2E] text-xs sm:text-sm text-slate-100 placeholder:text-slate-500 rounded-xl pl-10 pr-3 py-2.5 border border-white/[0.08] focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all"
+                className="w-full bg-white text-xs sm:text-sm text-[var(--ink)] placeholder:text-[var(--text-3)] rounded-xl pl-10 pr-3 py-2.5 border border-[var(--line)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] outline-none transition-all"
               />
             </div>
           </div>
 
           <div className="space-y-1">
-            <label className="block text-xs font-semibold text-slate-300">
+            <label className="block text-xs font-semibold text-[var(--ink)]">
               Manufacturer MRP (INR ₹)
             </label>
             <div className="relative flex items-center">
-              <IndianRupee className="w-4 h-4 text-slate-500 absolute left-3.5 pointer-events-none" />
+              <IndianRupee className="w-4 h-4 text-[var(--text-3)] absolute left-3.5 pointer-events-none" />
               <input
                 type="number"
                 min="0"
@@ -238,7 +238,7 @@ export const ProductDetailsTab: React.FC<ProductDetailsTabProps> = ({
                   })
                 }
                 placeholder="e.g. 2990.00"
-                className="w-full bg-[#181D2E] text-xs sm:text-sm text-slate-100 placeholder:text-slate-500 rounded-xl pl-10 pr-3 py-2.5 border border-white/[0.08] focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all"
+                className="w-full bg-white text-xs sm:text-sm text-[var(--ink)] placeholder:text-[var(--text-3)] rounded-xl pl-10 pr-3 py-2.5 border border-[var(--line)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] outline-none transition-all"
               />
             </div>
           </div>
@@ -246,11 +246,11 @@ export const ProductDetailsTab: React.FC<ProductDetailsTabProps> = ({
 
         {/* Real-Time Anomaly Flag Previews */}
         {isPriceExceedingMrp && (
-          <div className="p-3.5 rounded-xl bg-amber-950/20 border border-amber-500/30 text-xs text-amber-300 flex items-start gap-2">
-            <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+          <div className="p-3.5 rounded-xl bg-[var(--warn-bg)] border border-[var(--warn)]/30 text-xs text-[var(--warn-ink)] flex items-start gap-2">
+            <AlertTriangle className="w-4 h-4 text-[var(--warn)] shrink-0 mt-0.5" />
             <div>
-              <span className="font-semibold text-amber-200">Pricing Heuristic Flag: PRICE_EXCEEDS_MRP</span>
-              <p className="text-[11px] text-amber-300/80 mt-0.5">
+              <span className="font-semibold text-[var(--ink)]">Pricing Heuristic Flag: PRICE_EXCEEDS_MRP</span>
+              <p className="text-[11px] text-[var(--warn-ink)]/80 mt-0.5">
                 Observed price (₹{formData.observedPrice}) exceeds stated maximum retail price (₹{formData.mrp}), violating Indian Consumer Protection (E-Commerce) Rules.
               </p>
             </div>
@@ -258,11 +258,11 @@ export const ProductDetailsTab: React.FC<ProductDetailsTabProps> = ({
         )}
 
         {isExtremeDiscount && !isPriceExceedingMrp && (
-          <div className="p-3.5 rounded-xl bg-rose-950/20 border border-rose-500/30 text-xs text-rose-300 flex items-start gap-2">
-            <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+          <div className="p-3.5 rounded-xl bg-[var(--bad-bg)] border border-[var(--bad)]/30 text-xs text-[var(--bad-ink)] flex items-start gap-2">
+            <AlertTriangle className="w-4 h-4 text-[var(--bad)] shrink-0 mt-0.5" />
             <div>
-              <span className="font-semibold text-rose-200">Corridor Anomaly Flag: EXTREME_DEEP_DISCOUNT</span>
-              <p className="text-[11px] text-rose-300/80 mt-0.5">
+              <span className="font-semibold text-[var(--ink)]">Corridor Anomaly Flag: EXTREME_DEEP_DISCOUNT</span>
+              <p className="text-[11px] text-[var(--bad-ink)]/80 mt-0.5">
                 Observed discount exceeds 85% below MRP, warranting cross-modal packaging & merchant verification.
               </p>
             </div>
@@ -271,7 +271,7 @@ export const ProductDetailsTab: React.FC<ProductDetailsTabProps> = ({
 
         {/* Category & Description */}
         <div className="space-y-1">
-          <label className="block text-xs font-semibold text-slate-300">
+          <label className="block text-xs font-semibold text-[var(--ink)]">
             Product Description / Specifications (Optional)
           </label>
           <textarea
@@ -279,13 +279,13 @@ export const ProductDetailsTab: React.FC<ProductDetailsTabProps> = ({
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             placeholder="Include seller statements, claims, or warranty information for NLP review..."
-            className="w-full bg-[#181D2E] text-xs text-slate-100 placeholder:text-slate-500 rounded-xl p-3 border border-white/[0.08] focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all resize-none"
+            className="w-full bg-white text-xs text-[var(--ink)] placeholder:text-[var(--text-3)] rounded-xl p-3 border border-[var(--line)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] outline-none transition-all resize-none"
           />
         </div>
 
         {submitError && (
-          <div className="p-3.5 rounded-xl bg-rose-950/20 border border-rose-500/30 text-xs text-rose-300 flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+          <div className="p-3.5 rounded-xl bg-[var(--bad-bg)] border border-[var(--bad)]/30 text-xs text-[var(--bad-ink)] flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-[var(--bad)] shrink-0" />
             <span>{submitError}</span>
           </div>
         )}
@@ -310,11 +310,11 @@ export const ProductDetailsTab: React.FC<ProductDetailsTabProps> = ({
 
       {/* Live Ad-hoc Inference Result Display */}
       {inferenceResult && (
-        <div className="p-5 rounded-2xl bg-[#181D2E] border border-white/[0.08] shadow-soft space-y-4 animate-fadeIn">
-          <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
+        <div className="p-5 rounded-2xl bg-white border border-[var(--line)] shadow-sm space-y-4 animate-fadeIn">
+          <div className="flex items-center justify-between pb-3 border-b border-[var(--line)]">
             <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-indigo-400" />
-              <span className="text-sm font-bold text-slate-100 font-heading">Live Ad-Hoc Multimodal Assessment</span>
+              <Sparkles className="w-4 h-4 text-[var(--accent)]" />
+              <span className="text-sm font-bold text-[var(--ink)] font-heading">Live Ad-Hoc Multimodal Assessment</span>
             </div>
             {(() => {
               const badge = getRiskBadge(inferenceResult.overall_risk_tier);
@@ -328,21 +328,21 @@ export const ProductDetailsTab: React.FC<ProductDetailsTabProps> = ({
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
-            <div className="p-3 rounded-xl bg-[#111522] border border-white/[0.08]">
-              <span className="text-[11px] text-slate-400 block font-mono">Evaluated Modalities</span>
-              <span className="text-sm font-bold text-indigo-400 font-heading">
+            <div className="p-3 rounded-xl bg-[var(--canvas)]/40 border border-[var(--line)]">
+              <span className="text-[11px] text-[var(--text-3)] block font-mono">Evaluated Modalities</span>
+              <span className="text-sm font-bold text-[var(--accent)] font-heading">
                 {inferenceResult.available_modalities_count} / 5 Available
               </span>
             </div>
-            <div className="p-3 rounded-xl bg-[#111522] border border-white/[0.08]">
-              <span className="text-[11px] text-slate-400 block font-mono">Zero-Penalty Invariant</span>
-              <span className="text-sm font-bold text-emerald-400 font-heading">
+            <div className="p-3 rounded-xl bg-[var(--canvas)]/40 border border-[var(--line)]">
+              <span className="text-[11px] text-[var(--text-3)] block font-mono">Zero-Penalty Invariant</span>
+              <span className="text-sm font-bold text-[var(--ok-ink)] font-heading">
                 {inferenceResult.zero_penalty_invariant_applied ? 'Active (Protected)' : 'Standard'}
               </span>
             </div>
-            <div className="p-3 rounded-xl bg-[#111522] border border-white/[0.08] col-span-2 sm:col-span-1">
-              <span className="text-[11px] text-slate-400 block font-mono">Marketplace Target</span>
-              <span className="text-sm font-bold text-slate-200 font-heading">
+            <div className="p-3 rounded-xl bg-[var(--canvas)]/40 border border-[var(--line)] col-span-2 sm:col-span-1">
+              <span className="text-[11px] text-[var(--text-3)] block font-mono">Marketplace Target</span>
+              <span className="text-sm font-bold text-[var(--ink)] font-heading">
                 {formData.marketplace}
               </span>
             </div>
@@ -351,14 +351,14 @@ export const ProductDetailsTab: React.FC<ProductDetailsTabProps> = ({
           {/* Active Anomaly Flags */}
           {inferenceResult.flags && inferenceResult.flags.length > 0 && (
             <div className="space-y-1.5">
-              <span className="text-xs font-semibold text-slate-300">Active Signals & Corroborated Flags:</span>
+              <span className="text-xs font-semibold text-[var(--ink)]">Active Signals & Corroborated Flags:</span>
               <div className="flex flex-wrap gap-1.5">
                 {inferenceResult.flags.map((flag: string) => (
                   <span
                     key={flag}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-950/30 border border-amber-500/30 text-amber-300 text-[11px] font-medium"
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[var(--warn-bg)] border border-[var(--warn)]/30 text-[var(--warn-ink)] text-[11px] font-medium"
                   >
-                    <AlertTriangle className="w-3 h-3 text-amber-400" />
+                    <AlertTriangle className="w-3 h-3 text-[var(--warn)]" />
                     {flag}
                   </span>
                 ))}
@@ -368,8 +368,8 @@ export const ProductDetailsTab: React.FC<ProductDetailsTabProps> = ({
 
           {/* Sparsity note */}
           {inferenceResult.zero_penalty_invariant_applied && (
-            <div className="p-3 rounded-xl bg-[#111522] border border-white/[0.08] text-xs text-slate-400 flex items-start gap-2">
-              <Info className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
+            <div className="p-3 rounded-xl bg-[var(--canvas)]/40 border border-[var(--line)] text-xs text-[var(--text-2)] flex items-start gap-2">
+              <Info className="w-4 h-4 text-[var(--text-3)] shrink-0 mt-0.5" />
               <span>
                 Zero-penalty invariant applied: Newly submitted listing with sparse channels ({inferenceResult.available_modalities_count}/5 modalities) is safeguarded from counterfeit penalty prejudice.
               </span>
@@ -379,12 +379,12 @@ export const ProductDetailsTab: React.FC<ProductDetailsTabProps> = ({
       )}
 
       {/* Zero Penalty Invariant Notice */}
-      <div className="p-4 rounded-xl bg-[#181D2E] border border-white/[0.08] text-xs text-slate-300 space-y-2">
-        <div className="flex items-center gap-2 font-semibold text-indigo-400 font-heading">
+      <div className="p-4 rounded-xl bg-[var(--heather)]/30 border border-[var(--line)] text-xs text-[var(--text-2)] space-y-2">
+        <div className="flex items-center gap-2 font-semibold text-[var(--accent)] font-heading">
           <ShieldCheck className="w-4 h-4" />
           <span>Zero-Penalty Modeling Invariant</span>
         </div>
-        <p className="text-[11px] text-slate-400 leading-relaxed">
+        <p className="text-[11px] text-[var(--text-2)] leading-relaxed">
           If certain modalities (such as reviews or packaging photos) are unobserved for a new submission,
           the engine classifies the product under honest sparse data rules (<code>UNASSESSED_SPARSE_DATA</code>) rather than penalizing missing data as negative anomaly evidence.
         </p>

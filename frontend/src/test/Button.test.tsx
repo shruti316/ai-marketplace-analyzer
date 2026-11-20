@@ -27,7 +27,7 @@ describe('Button Component', () => {
 
   it('applies variant classes correctly', () => {
     const { rerender } = render(<Button variant="primary">Primary</Button>);
-    expect(screen.getByRole('button')).toHaveClass('bg-indigo-600');
+    expect(screen.getByRole('button')).toHaveClass('bg-[#16131F]');
 
     rerender(<Button variant="danger">Danger</Button>);
     expect(screen.getByRole('button')).toHaveClass('bg-rose-600');

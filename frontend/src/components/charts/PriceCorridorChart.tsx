@@ -77,7 +77,7 @@ export const PriceCorridorChart: React.FC<PriceCorridorChartProps> = ({
   return (
     <div className={`p-5 rounded-2xl bg-white border border-[var(--line)] shadow-xs space-y-4 ${className}`}>
       {/* Header with Title and Legend Badges */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#ECE8F2]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[var(--line)]">
         <div>
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold text-[var(--ink)] font-heading uppercase tracking-wider">
@@ -120,7 +120,7 @@ export const PriceCorridorChart: React.FC<PriceCorridorChartProps> = ({
               </linearGradient>
             </defs>
 
-            <CartesianGrid strokeDasharray="3 3" stroke="#ECE8F2" vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(193,160,172,0.3)" vertical={false} />
 
             <XAxis
               dataKey="price"
@@ -128,8 +128,8 @@ export const PriceCorridorChart: React.FC<PriceCorridorChartProps> = ({
               domain={[minRange, maxRange]}
               tickFormatter={formatInr}
               tick={{ fill: '#6F5B68', fontSize: 10, fontFamily: 'monospace' }}
-              axisLine={{ stroke: '#ECE8F2' }}
-              tickLine={{ stroke: '#ECE8F2' }}
+              axisLine={{ stroke: 'rgba(193,160,172,0.35)' }}
+              tickLine={{ stroke: 'rgba(193,160,172,0.35)' }}
             />
 
             <YAxis
@@ -239,7 +239,7 @@ export const PriceCorridorChart: React.FC<PriceCorridorChartProps> = ({
               x={obs}
               y={obsDensity}
               r={7}
-              fill="#7C5DFA"
+              fill="#6B2D5C"
               stroke="#FFFFFF"
               strokeWidth={2}
             />
@@ -248,13 +248,13 @@ export const PriceCorridorChart: React.FC<PriceCorridorChartProps> = ({
 
         {/* Floating Tag for Observed Price directly above marker */}
         <div className="absolute top-2 right-4 flex items-center gap-1.5 bg-[var(--ink)] text-white px-2.5 py-1 rounded-lg text-[10px] font-mono shadow-md">
-          <span className="w-2 h-2 rounded-full bg-[#7C5DFA] animate-ping" />
+          <span className="w-2 h-2 rounded-full bg-[var(--accent)] animate-ping" />
           <span>Observed Price: <strong className="text-white font-bold">{formatInr(obs)}</strong></span>
         </div>
       </div>
 
       {/* Summary Note */}
-      <div className="pt-2 border-t border-[#ECE8F2] flex flex-col sm:flex-row sm:items-center justify-between text-xs text-[var(--text-2)] gap-2">
+      <div className="pt-2 border-t border-[var(--line)] flex flex-col sm:flex-row sm:items-center justify-between text-xs text-[var(--text-2)] gap-2">
         <span className="flex items-center gap-1.5 font-medium">
           <span className="text-[var(--ok-ink)] font-bold">✓ Verified:</span>
           <span>Observed price is consistent with genuine brand promotions ({formatInr(obs)} vs median {formatInr(med)}).</span>

@@ -132,10 +132,10 @@ export const AssistantPage: React.FC = () => {
   return (
     <div className="space-y-6 animate-fadeIn pb-12 max-w-4xl mx-auto">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#ECE8F2]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[var(--line)]">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#16131F] font-heading flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-[#7C5DFA]" />
+            <Sparkles className="w-5 h-5 text-[var(--accent)]" />
             <span>TrustSphere Intelligence Assistant</span>
           </h1>
           <p className="text-xs text-[var(--text-3)] mt-0.5">
@@ -150,11 +150,11 @@ export const AssistantPage: React.FC = () => {
       </div>
 
       {/* Full-Width Conversational Canvas */}
-      <div className="bg-white rounded-[24px] border border-[#ECE8F2] shadow-[0_8px_24px_rgba(22,19,31,0.05)] flex flex-col h-[700px] overflow-hidden">
+      <div className="bg-white rounded-[24px] border border-[var(--line)] shadow-[0_8px_24px_rgba(22,19,31,0.05)] flex flex-col h-[700px] overflow-hidden">
         {/* Thread Header with Active Grounding Context */}
-        <div className="px-6 py-4 border-b border-[#ECE8F2] bg-[#FDFCFE] flex items-center justify-between gap-4">
+        <div className="px-6 py-4 border-b border-[var(--line)] bg-white flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-[#EDE9FE] text-[#7C5DFA] border border-[#7C5DFA]/20">
+            <div className="p-2 rounded-xl bg-[var(--heather)]/60 text-[var(--accent)] border border-[var(--line)]">
               <Bot className="w-4 h-4" />
             </div>
             <div>
@@ -165,12 +165,12 @@ export const AssistantPage: React.FC = () => {
                 </span>
               </div>
               <p className="text-[11px] text-[var(--text-3)] font-mono mt-0.5">
-                Active Grounding Context: <span className="text-[#7C5DFA] font-semibold">{activeProduct?.product_title || selectedProductId}</span>
+                Active Grounding Context: <span className="text-[var(--accent)] font-semibold">{activeProduct?.product_title || selectedProductId}</span>
               </p>
             </div>
           </div>
 
-          <span className="text-[10px] font-mono text-[var(--text-3)] bg-[#F9F8FC] px-2.5 py-1 rounded-lg border border-[#ECE8F2]">
+          <span className="text-[10px] font-mono text-[var(--text-3)] bg-[var(--canvas)] px-2.5 py-1 rounded-lg border border-[var(--line)]">
             Evidence Engine v1.7
           </span>
         </div>
@@ -183,15 +183,15 @@ export const AssistantPage: React.FC = () => {
               className={`flex gap-3 ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               {m.sender === 'assistant' && (
-                <div className="h-8 w-8 rounded-xl bg-[#EDE9FE] text-[#7C5DFA] border border-[#ECE8F2] flex items-center justify-center shrink-0 shadow-xs mt-0.5">
+                <div className="h-8 w-8 rounded-xl bg-[var(--heather)]/60 text-[var(--accent)] border border-[var(--line)] flex items-center justify-center shrink-0 shadow-xs mt-0.5">
                   <Bot className="w-4 h-4" />
                 </div>
               )}
               <div
                 className={`max-w-[85%] rounded-[18px] p-4 text-xs leading-relaxed ${
                   m.sender === 'user'
-                    ? 'bg-[#7C5DFA] text-white rounded-tr-none shadow-xs'
-                    : 'bg-[#F9F8FC] border border-[#ECE8F2] text-[#16131F] rounded-tl-none shadow-xs'
+                    ? 'bg-[#16131F] text-white rounded-tr-none shadow-xs'
+                    : 'bg-[var(--canvas)] border border-[var(--line)] text-[#16131F] rounded-tl-none shadow-xs'
                 }`}
               >
                 <div className="whitespace-pre-line font-normal">
@@ -204,7 +204,7 @@ export const AssistantPage: React.FC = () => {
 
                 {/* Evidence Citations */}
                 {m.evidence && m.evidence.length > 0 && (
-                  <div className="mt-3 pt-3 border-t border-[#ECE8F2] space-y-1.5">
+                  <div className="mt-3 pt-3 border-t border-[var(--line)] space-y-1.5">
                     <span className="text-[10px] font-bold text-[var(--text-3)] uppercase tracking-wider block font-mono">
                       Corroborating Evidence Citations:
                     </span>
@@ -212,7 +212,7 @@ export const AssistantPage: React.FC = () => {
                       {m.evidence.map((ev, idx) => (
                         <li
                           key={idx}
-                          className="flex items-center gap-1.5 text-[11px] text-[#7C5DFA] bg-white px-2 py-1 rounded-md border border-[#ECE8F2]"
+                          className="flex items-center gap-1.5 text-[11px] text-[var(--accent)] bg-white px-2 py-1 rounded-md border border-[var(--line)]"
                         >
                           <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
                           <span className="font-mono truncate">{ev}</span>
@@ -231,14 +231,14 @@ export const AssistantPage: React.FC = () => {
 
           {isTyping && (
             <div className="flex gap-3 justify-start">
-              <div className="h-8 w-8 rounded-xl bg-[#EDE9FE] text-[#7C5DFA] border border-[#ECE8F2] flex items-center justify-center shrink-0 shadow-xs">
+              <div className="h-8 w-8 rounded-xl bg-[var(--heather)]/60 text-[var(--accent)] border border-[var(--line)] flex items-center justify-center shrink-0 shadow-xs">
                 <Bot className="w-4 h-4" />
               </div>
-              <div className="bg-[#F9F8FC] border border-[#ECE8F2] text-[#4A3F4B] rounded-[18px] rounded-tl-none p-4 text-xs shadow-xs flex items-center gap-2">
+              <div className="bg-[var(--canvas)] border border-[var(--line)] text-[#4A3F4B] rounded-[18px] rounded-tl-none p-4 text-xs shadow-xs flex items-center gap-2">
                 <div className="flex gap-1.5">
-                  <div className="w-2 h-2 rounded-full bg-[#7C5DFA] animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <div className="w-2 h-2 rounded-full bg-[#7C5DFA] animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <div className="w-2 h-2 rounded-full bg-[#7C5DFA] animate-bounce" style={{ animationDelay: '300ms' }} />
+                  <div className="w-2 h-2 rounded-full bg-[var(--accent)] animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <div className="w-2 h-2 rounded-full bg-[var(--accent)] animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <div className="w-2 h-2 rounded-full bg-[var(--accent)] animate-bounce" style={{ animationDelay: '300ms' }} />
                 </div>
                 <span className="text-[11px] text-[var(--text-3)] font-mono ml-2">Grounded reasoning in progress...</span>
               </div>
@@ -249,7 +249,7 @@ export const AssistantPage: React.FC = () => {
         </div>
 
         {/* Suggested Quick Prompts */}
-        <div className="px-6 py-2.5 border-t border-[#ECE8F2] bg-[#FDFCFE] overflow-x-auto">
+        <div className="px-6 py-2.5 border-t border-[var(--line)] bg-white overflow-x-auto">
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-mono text-[var(--text-3)] shrink-0 uppercase tracking-wider font-semibold">
               Suggested:
@@ -261,7 +261,7 @@ export const AssistantPage: React.FC = () => {
                   type="button"
                   onClick={() => handleSend(prompt)}
                   disabled={isTyping}
-                  className="px-3 py-1 rounded-lg bg-[#F9F8FC] hover:bg-[#EDE9FE]/50 border border-[#ECE8F2] text-[11px] text-[#4A3F4B] hover:text-[#16131F] transition-all whitespace-nowrap cursor-pointer disabled:opacity-50"
+                  className="px-3 py-1 rounded-lg bg-[var(--canvas)] hover:bg-[var(--heather)]/50 border border-[var(--line)] text-[11px] text-[#4A3F4B] hover:text-[#16131F] transition-all whitespace-nowrap cursor-pointer disabled:opacity-50"
                 >
                   {prompt}
                 </button>
@@ -271,7 +271,7 @@ export const AssistantPage: React.FC = () => {
         </div>
 
         {/* Input Bar */}
-        <div className="p-4 border-t border-[#ECE8F2] bg-[#FDFCFE]">
+        <div className="p-4 border-t border-[var(--line)] bg-white">
           <div className="flex items-center gap-3">
             <input
               type="text"
@@ -280,7 +280,7 @@ export const AssistantPage: React.FC = () => {
               onKeyDown={handleKeyDown}
               disabled={isTyping}
               placeholder="Ask a question about this product's trust signals, reviews, or price corridor..."
-              className="flex-1 bg-[#F9F8FC] border border-[#ECE8F2] rounded-xl px-4 py-3 text-xs sm:text-sm text-[#16131F] placeholder:text-[var(--text-3)] focus:outline-none focus:border-[#7C5DFA] focus:ring-1 focus:ring-[#7C5DFA] transition-all"
+              className="flex-1 bg-[var(--canvas)] border border-[var(--line)] rounded-xl px-4 py-3 text-xs sm:text-sm text-[#16131F] placeholder:text-[var(--text-3)] focus:outline-none focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] transition-all"
             />
             <Button
               variant="primary"
@@ -288,7 +288,7 @@ export const AssistantPage: React.FC = () => {
               onClick={() => handleSend()}
               disabled={!input.trim() || isTyping}
               rightIcon={<Send className="w-3.5 h-3.5" />}
-              className="bg-[#7C5DFA] hover:bg-[#6A49F2] text-white font-semibold"
+              className="bg-[#16131F] hover:bg-[var(--accent)] text-white font-semibold cursor-pointer"
             >
               Send
             </Button>

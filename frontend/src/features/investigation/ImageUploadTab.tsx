@@ -119,8 +119,8 @@ export const ImageUploadTab: React.FC<ImageUploadTabProps> = () => {
           onClick={() => fileInputRef.current?.click()}
           className={`border-2 border-dashed rounded-2xl p-8 sm:p-12 text-center transition-all cursor-pointer select-none ${
             dragActive
-              ? 'border-indigo-500 bg-indigo-950/30 scale-[1.01]'
-              : 'border-white/[0.08] hover:border-indigo-500/50 bg-[#181D2E]/40 hover:bg-[#181D2E]'
+              ? 'border-[var(--accent)] bg-[var(--heather)]/20 scale-[1.01]'
+              : 'border-[var(--line)] hover:border-[var(--accent)] bg-white hover:bg-[var(--canvas)]/30'
           }`}
         >
           <input
@@ -136,15 +136,15 @@ export const ImageUploadTab: React.FC<ImageUploadTabProps> = () => {
           />
 
           <div className="flex flex-col items-center justify-center space-y-4 max-w-sm mx-auto">
-            <div className="h-16 w-16 rounded-2xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center justify-center shadow-inner">
-              <UploadCloud className="h-8 w-8" />
+            <div className="h-16 w-16 rounded-2xl bg-[var(--heather)] text-[var(--accent)] border border-[var(--line)] flex items-center justify-center shadow-inner">
+              <UploadCloud className="h-8 w-8 text-[var(--accent)]" />
             </div>
 
             <div className="space-y-1">
-              <p className="text-sm font-semibold text-slate-100 font-heading">
+              <p className="text-sm font-semibold text-[var(--ink)] font-heading">
                 Drag and drop your product packaging or catalog image
               </p>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-[var(--text-3)]">
                 Supports PNG, JPEG, or WebP up to 10MB
               </p>
             </div>
@@ -157,7 +157,7 @@ export const ImageUploadTab: React.FC<ImageUploadTabProps> = () => {
                 e.stopPropagation();
                 fileInputRef.current?.click();
               }}
-              leftIcon={<ImageIcon className="w-4 h-4" />}
+              leftIcon={<ImageIcon className="w-4 h-4 text-[var(--accent)]" />}
             >
               Browse Files
             </Button>
@@ -165,11 +165,11 @@ export const ImageUploadTab: React.FC<ImageUploadTabProps> = () => {
         </div>
       ) : (
         /* Selected Image Preview Card */
-        <div className="p-6 rounded-2xl bg-[#181D2E] border border-white/[0.08] shadow-soft space-y-5">
+        <div className="p-6 rounded-2xl bg-white border border-[var(--line)] shadow-sm space-y-5">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               {previewUrl && (
-                <div className="h-20 w-20 rounded-xl overflow-hidden bg-[#111522] border border-white/[0.08] shrink-0">
+                <div className="h-20 w-20 rounded-xl overflow-hidden bg-[var(--canvas)] border border-[var(--line)] shrink-0">
                   <img
                     src={previewUrl}
                     alt="Product preview"
@@ -178,13 +178,13 @@ export const ImageUploadTab: React.FC<ImageUploadTabProps> = () => {
                 </div>
               )}
               <div className="space-y-1">
-                <p className="text-sm font-semibold text-slate-100 break-all font-heading">
+                <p className="text-sm font-semibold text-[var(--ink)] break-all font-heading">
                   {selectedFile.name}
                 </p>
-                <div className="flex items-center gap-2 text-xs text-slate-400 font-mono">
+                <div className="flex items-center gap-2 text-xs text-[var(--text-3)] font-mono">
                   <span>{(selectedFile.size / (1024 * 1024)).toFixed(2)} MB</span>
                   <span>•</span>
-                  <span className="uppercase font-medium text-indigo-400">
+                  <span className="uppercase font-medium text-[var(--accent)]">
                     {selectedFile.type.split('/')[1]}
                   </span>
                 </div>
@@ -198,7 +198,7 @@ export const ImageUploadTab: React.FC<ImageUploadTabProps> = () => {
                 onClick={handleClear}
                 disabled={isProcessing}
                 leftIcon={<X className="w-4 h-4" />}
-                className="text-slate-400 hover:text-rose-400"
+                className="text-[var(--text-3)] hover:text-[var(--bad)]"
               >
                 Clear
               </Button>
@@ -217,10 +217,10 @@ export const ImageUploadTab: React.FC<ImageUploadTabProps> = () => {
 
           {/* Error Notice */}
           {errorMessage && (
-            <div className="flex items-start gap-3 p-4 rounded-xl bg-rose-950/20 border border-rose-500/30 text-rose-300 text-xs">
-              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-400" />
+            <div className="flex items-start gap-3 p-4 rounded-xl bg-[var(--bad-bg)] border border-[var(--bad)]/30 text-[var(--bad-ink)] text-xs">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-[var(--bad)]" />
               <div className="space-y-1">
-                <p className="font-semibold text-rose-200">Inspection Failed</p>
+                <p className="font-semibold">Inspection Failed</p>
                 <p>{errorMessage}</p>
               </div>
             </div>
@@ -228,11 +228,11 @@ export const ImageUploadTab: React.FC<ImageUploadTabProps> = () => {
 
           {/* Live Inspection Results Breakdown */}
           {inspectionResult && (
-            <div className="space-y-5 pt-4 border-t border-white/[0.08] animate-fadeIn">
+            <div className="space-y-5 pt-4 border-t border-[var(--line)] animate-fadeIn">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
-                  <ShieldCheck className="w-5 h-5 text-indigo-400" />
-                  <span className="text-sm font-bold text-slate-100 font-heading">
+                  <ShieldCheck className="w-5 h-5 text-[var(--accent)]" />
+                  <span className="text-sm font-bold text-[var(--ink)] font-heading">
                     Live Visual & Packaging Findings
                   </span>
                 </div>
@@ -246,66 +246,66 @@ export const ImageUploadTab: React.FC<ImageUploadTabProps> = () => {
 
               {/* Quality & Resolution Grid */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="p-3.5 rounded-xl bg-[#111522] border border-white/[0.08]">
-                  <p className="text-[11px] font-medium text-slate-400 font-mono">Dimensions</p>
-                  <p className="text-sm font-bold text-slate-100 mt-0.5 font-heading">
+                <div className="p-3.5 rounded-xl bg-[var(--canvas)]/40 border border-[var(--line)]">
+                  <p className="text-[11px] font-medium text-[var(--text-3)] font-mono">Dimensions</p>
+                  <p className="text-sm font-bold text-[var(--ink)] mt-0.5 font-heading">
                     {inspectionResult.image_metadata.width} × {inspectionResult.image_metadata.height}px
                   </p>
                 </div>
-                <div className="p-3.5 rounded-xl bg-[#111522] border border-white/[0.08]">
-                  <p className="text-[11px] font-medium text-slate-400 font-mono">Laplacian Blur Score</p>
-                  <p className="text-sm font-bold text-slate-100 mt-0.5 font-heading">
+                <div className="p-3.5 rounded-xl bg-[var(--canvas)]/40 border border-[var(--line)]">
+                  <p className="text-[11px] font-medium text-[var(--text-3)] font-mono">Laplacian Blur Score</p>
+                  <p className="text-sm font-bold text-[var(--ink)] mt-0.5 font-heading">
                     {inspectionResult.quality_findings.blur_score.toFixed(1)}
                   </p>
                 </div>
-                <div className="p-3.5 rounded-xl bg-[#111522] border border-white/[0.08]">
-                  <p className="text-[11px] font-medium text-slate-400 font-mono">Resolution Tier</p>
-                  <p className="text-sm font-bold text-slate-100 mt-0.5 font-heading">
+                <div className="p-3.5 rounded-xl bg-[var(--canvas)]/40 border border-[var(--line)]">
+                  <p className="text-[11px] font-medium text-[var(--text-3)] font-mono">Resolution Tier</p>
+                  <p className="text-sm font-bold text-[var(--ink)] mt-0.5 font-heading">
                     {inspectionResult.quality_findings.resolution_tier}
                   </p>
                 </div>
-                <div className="p-3.5 rounded-xl bg-[#111522] border border-white/[0.08]">
-                  <p className="text-[11px] font-medium text-slate-400 font-mono">White Background</p>
-                  <p className="text-sm font-bold text-slate-100 mt-0.5 font-heading">
+                <div className="p-3.5 rounded-xl bg-[var(--canvas)]/40 border border-[var(--line)]">
+                  <p className="text-[11px] font-medium text-[var(--text-3)] font-mono">White Background</p>
+                  <p className="text-sm font-bold text-[var(--ink)] mt-0.5 font-heading">
                     {inspectionResult.quality_findings.is_white_background ? 'Detected' : 'Natural/Studio'}
                   </p>
                 </div>
               </div>
 
               {/* OCR Extracted Packaging Fields */}
-              <div className="p-4 rounded-xl bg-[#111522] border border-white/[0.08] space-y-3">
+              <div className="p-4 rounded-xl bg-[var(--canvas)]/30 border border-[var(--line)] space-y-3">
                 <div className="flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-indigo-400" />
-                  <span className="text-xs font-semibold text-slate-200 font-heading">
+                  <FileText className="w-4 h-4 text-[var(--accent)]" />
+                  <span className="text-xs font-semibold text-[var(--ink)] font-heading">
                     Statutory Packaging Identifiers (Physical OCR)
                   </span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
                   <div>
-                    <span className="text-slate-400">Detected MRP: </span>
-                    <span className="font-semibold text-slate-100">
+                    <span className="text-[var(--text-3)]">Detected MRP: </span>
+                    <span className="font-semibold text-[var(--ink)]">
                       {inspectionResult.ocr_findings.extracted_mrp
                         ? `₹${inspectionResult.ocr_findings.extracted_mrp}`
                         : 'Not detected on packaging'}
                     </span>
                   </div>
                   <div>
-                    <span className="text-slate-400">Net Quantity: </span>
-                    <span className="font-semibold text-slate-100">
+                    <span className="text-[var(--text-3)]">Net Quantity: </span>
+                    <span className="font-semibold text-[var(--ink)]">
                       {inspectionResult.ocr_findings.extracted_net_quantity || 'Not detected'}
                     </span>
                   </div>
                   <div>
-                    <span className="text-slate-400">Batch / Mfg Code: </span>
-                    <span className="font-semibold text-slate-100">
+                    <span className="text-[var(--text-3)]">Batch / Mfg Code: </span>
+                    <span className="font-semibold text-[var(--ink)]">
                       {inspectionResult.ocr_findings.extracted_batch_code || 'Not detected'}
                     </span>
                   </div>
                 </div>
                 {inspectionResult.ocr_findings.detected_text && (
-                  <div className="pt-2 border-t border-white/[0.08]">
-                    <p className="text-[11px] font-medium text-slate-400 mb-1 font-mono">Raw Detected Text:</p>
-                    <p className="text-xs text-slate-300 bg-[#0B0D14] p-2.5 rounded-lg border border-white/[0.08] max-h-24 overflow-y-auto font-mono">
+                  <div className="pt-2 border-t border-[var(--line)]">
+                    <p className="text-[11px] font-medium text-[var(--text-3)] mb-1 font-mono">Raw Detected Text:</p>
+                    <p className="text-xs text-[var(--text-2)] bg-white p-2.5 rounded-lg border border-[var(--line)] max-h-24 overflow-y-auto font-mono">
                       {inspectionResult.ocr_findings.detected_text}
                     </p>
                   </div>
@@ -316,8 +316,8 @@ export const ImageUploadTab: React.FC<ImageUploadTabProps> = () => {
               {inspectionResult.warnings.length > 0 && (
                 <div className="space-y-1.5">
                   {inspectionResult.warnings.map((w, idx) => (
-                    <div key={idx} className="flex items-center gap-2 text-xs text-amber-300 bg-amber-950/20 px-3 py-1.5 rounded-lg border border-amber-500/30">
-                      <AlertCircle className="w-3.5 h-3.5 shrink-0 text-amber-400" />
+                    <div key={idx} className="flex items-center gap-2 text-xs text-[var(--warn-ink)] bg-[var(--warn-bg)] px-3 py-1.5 rounded-lg border border-[var(--warn)]/30">
+                      <AlertCircle className="w-3.5 h-3.5 shrink-0 text-[var(--warn)]" />
                       <span>{w}</span>
                     </div>
                   ))}
@@ -325,8 +325,8 @@ export const ImageUploadTab: React.FC<ImageUploadTabProps> = () => {
               )}
 
               {/* Invariant Grounding Notice */}
-              <div className="p-3 rounded-xl bg-indigo-950/20 border border-indigo-500/30 text-[11px] text-indigo-300 leading-relaxed">
-                <strong className="text-indigo-200">Architectural Note:</strong> Image inspection provides isolated visual asset and statutory packaging evidence. In accordance with TrustSphere invariants, visual quality observations alone do not constitute a full multi-modal product trust assessment.
+              <div className="p-3 rounded-xl bg-[var(--heather)]/30 border border-[var(--line)] text-[11px] text-[var(--text-2)] leading-relaxed">
+                <strong className="text-[var(--accent)]">Architectural Note:</strong> Image inspection provides isolated visual asset and statutory packaging evidence. In accordance with TrustSphere invariants, visual quality observations alone do not constitute a full multi-modal product trust assessment.
               </div>
             </div>
           )}

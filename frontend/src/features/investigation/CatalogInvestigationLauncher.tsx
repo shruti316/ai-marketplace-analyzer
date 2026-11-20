@@ -22,14 +22,14 @@ export const CatalogInvestigationLauncher: React.FC = () => {
   });
 
   return (
-    <div className="space-y-4 pt-4 border-t border-white/[0.08]">
+    <div className="space-y-4 pt-4 border-t border-[var(--line)]">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2 font-heading">
-            <Package className="w-4 h-4 text-indigo-400" />
+          <h3 className="text-sm font-bold text-[var(--ink)] flex items-center gap-2 font-heading">
+            <Package className="w-4 h-4 text-[var(--accent)]" />
             <span>Select Product from Verified Marketplace Catalog</span>
           </h3>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-[var(--text-3)]">
             Choose from 3,643 canonical catalog products across Amazon India, Flipkart, and Myntra
           </p>
         </div>
@@ -37,7 +37,7 @@ export const CatalogInvestigationLauncher: React.FC = () => {
         {/* Filter / Search Bar */}
         <div className="flex items-center gap-2">
           <div className="relative">
-            <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-2.5 pointer-events-none" />
+            <Search className="w-3.5 h-3.5 text-[var(--text-3)] absolute left-3 top-2.5 pointer-events-none" />
             <input
               type="text"
               value={search}
@@ -46,7 +46,7 @@ export const CatalogInvestigationLauncher: React.FC = () => {
                 setPage(1);
               }}
               placeholder="Search title, brand..."
-              className="bg-[#181D2E] text-xs text-slate-100 placeholder:text-slate-500 rounded-xl pl-8 pr-3 py-1.5 border border-white/[0.08] focus:border-indigo-500 outline-none transition-all"
+              className="bg-[var(--canvas)]/40 text-xs text-[var(--ink)] placeholder:text-[var(--text-3)] rounded-xl pl-8 pr-3 py-1.5 border border-[var(--line)] focus:border-[var(--accent)] outline-none transition-all"
             />
           </div>
         </div>
@@ -56,10 +56,10 @@ export const CatalogInvestigationLauncher: React.FC = () => {
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="p-4 rounded-xl bg-[#181D2E] border border-white/[0.08] animate-pulse space-y-3">
-              <div className="h-4 bg-[#111522] rounded w-3/4" />
-              <div className="h-3 bg-[#111522] rounded w-1/2" />
-              <div className="h-8 bg-[#111522] rounded w-full" />
+            <div key={i} className="p-4 rounded-xl bg-[var(--canvas)]/40 border border-[var(--line)] animate-pulse space-y-3">
+              <div className="h-4 bg-[var(--canvas)] rounded w-3/4" />
+              <div className="h-3 bg-[var(--canvas)] rounded w-1/2" />
+              <div className="h-8 bg-[var(--canvas)] rounded w-full" />
             </div>
           ))}
         </div>
@@ -68,22 +68,22 @@ export const CatalogInvestigationLauncher: React.FC = () => {
           {productsData.items.map((prod) => (
             <div
               key={prod.canonical_product_id}
-              className="p-4 rounded-xl bg-[#181D2E] border border-white/[0.08] hover:border-indigo-500/50 hover:bg-[#1E2438] transition-all flex flex-col justify-between space-y-3"
+              className="p-4 rounded-xl bg-white border border-[var(--line)] hover:border-[var(--accent)] hover:shadow-xs transition-all flex flex-col justify-between space-y-3"
             >
               <div className="space-y-1.5">
-                <div className="flex items-center justify-between text-[11px] text-slate-400">
-                  <span className="font-semibold text-indigo-400">{prod.brand_name || 'Brand Verified'}</span>
-                  <span className="font-mono text-[10px] bg-[#111522] px-1.5 py-0.5 rounded text-slate-400 border border-white/[0.05]">
+                <div className="flex items-center justify-between text-[11px] text-[var(--text-3)]">
+                  <span className="font-semibold text-[var(--accent)]">{prod.brand_name || 'Brand Verified'}</span>
+                  <span className="font-mono text-[10px] bg-[var(--canvas)]/60 px-1.5 py-0.5 rounded text-[var(--text-3)] border border-[var(--line)]">
                     {prod.category}
                   </span>
                 </div>
-                <h4 className="text-xs font-semibold text-slate-100 line-clamp-2 leading-snug font-heading" title={prod.product_title || prod.title}>
+                <h4 className="text-xs font-semibold text-[var(--ink)] line-clamp-2 leading-snug font-heading" title={prod.product_title || prod.title}>
                   {prod.product_title || prod.title || 'Marketplace Item'}
                 </h4>
               </div>
 
-              <div className="pt-2 border-t border-white/[0.08] flex items-center justify-between">
-                <span className="text-[11px] font-mono text-slate-500 truncate max-w-[120px]">
+              <div className="pt-2 border-t border-[var(--line)] flex items-center justify-between">
+                <span className="text-[11px] font-mono text-[var(--text-3)] truncate max-w-[120px]">
                   {prod.canonical_product_id}
                 </span>
                 <Button
@@ -100,7 +100,7 @@ export const CatalogInvestigationLauncher: React.FC = () => {
           ))}
         </div>
       ) : (
-        <div className="p-8 text-center bg-[#181D2E] rounded-xl border border-white/[0.08] text-xs text-slate-400">
+        <div className="p-8 text-center bg-white rounded-xl border border-[var(--line)] text-xs text-[var(--text-3)]">
           No catalog products matched your search query.
         </div>
       )}
