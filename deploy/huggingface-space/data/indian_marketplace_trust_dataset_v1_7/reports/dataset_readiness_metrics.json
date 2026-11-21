@@ -1,0 +1,98 @@
+{
+  "catalog_summary": {
+    "total_products": 3643,
+    "total_reviews": 3659,
+    "products_with_reviews": 148,
+    "products_without_reviews": 3495,
+    "review_sparsity_rate": 95.94,
+    "total_images": 5034,
+    "usable_images": 4708,
+    "total_prices": 3667
+  },
+  "annotation_inventory": {
+    "review_gold_tier_2": 100,
+    "review_silver_tier_3": 600,
+    "review_pending_tasks": 500,
+    "listing_heuristic_annotations": 250,
+    "image_heuristic_annotations": 250,
+    "physical_ocr_cohort": 100
+  },
+  "eligibility_matrix": {
+    "task_1_review_deception": {
+      "task_name": "Review Authenticity & Deception Detection",
+      "modality": "NLP / Text + Tabular",
+      "ground_truth_samples": {
+        "gold_human": 100,
+        "silver_heuristic": 600,
+        "pending_queue": 500
+      },
+      "eligibility_status": "SUPERVISED_BENCHMARK_VIABLE",
+      "training_regime": "Cross-Validation on Gold (N=100); Out-of-Domain Transfer from Silver (N=600)",
+      "caveats": "Small gold positive support (N=17); require completion of 500 pending tasks for full production training."
+    },
+    "task_2_pricing_anomalies": {
+      "task_name": "Pricing Anomaly & Excessive Discount Detection",
+      "modality": "Numerical / Econometric",
+      "ground_truth_samples": {
+        "gold_human": 0,
+        "statistical_corridors": 444,
+        "robust_iqr_outliers": 353
+      },
+      "eligibility_status": "STATISTICAL_UNSUPERVISED_ONLY",
+      "training_regime": "Robust Median & Interquartile Range (IQR) Corridors by Subcategory & Brand",
+      "caveats": "Zero external gold fraud labels exist; statistical anomalies must not be treated as confirmed legal fraud."
+    },
+    "task_3_image_reuse_and_tampering": {
+      "task_name": "Image Similarity, Perceptual Hashing & Cross-Listing Reuse",
+      "modality": "Computer Vision / ResNet-18",
+      "ground_truth_samples": {
+        "gold_human": 0,
+        "heuristic_pairs": 250,
+        "duplicate_hash_clusters": 323
+      },
+      "eligibility_status": "SELF_SUPERVISED_AND_DETERMINISTIC",
+      "training_regime": "Frozen ResNet-18 (512-d) + Perceptual dHash (hamming distance <= 10)",
+      "caveats": "Catalog reuse is often legitimate manufacturer stock imagery; requires multi-modal corroboration to confirm fraud."
+    },
+    "task_4_packaging_ocr_brand_alignment": {
+      "task_name": "Physical Packaging OCR & Brand Token Verification",
+      "modality": "Optical Character Recognition / WinRT",
+      "ground_truth_samples": {
+        "physical_ocr_executed": 100,
+        "successful_extractions": 74,
+        "brand_verified": 32
+      },
+      "eligibility_status": "DETERMINISTIC_EXTRACTION_AND_RULE_VERIFIED",
+      "training_regime": "WinRT Native OCR + Bounding Box Geometry + Entity Subgraph Matching",
+      "caveats": "Non-cosmetic or textless products legitimately lack typography (26% zero text rate)."
+    },
+    "task_5_seller_identity_trust": {
+      "task_name": "Seller Identity Governance & Platform Pool Separation",
+      "modality": "Graph / Entity Resolution",
+      "ground_truth_samples": {
+        "individual_sellers": 0,
+        "platform_aggregate_pools": 4
+      },
+      "eligibility_status": "GOVERNANCE_RULE_BASED_ONLY",
+      "training_regime": "Platform Aggregate Partitioning & Zero-Individual-Reputation Guardrail",
+      "caveats": "Zero individual merchant IDs exist; supervised merchant credit scoring is strictly ineligible without individual KYC."
+    },
+    "task_6_multimodal_product_fraud": {
+      "task_name": "Overall Product Counterfeit / Fraud Verdict",
+      "modality": "Multimodal Fusion (NLP + CV + Pricing + Graph + OCR)",
+      "ground_truth_samples": {
+        "gold_human": 0,
+        "multimodal_corroborated_flags": 154
+      },
+      "eligibility_status": "FUSED_BAYESIAN_EVIDENCE_ENGINE",
+      "training_regime": "Corroboration Logic across independent evidence modules (v1.7 Central Engine)",
+      "caveats": "Supervised end-to-end binary classifier cannot be defensibly trained without real legal seizure/settlement labels."
+    }
+  },
+  "explicit_annotation_requirements_for_supervised_advancement": {
+    "workstream_A_review_queue": "Complete double-blind adjudication of the 500 pending reviews (2 annotators + 1 lead, ~25 human hours).",
+    "workstream_B_vision_language": "Annotate 250 image-title pairs for genuine physical mismatch vs promotional styling.",
+    "workstream_C_seller_kyc": "Collect GSTIN/trade license KYC on 100 merchant accounts to transition from platform aggregate pools to individual seller scoring.",
+    "workstream_D_legal_counterfeit": "Partner with brand rights-holders or e-commerce legal teams to obtain 50-100 verified counterfeit takedown notices."
+  }
+}
