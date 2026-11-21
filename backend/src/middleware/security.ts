@@ -52,18 +52,22 @@ export function buildCorsMiddleware(): (req: Request, res: Response, next: NextF
       }
 
       const allowed = getAllowedOrigins();
+      // Credentialed requests must never match a pure wildcard '*'
       const isAllowed =
-        allowed.includes(origin) ||
-        allowed.includes('*') ||
+        allowed.filter((p) => p !== '*').includes(origin) ||
         allowed.some((pattern) => {
+          if (pattern === '*') return false;
           if (pattern.startsWith('https://*.') || pattern.startsWith('http://*.')) {
             const proto = pattern.startsWith('https://') ? 'https://' : 'http://';
             const suffix = pattern.replace(/^https?:\/\/\*\./, '');
-            return origin.startsWith(proto) && origin.slice(proto.length).endsWith(suffix);
+            if (!origin.startsWith(proto)) return false;
+            const host = origin.slice(proto.length);
+            return host === suffix || host.endsWith('.' + suffix);
           }
           if (pattern.startsWith('*.')) {
             const suffix = pattern.slice(2);
-            return origin.replace(/^https?:\/\//, '').endsWith(suffix);
+            const host = origin.replace(/^https?:\/\//, '');
+            return host === suffix || host.endsWith('.' + suffix);
           }
           return false;
         });

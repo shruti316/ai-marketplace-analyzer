@@ -333,6 +333,27 @@ class PhysicalOCREngine:
             zero_penalty_applied=True,
         )
 
+    def recognize_pil_text(self, pil_img: Image.Image, preprocess: bool = True) -> str:
+        """Extracts plain text from a PIL image across Windows (winocr), Linux (pytesseract/easyocr), or graceful fallback."""
+        if not self._winocr_available and not self._tesseract_available and not self._easyocr_available:
+            return ""
+
+        try:
+            target_img = PackagingImagePreprocessor.enhance_for_ocr(pil_img) if preprocess else pil_img
+            if self._winocr_available:
+                res = self._winocr.recognize_pil_sync(target_img, "en")
+                return str(res.get("text", "")).strip() if isinstance(res, dict) else str(res).strip()
+            elif self._tesseract_available:
+                return self._pytesseract.image_to_string(target_img).strip()
+            elif self._easyocr_available:
+                if self._easyocr_reader is None:
+                    self._easyocr_reader = self._easyocr.Reader(["en"], gpu=False, verbose=False)
+                res = self._easyocr_reader.readtext(np.array(target_img), detail=0)
+                return " ".join([str(t) for t in res]).strip()
+        except Exception as e:
+            logger.warning(f"PIL OCR extraction encountered non-fatal error: {e}")
+        return ""
+
     def extract_text_from_image(
         self, image_path: Path, canonical_brand: Optional[str] = None, preprocess: bool = True
     ) -> Dict[str, Any]:

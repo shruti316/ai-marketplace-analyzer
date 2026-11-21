@@ -15,6 +15,7 @@ import os
 from pathlib import Path
 import re
 import tempfile
+import threading
 import time
 from typing import Any, Dict, List, Optional, Tuple
 import unicodedata
@@ -25,9 +26,55 @@ from PIL import Image, ImageOps, ImageFilter
 os.environ["MPLCONFIGDIR"] = tempfile.gettempdir()
 
 from src.cv.image_quality import ImageQualityAuditor, ImageQualityMetrics
-from src.cv.ocr_engine import PackagingIdentifierExtractor, PackagingBrandMatcher
+from src.cv.ocr_engine import PhysicalOCREngine, PackagingIdentifierExtractor, PackagingBrandMatcher
 
 logger = logging.getLogger("VisualInspector")
+
+# Module-level cached CLIP singleton
+_CLIP_MODEL = None
+_CLIP_PROCESSOR = None
+_CLIP_DEVICE = None
+_CLIP_INIT_LOCK = threading.Lock()
+_CLIP_LOADED = False
+_CLIP_LOAD_FAILED = False
+
+
+def get_shared_clip() -> Tuple[Any, Any, str]:
+    """Provides a thread-safe cached singleton of the HuggingFace CLIP model and processor."""
+    global _CLIP_MODEL, _CLIP_PROCESSOR, _CLIP_DEVICE, _CLIP_LOADED, _CLIP_LOAD_FAILED
+    if _CLIP_LOADED:
+        return _CLIP_MODEL, _CLIP_PROCESSOR, _CLIP_DEVICE
+    if _CLIP_LOAD_FAILED:
+        return None, None, "cpu"
+
+    with _CLIP_INIT_LOCK:
+        if _CLIP_LOADED:
+            return _CLIP_MODEL, _CLIP_PROCESSOR, _CLIP_DEVICE
+        if _CLIP_LOAD_FAILED:
+            return None, None, "cpu"
+        try:
+            from transformers import CLIPModel, CLIPProcessor
+            import torch
+
+            model_id = "openai/clip-vit-base-patch32"
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+            logger.info("Initializing cached singleton CLIP model (%s) on %s...", model_id, device)
+            processor = CLIPProcessor.from_pretrained(model_id)
+            model = CLIPModel.from_pretrained(model_id).to(device)
+            model.eval()
+
+            _CLIP_PROCESSOR = processor
+            _CLIP_MODEL = model
+            _CLIP_DEVICE = device
+            _CLIP_LOADED = True
+            logger.info("Cached singleton CLIP model successfully loaded into memory.")
+            return _CLIP_MODEL, _CLIP_PROCESSOR, _CLIP_DEVICE
+        except Exception as e:
+            logger.warning(
+                "CLIP loading deferred or unavailable: %s. Using transparent deterministic proxy.", e
+            )
+            _CLIP_LOAD_FAILED = True
+            return None, None, "cpu"
 
 # Zero-Shot Category Reference Prompts
 CATEGORY_PROMPTS = {
@@ -60,6 +107,9 @@ class ZeroShotVisionDetection:
     title_image_consistent: bool
     consistency_score: float
     consistency_note: str
+    model_used: str = "openai/clip-vit-base-patch32"
+    is_fallback: bool = False
+    inference_device: str = "cpu"
 
 
 @dataclass
@@ -79,6 +129,8 @@ class CLIPAlignmentResult:
     is_discordant: bool
     confidence: float
     discrepancy_explanation: Optional[str]
+    model_used: str = "openai/clip-vit-base-patch32"
+    is_fallback: bool = False
 
 
 @dataclass
@@ -99,28 +151,21 @@ class UpgradedVisualInspector:
 
     def __init__(self, use_clip: bool = True):
         self.quality_auditor = ImageQualityAuditor()
+        self.ocr_engine = PhysicalOCREngine()
         self.use_clip = use_clip
-        self.clip_model = None
-        self.clip_processor = None
-        self.clip_ready = False
         if use_clip:
-            self._init_clip()
+            self.clip_model, self.clip_processor, self.clip_device = get_shared_clip()
+            self.clip_ready = self.clip_model is not None and self.clip_processor is not None
+        else:
+            self.clip_model = None
+            self.clip_processor = None
+            self.clip_device = "cpu"
+            self.clip_ready = False
 
     def _init_clip(self):
-        try:
-            from transformers import CLIPModel, CLIPProcessor
-            import torch
-            model_id = "openai/clip-vit-base-patch32"
-            device = "cuda" if torch.cuda.is_available() else "cpu"
-            self.clip_processor = CLIPProcessor.from_pretrained(model_id)
-            self.clip_model = CLIPModel.from_pretrained(model_id).to(device)
-            self.clip_model.eval()
-            self.clip_device = device
-            self.clip_ready = True
-            logger.info("CLIP model loaded successfully for zero-shot visual alignment.")
-        except Exception as e:
-            logger.warning(f"CLIP loading deferred or unavailable: {e}. Using deterministic semantic proxy.")
-            self.clip_ready = False
+        """Backwards compatible hook delegating to cached singleton."""
+        self.clip_model, self.clip_processor, self.clip_device = get_shared_clip()
+        self.clip_ready = self.clip_model is not None and self.clip_processor is not None
 
     def inspect_product_image(
         self,
@@ -271,7 +316,10 @@ class UpgradedVisualInspector:
                     is_brand_confident=is_brand_confident,
                     title_image_consistent=is_consistent,
                     consistency_score=round(sim, 3),
-                    consistency_note=note
+                    consistency_note=note,
+                    model_used="openai/clip-vit-base-patch32",
+                    is_fallback=False,
+                    inference_device=self.clip_device
                 )
             except Exception as e:
                 logger.warning(f"Zero-shot classification error: {e}")
@@ -287,22 +335,19 @@ class UpgradedVisualInspector:
             is_brand_confident=claimed_brand != "Unknown",
             title_image_consistent=True,
             consistency_score=0.22,
-            consistency_note="Visual features verified via catalog baseline."
+            consistency_note="Visual features verified via catalog baseline.",
+            model_used="heuristic_catalog_proxy",
+            is_fallback=True,
+            inference_device="none"
         )
 
     def _run_ocr(self, img: Image.Image) -> str:
-        """Extracts text using WinOCR if available."""
+        """Extracts text using cross-platform PhysicalOCREngine (winocr on Windows, pytesseract/easyocr on Linux, or graceful zero-penalty)."""
         try:
-            import winocr
-            if hasattr(winocr, "recognize_pil"):
-                res = winocr.recognize_pil(img)
-                return str(res.get("text", "")) if isinstance(res, dict) else str(res)
-            elif hasattr(winocr, "recognize_sync"):
-                res = winocr.recognize_sync(img)
-                return str(res.get("text", "")) if isinstance(res, dict) else str(res)
-        except Exception:
-            pass
-        return ""
+            return self.ocr_engine.recognize_pil_text(img)
+        except Exception as e:
+            logger.debug(f"OCR execution bypass or error: {e}")
+            return ""
 
     def _audit_compliance(
         self,
@@ -380,7 +425,9 @@ class UpgradedVisualInspector:
                     alignment_status=status,
                     is_discordant=is_discordant,
                     confidence=round(float(max(probs)), 2),
-                    discrepancy_explanation=expl
+                    discrepancy_explanation=expl,
+                    model_used="openai/clip-vit-base-patch32",
+                    is_fallback=False
                 )
             except Exception as e:
                 logger.warning(f"CLIP alignment calculation error: {e}")
@@ -390,7 +437,9 @@ class UpgradedVisualInspector:
             alignment_status="MODERATE_ALIGNMENT",
             is_discordant=False,
             confidence=0.75,
-            discrepancy_explanation=None
+            discrepancy_explanation=None,
+            model_used="heuristic_catalog_proxy",
+            is_fallback=True
         )
 
     def _build_empty_report(self, path: str, reason: str) -> VisualInspectionReport:
@@ -405,7 +454,10 @@ class UpgradedVisualInspector:
                 is_brand_confident=False,
                 title_image_consistent=True,
                 consistency_score=0.0,
-                consistency_note=reason
+                consistency_note=reason,
+                model_used="none",
+                is_fallback=True,
+                inference_device="none"
             ),
             ocr_raw_text="",
             compliance_finding=VisualComplianceFinding(
@@ -421,7 +473,9 @@ class UpgradedVisualInspector:
                 alignment_status="DISCORDANT_MISMATCH",
                 is_discordant=True,
                 confidence=0.5,
-                discrepancy_explanation=reason
+                discrepancy_explanation=reason,
+                model_used="none",
+                is_fallback=True
             ),
             visual_risk_tier="HIGH",
             visual_defects=[reason],

@@ -4,7 +4,7 @@ import { AddressInfo } from 'node:net';
 import express, { Request, Response } from 'express';
 import { z } from 'zod';
 import { createApp } from '../src/app';
-import { envSchema, getAllowedOrigins, resetEnvCache } from '../src/config/env';
+import { envSchema, getAllowedOrigins, resetEnvCache, DEFAULT_DEV_JWT_SECRET } from '../src/config/env';
 import {
   getApplicationPool,
   closeApplicationPool,
@@ -92,6 +92,32 @@ async function withTestServer(
   const invalidMissingUser = { ...baseValid, DB_USER: '' };
   const parsedInvalid = envSchema.safeParse(invalidMissingUser);
   assert.strictEqual(parsedInvalid.success, false, 'Missing DB_USER must fail validation');
+
+  // Case D: Production must reject default development JWT secret
+  const prodWithExplicitDefault = { ...baseValid, NODE_ENV: 'production', JWT_SECRET: DEFAULT_DEV_JWT_SECRET };
+  assert.strictEqual(envSchema.safeParse(prodWithExplicitDefault).success, false, 'Production must reject default dev JWT secret');
+
+  const { JWT_SECRET: _omit, ...baseWithoutSecret } = baseValid;
+  const prodWithOmittedSecret = { ...baseWithoutSecret, NODE_ENV: 'production' };
+  assert.strictEqual(envSchema.safeParse(prodWithOmittedSecret).success, false, 'Production must reject omitted JWT secret defaulting to dev secret');
+
+  // Case E: Production must reject short JWT secret (< 32 chars)
+  const prodWithShortSecret = { ...baseValid, NODE_ENV: 'production', JWT_SECRET: 'short-secret-under-32-chars' };
+  const parsedProdShort = envSchema.safeParse(prodWithShortSecret);
+  assert.strictEqual(parsedProdShort.success, false, 'Production must reject short JWT secret');
+
+  // Case F: Production must accept strong 32+ character JWT secret
+  const prodWithStrongSecret = { ...baseValid, NODE_ENV: 'production', JWT_SECRET: 'production-super-secure-secret-key-at-least-32-chars' };
+  const parsedProdStrong = envSchema.safeParse(prodWithStrongSecret);
+  assert.strictEqual(parsedProdStrong.success, true, 'Production must accept strong 32+ character JWT secret');
+
+  // Case G: Dynamic Render PORT environment variable parsing
+  const renderPortConfig = { ...baseValid, PORT: '10000' };
+  const parsedRenderPort = envSchema.safeParse(renderPortConfig);
+  assert.strictEqual(parsedRenderPort.success, true, 'PORT must parse successfully');
+  if (parsedRenderPort.success) {
+    assert.strictEqual(parsedRenderPort.data.PORT, 10000, 'PORT must coerce to 10000 integer');
+  }
 
   console.log('PASS: Environment validation and CORS parsing verified.');
 

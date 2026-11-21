@@ -12,18 +12,22 @@ let server: Server | null = null;
 
 /**
  * Starts the HTTP server listener on the configured port.
+ * Evaluates process.env.PORT first (injected dynamically on Render),
+ * falling back to NODE_BACKEND_PORT from configuration, and finally 5000.
  */
 export function startServer(): Server {
   let port = 5000;
   try {
     const env = getEnv();
-    port = env.NODE_BACKEND_PORT;
+    const renderPort = process.env.PORT ? parseInt(process.env.PORT, 10) : undefined;
+    port = renderPort && !isNaN(renderPort) ? renderPort : (env.PORT || env.NODE_BACKEND_PORT || 5000);
   } catch {
-    port = 5000;
+    const rawPort = process.env.PORT || process.env.NODE_BACKEND_PORT;
+    port = rawPort ? parseInt(rawPort, 10) || 5000 : 5000;
   }
 
-  const runningServer = app.listen(port, () => {
-    console.log(`[INFO] Marketplace Trust Intelligence Backend listening on port ${port}`);
+  const runningServer = app.listen(port, '0.0.0.0', () => {
+    console.log(`[INFO] Marketplace Trust Intelligence Backend listening on port ${port} (0.0.0.0)`);
   });
 
   return runningServer;

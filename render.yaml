@@ -1,10 +1,26 @@
-# Render Blueprint configuration for AI Marketplace Analyzer Backend
-# Deploys the Node/Express backend service on Render
+# Render Blueprint configuration for AI Marketplace Analyzer Services
+# Deploys both the Python AI Engine (Docker runtime with Tesseract OCR) and Node.js/Express Backend
 services:
+  - type: web
+    name: ai-marketplace-python
+    env: docker
+    dockerfilePath: ./Dockerfile
+    plan: standard
+    region: oregon
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: PORT
+        value: 8000
+      - key: SERVICE_HOST
+        value: "0.0.0.0"
+
   - type: web
     name: ai-marketplace-backend
     runtime: node
     plan: free
+    region: oregon
     rootDir: backend
     buildCommand: npm install && npm run build
     startCommand: npm run start
@@ -12,12 +28,12 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: NODE_BACKEND_PORT
-        value: 10000
       - key: CORS_ALLOWED_ORIGINS
         value: "https://*.vercel.app,http://localhost:3000"
       - key: JWT_SECRET
         generateValue: true
+      - key: PYTHON_SERVICE_URL
+        value: http://ai-marketplace-python:8000
       - key: DB_HOST
         sync: false
       - key: DB_PORT
@@ -28,3 +44,5 @@ services:
         sync: false
       - key: DB_NAME
         sync: false
+      - key: DB_SSL
+        value: "true"

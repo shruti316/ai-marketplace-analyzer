@@ -335,8 +335,9 @@ class TrustIntelligenceRestServer:
         dataset_dir: Optional[Path] = None,
         bind_socket: bool = True,
     ):
-        self.host = host if host is not None else os.environ.get("SERVICE_HOST", "127.0.0.1")
-        self.port = int(port if port is not None else os.environ.get("SERVICE_PORT", "8000"))
+        resolved_host, resolved_port = resolve_server_bind_address(host, port)
+        self.host = resolved_host
+        self.port = resolved_port
         self.dispatcher = TrustIntelligenceDispatcher(dataset_dir)
         TrustIntelligenceRequestHandler.dispatcher = self.dispatcher
         self.httpd: Optional[HTTPServer] = None
@@ -362,21 +363,38 @@ class TrustIntelligenceRestServer:
             logger.info("REST API Server stopped.")
 
 
+def resolve_server_bind_address(host: Optional[str] = None, port: Optional[int] = None) -> Tuple[str, int]:
+    """Resolves host and port for the REST server.
+    
+    Precedence:
+    - Host: explicitly passed argument > os.environ["SERVICE_HOST"] > "0.0.0.0"
+    - Port: explicitly passed argument > os.environ["PORT"] > os.environ["SERVICE_PORT"] > 8000
+    """
+    resolved_host = host if host is not None else os.environ.get("SERVICE_HOST", "0.0.0.0")
+    if port is not None:
+        resolved_port = int(port)
+    elif "PORT" in os.environ and os.environ["PORT"].strip():
+        resolved_port = int(os.environ["PORT"].strip())
+    elif "SERVICE_PORT" in os.environ and os.environ["SERVICE_PORT"].strip():
+        resolved_port = int(os.environ["SERVICE_PORT"].strip())
+    else:
+        resolved_port = 8000
+    return resolved_host, resolved_port
+
+
 def create_app_server(
     host: Optional[str] = None,
     port: Optional[int] = None,
     bind_socket: bool = True,
 ) -> TrustIntelligenceRestServer:
-    resolved_host = host if host is not None else os.environ.get("SERVICE_HOST", "127.0.0.1")
-    resolved_port = int(port if port is not None else os.environ.get("SERVICE_PORT", "8000"))
+    resolved_host, resolved_port = resolve_server_bind_address(host, port)
     return TrustIntelligenceRestServer(host=resolved_host, port=resolved_port, bind_socket=bind_socket)
 
 
 if __name__ == "__main__":
-    host = os.environ.get("SERVICE_HOST", "127.0.0.1")
-    port = int(os.environ.get("SERVICE_PORT", "8000"))
-    server = create_app_server(host=host, port=port, bind_socket=True)
-    print(f"Serving Trust Intelligence REST API on http://{host}:{port}. Press Ctrl+C to stop.")
+    resolved_host, resolved_port = resolve_server_bind_address()
+    server = create_app_server(host=resolved_host, port=resolved_port, bind_socket=True)
+    print(f"Serving Trust Intelligence REST API on http://{resolved_host}:{resolved_port}. Press Ctrl+C to stop.")
     try:
         server.httpd.serve_forever()
     except KeyboardInterrupt:

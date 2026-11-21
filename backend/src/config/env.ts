@@ -57,7 +57,10 @@ loadEnv();
  * Strict Zod validation schema for backend environment variables.
  * Enforces database connection parameters, server port, and external service URLs.
  */
+export const DEFAULT_DEV_JWT_SECRET = 'dev-marketplace-secret-change-in-production-min-32-chars';
+
 export const envSchema = z.object({
+  PORT: z.coerce.number().int().min(1).max(65535).optional(),
   DB_HOST: z.string().min(1, 'DB_HOST is required (e.g., 127.0.0.1)'),
   DB_PORT: z.coerce.number().int().min(1).max(65535).default(3306),
   DB_USER: z.string().min(1, 'DB_USER is required'),
@@ -71,7 +74,7 @@ export const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PYTHON_SERVICE_URL: z.string().url().default('http://127.0.0.1:8000'),
   CORS_ALLOWED_ORIGINS: z.string().default('http://localhost:3000,http://127.0.0.1:3000'),
-  JWT_SECRET: z.string().min(16).default('dev-marketplace-secret-change-in-production-min-32-chars'),
+  JWT_SECRET: z.string().min(16).default(DEFAULT_DEV_JWT_SECRET),
   // Proxy Trust Configuration (for secure IP extraction behind reverse proxies)
   TRUST_PROXY: z.union([z.boolean(), z.number(), z.string()]).default(false),
   // Rate Limiting Parameters (requests per window)
@@ -82,6 +85,22 @@ export const envSchema = z.object({
   PYTHON_FAST_TIMEOUT_MS: z.coerce.number().int().min(500).default(5000), // 5s for fast queries
   PYTHON_STANDARD_TIMEOUT_MS: z.coerce.number().int().min(1000).default(10000), // 10s for reports & evidence
   PYTHON_INFERENCE_TIMEOUT_MS: z.coerce.number().int().min(5000).default(45000) // 45s for neural feature extraction
+}).superRefine((data, ctx) => {
+  if (data.NODE_ENV === 'production') {
+    if (!data.JWT_SECRET || data.JWT_SECRET === DEFAULT_DEV_JWT_SECRET) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['JWT_SECRET'],
+        message: 'Production deployment must not use the default development JWT_SECRET. Please configure a unique, secure JWT_SECRET in production.'
+      });
+    } else if (data.JWT_SECRET.length < 32) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['JWT_SECRET'],
+        message: 'Production JWT_SECRET must be at least 32 characters in length.'
+      });
+    }
+  }
 });
 
 export type Env = z.infer<typeof envSchema>;

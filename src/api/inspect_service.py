@@ -201,7 +201,10 @@ class ImageInspectionService:
                     "is_brand_confident": canonical_brand is not None,
                     "title_image_consistent": True,
                     "consistency_score": 0.22,
-                    "consistency_note": "Visual appearance consistent with product listing."
+                    "consistency_note": "Visual appearance consistent with product listing.",
+                    "model_used": "heuristic_catalog_proxy",
+                    "is_fallback": True,
+                    "inference_device": "none"
                 }
 
             # 4. Physical Packaging OCR & Identifier Extraction

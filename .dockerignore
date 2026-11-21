@@ -1,0 +1,50 @@
+# ==============================================================================
+# Docker Build Context Exclusions for TrustSphere Python AI Service
+# Optimizes build context transfer to under 35 MB by excluding dev/build artifacts
+# while strictly preserving runtime Parquet datasets and joblib model weights.
+# ==============================================================================
+
+# Version control and editor metadata
+.git/
+.github/
+.vscode/
+.idea/
+
+# Virtual environments and compiled Python bytecode
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Testing, coverage, and temporary scratch files
+.pytest_cache/
+.coverage
+htmlcov/
+scratch/
+*.log
+*.tmp
+*.bak_*
+
+# Node.js backend and frontend source directories
+node_modules/
+backend/
+frontend/
+AI_Based_Marketplace_Analyzer_Source_Code/
+*.zip
+
+# Non-code presentation and publication documents
+*.pptx
+*.docx
+*.pdf
+*.html
+*.png
+*.jpg
+*.jpeg
+*.webp
+
+# Large raw scraped datasets and offline training caches
+data/*
+!data/indian_marketplace_trust_dataset_v1_7/

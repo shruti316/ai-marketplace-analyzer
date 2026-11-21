@@ -9,7 +9,7 @@ function setRefreshTokenCookie(res: Response, refreshToken: string, rememberMe =
   res.cookie(REFRESH_COOKIE_NAME, refreshToken, {
     httpOnly: true,
     secure: isProduction,
-    sameSite: 'lax',
+    sameSite: isProduction ? 'none' : 'lax',
     path: '/api/v1/auth',
     maxAge: (rememberMe ? 30 : 1) * 24 * 60 * 60 * 1000
   });
@@ -20,7 +20,7 @@ function clearRefreshTokenCookie(res: Response): void {
   res.clearCookie(REFRESH_COOKIE_NAME, {
     httpOnly: true,
     secure: isProduction,
-    sameSite: 'lax',
+    sameSite: isProduction ? 'none' : 'lax',
     path: '/api/v1/auth'
   });
 }
