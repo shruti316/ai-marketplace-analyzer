@@ -103,13 +103,17 @@ export class HfGradioClient {
 
     this.connectingPromise = (async () => {
       try {
+        console.log(`[HfGradioClient] Connecting to Space: ${spaceId}...`);
         const client = await Client.connect(spaceId, {
+          token: hfToken as any,
           hf_token: hfToken as any
         });
+        console.log(`[HfGradioClient] Connected successfully to Space: ${spaceId}`);
         this.clientInstance = client;
         this.failureCount = 0;
         return client;
       } catch (err: any) {
+        console.warn(`[HfGradioClient] Connection failed to ${spaceId}:`, err.message);
         this.recordFailure();
         this.clientInstance = null;
         throw new ServiceUnavailableError(
@@ -257,7 +261,9 @@ export class HfGradioClient {
     let ocrData: any[] = [];
 
     try {
-      // 1. ZeroGPU Product Image Analysis (Forward pass, timeout: 45s)
+      // 1. ZeroGPU Product Image Analysis (Forward pass, timeout: 60s)
+      console.log(`[HfGradioClient] [1/2] Initiating ZeroGPU CLIP visual forward pass (timeout: 60s) for "${cleanTitle}"...`);
+      const vStart = Date.now();
       const visionRes: any = await Promise.race([
         client.predict('/product_image_analysis', {
           image: imageBlob,
@@ -266,9 +272,11 @@ export class HfGradioClient {
           claimed_mrp: claimedMrp ? Number(claimedMrp) : 1499.0
         }),
         new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('ZeroGPU CLIP image inference timed out (45s limit)')), 45000)
+          setTimeout(() => reject(new Error('ZeroGPU CLIP image inference timed out (60s limit)')), 60000)
         )
       ]);
+      const vElapsed = Date.now() - vStart;
+      console.log(`[HfGradioClient] [1/2] ZeroGPU vision forward pass completed in ${vElapsed}ms.`);
       visionData = visionRes.data || [];
     } catch (visionErr: any) {
       // Do NOT retry expensive GPU inference repeatedly
@@ -278,6 +286,8 @@ export class HfGradioClient {
 
     try {
       // 2. CPU Packaging OCR Analysis (Timeout: 20s)
+      console.log(`[HfGradioClient] [2/2] Initiating CPU packaging OCR analysis (timeout: 20s)...`);
+      const oStart = Date.now();
       const ocrRes: any = await Promise.race([
         client.predict('/ocr_analysis', {
           packaging_image: imageBlob,
@@ -288,6 +298,8 @@ export class HfGradioClient {
           setTimeout(() => reject(new Error('Packaging OCR inference timed out (20s limit)')), 20000)
         )
       ]);
+      const oElapsed = Date.now() - oStart;
+      console.log(`[HfGradioClient] [2/2] CPU packaging OCR analysis completed in ${oElapsed}ms.`);
       ocrData = ocrRes.data || [];
       this.recordSuccess();
     } catch (ocrErr: any) {
