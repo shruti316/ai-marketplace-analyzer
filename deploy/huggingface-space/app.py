@@ -91,6 +91,13 @@ def analyze_product_image(
             {}
         )
 
+    # Abuse protection: cap resolution to 2048x2048 to prevent memory exhaustion
+    if image.width > 2048 or image.height > 2048:
+        image = image.copy()
+        image.thumbnail((2048, 2048), Image.Resampling.LANCZOS)
+    listing_title = (listing_title or "Product")[:300]
+    claimed_brand = (claimed_brand or "Unknown")[:100]
+
     inspector = get_visual_inspector()
     report = inspector.inspect_product_image(
         image_input=image,
@@ -152,6 +159,12 @@ def analyze_packaging_ocr(
             "No text extracted.",
             "N/A"
         )
+
+    # Abuse protection: cap resolution to 2048x2048 to prevent memory exhaustion
+    if packaging_image.width > 2048 or packaging_image.height > 2048:
+        packaging_image = packaging_image.copy()
+        packaging_image.thumbnail((2048, 2048), Image.Resampling.LANCZOS)
+    claimed_brand = (claimed_brand or "")[:100]
 
     ocr = get_ocr_engine()
     raw_text = ocr.recognize_pil_text(packaging_image)
@@ -437,6 +450,9 @@ def create_app() -> gr.Blocks:
                     inputs=[],
                     outputs=[out_health_json]
                 )
+
+        # Enable queue for request buffering, concurrency throttling, and abuse protection
+        demo.queue(max_size=20, default_concurrency_limit=4)
 
     return demo
 
