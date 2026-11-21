@@ -6,6 +6,7 @@ import { sellerTrustService, SellerTrustAssessment } from './seller_trust_servic
 import { competitorDiscoveryService, CompetitorComparisonSnapshot, ExactMarketplaceOffer, CompetingProductAlternative } from './competitor_discovery_service';
 import { buyingSuitabilityService, BuyingSuitabilityAssessment } from './buying_suitability_service';
 import { trustClient } from '../trust/trust.client';
+import { hfGradioClient } from '../trust/hf_gradio.client';
 import { investigationRepository } from '../investigation_history/investigation_history.repository';
 import { PipelineInvestigationInput } from './investigate.schemas';
 import { ExtractedProductData } from './marketplace_adapters';
@@ -404,11 +405,22 @@ export class InvestigationOrchestrator {
       }
     } else {
       try {
-        const cvResponse: any = await trustClient.post('/api/v1/inspect/image', {
-          image_base64: imageBase64ToInspect,
-          canonical_brand: brand,
-          product_title: title,
-        }, 20000);
+        let cvResponse: any = null;
+        try {
+          cvResponse = await hfGradioClient.inspectImage(
+            imageBase64ToInspect!,
+            title || 'Product',
+            brand || 'Generic',
+            price || undefined
+          );
+        } catch (hfErr: any) {
+          console.warn('[InvestigationOrchestrator] Hugging Face ZeroGPU inspection deferred to secondary:', hfErr.message);
+          cvResponse = await trustClient.post('/api/v1/inspect/image', {
+            image_base64: imageBase64ToInspect,
+            canonical_brand: brand,
+            product_title: title,
+          }, 20000);
+        }
 
         if (cvResponse && cvResponse.quality_findings) {
           const q = cvResponse.quality_findings;

@@ -1,4 +1,5 @@
 import { trustClient } from './trust.client';
+import { hfGradioClient } from './hf_gradio.client';
 import { trustRepository, TrustAssessmentRow } from './trust.repository';
 import { catalogRepository } from '../catalog/catalog.repository';
 import { NotFoundError, ServiceUnavailableError } from '../../middleware/errorHandler';
@@ -6,15 +7,12 @@ import { NotFoundError, ServiceUnavailableError } from '../../middleware/errorHa
 export class TrustService {
   /**
    * Retrieves product trust assessment.
-   * Prioritizes live Python inference engine with fallback to MySQL historical snapshot.
+   * Prioritizes live Hugging Face Gradio ML service with fallback to live Python engine and MySQL historical snapshot.
    */
   async getProductTrustAssessment(productId: string, preferCached = false): Promise<unknown> {
     const product = await catalogRepository.findProductById(productId);
-    if (!product) {
-      throw new NotFoundError(`Product not found with ID "${productId}"`, 'PRODUCT_NOT_FOUND');
-    }
 
-    if (preferCached) {
+    if (preferCached && product) {
       const cached = await trustRepository.findLatestByProductId(productId);
       if (cached) {
         return {
@@ -24,6 +22,22 @@ export class TrustService {
       }
     }
 
+    // 1. Attempt Live Hugging Face ZeroGPU Gradio ML Service
+    try {
+      const hfResult = await hfGradioClient.assessMarketplaceTrust(productId, 'v1.0');
+      return {
+        source: 'LIVE_HUGGINGFACE_ZEROGPU',
+        assessment: hfResult
+      };
+    } catch (hfErr) {
+      // Gracefully continue to secondary engine or database fallback
+    }
+
+    if (!product) {
+      throw new NotFoundError(`Product not found with ID "${productId}"`, 'PRODUCT_NOT_FOUND');
+    }
+
+    // 2. Secondary: Live Internal Python Engine
     try {
       const liveResult = await trustClient.assessProduct(productId);
       return {
@@ -31,16 +45,14 @@ export class TrustService {
         assessment: liveResult
       };
     } catch (err) {
-      // Graceful fallback to MySQL snapshot if upstream Python engine is unavailable
-      if (err instanceof ServiceUnavailableError) {
-        const cached = await trustRepository.findLatestByProductId(productId);
-        if (cached) {
-          return {
-            source: 'MYSQL_FALLBACK_SNAPSHOT',
-            warning: 'Live inference engine currently unreachable; serving verified historical assessment snapshot.',
-            assessment: this.formatDbAssessment(cached)
-          };
-        }
+      // 3. Tertiary: Graceful fallback to MySQL snapshot
+      const cached = await trustRepository.findLatestByProductId(productId);
+      if (cached) {
+        return {
+          source: 'MYSQL_FALLBACK_SNAPSHOT',
+          warning: 'Live inference engines currently unreachable; serving verified historical assessment snapshot.',
+          assessment: this.formatDbAssessment(cached)
+        };
       }
       throw err;
     }
@@ -50,13 +62,39 @@ export class TrustService {
    * Evaluates product using frozen learned multimodal model (v1.0 or v1.1).
    * Invariant: Elevates policy anomaly classification, not confirmed fraud.
    */
-  async getProductLearnedMultimodal(productId: string, version = 'v1.0'): Promise<unknown> {
+  async getProductLearnedMultimodal(productId: string, version: 'v1.0' | 'v1.1' = 'v1.0'): Promise<unknown> {
     const product = await catalogRepository.findProductById(productId);
+
+    // 1. Attempt Live Hugging Face ZeroGPU Gradio ML Service
+    try {
+      const hfResult = await hfGradioClient.assessMarketplaceTrust(productId, version);
+      return {
+        source: 'LIVE_HUGGINGFACE_ZEROGPU',
+        assessment: hfResult
+      };
+    } catch (hfErr) {
+      // Gracefully continue to secondary engine or database fallback
+    }
+
     if (!product) {
       throw new NotFoundError(`Product not found with ID "${productId}"`, 'PRODUCT_NOT_FOUND');
     }
 
-    return trustClient.assessProductLearnedMultimodal(productId, version);
+    // 2. Secondary: Internal Python Engine
+    try {
+      return await trustClient.assessProductLearnedMultimodal(productId, version);
+    } catch (err) {
+      // 3. Tertiary: MySQL Historical Snapshot Fallback
+      const cached = await trustRepository.findLatestByProductId(productId);
+      if (cached) {
+        return {
+          source: 'MYSQL_FALLBACK_SNAPSHOT',
+          warning: 'Live multimodal inference engines currently unreachable; serving verified historical assessment snapshot.',
+          assessment: this.formatDbAssessment(cached)
+        };
+      }
+      throw err;
+    }
   }
 
   /**
