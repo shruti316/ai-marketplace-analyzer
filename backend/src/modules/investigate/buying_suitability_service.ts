@@ -92,28 +92,31 @@ export class BuyingSuitabilityService {
     }
     reasonsConsider.push('Core product specifications meet contemporary category standards');
 
-    // Engine A Conflict Detection: Check if Engine A flagged High Risk or Unverified Domain
-    const isUnverifiedDomain = websiteTrust?.trust_tier === 'SUSPECTED_IMPERSONATION' || websiteTrust?.trust_tier === 'UNVERIFIED_THIRD_PARTY';
-    const hasSevereLegitimacyWarning = engineATrustScore < 45 || isSteepDiscountAnomaly || isUnverifiedDomain;
+    // Engine A Conflict Detection: Check for genuine fraud evidence (Impersonation or severe anomaly)
+    const isImpersonation = websiteTrust?.trust_tier === 'SUSPECTED_IMPERSONATION';
+    const isSevereAnomaly = isSteepDiscountAnomaly && engineATrustScore < 45;
+    const hasSevereLegitimacyWarning = isImpersonation || isSevereAnomaly || engineATrustScore < 30;
 
     if (hasSevereLegitimacyWarning) {
       category = 'HIGH_RISK_CAUTION';
-      title = "Not recommended. Don't buy from this page";
-      if (websiteTrust?.trust_tier === 'SUSPECTED_IMPERSONATION') {
-        warning = `⚠️ Critical Warning: The website domain '${websiteTrust.domain}' is a suspected look-alike mimicking an official marketplace. We cannot confirm this is an official marketplace.`;
+      title = "Not recommended. High risk detected";
+      if (isImpersonation) {
+        warning = `⚠️ Critical Warning: The website domain '${websiteTrust.domain}' is a suspected look-alike mimicking an official marketplace. High probability of phishing or deceptive checkout.`;
         reasonsCaution.unshift('Domain name mimics official brand but is hosted on an unverified domain');
         reasonsCaution.unshift('High probability of phishing or deceptive checkout');
-      } else if (websiteTrust?.trust_tier === 'UNVERIFIED_THIRD_PARTY') {
-        warning = `⚠️ Unsupported or unverified website. We can't confirm '${websiteTrust.domain}' is an official marketplace.`;
-        reasonsCaution.unshift('Website domain is not an official verified marketplace');
-        reasonsCaution.unshift('Statutory consumer protections and grievance redressal cannot be confirmed');
       } else {
-        warning = `⚠️ Critical Warning: Although advertised specifications and price (₹${price}) appear competitive, Engine A detected severe legitimacy and pricing anomalies. High probability of counterfeit goods, defective stock, or unauthorized merchant listing.`;
+        warning = `⚠️ Critical Warning: Although advertised specifications appear competitive, severe pricing or authenticity anomalies were detected. Listing price is ${discountPercent}% below MRP, breaching the verified category pricing corridor.`;
         reasonsCaution.push(`Listing price is ${discountPercent}% below MRP, breaching the verified category pricing corridor`);
-        reasonsCaution.push('Engine A flagged severe seller governance or customer defect patterns');
+        reasonsCaution.push('Severe seller governance or counterfeit defect signals detected');
         reasonsCaution.push('Doorstep physical authenticity cannot be verified prior to courier delivery');
       }
       rawSuitability = Math.min(rawSuitability, 25);
+    } else if (websiteTrust?.trust_tier === 'INDEPENDENT_WEBSTORE' || websiteTrust?.trust_tier === 'UNVERIFIED_THIRD_PARTY') {
+      reasonsCaution.push(`Independent retailer (${websiteTrust.domain}): buyer protection depends on direct merchant return policies`);
+      if (rawSuitability >= 75) {
+        category = 'GOOD_VALUE_WITH_CONCERNS';
+        title = 'Good Value — Independent Retailer';
+      }
     } else if (nlpReviewScore !== null && nlpReviewScore < -0.15) {
       category = 'CONSIDER_ALTERNATIVES';
       title = 'Consider Alternatives — Elevated Defect Complaints';

@@ -73,10 +73,14 @@ export class InvestigateService {
     let platformName: string = 'Retail Webstore';
     let extractedIdentifier: string | null = null;
 
-    // Strict Domain Validation (BUG 2)
+    // Strict Domain Validation
     const isAmazon = hostname === 'amazon.in' || hostname === 'www.amazon.in' || /^([a-z0-9-]+\.)*amazon\.in$/.test(hostname);
     const isFlipkart = hostname === 'flipkart.com' || hostname === 'www.flipkart.com' || /^([a-z0-9-]+\.)*flipkart\.com$/.test(hostname);
     const isMyntra = hostname === 'myntra.com' || hostname === 'www.myntra.com' || /^([a-z0-9-]+\.)*myntra\.com$/.test(hostname);
+    const isNykaa = hostname.includes('nykaa.com') || hostname.includes('nykaa.in');
+    const isDecathlon = hostname === 'decathlon.in' || hostname.endsWith('.decathlon.in');
+    const isCroma = hostname === 'croma.com' || hostname.endsWith('.croma.com');
+    const isAdidas = hostname === 'adidas.co.in' || hostname === 'adidas.com' || hostname.endsWith('.adidas.co.in') || hostname.endsWith('.adidas.com');
 
     const isLookAlike =
       (hostname.includes('amazon') || hostname.includes('flipkart') || hostname.includes('myntra') || hostname.includes('amaz0n')) &&
@@ -121,20 +125,58 @@ export class InvestigateService {
       if (styleMatch) {
         extractedIdentifier = styleMatch[1];
       }
+    } else if (isDecathlon) {
+      platformId = 'PLATFORM_DECATHLON';
+      platformName = 'Decathlon India';
+      const match = parsedUrl.pathname.match(/\/p\/([0-9]+)/i);
+      if (match) extractedIdentifier = match[1];
+    } else if (isCroma) {
+      platformId = 'PLATFORM_CROMA';
+      platformName = 'Croma';
+      const match = parsedUrl.pathname.match(/\/p\/([0-9]+)/i);
+      if (match) extractedIdentifier = match[1];
+    } else if (isAdidas) {
+      platformId = 'PLATFORM_ADIDAS';
+      platformName = 'Adidas India';
+      const match = parsedUrl.pathname.match(/\/([A-Z0-9]{5,8})\.html/i) || parsedUrl.pathname.match(/\/p\/([A-Z0-9]{5,8})/i);
+      if (match) extractedIdentifier = match[1].toUpperCase();
+    } else if (isNykaa) {
+      platformId = 'PLATFORM_NYKAA';
+      platformName = 'Nykaa';
+      const match = parsedUrl.pathname.match(/\/p\/([0-9]+)/i);
+      if (match) extractedIdentifier = match[1];
     } else {
       platformId = null;
+      platformName = 'Independent Webstore';
     }
 
     if (!platformId) {
+      let extracted: any = null;
+      try {
+        extracted = await urlRetrieverService.retrieveAndExtract(parsedUrl.toString());
+      } catch {
+        // Fallback
+      }
+
       return {
         catalogue_match: false,
-        is_live_scraped: false,
+        is_live_scraped: Boolean(extracted?.observed_price),
         is_unverified_domain: true,
         is_lookalike_domain: false,
         recognized_platform: null,
-        extracted_identifier: null,
-        domain_status: 'UNSUPPORTED_WEBSITE',
-        message: `Unsupported or unverified website. We can't confirm this is an official marketplace (${hostname}). Supported platforms: Amazon India (amazon.in), Flipkart (flipkart.com), and Myntra (myntra.com).`,
+        extracted_identifier: extracted?.sku_or_asin || null,
+        domain_status: 'INDEPENDENT_WEBSTORE',
+        suggested_title: extracted?.title || 'E-Commerce Product Listing',
+        suggested_brand: extracted?.brand || 'Brand',
+        suggested_category: extracted?.category || 'General Merchandise',
+        suggested_price: extracted?.observed_price || null,
+        suggested_mrp: extracted?.mrp || null,
+        discount_percentage: extracted?.discount_percent || null,
+        main_image_url: extracted?.main_image_url || null,
+        provenance: extracted?.extraction_provenance || 'LIVE_PAGE_EXTRACTION',
+        retrieval_status: extracted?.retrieval_status || 'CONFIRMED',
+        message: `Independent or unindexed webstore (${hostname}). Listing parameters extracted and ready for unbiased evidence evaluation.`,
+        live_analysis_ready: true,
       };
     }
 
@@ -145,37 +187,45 @@ export class InvestigateService {
         ? `amazon_in_${extractedIdentifier}`
         : (platformId === 'PLATFORM_FLIPKART' ? `flipkart_${extractedIdentifier}` : `myntra_${extractedIdentifier}`);
 
-      matchedListing = await queryOne<ListingMatchRow>(
-        `SELECT ml.listing_id, ml.canonical_product_id, ml.platform_id, ml.marketplace_product_id,
-                ml.listing_title, ml.listing_url, cp.product_title, cp.brand_id, cp.category,
-                ph.selling_price_inr, ph.mrp_inr, p.platform_name
-         FROM marketplace_listings ml
-         JOIN canonical_products cp ON ml.canonical_product_id = cp.canonical_product_id
-         JOIN platforms p ON ml.platform_id = p.platform_id
-         LEFT JOIN price_history ph ON ml.listing_id = ph.listing_id
-         WHERE ml.marketplace_product_id = ?
-            OR ml.marketplace_product_id = ?
-            OR ml.marketplace_product_id LIKE ?
-         LIMIT 1`,
-        [extractedIdentifier, prefixedId, `%${extractedIdentifier}%`]
-      );
+      try {
+        matchedListing = await queryOne<ListingMatchRow>(
+          `SELECT ml.listing_id, ml.canonical_product_id, ml.platform_id, ml.marketplace_product_id,
+                  ml.listing_title, ml.listing_url, cp.product_title, cp.brand_id, cp.category,
+                  ph.selling_price_inr, ph.mrp_inr, p.platform_name
+           FROM marketplace_listings ml
+           JOIN canonical_products cp ON ml.canonical_product_id = cp.canonical_product_id
+           JOIN platforms p ON ml.platform_id = p.platform_id
+           LEFT JOIN price_history ph ON ml.listing_id = ph.listing_id
+           WHERE ml.marketplace_product_id = ?
+              OR ml.marketplace_product_id = ?
+              OR ml.marketplace_product_id LIKE ?
+           LIMIT 1`,
+          [extractedIdentifier, prefixedId, `%${extractedIdentifier}%`]
+        );
+      } catch {
+        matchedListing = null;
+      }
     }
 
     // Fallback: search by URL substring only if pathname is specific and long enough
     if (!matchedListing && parsedUrl.pathname.length > 15) {
       const urlPattern = `%${parsedUrl.pathname.slice(0, 50)}%`;
-      matchedListing = await queryOne<ListingMatchRow>(
-        `SELECT ml.listing_id, ml.canonical_product_id, ml.platform_id, ml.marketplace_product_id,
-                ml.listing_title, ml.listing_url, cp.product_title, cp.brand_id, cp.category,
-                ph.selling_price_inr, ph.mrp_inr, p.platform_name
-         FROM marketplace_listings ml
-         JOIN canonical_products cp ON ml.canonical_product_id = cp.canonical_product_id
-         JOIN platforms p ON ml.platform_id = p.platform_id
-         LEFT JOIN price_history ph ON ml.listing_id = ph.listing_id
-         WHERE ml.listing_url LIKE ?
-         LIMIT 1`,
-        [urlPattern]
-      );
+      try {
+        matchedListing = await queryOne<ListingMatchRow>(
+          `SELECT ml.listing_id, ml.canonical_product_id, ml.platform_id, ml.marketplace_product_id,
+                  ml.listing_title, ml.listing_url, cp.product_title, cp.brand_id, cp.category,
+                  ph.selling_price_inr, ph.mrp_inr, p.platform_name
+           FROM marketplace_listings ml
+           JOIN canonical_products cp ON ml.canonical_product_id = cp.canonical_product_id
+           JOIN platforms p ON ml.platform_id = p.platform_id
+           LEFT JOIN price_history ph ON ml.listing_id = ph.listing_id
+           WHERE ml.listing_url LIKE ?
+           LIMIT 1`,
+          [urlPattern]
+        );
+      } catch {
+        matchedListing = null;
+      }
     }
 
     // Always attempt live extraction so fresh prices (e.g. ₹4,000) from the live webpage take precedence over stale seed data
@@ -274,10 +324,24 @@ export class InvestigateService {
     } else if (platformId === 'PLATFORM_MYNTRA') {
       const match = path.match(/\/([^\/]+)\/\d+/i);
       cleanSlug = match ? match[1] : '';
+    } else if (platformId === 'PLATFORM_DECATHLON') {
+      const match = path.match(/\/p\/\d+\/([^\/\?]+)/i) || path.match(/\/([^\/]+)\/p\//i);
+      cleanSlug = match ? match[1] : '';
+    } else if (platformId === 'PLATFORM_CROMA') {
+      const match = path.match(/\/([^\/]+)\/p\/\d+/i) || path.match(/\/p\/\d+\/([^\/\?]+)/i);
+      cleanSlug = match ? match[1] : '';
+    } else if (platformId === 'PLATFORM_ADIDAS') {
+      const match = path.match(/\/([^\/]+)\/[A-Z0-9]+\.html/i) || path.match(/\/([^\/]+)\.html/i);
+      cleanSlug = match ? match[1] : '';
     }
 
     if (!cleanSlug && path.length > 2) {
-      cleanSlug = path.split('/').filter(Boolean)[0] || '';
+      // Find the most descriptive non-numeric slug segment
+      const segments = path.split('/').filter(Boolean);
+      const descriptive = segments.filter(
+        (s) => s !== 'p' && s !== 'dp' && s !== 'gp' && s !== 'product' && !/^\d+$/.test(s) && s.length > 3
+      );
+      cleanSlug = descriptive.length > 0 ? descriptive[descriptive.length - 1] : segments[0] || '';
     }
 
     const title = cleanSlug

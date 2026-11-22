@@ -75,14 +75,18 @@ export const InvestigationWorkspacePage: React.FC = () => {
       setDetectedPlatform('Flipkart');
     } else if (trimmed.includes('myntra.com')) {
       setDetectedPlatform('Myntra');
+    } else if (trimmed.includes('decathlon.in')) {
+      setDetectedPlatform('Decathlon India');
+    } else if (trimmed.includes('croma.com')) {
+      setDetectedPlatform('Croma');
+    } else if (trimmed.includes('adidas.co.in') || trimmed.includes('adidas.com')) {
+      setDetectedPlatform('Adidas India');
     } else if (trimmed.includes('nykaa.com') || trimmed.includes('nykaa.in') || trimmed.includes('nykaafashion')) {
       setDetectedPlatform('Nykaa');
     } else if (trimmed.includes('nike.com') || trimmed.includes('nike.in')) {
       setDetectedPlatform('Nike');
     } else if (trimmed.includes('plumgoodness.com')) {
       setDetectedPlatform('Plum Goodness');
-    } else if (trimmed.includes('adidas.co.in') || trimmed.includes('adidas.com')) {
-      setDetectedPlatform('Adidas');
     } else if (trimmed.includes('tatacliq.com')) {
       setDetectedPlatform('Tata CLiQ');
     } else if (trimmed.includes('ajio.com')) {
@@ -133,22 +137,47 @@ export const InvestigationWorkspacePage: React.FC = () => {
         ? res.product?.title || ''
         : (res as any).suggested_title || '';
 
-      // Clean up title if it defaulted to a raw marketplace domain name
-      if (!extractedTitle || extractedTitle.toLowerCase() === 'amazon.in' || extractedTitle.toLowerCase().includes('flipkart.com') || extractedTitle.toLowerCase() === 'flipkart') {
+      // Clean up title if it defaulted to a raw marketplace domain name or bare numeric ID
+      if (
+        !extractedTitle ||
+        extractedTitle.toLowerCase() === 'amazon.in' ||
+        extractedTitle.toLowerCase().includes('flipkart.com') ||
+        extractedTitle.toLowerCase() === 'flipkart' ||
+        /^\d+$/.test(extractedTitle.trim())
+      ) {
         try {
           const u = new URL(trimmed);
-          const parts = u.pathname.split('/').filter((p) => p && p !== 'dp' && p !== 'p' && !p.startsWith('itm') && p.length > 3);
+          const parts = u.pathname
+            .split('/')
+            .filter((p) => p && p !== 'dp' && p !== 'p' && !p.startsWith('itm') && !/^\d+$/.test(p) && p.length > 2);
           if (parts.length > 0) {
-            extractedTitle = parts[0].replace(/-/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
+            extractedTitle = parts[parts.length - 1]
+              .replace(/[-_+]/g, ' ')
+              .replace(/\s+/g, ' ')
+              .trim()
+              .replace(/\b\w/g, (l) => l.toUpperCase());
           }
         } catch {
           // ignore
         }
       }
 
-      const inferredBrand = isCatalog
+      let inferredBrand = isCatalog
         ? (res.product?.brand_id?.replace(/^BRAND_\d+_/, '')?.replace(/_/g, ' ') || 'Brand')
-        : (res as any).suggested_brand || (extractedTitle ? extractedTitle.split(' ')[0] : 'Brand');
+        : (res as any).suggested_brand;
+
+      if (!inferredBrand || inferredBrand === 'Brand' || /^\d+$/.test(inferredBrand)) {
+        const lowerUrl = trimmed.toLowerCase();
+        if (lowerUrl.includes('decathlon')) inferredBrand = 'Decathlon';
+        else if (lowerUrl.includes('croma')) inferredBrand = 'Croma';
+        else if (lowerUrl.includes('adidas')) inferredBrand = 'Adidas';
+        else if (lowerUrl.includes('nykaa')) inferredBrand = 'Nykaa';
+        else if (extractedTitle && !/^\d+$/.test(extractedTitle.split(' ')[0])) {
+          inferredBrand = extractedTitle.split(' ')[0];
+        } else {
+          inferredBrand = 'Brand';
+        }
+      }
 
       const inferredCategory = isCatalog
         ? (res.product?.category || 'Apparel & Accessories')
@@ -340,7 +369,7 @@ export const InvestigationWorkspacePage: React.FC = () => {
             Start a New Product Investigation
           </h1>
           <p className="text-xs sm:text-sm text-[var(--text-2)] max-w-2xl leading-relaxed">
-            Investigate authenticity signals, pricing anomalies, visual packaging consistency, and merchant governance across Amazon India, Flipkart, and Myntra using explainable multimodal evidence.
+            Investigate authenticity signals, pricing anomalies, visual packaging consistency, and merchant governance across Amazon, Flipkart, Myntra, Decathlon, Croma, Adidas, and any verified webstore using explainable multimodal evidence.
           </p>
 
           {/* Platform Invariants Footer */}
@@ -437,7 +466,7 @@ export const InvestigationWorkspacePage: React.FC = () => {
               <span>1. Product Listing URL</span>
             </span>
             <span className="text-[11px] font-mono text-[var(--text-3)]">
-              Supported: Amazon.in · Flipkart · Myntra
+              Supported: Amazon · Flipkart · Myntra · Decathlon · Croma · Adidas & Webstores
             </span>
           </label>
 
@@ -450,7 +479,7 @@ export const InvestigationWorkspacePage: React.FC = () => {
               value={url}
               onChange={(e) => handleUrlChange(e.target.value)}
               disabled={isAnalyzing || isAutoFilling}
-              placeholder="Paste marketplace product link (e.g. https://www.flipkart.com/... or https://www.amazon.in/dp/...)"
+              placeholder="Paste marketplace product link (e.g. Amazon, Flipkart, Myntra, Decathlon, Croma, Adidas, or webstore link)"
               className="w-full pl-11 pr-28 py-3.5 rounded-xl border border-[var(--line)] focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20 outline-none text-xs sm:text-sm text-[var(--ink)] placeholder:text-[var(--text-3)] transition-all bg-[var(--canvas)]/50"
             />
             <button
@@ -488,7 +517,7 @@ export const InvestigationWorkspacePage: React.FC = () => {
             <div className="p-3 rounded-xl bg-[var(--warn-bg)] border border-[var(--warn)]/30 text-xs text-[var(--warn-ink)] flex items-center justify-between font-medium mt-1">
               <div className="flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4 text-[var(--warn)] shrink-0" />
-                <span>Price not found on page. Enter price manually below or retry.</span>
+                <span>Price could not be verified from the available page data. Enter price manually below or retry.</span>
               </div>
               <button
                 type="button"
