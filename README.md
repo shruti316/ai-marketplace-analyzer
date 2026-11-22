@@ -4,7 +4,6 @@ TrustSphere is an independent, evidence-driven product trust and listing intelli
 
 **Live Deployment**: [https://ai-marketplace-analyzer.vercel.app/](https://ai-marketplace-analyzer.vercel.app/)
 
-![TrustSphere Preview](TrustSphere_Preview.png)
 
 ---
 
