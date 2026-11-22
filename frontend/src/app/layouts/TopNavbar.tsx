@@ -17,19 +17,32 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onOpenMobileMenu, onOpenCo
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
 
-  // Query live health endpoint
-  const { data: healthData, isError } = useQuery({
+  // Query live health endpoint with safe retries for Render cold-starts
+  const { data: healthData, isLoading, isFetching, refetch } = useQuery({
     queryKey: ['system-health'],
     queryFn: () => healthService.getHealth(),
     refetchInterval: 30000,
-    retry: 1,
+    retry: 2,
+    retryDelay: (attempt) => Math.min(attempt * 2000, 5000),
   });
 
-  const dbStatus = isError
-    ? 'disconnected'
-    : healthData?.database?.status === 'connected'
+  const isWaking = (isLoading || isFetching) && !healthData;
+  const isHealthy = healthData?.status === 'healthy' && healthData?.database?.status === 'connected';
+  const isDegraded = healthData?.status === 'healthy' && healthData?.database?.status !== 'connected';
+
+  const dbStatus: 'healthy' | 'degraded' | 'disconnected' = isHealthy
     ? 'healthy'
-    : 'degraded';
+    : isWaking || isDegraded
+    ? 'degraded'
+    : 'disconnected';
+
+  const statusLabel = isHealthy
+    ? 'Engine Live'
+    : isWaking
+    ? 'Waking Engine...'
+    : isDegraded
+    ? 'Degraded'
+    : 'Offline';
 
   return (
     <header className="h-16 mt-4 mx-4 sm:mx-6 rounded-[20px] bg-white/70 backdrop-blur-xl border border-white/60 shadow-[0_4px_20px_rgba(22,19,31,0.04)] px-4 sm:px-6 flex items-center justify-between sticky top-4 z-20 shrink-0 transition-all">
@@ -73,22 +86,24 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onOpenMobileMenu, onOpenCo
         </button>
 
         {/* System Health Status Indicator */}
-        <div
+        <button
+          type="button"
+          onClick={() => refetch()}
           className={cn(
-            'hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-medium',
+            'hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-medium cursor-pointer transition-all hover:opacity-90',
             dbStatus === 'healthy'
               ? 'bg-[#E6F4EA] text-[#065F46] border-[#A7F3D0]'
               : dbStatus === 'degraded'
               ? 'bg-[#FEF3C7] text-[#92400E] border-[#FDE68A]'
               : 'bg-[#FCE7F3] text-[#9F1239] border-[#FECDD3]'
           )}
-          title={`Backend: ${healthData?.status || 'checking'}, MySQL: ${healthData?.database?.status || 'probing'}`}
+          title={`Backend: ${healthData?.status || (isWaking ? 'waking up from cold sleep' : 'unreachable')}, Database: ${healthData?.database?.status || 'probing'}. Click to test connection.`}
         >
           <StatusIndicator status={dbStatus} />
           <span className="text-[11px] font-semibold">
-            {dbStatus === 'healthy' ? 'Engine Live' : dbStatus === 'degraded' ? 'Degraded' : 'Offline'}
+            {statusLabel}
           </span>
-        </div>
+        </button>
 
         {/* Quick Check Action */}
         <Link

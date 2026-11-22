@@ -21,7 +21,18 @@ export class AmazonIndiaAdapter implements MarketplaceAdapter {
   }
 
   extractFromMetadata(url: URL, meta: Record<string, string>): Partial<ExtractedProductData> {
-    const title = meta['og:title'] || meta['title'] || '';
+    let title = meta['og:title'] || meta['title'] || '';
+    const cleanLower = title.toLowerCase().trim();
+    if (
+      cleanLower === 'amazon.in' ||
+      cleanLower === 'amazon' ||
+      cleanLower.includes('robot check') ||
+      cleanLower.includes('captcha') ||
+      cleanLower.includes('access denied') ||
+      cleanLower.includes('service unavailable')
+    ) {
+      title = '';
+    }
     const image = meta['og:image'] || '';
     const priceStr = meta['product:price:amount'] || meta['price'] || '';
     const price = parseFloat(priceStr) || 0;
@@ -42,7 +53,21 @@ export class AmazonIndiaAdapter implements MarketplaceAdapter {
     if (match) cleanSlug = match[1];
 
     if (!cleanSlug && path.length > 2) {
-      cleanSlug = path.split('/').filter(Boolean)[0] || '';
+      const candidates = path.split('/').filter((p) => (
+        p &&
+        p !== 'dp' &&
+        p !== 'gp' &&
+        p !== 'product' &&
+        !p.startsWith('ref=') &&
+        !p.startsWith('ref_') &&
+        !p.startsWith('asc_df') &&
+        !p.startsWith('mcid=') &&
+        !p.startsWith('tag=') &&
+        !/^[A-Z0-9]{10}$/i.test(p) &&
+        !/^\d+$/.test(p) &&
+        p.length > 3
+      ));
+      cleanSlug = candidates[0] || '';
     }
 
     const title = cleanSlug

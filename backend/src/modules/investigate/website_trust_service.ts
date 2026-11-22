@@ -3,7 +3,7 @@ import { URL } from 'node:url';
 export interface WebsiteTrustAssessment {
   domain: string;
   is_https: boolean;
-  trust_tier: 'VERIFIED_MARKETPLACE' | 'LEGITIMATE_RETAILER' | 'UNVERIFIED_THIRD_PARTY' | 'SUSPECTED_IMPERSONATION';
+  trust_tier: 'VERIFIED_MARKETPLACE' | 'LEGITIMATE_RETAILER' | 'INDEPENDENT_WEBSTORE' | 'UNVERIFIED_THIRD_PARTY' | 'SUSPECTED_IMPERSONATION';
   trust_score: number; // 0 - 100
   organization_identity: string;
   registered_entity: string;
@@ -19,6 +19,9 @@ export interface WebsiteTrustAssessment {
 export class WebsiteTrustService {
   /**
    * Evaluates the legal, security, and reputational characteristics of the destination retail website.
+   * Marketplace-Agnostic Design: A marketplace name alone never determines whether a product is safe or unsafe.
+   * Evaluates protocol security, corporate registration provenance, and explicit uncertainty without penalizing
+   * unfamiliar domains simply for being unindexed.
    */
   evaluateWebsite(url: URL): WebsiteTrustAssessment {
     const host = url.hostname.toLowerCase();
@@ -28,7 +31,7 @@ export class WebsiteTrustService {
     const concerning: string[] = [];
     const unavailable: string[] = [
       'Real-time registrar WHOIS privacy barrier active',
-      'Automated PCI-DSS merchant penetration test not permitted without authorization',
+      'Automated PCI-DSS merchant penetration test not permitted without explicit host authorization',
     ];
 
     if (isHttps) {
@@ -37,18 +40,89 @@ export class WebsiteTrustService {
       concerning.push('Non-secure HTTP protocol detected; transaction data transmitted in plaintext');
     }
 
-    // Check for Major Verified Indian Marketplaces
-    if (host === 'amazon.in' || /^([a-z0-9-]+\.)+amazon\.in$/.test(host)) {
-      supporting.push('Official domain of Amazon Seller Services Private Limited (CIN: U51109KA2012PTC063737)');
+    // 1. Decathlon India Direct Flagship
+    if (host === 'decathlon.in' || host.endsWith('.decathlon.in')) {
+      supporting.push('Official direct webstore of Decathlon Sports India Private Limited (CIN: U52392KA2008PTC047804)');
+      supporting.push('Direct brand manufacturer supply chain with zero third-party merchant intermediary risk');
+      supporting.push('Statutory 30-day return policy and doorstep warranty service active');
+      supporting.push('PCI-DSS Level 1 tokenized encrypted payment gateway');
+
+      return {
+        domain: host,
+        is_https: isHttps,
+        trust_tier: 'LEGITIMATE_RETAILER',
+        trust_score: 95,
+        organization_identity: 'Decathlon Sports India Private Limited',
+        registered_entity: 'Bengaluru, Karnataka, India',
+        grievance_officer_available: true,
+        return_policy_status: 'EXPLICIT_DISCLOSED',
+        payment_security_indicator: 'PCI_DSS_GATEWAY',
+        supporting_evidence: supporting,
+        concerning_signals: concerning,
+        unavailable_checks: unavailable,
+        explanation: 'Official direct-to-consumer store of Decathlon India. Direct brand procurement provides authentic sporting goods with factory warranty and transparent return frameworks.',
+      };
+    }
+
+    // 2. Croma (Tata Digital / Infiniti Retail)
+    if (host === 'croma.com' || host.endsWith('.croma.com')) {
+      supporting.push('Official e-commerce webstore of Infiniti Retail Limited (A Tata Enterprise, CIN: U31900MH2005PLC158120)');
+      supporting.push('Authorized national brand distributor partnerships with verified manufacturer warranties');
       supporting.push('Statutory Grievance Officer and nodal contact published under Consumer Protection (E-Commerce) Rules 2020');
-      supporting.push('Standard 7–10 day doorstep return/replacement policy enforced');
-      supporting.push('RBI-compliant encrypted tokenized payment gateway');
+      supporting.push('Tata Pay / RBI-compliant encrypted tokenized payment gateway');
 
       return {
         domain: host,
         is_https: isHttps,
         trust_tier: 'VERIFIED_MARKETPLACE',
+        trust_score: 94,
+        organization_identity: 'Infiniti Retail Limited (Tata Croma)',
+        registered_entity: 'Mumbai, Maharashtra, India',
+        grievance_officer_available: true,
+        return_policy_status: 'STANDARD_MARKETPLACE',
+        payment_security_indicator: 'PCI_DSS_GATEWAY',
+        supporting_evidence: supporting,
+        concerning_signals: concerning,
+        unavailable_checks: unavailable,
+        explanation: 'Official electronics webstore of Infiniti Retail Limited (Tata Enterprise). Certified authorized brand partnerships with verified manufacturer warranties and nationwide service support.',
+      };
+    }
+
+    // 3. Adidas Official Store
+    if (host === 'adidas.co.in' || host === 'adidas.com' || host.endsWith('.adidas.co.in') || host.endsWith('.adidas.com')) {
+      supporting.push('Official direct brand portal of Adidas India Marketing Private Limited (CIN: U51909HR1995PTC032905)');
+      supporting.push('Direct factory inventory dispatch with official brand authenticity guarantees');
+      supporting.push('Standard 14-day return framework and statutory customer grievance redressal');
+
+      return {
+        domain: host,
+        is_https: isHttps,
+        trust_tier: 'LEGITIMATE_RETAILER',
         trust_score: 95,
+        organization_identity: 'Adidas India Marketing Private Limited',
+        registered_entity: 'Gurugram, Haryana, India',
+        grievance_officer_available: true,
+        return_policy_status: 'EXPLICIT_DISCLOSED',
+        payment_security_indicator: 'PCI_DSS_GATEWAY',
+        supporting_evidence: supporting,
+        concerning_signals: concerning,
+        unavailable_checks: unavailable,
+        explanation: 'Official flagship portal of Adidas India. Direct factory inventory with verified statutory declarations and zero counterfeit intermediary risk.',
+      };
+    }
+
+    // 4. Amazon India Marketplace
+    if (host === 'amazon.in' || /^([a-z0-9-]+\.)+amazon\.in$/.test(host)) {
+      supporting.push('Official domain of Amazon Seller Services Private Limited (CIN: U51109KA2012PTC063737)');
+      supporting.push('Statutory Grievance Officer published under Consumer Protection (E-Commerce) Rules 2020');
+      supporting.push('Standard 7–10 day doorstep return/replacement policy enforced');
+      concerning.push('Marketplace architecture: Platform host does not guarantee individual third-party seller authenticity');
+
+      return {
+        domain: host,
+        is_https: isHttps,
+        trust_tier: 'VERIFIED_MARKETPLACE',
+        trust_score: 90,
         organization_identity: 'Amazon Seller Services Private Limited',
         registered_entity: 'Bengaluru, Karnataka, India',
         grievance_officer_available: true,
@@ -57,20 +131,22 @@ export class WebsiteTrustService {
         supporting_evidence: supporting,
         concerning_signals: concerning,
         unavailable_checks: unavailable,
-        explanation: 'The website domain is the authenticated, legally registered Indian retail marketplace of Amazon. Note: A legitimate marketplace operator does not guarantee that individual third-party marketplace sellers are authentic.',
+        explanation: 'The website domain is the authenticated Indian retail marketplace of Amazon. Note: Marketplace platform legitimacy does not guarantee that individual third-party sellers or listings are authentic; individual merchant evidence must be evaluated.',
       };
     }
 
+    // 5. Flipkart Marketplace
     if (host === 'flipkart.com' || /^([a-z0-9-]+\.)+flipkart\.com$/.test(host)) {
       supporting.push('Official domain of Flipkart Internet Private Limited (CIN: U51109KA2012PTC066107)');
       supporting.push('Statutory Indian e-commerce compliance officer and customer grievance portal registered');
       supporting.push('Flipkart Assured buyer protection and replacement window active');
+      concerning.push('Multi-seller marketplace: third-party merchant listings must be evaluated independently');
 
       return {
         domain: host,
         is_https: isHttps,
         trust_tier: 'VERIFIED_MARKETPLACE',
-        trust_score: 94,
+        trust_score: 89,
         organization_identity: 'Flipkart Internet Private Limited',
         registered_entity: 'Bengaluru, Karnataka, India',
         grievance_officer_available: true,
@@ -79,10 +155,11 @@ export class WebsiteTrustService {
         supporting_evidence: supporting,
         concerning_signals: concerning,
         unavailable_checks: unavailable,
-        explanation: 'The website domain is the verified primary domain of Flipkart India. Individual merchant listings must be evaluated independently for pricing and physical packaging anomalies.',
+        explanation: 'The website domain is the verified primary domain of Flipkart India. Note: Platform recognition does not confer automatic safety; individual merchant offerings must be examined for pricing anomalies.',
       };
     }
 
+    // 6. Myntra Fashion Marketplace
     if (host === 'myntra.com' || /^([a-z0-9-]+\.)+myntra\.com$/.test(host)) {
       supporting.push('Official domain of Myntra Designs Private Limited');
       supporting.push('Strict brand partnership onboarding and 14-day return framework');
@@ -91,7 +168,7 @@ export class WebsiteTrustService {
         domain: host,
         is_https: isHttps,
         trust_tier: 'VERIFIED_MARKETPLACE',
-        trust_score: 93,
+        trust_score: 91,
         organization_identity: 'Myntra Designs Private Limited',
         registered_entity: 'Bengaluru, Karnataka, India',
         grievance_officer_available: true,
@@ -104,18 +181,17 @@ export class WebsiteTrustService {
       };
     }
 
-    // Official Brand Manufacturer Flagship Stores
+    // 7. Nike Flagship
     if (host === 'nike.com' || host === 'nike.in' || host.endsWith('.nike.com') || host.endsWith('.nike.in')) {
-      supporting.push('Official direct-to-consumer flagship store of Nike, Inc. / Nike India Private Limited (CIN: U51909KA2004PTC034444)');
+      supporting.push('Official direct-to-consumer flagship store of Nike, Inc. / Nike India Private Limited');
       supporting.push('100% direct manufacturer supply chain with zero third-party merchant intermediary risk');
       supporting.push('Official brand 30-day wear-test return and warranty framework enforced');
-      supporting.push('Global PCI-DSS Level 1 tokenized encrypted payment infrastructure');
 
       return {
         domain: host,
         is_https: isHttps,
-        trust_tier: 'VERIFIED_MARKETPLACE',
-        trust_score: 99,
+        trust_tier: 'LEGITIMATE_RETAILER',
+        trust_score: 96,
         organization_identity: 'Nike India Private Limited / Nike Inc.',
         registered_entity: 'Bengaluru, Karnataka, India / Beaverton, OR, USA',
         grievance_officer_available: true,
@@ -128,50 +204,7 @@ export class WebsiteTrustService {
       };
     }
 
-    if (host === 'plumgoodness.com' || host.endsWith('.plumgoodness.com')) {
-      supporting.push('Official direct flagship webstore of Pureplay Skin Sciences India Private Limited (CIN: U24233MH2013PTC249339)');
-      supporting.push('Direct brand manufacturer fulfillment with statutory batch-coded cosmetic safety compliance');
-      supporting.push('Explicit grievance redressal and transparent return/exchange policy');
-      supporting.push('Razorpay/PayU PCI-DSS Level 1 compliant secure tokenized gateway');
-
-      return {
-        domain: host,
-        is_https: isHttps,
-        trust_tier: 'VERIFIED_MARKETPLACE',
-        trust_score: 98,
-        organization_identity: 'Pureplay Skin Sciences India Pvt Ltd (Plum Goodness)',
-        registered_entity: 'Thane, Maharashtra, India',
-        grievance_officer_available: true,
-        return_policy_status: 'EXPLICIT_DISCLOSED',
-        payment_security_indicator: 'PCI_DSS_GATEWAY',
-        supporting_evidence: supporting,
-        concerning_signals: concerning,
-        unavailable_checks: unavailable,
-        explanation: 'Verified official brand direct store of Plum Goodness. Authentic batch manufacturing declarations with complete direct-to-consumer transparency.',
-      };
-    }
-
-    if (host === 'adidas.co.in' || host === 'adidas.com' || host.endsWith('.adidas.co.in')) {
-      supporting.push('Official brand portal of Adidas India Marketing Private Limited');
-      supporting.push('Direct factory inventory dispatch with official brand authenticity guarantees');
-
-      return {
-        domain: host,
-        is_https: isHttps,
-        trust_tier: 'VERIFIED_MARKETPLACE',
-        trust_score: 99,
-        organization_identity: 'Adidas India Marketing Private Limited',
-        registered_entity: 'Gurugram, Haryana, India',
-        grievance_officer_available: true,
-        return_policy_status: 'EXPLICIT_DISCLOSED',
-        payment_security_indicator: 'PCI_DSS_GATEWAY',
-        supporting_evidence: supporting,
-        concerning_signals: concerning,
-        unavailable_checks: unavailable,
-        explanation: 'Official flagship portal of Adidas India. Direct factory inventory with verified statutory declarations.',
-      };
-    }
-
+    // 8. Apple Store
     if (host === 'apple.com' || host.endsWith('.apple.com')) {
       supporting.push('Official online store of Apple India Private Limited (CIN: U30007KA1996PTC019630)');
       supporting.push('Authorized flagship with direct serial verification and global warranty registration');
@@ -179,8 +212,8 @@ export class WebsiteTrustService {
       return {
         domain: host,
         is_https: isHttps,
-        trust_tier: 'VERIFIED_MARKETPLACE',
-        trust_score: 100,
+        trust_tier: 'LEGITIMATE_RETAILER',
+        trust_score: 98,
         organization_identity: 'Apple India Private Limited',
         registered_entity: 'Bengaluru, Karnataka, India',
         grievance_officer_available: true,
@@ -189,22 +222,21 @@ export class WebsiteTrustService {
         supporting_evidence: supporting,
         concerning_signals: concerning,
         unavailable_checks: unavailable,
-        explanation: 'Official online store of Apple Inc. Complete hardware serial provenance with 100% verified genuine supply chain.',
+        explanation: 'Official online store of Apple Inc. Complete hardware serial provenance with verified genuine supply chain.',
       };
     }
 
-    // Nykaa & Nykaa Fashion Flagship Marketplace
+    // 9. Nykaa & Nykaa Fashion
     if (host === 'nykaa.com' || host === 'nykaa.in' || host.endsWith('.nykaa.com') || host.endsWith('.nykaa.in') || host.includes('nykaafashion')) {
       supporting.push('Official domain of FSN E-Commerce Ventures Limited (Public Listed, CIN: L52600MH2012PLC230136)');
       supporting.push('100% authentic brand distributor supply chain with direct manufacturer procurement');
-      supporting.push('Statutory Grievance Officer and nodal contact published under Consumer Protection (E-Commerce) Rules 2020');
-      supporting.push('RBI-compliant encrypted tokenized payment gateway with verified return & refund frameworks');
+      supporting.push('Statutory Grievance Officer and nodal contact published under Consumer Protection Rules 2020');
 
       return {
         domain: host,
         is_https: isHttps,
         trust_tier: 'VERIFIED_MARKETPLACE',
-        trust_score: 98,
+        trust_score: 92,
         organization_identity: 'FSN E-Commerce Ventures Limited (Nykaa)',
         registered_entity: 'Mumbai, Maharashtra, India',
         grievance_officer_available: true,
@@ -217,17 +249,19 @@ export class WebsiteTrustService {
       };
     }
 
-    // Tata CLiQ
-    if (host === 'tatacliq.com' || host.endsWith('.tatacliq.com')) {
-      supporting.push('Official brand portal of Tata UniStore Limited (Tata Group enterprise)');
-      supporting.push('Authorized brand partnerships with authenticated warranty guarantees');
+    // 10. Tata CLiQ & AJIO
+    if (host === 'tatacliq.com' || host.endsWith('.tatacliq.com') || host === 'ajio.com' || host.endsWith('.ajio.com')) {
+      const isTata = host.includes('tatacliq');
+      const orgName = isTata ? 'Tata UniStore Limited (Tata CLiQ)' : 'Reliance Retail Limited (AJIO)';
+      supporting.push(`Official brand portal of ${orgName}`);
+      supporting.push('Authorized corporate retail distribution with standard return protocols');
 
       return {
         domain: host,
         is_https: isHttps,
         trust_tier: 'VERIFIED_MARKETPLACE',
-        trust_score: 96,
-        organization_identity: 'Tata UniStore Limited (Tata CLiQ)',
+        trust_score: 92,
+        organization_identity: orgName,
         registered_entity: 'Mumbai, Maharashtra, India',
         grievance_officer_available: true,
         return_policy_status: 'STANDARD_MARKETPLACE',
@@ -235,51 +269,29 @@ export class WebsiteTrustService {
         supporting_evidence: supporting,
         concerning_signals: concerning,
         unavailable_checks: unavailable,
-        explanation: 'Official e-commerce portal of Tata UniStore Limited. Certified luxury and lifestyle brand partnerships.',
+        explanation: `Verified corporate retail marketplace of ${orgName}. Certified brand partnerships and authenticated customer support.`,
       };
     }
 
-    // Ajio (Reliance Retail)
-    if (host === 'ajio.com' || host.endsWith('.ajio.com')) {
-      supporting.push('Official fashion webstore of Reliance Retail Limited');
-      supporting.push('Direct corporate retail distribution with standard return protocols');
-
-      return {
-        domain: host,
-        is_https: isHttps,
-        trust_tier: 'VERIFIED_MARKETPLACE',
-        trust_score: 96,
-        organization_identity: 'Reliance Retail Limited (AJIO)',
-        registered_entity: 'Mumbai, Maharashtra, India',
-        grievance_officer_available: true,
-        return_policy_status: 'STANDARD_MARKETPLACE',
-        payment_security_indicator: 'PCI_DSS_GATEWAY',
-        supporting_evidence: supporting,
-        concerning_signals: concerning,
-        unavailable_checks: unavailable,
-        explanation: 'Verified fashion marketplace of Reliance Retail Limited with corporate brand authorization.',
-      };
-    }
-
-    // Direct Legitimate Beauty & Consumer Brand Flagships
+    // 11. Direct Legitimate Brand Flagships (Plum, Boat, Noise, Samsung, Zara, H&M, Mamaearth, etc.)
     if (
-      host === 'purplle.com' || host.endsWith('.purplle.com') ||
-      host === 'sugarcosmetics.com' || host.endsWith('.sugarcosmetics.com') ||
-      host === 'mamaearth.in' || host.endsWith('.mamaearth.in') ||
+      host === 'plumgoodness.com' || host.endsWith('.plumgoodness.com') ||
       host === 'boat-lifestyle.com' || host.endsWith('.boat-lifestyle.com') ||
       host === 'gonoise.com' || host === 'noise.com' || host.endsWith('.gonoise.com') ||
       host === 'samsung.com' || host.endsWith('.samsung.com') ||
       host === 'zara.com' || host.endsWith('.zara.com') ||
-      host === 'hm.com' || host.endsWith('.hm.com')
+      host === 'hm.com' || host.endsWith('.hm.com') ||
+      host === 'mamaearth.in' || host.endsWith('.mamaearth.in') ||
+      host === 'sugarcosmetics.com' || host.endsWith('.sugarcosmetics.com')
     ) {
-      supporting.push('Official direct brand portal with manufacturer warranty and direct dispatch');
+      supporting.push(`Official direct brand portal with manufacturer warranty and direct dispatch (${host})`);
       supporting.push('Standard return policy and RBI-compliant tokenized payment gateway');
 
       return {
         domain: host,
         is_https: isHttps,
-        trust_tier: 'VERIFIED_MARKETPLACE',
-        trust_score: 97,
+        trust_tier: 'LEGITIMATE_RETAILER',
+        trust_score: 94,
         organization_identity: `Official Brand Webstore (${host})`,
         registered_entity: 'Authorized Corporate Entity',
         grievance_officer_available: true,
@@ -288,19 +300,21 @@ export class WebsiteTrustService {
         supporting_evidence: supporting,
         concerning_signals: concerning,
         unavailable_checks: unavailable,
-        explanation: `Verified official brand portal for ${host}. Direct manufacturer procurement and authenticated dispatch.`,
+        explanation: `Verified official direct store for ${host}. Authentic batch manufacturing declarations with direct-to-consumer supply-chain transparency.`,
       };
     }
 
-    // Impersonation & Typosquatting Heuristics
-    const suspiciousBrandKeywords = ['amazon', 'flipkart', 'myntra', 'nike', 'apple'];
+    // 12. Impersonation & Typosquatting Heuristics (ONLY flag when positive evidence of mimicry exists)
+    const suspiciousBrandKeywords = ['amazon', 'amaz0n', 'flipkart', 'fl1pkart', 'myntra', 'myntr4', 'nike', 'apple', 'croma', 'decathlon', 'adidas'];
     const isTyposquat = suspiciousBrandKeywords.some((kw) => {
       return (
         host.includes(kw) &&
         !host.endsWith(`.${kw}.com`) &&
         !host.endsWith(`.${kw}.in`) &&
+        !host.endsWith(`.${kw}.co.in`) &&
         host !== `${kw}.com` &&
-        host !== `${kw}.in`
+        host !== `${kw}.in` &&
+        host !== `${kw}.co.in`
       );
     });
 
@@ -325,15 +339,22 @@ export class WebsiteTrustService {
       };
     }
 
-    // Generic Third-Party Store
+    // 13. Independent / Unindexed Retailer (Marketplace-Agnostic Baseline)
+    // Neutral evaluation with explicit uncertainty — NEVER automatically labeled a scam!
     supporting.push('Standard commercial e-commerce domain structure');
-    concerning.push('Independent unverified merchant website: corporate registration and legal grievance compliance unverified');
+    if (isHttps) {
+      supporting.push('Secure TLS encryption active for data in transit');
+    }
+    concerning.push('Independent retail webstore: corporate registration not pre-indexed in TrustSphere partner catalog');
+    concerning.push('Buyer protection relies on direct merchant policy rather than platform arbitration');
+
+    const baselineScore = isHttps ? 72 : 45;
 
     return {
       domain: host,
       is_https: isHttps,
-      trust_tier: 'UNVERIFIED_THIRD_PARTY',
-      trust_score: 35,
+      trust_tier: 'INDEPENDENT_WEBSTORE',
+      trust_score: baselineScore,
       organization_identity: host,
       registered_entity: 'Independent Merchant',
       grievance_officer_available: false,
@@ -342,7 +363,7 @@ export class WebsiteTrustService {
       supporting_evidence: supporting,
       concerning_signals: concerning,
       unavailable_checks: unavailable,
-      explanation: "Unsupported or unverified website. We can't confirm this is an official marketplace. Standard consumer safeguards cannot be validated.",
+      explanation: `Independent retail webstore (${host}). Normal commercial web structure with secure communication. Standard consumer protections depend on direct merchant return policies. Product authenticity should be verified against price corridors and physical packaging evidence.`,
     };
   }
 }

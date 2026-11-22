@@ -1,0 +1,206 @@
+{
+  "split_specification": {
+    "type": "Multimodal_Connected_Components_Leakage_Safe",
+    "train_count": 2550,
+    "val_count": 546,
+    "test_count": 547,
+    "total_features": 23
+  },
+  "benchmarks": {
+    "majority_baseline": {
+      "accuracy": 0.9982,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1_score": 0.0,
+      "pr_auc": 0.0018,
+      "roc_auc": 0.5,
+      "confusion_matrix": [
+        [
+          546,
+          0
+        ],
+        [
+          1,
+          0
+        ]
+      ],
+      "support": 547,
+      "positives": 1
+    },
+    "deterministic_corroboration_engine": {
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "pr_auc": 1.0,
+      "roc_auc": 1.0,
+      "confusion_matrix": [
+        [
+          546,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
+      "support": 547,
+      "positives": 1
+    },
+    "early_fusion_logistic_regression": {
+      "accuracy": 0.8757,
+      "precision": 0.0145,
+      "recall": 1.0,
+      "f1_score": 0.0286,
+      "pr_auc": 0.0833,
+      "roc_auc": 0.9799,
+      "confusion_matrix": [
+        [
+          478,
+          68
+        ],
+        [
+          0,
+          1
+        ]
+      ],
+      "support": 547,
+      "positives": 1
+    },
+    "early_fusion_random_forest": {
+      "accuracy": 0.9726,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1_score": 0.0,
+      "pr_auc": 0.0667,
+      "roc_auc": 0.9744,
+      "confusion_matrix": [
+        [
+          532,
+          14
+        ],
+        [
+          1,
+          0
+        ]
+      ],
+      "support": 547,
+      "positives": 1
+    },
+    "late_fusion_ensemble": {
+      "accuracy": 0.9854,
+      "precision": 0.1111,
+      "recall": 1.0,
+      "f1_score": 0.2,
+      "pr_auc": 0.5,
+      "roc_auc": 0.9982,
+      "confusion_matrix": [
+        [
+          538,
+          8
+        ],
+        [
+          0,
+          1
+        ]
+      ],
+      "support": 547,
+      "positives": 1
+    }
+  },
+  "stratified_5fold_cross_validation_catalog_wide": {
+    "total_samples": 3643,
+    "positive_cases": 154,
+    "logistic_regression": {
+      "accuracy": 0.8076,
+      "precision": 0.1779,
+      "recall": 0.9805,
+      "f1_score": 0.3011,
+      "pr_auc": 0.2139,
+      "roc_auc": 0.9169,
+      "confusion_matrix": [
+        [
+          2791,
+          698
+        ],
+        [
+          3,
+          151
+        ]
+      ],
+      "support": 3643,
+      "positives": 154
+    },
+    "random_forest": {
+      "accuracy": 0.9709,
+      "precision": 0.6579,
+      "recall": 0.6494,
+      "f1_score": 0.6536,
+      "pr_auc": 0.7033,
+      "roc_auc": 0.97,
+      "confusion_matrix": [
+        [
+          3437,
+          52
+        ],
+        [
+          54,
+          100
+        ]
+      ],
+      "support": 3643,
+      "positives": 154
+    },
+    "late_fusion_ensemble": {
+      "accuracy": 0.9849,
+      "precision": 0.7829,
+      "recall": 0.8896,
+      "f1_score": 0.8328,
+      "pr_auc": 0.9278,
+      "roc_auc": 0.996,
+      "confusion_matrix": [
+        [
+          3451,
+          38
+        ],
+        [
+          17,
+          137
+        ]
+      ],
+      "support": 3643,
+      "positives": 154
+    }
+  },
+  "feature_importances": {
+    "cv_has_cross_catalog_reuse": 0.3007,
+    "image_count": 0.1408,
+    "robust_z_score": 0.1128,
+    "price_inr": 0.1103,
+    "discount_percentage": 0.1076,
+    "has_images": 0.053,
+    "cv_has_duplicate_hash": 0.0476,
+    "is_price_outlier": 0.0262,
+    "is_extreme_price_outlier": 0.0242,
+    "nlp_max_discordance": 0.0173,
+    "nlp_mean_rating": 0.0138,
+    "review_count": 0.0119,
+    "nlp_has_duplicate": 0.0107,
+    "nlp_mean_sentiment": 0.0106,
+    "has_reviews": 0.0082,
+    "clip_cosine_similarity": 0.0014,
+    "ocr_word_count": 0.0012,
+    "ocr_observed": 0.001,
+    "clip_observed": 0.0005,
+    "is_discount_anomaly": 0.0002,
+    "ocr_brand_verified": 0.0001,
+    "clip_is_discordant": 0.0,
+    "graph_degree": 0.0
+  },
+  "missing_modality_robustness": {
+    "zero_penalty_invariant_satisfied": true,
+    "full_data_mean_probability": 0.0422,
+    "sparse_masked_mean_probability": 0.0022,
+    "penalty_inflation_detected": false
+  }
+}

@@ -73,7 +73,13 @@ export const envSchema = z.object({
   NODE_BACKEND_PORT: z.coerce.number().int().min(1).max(65535).default(5000),
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PYTHON_SERVICE_URL: z.string().url().default('http://127.0.0.1:8000'),
-  CORS_ALLOWED_ORIGINS: z.string().default('http://localhost:3000,http://127.0.0.1:3000'),
+  // Hugging Face Space ML Service Configuration
+  HF_SPACE_ID: z.string().default('06Remontada06/trustphere-ml'),
+  HF_SPACE_URL: z.string().url().default('https://06remontada06-trustphere-ml.hf.space'),
+  HF_TOKEN: z.string().optional(),
+  CORS_ALLOWED_ORIGINS: z.string().default(
+    'http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,https://ai-marketplace-analyzer.vercel.app,https://*.vercel.app'
+  ),
   JWT_SECRET: z.string().min(16).default(DEFAULT_DEV_JWT_SECRET),
   // Proxy Trust Configuration (for secure IP extraction behind reverse proxies)
   TRUST_PROXY: z.union([z.boolean(), z.number(), z.string()]).default(false),

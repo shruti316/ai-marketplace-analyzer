@@ -1,48 +1,40 @@
-# Render Blueprint configuration for AI Marketplace Analyzer Services
-# Deploys both the Python AI Engine (Docker runtime with Tesseract OCR) and Node.js/Express Backend
+# Render Blueprint configuration for TrustSphere Backend Service
+# Deploys the Node.js/Express Backend on Render's Free Web Service tier (₹0 budget).
+# Python ML inference is permanently handled by Hugging Face ZeroGPU Space (06Remontada06/trustphere-ml).
 services:
-  - type: web
-    name: ai-marketplace-python
-    env: docker
-    dockerfilePath: ./Dockerfile
-    plan: standard
-    region: oregon
-    healthCheckPath: /health
-    envVars:
-      - key: PYTHONUNBUFFERED
-        value: "1"
-      - key: PORT
-        value: 8000
-      - key: SERVICE_HOST
-        value: "0.0.0.0"
-
   - type: web
     name: ai-marketplace-backend
     runtime: node
     plan: free
     region: oregon
     rootDir: backend
-    buildCommand: npm install && npm run build
+    buildCommand: npm install --include=dev && npm run build
     startCommand: npm run start
     healthCheckPath: /live
     envVars:
       - key: NODE_ENV
         value: production
       - key: CORS_ALLOWED_ORIGINS
-        value: "https://*.vercel.app,http://localhost:3000"
+        value: "https://ai-marketplace-analyzer.vercel.app,https://*.vercel.app,http://localhost:3000,http://localhost:5173"
       - key: JWT_SECRET
         generateValue: true
-      - key: PYTHON_SERVICE_URL
-        value: http://ai-marketplace-python:8000
+      - key: TRUST_PROXY
+        value: "1"
+      - key: HF_SPACE_ID
+        value: "06Remontada06/trustphere-ml"
+      - key: HF_SPACE_URL
+        value: "https://06remontada06-trustphere-ml.hf.space"
+      - key: HF_TOKEN
+        sync: false
       - key: DB_HOST
         sync: false
       - key: DB_PORT
+        value: "4000"
+      - key: DB_NAME
         sync: false
       - key: DB_USER
         sync: false
       - key: DB_PASSWORD
-        sync: false
-      - key: DB_NAME
         sync: false
       - key: DB_SSL
         value: "true"

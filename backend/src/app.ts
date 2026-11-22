@@ -24,7 +24,13 @@ export function createApp(): Express {
     const { getEnv } = require('./config/env');
     const env = getEnv();
     if (env.TRUST_PROXY !== false && env.TRUST_PROXY !== 'false') {
-      app.set('trust proxy', env.TRUST_PROXY);
+      const proxySetting =
+        env.TRUST_PROXY === 'true'
+          ? true
+          : env.TRUST_PROXY === '1'
+            ? 1
+            : env.TRUST_PROXY;
+      app.set('trust proxy', proxySetting);
     }
   } catch {
     // Fall back to default (no proxy trust) if env parsing is in flux

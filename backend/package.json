@@ -33,6 +33,7 @@
   "author": "Google DeepMind Project Team",
   "license": "UNLICENSED",
   "dependencies": {
+    "@gradio/client": "^2.8.0",
     "@node-rs/argon2": "^2.2.2",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",

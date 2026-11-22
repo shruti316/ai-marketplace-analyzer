@@ -1,5 +1,22 @@
 import { URL } from 'node:url';
 
+export type PriceVerificationStatus = 'VERIFIED' | 'PARTIALLY_VERIFIED' | 'UNVERIFIED' | 'NOT_FOUND' | 'CONFLICTING_SOURCES';
+
+export type PriceType = 'SELLING_PRICE' | 'MRP' | 'DISCOUNTED_PRICE' | 'EFFECTIVE_OFFER_PRICE' | 'EMI_INSTALLMENT' | 'SUBSCRIPTION' | 'DELIVERY_CHARGE';
+
+export interface ValidatedPriceItem {
+  value: number | null;
+  currency: string;
+  price_type: PriceType;
+  source: 'OFFICIAL_FEED' | 'JSON_LD' | 'EMBEDDED_STATE' | 'OPEN_GRAPH_META' | 'DOM_SEMANTIC' | 'RETAILER_ADAPTER' | 'FALLBACK_URL' | 'MANUAL_ENTRY';
+  extraction_method: string;
+  confidence: number;
+  verification_status: PriceVerificationStatus;
+  extracted_at: string;
+  explanation?: string;
+  conflicting_sources?: Array<{ source: string; amount: number }>;
+}
+
 export interface PriceEvidenceItem {
   amount: number | null;
   currency: string;
@@ -35,6 +52,14 @@ export interface ExtractedProductData {
   effective_offer_price?: number | null;
   reference_market_price?: ReferenceMarketPriceInfo | null;
   price_evidence?: PriceEvidenceItem[];
+  validated_price?: ValidatedPriceItem;
+  price_verification_status?: PriceVerificationStatus;
+  price_diagnostics?: {
+    status: PriceVerificationStatus;
+    extracted_source: string;
+    conflicting_sources?: Array<{ source: string; amount: number }>;
+    note: string;
+  };
   availability: string;
   seller_name: string;
   seller_rating?: number;

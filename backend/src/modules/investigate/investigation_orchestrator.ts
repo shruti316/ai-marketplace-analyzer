@@ -6,9 +6,12 @@ import { sellerTrustService, SellerTrustAssessment } from './seller_trust_servic
 import { competitorDiscoveryService, CompetitorComparisonSnapshot, ExactMarketplaceOffer, CompetingProductAlternative } from './competitor_discovery_service';
 import { buyingSuitabilityService, BuyingSuitabilityAssessment } from './buying_suitability_service';
 import { trustClient } from '../trust/trust.client';
+import { hfGradioClient } from '../trust/hf_gradio.client';
 import { investigationRepository } from '../investigation_history/investigation_history.repository';
 import { PipelineInvestigationInput } from './investigate.schemas';
 import { ExtractedProductData } from './marketplace_adapters';
+import { reviewNlpEngine } from './review_nlp_engine';
+import { decoupledTrustEngine, FiveDimensionTrustResult } from './decoupled_trust_engine';
 
 export interface StructuredAspectItem {
   key: string;
@@ -53,6 +56,7 @@ export interface ProductIntelligenceReport {
     verdict_headline: string;
     provenance: string;
   };
+  five_dimension_trust: FiveDimensionTrustResult;
   section_1_overview: {
     title: string;
     brand: string;
@@ -404,11 +408,22 @@ export class InvestigationOrchestrator {
       }
     } else {
       try {
-        const cvResponse: any = await trustClient.post('/api/v1/inspect/image', {
-          image_base64: imageBase64ToInspect,
-          canonical_brand: brand,
-          product_title: title,
-        }, 20000);
+        let cvResponse: any = null;
+        try {
+          cvResponse = await hfGradioClient.inspectImage(
+            imageBase64ToInspect!,
+            title || 'Product',
+            brand || 'Generic',
+            price || undefined
+          );
+        } catch (hfErr: any) {
+          console.warn('[InvestigationOrchestrator] Hugging Face ZeroGPU inspection deferred to secondary:', hfErr.message);
+          cvResponse = await trustClient.post('/api/v1/inspect/image', {
+            image_base64: imageBase64ToInspect,
+            canonical_brand: brand,
+            product_title: title,
+          }, 20000);
+        }
 
         if (cvResponse && cvResponse.quality_findings) {
           const q = cvResponse.quality_findings;
@@ -513,117 +528,61 @@ export class InvestigationOrchestrator {
       inferReviews = [(input.reviews as string).trim()];
     }
 
-    // Grounded category sentiment benchmark reviews for ABSA generation when no user reviews provided
-    if (inferReviews.length === 0) {
-      const lowerComb = (title + ' ' + category + ' ' + brand).toLowerCase();
-      if (lowerComb.match(/\b(phone|mobile|smartphone|galaxy|iphone|pixel|oneplus|redmi|realme|poco)\b/)) {
-        inferReviews = [
-          `Original ${brand} smartphone with authentic sealed retail box and genuine IMEI verification.`,
-          `Display touch response is ultra-smooth and fast charging works as advertised, genuine product.`,
-          `Camera quality and battery backup match authentic ${brand} retail specifications perfectly.`,
-          `Packaging was sealed with intact manufacturer holographic security sticker.`,
-          `Excellent value for money, verified genuine handset delivered safely.`,
-        ];
-      } else if (lowerComb.match(/shoe|sneaker|runner|footwear|boot|sandal|trainer/)) {
-        inferReviews = [
-          `Comfortable fit with genuine ${brand} sole cushioning and durable stitching.`,
-          `Arrived in original branded shoebox with all authentic manufacturer tags.`,
-          `Great grip and lightweight foam, 100% genuine pair.`,
-          `Quality materials, fits true to size and high durability.`,
-          `Satisfied with the price and genuine platform delivery.`,
-        ];
-      } else if (lowerComb.match(/facewash|face-wash|cleanser|moisturi|serum|sunscreen|cream|lotion|soap|scrub|skin|hair|beauty|shampoo/)) {
-        inferReviews = [
-          `Authentic ${brand} formulation, gentle on skin with clear batch code and expiry.`,
-          `Arrived with intact tamper-evident foil seal on bottle cap.`,
-          `Effective cleansing without irritation, consistent texture and genuine smell.`,
-          `Statutory MRP and manufacturer declarations clearly printed on outer carton.`,
-          `Good product, original formulation and fair pricing.`,
-        ];
-      } else if (lowerComb.match(/earphone|headphone|airdope|earbud|audio|tws|neckband|bose|sony/)) {
-        inferReviews = [
-          `Clean sound quality with deep bass, connects instantly via Bluetooth.`,
-          `Original ${brand} retail package with authentic serial number registered.`,
-          `Battery life easily lasts over 24 hours, noise cancellation works well.`,
-          `Build quality and ear tips are premium and comfortable.`,
-          `Authentic product with valid warranty coverage.`,
-        ];
-      } else if (lowerComb.match(/jacket|puffer|coat|outerwear|bomber|parka/)) {
-        inferReviews = [
-          `Solid stitch quality and warm quilted insulation, fits comfortably.`,
-          `Original brand tags attached, smooth heavy-duty metal zippers.`,
-          `Fabric is durable and windproof, clean inner lining.`,
-          `Looks identical to retail store listing, good packaging.`,
-          `Great value winter jacket, completely satisfied.`,
-        ];
-      } else {
-        inferReviews = [
-          `Authentic product received in good condition with original packaging.`,
-          `Good build quality and materials meet expectations.`,
-          `Delivered on time with genuine brand tags and documentation.`,
-          `Product matches online listing description and specifications.`,
-          `Satisfied with the purchase and overall value.`,
-        ];
-      }
-    }
+    const hasReviews = inferReviews.length > 0;
+    const nlpReport = reviewNlpEngine.analyzeReviews(inferReviews);
 
     let inferResult: any = null;
-    try {
-      inferResult = await trustClient.post('/api/v1/infer', {
-        product_title: title,
-        brand: brand,
-        category: category,
-        observed_price_inr: price,
-        mrp_inr: mrp,
-        marketplace: marketplace,
-        reviews: inferReviews,
-      }, 20000);
-    } catch (inferErr: any) {
+    if (hasReviews) {
+      try {
+        inferResult = await trustClient.post('/api/v1/infer', {
+          product_title: title,
+          brand: brand,
+          category: category,
+          observed_price_inr: price,
+          mrp_inr: mrp,
+          marketplace: marketplace,
+          reviews: inferReviews,
+        }, 20000);
+      } catch (inferErr: any) {
+        inferResult = this.createInferenceFallback(title, brand, price, mrp, isSteepDiscountAnomaly);
+      }
+    } else {
       inferResult = this.createInferenceFallback(title, brand, price, mrp, isSteepDiscountAnomaly);
     }
 
-    // Dynamic trust score calculation from real signals
-    const titleHash = Array.from(title || '').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-    const priceMod = (price || 0) % 17;
-    const variance = ((titleHash * 31 + priceMod) % 9) - 4; // -4 to +4
+    // Decoupled 5-Dimension Trust Assessment Engine with Non-Masking Invariant
+    const fiveDimensionResult = decoupledTrustEngine.evaluateFiveDimensions({
+      url: parsedUrl,
+      platformName: marketplace,
+      domainStatus: websiteTrust.trust_tier,
+      isLookalike: websiteTrust.trust_tier === 'SUSPECTED_IMPERSONATION',
+      productTitle: title,
+      brand,
+      category,
+      observedPrice: price,
+      mrp,
+      effectiveOfferPrice: (extractedData as any).effective_offer_price || null,
+      referenceMarketPrice: (extractedData as any).reference_market_price?.median || null,
+      priceVerificationStatus: (extractedData as any).price_verification_status || (price ? 'PARTIALLY_VERIFIED' : 'NOT_FOUND'),
+      validatedPrice: (extractedData as any).validated_price || null,
+      sellerName: sellerTrust.seller_name,
+      sellerRating: sellerTrust.rating_summary.average_rating,
+      fulfillmentType: sellerTrust.fulfillment_channel,
+      claimedStarRating: (input as any).rating,
+      ratingsCount: (input as any).ratings_count,
+      nlpReport,
+    });
 
-    let baseTrustScore: number;
-    const rawTrust = inferResult?.trust_score ?? inferResult?.overall_trust_score;
-    if (typeof rawTrust === 'number' && !isNaN(rawTrust)) {
-      baseTrustScore = Math.round(rawTrust);
-    } else {
-      // Dynamic fallback based on brand, discount, and category
-      const brandLower = brand.toLowerCase();
-      let calculatedScore = 80 + variance;
-      if (['apple', 'samsung', 'sony', 'google', 'oneplus', 'nike', 'adidas', 'puma'].some(b => brandLower.includes(b))) {
-        calculatedScore = 90 + Math.round(variance * 0.6);
-      } else if (['boat', 'noise', 'fire-boltt', 'boult', 'fastrack', 'titan', 'plum', 'minimalist', 'cetaphil'].some(b => brandLower.includes(b))) {
-        calculatedScore = 84 + Math.round(variance * 0.7);
-      } else if (['kotty', 'roadster', 'highlander', 'tokyo talkies'].some(b => brandLower.includes(b))) {
-        calculatedScore = 78 + Math.round(variance * 0.8);
-      }
-      if (isSteepDiscountAnomaly) {
-        calculatedScore = Math.min(calculatedScore, 36);
-      }
-      baseTrustScore = calculatedScore;
-    }
-
-    const rawTier = String(inferResult?.risk_tier || '').toUpperCase();
-    let mlRiskTier: 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL' = isSteepDiscountAnomaly ? 'HIGH' : 'LOW';
-    if (rawTier.includes('CRITICAL')) mlRiskTier = 'CRITICAL';
-    else if (rawTier.includes('HIGH')) mlRiskTier = 'HIGH';
-    else if (rawTier.includes('MODERATE')) mlRiskTier = 'MODERATE';
-    else if (rawTier.includes('LOW')) mlRiskTier = 'LOW';
-
-    let mlTrustScore = baseTrustScore;
-
-    // Strict Domain Trust Integration (BUG 2)
-    if (websiteTrust.trust_tier === 'SUSPECTED_IMPERSONATION') {
+    const mlTrustScore = fiveDimensionResult.overall_trust_score;
+    let mlRiskTier: 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL' = 'LOW';
+    if (fiveDimensionResult.overall_risk_level === 'CRITICAL_RISK') {
       mlRiskTier = 'CRITICAL';
-      mlTrustScore = Math.min(mlTrustScore, 15);
-    } else if (websiteTrust.trust_tier === 'UNVERIFIED_THIRD_PARTY') {
+    } else if (fiveDimensionResult.overall_risk_level === 'HIGH_OBSERVED_RISK') {
       mlRiskTier = 'HIGH';
-      mlTrustScore = Math.min(mlTrustScore, 35);
+    } else if (fiveDimensionResult.overall_risk_level === 'MODERATE_RISK') {
+      mlRiskTier = 'MODERATE';
+    } else {
+      mlRiskTier = 'LOW';
     }
 
     const identifiedGaps = (inferResult?.identified_gaps || []).map((g: any) => ({
@@ -632,121 +591,34 @@ export class InvestigationOrchestrator {
       description: g.description || '',
     }));
 
-    // Process Review & Sentiment Intelligence (NLP ABSA)
-    const hasReviews = inferReviews.length > 0;
-    const reviewSummary = inferResult?.review_summary || {};
-    const rawOverallScore = hasReviews && typeof reviewSummary.overall_sentiment_score === 'number' && !isNaN(reviewSummary.overall_sentiment_score)
-      ? reviewSummary.overall_sentiment_score
-      : (hasReviews && typeof reviewSummary.sentiment_score === 'number' && !isNaN(reviewSummary.sentiment_score) ? reviewSummary.sentiment_score : null);
-
-    const overallSatisfactionIndex = rawOverallScore !== null
-      ? Math.round(Math.max(10, Math.min(98, ((rawOverallScore + 1.0) / 2.0) * 100)))
-      : null;
-
-    // Parse the 5 canonical aspects safely without NaN
-    const rawAspects = reviewSummary.aspect_findings || {};
-    const aspectTaxonomy = [
-      { key: 'material_durability', label: 'Material & Durability' },
-      { key: 'comfort_fit', label: 'Comfort & Ergonomics' },
-      { key: 'packaging_compliance', label: 'Packaging & Box' },
-      { key: 'authenticity_trust', label: 'Authenticity & Trust' },
-      { key: 'price_value', label: 'Price-to-Value' },
-    ];
-
-    const structuredAspects: StructuredAspectItem[] = aspectTaxonomy.map(def => {
-      const raw = rawAspects[def.key];
-      if (!raw || !hasReviews) {
-        return {
-          key: def.key,
-          display_name: def.label,
-          sentiment_score: null,
-          satisfaction_pct: null,
-          mention_count: 0,
-          positive_mentions: 0,
-          negative_mentions: 0,
-          sentiment_label: 'NO_DATA',
-          defect_risk_level: 'LOW',
-          status: 'NO_DATA',
-          top_complaints: [],
-          top_praises: [],
-        };
-      }
-
-      if (typeof raw === 'object' && raw !== null) {
-        const score = typeof raw.sentiment_score === 'number' && !isNaN(raw.sentiment_score)
-          ? raw.sentiment_score
-          : null;
-        const mentions = Number(raw.mention_count || 0);
-        const satPct = (score !== null && mentions > 0)
-          ? Math.round(Math.max(0, Math.min(100, ((score + 1.0) / 2.0) * 100)))
-          : null;
-
-        return {
-          key: def.key,
-          display_name: raw.display_name || def.label,
-          sentiment_score: score !== null ? Math.round(score * 100) / 100 : null,
-          satisfaction_pct: satPct,
-          mention_count: mentions,
-          positive_mentions: Number(raw.positive_mentions || 0),
-          negative_mentions: Number(raw.negative_mentions || 0),
-          sentiment_label: raw.sentiment_label || (score && score >= 0.2 ? 'POSITIVE' : 'CONCERN'),
-          defect_risk_level: raw.defect_risk_level || 'LOW',
-          status: mentions > 0 && score !== null ? 'EVALUATED' : 'NO_DATA',
-          top_complaints: Array.isArray(raw.top_complaints) ? raw.top_complaints : [],
-          top_praises: Array.isArray(raw.top_praises) ? raw.top_praises : [],
-        };
-      }
-
-      if (typeof raw === 'number' && !isNaN(raw)) {
-        const score = raw;
-        const satPct = Math.round(Math.max(0, Math.min(100, ((score + 1.0) / 2.0) * 100)));
-        return {
-          key: def.key,
-          display_name: def.label,
-          sentiment_score: Math.round(score * 100) / 100,
-          satisfaction_pct: satPct,
-          mention_count: 1,
-          positive_mentions: score >= 0 ? 1 : 0,
-          negative_mentions: score < 0 ? 1 : 0,
-          sentiment_label: score >= 0.2 ? 'POSITIVE' : 'CONCERN',
-          defect_risk_level: score < -0.3 ? 'HIGH' : 'LOW',
-          status: 'EVALUATED',
-          top_complaints: [],
-          top_praises: [],
-        };
-      }
-
-      return {
-        key: def.key,
-        display_name: def.label,
-        sentiment_score: null,
-        satisfaction_pct: null,
-        mention_count: 0,
-        positive_mentions: 0,
-        negative_mentions: 0,
-        sentiment_label: 'NO_DATA',
-        defect_risk_level: 'LOW',
-        status: 'NO_DATA',
-        top_complaints: [],
-        top_praises: [],
-      };
-    });
-
     const reviewSection: ProductIntelligenceReport['section_5_review_intelligence'] = {
-      overall_sentiment_score: hasReviews && rawOverallScore !== null ? Math.round(rawOverallScore * 100) / 100 : null,
-      satisfaction_index: hasReviews ? overallSatisfactionIndex : null,
-      aspects: hasReviews ? structuredAspects : [],
-      rating_review_dissonance_detected: hasReviews ? Boolean(reviewSummary.rating_review_dissonance) : false,
-      positive_themes: hasReviews ? (reviewSummary.positive_themes || ['Good finishing', 'Accurate sizing', 'Prompt delivery']) : [],
-      negative_themes: hasReviews ? (reviewSummary.negative_themes || (isSteepDiscountAnomaly ? ['Questionable packaging seal', 'Lower weight than original'] : ['Minor transit packaging wear'])) : [],
-      complaints: hasReviews ? (reviewSummary.complaint_topics || (isSteepDiscountAnomaly ? ['Suspicion of unauthorized stock'] : ['Packaging box slightly crushed in transit'])) : [],
-      reviews_analyzed_count: Array.isArray(inferReviews) ? inferReviews.length : 0,
-      sample_reviews: (Array.isArray(inferReviews) ? inferReviews : []).map((r: any) => ({
-        review_text: typeof r === 'string' ? r : r.review_text,
-        rating: typeof r === 'object' && r.rating ? r.rating : 4.0,
+      overall_sentiment_score: nlpReport.overall_sentiment_score,
+      satisfaction_index: nlpReport.satisfaction_index,
+      aspects: nlpReport.aspects.map(a => ({
+        key: a.key,
+        display_name: a.display_name,
+        sentiment_score: a.sentiment_score,
+        satisfaction_pct: a.satisfaction_pct,
+        mention_count: a.mention_count,
+        positive_mentions: a.positive_mentions,
+        negative_mentions: a.negative_mentions,
+        sentiment_label: a.sentiment_label,
+        defect_risk_level: a.defect_risk_level,
+        status: a.status,
+        top_complaints: a.top_complaints,
+        top_praises: a.top_praises,
+      })),
+      rating_review_dissonance_detected: nlpReport.suspicious_patterns.rating_review_dissonance_detected,
+      positive_themes: nlpReport.positive_themes,
+      negative_themes: nlpReport.negative_themes,
+      complaints: nlpReport.complaints,
+      reviews_analyzed_count: nlpReport.reviews_analyzed_count,
+      sample_reviews: inferReviews.map(r => ({
+        review_text: r,
+        rating: 4.0,
         sentiment: 'POSITIVE',
       })),
-      status: Array.isArray(inferReviews) && inferReviews.length > 0 ? 'EVALUATED' : 'NO_REVIEWS',
+      status: nlpReport.status === 'EVALUATED' ? 'EVALUATED' : 'NO_REVIEWS',
     };
 
     // ----------------------------------------------------
@@ -774,7 +646,7 @@ export class InvestigationOrchestrator {
       sellerTrust,
       engineATrustScore: mlTrustScore,
       isSteepDiscountAnomaly,
-      nlpReviewScore: rawOverallScore,
+      nlpReviewScore: nlpReport.overall_sentiment_score,
     });
 
     // Construct Multimodal Radar Signals & Coverage Matrix
@@ -787,7 +659,7 @@ export class InvestigationOrchestrator {
       },
       {
         modality: 'Review NLP ABSA',
-        listing_score: overallSatisfactionIndex,
+        listing_score: nlpReport.satisfaction_index ?? 75,
         genuine_benchmark: 82,
         status: hasReviews ? 'EVALUATED' : 'NOT_PROVIDED',
       },
@@ -869,6 +741,7 @@ export class InvestigationOrchestrator {
         verdict_headline: suitabilityAssessment.recommendation_title,
         provenance: extractedData.extraction_provenance,
       },
+      five_dimension_trust: fiveDimensionResult,
       section_1_overview: {
         title,
         brand,
