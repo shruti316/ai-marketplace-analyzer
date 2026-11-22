@@ -9,10 +9,12 @@ import {
   ChevronLeft,
   ChevronRight,
   LogOut,
+  LogIn,
   ShieldCheck,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { cn } from '../../lib/utils';
+import { Link } from 'react-router-dom';
 
 export interface NavItem {
   name: string;
@@ -23,7 +25,7 @@ export interface NavItem {
 
 export const NAV_ITEMS: NavItem[] = [
   { name: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
-  { name: 'Scanner', to: '/', icon: ScanSearch },
+  { name: 'Scanner', to: '/scanner', icon: ScanSearch },
   { name: 'Comparisons', to: '/comparisons', icon: GitCompare },
   { name: 'AI Assistant', to: '/assistant', icon: Sparkles },
   { name: 'Settings', to: '/settings', icon: Settings },
@@ -121,33 +123,33 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* User Profile & Account Area */}
       <div className="p-3 border-t border-[rgba(193,160,172,0.35)] bg-[#FDFBFC]">
-        <div
-          className={cn(
-            'flex items-center gap-2.5 p-2 rounded-[16px] bg-[#F8EDF2] border border-[rgba(193,160,172,0.35)] transition-colors',
-            isCollapsed ? 'justify-center' : 'justify-between'
-          )}
-        >
-          <div className="flex items-center gap-2.5 overflow-hidden">
-            <div className="h-8 w-8 rounded-full bg-[#F0D9E4] text-[#16131F] border border-[#C1A0AC]/40 flex items-center justify-center text-xs font-bold shrink-0">
-              {user?.fullName?.charAt(0) || user?.email?.charAt(0) || 'U'}
-            </div>
-            {!isCollapsed && (
-              <div className="flex flex-col truncate">
-                <span className="text-xs font-semibold text-[#16131F] truncate">
-                  {user?.fullName || (isAuthenticated ? 'Consumer' : 'Shruti')}
-                </span>
-                <span className="text-[10px] text-[var(--text-3)] uppercase tracking-wider font-medium truncate font-mono">
-                  {user?.role || 'Viewer'}
-                </span>
-              </div>
+        {isAuthenticated && user ? (
+          <div
+            className={cn(
+              'flex items-center gap-2.5 p-2 rounded-[16px] bg-[#F8EDF2] border border-[rgba(193,160,172,0.35)] transition-colors',
+              isCollapsed ? 'justify-center' : 'justify-between'
             )}
-          </div>
+          >
+            <Link to="/settings" className="flex items-center gap-2.5 overflow-hidden group">
+              <div className="h-8 w-8 rounded-full bg-[#F0D9E4] text-[#16131F] border border-[#C1A0AC]/40 flex items-center justify-center text-xs font-bold shrink-0 group-hover:scale-105 transition-transform">
+                {user.fullName?.charAt(0) || user.email?.charAt(0) || 'U'}
+              </div>
+              {!isCollapsed && (
+                <div className="flex flex-col truncate">
+                  <span className="text-xs font-semibold text-[#16131F] truncate group-hover:text-[var(--accent)] transition-colors">
+                    {user.fullName || user.email}
+                  </span>
+                  <span className="text-[10px] text-[var(--text-3)] uppercase tracking-wider font-medium truncate font-mono">
+                    {user.role}
+                  </span>
+                </div>
+              )}
+            </Link>
 
-          {isAuthenticated && (
             <button
               onClick={() => logout()}
               className={cn(
-                'text-[var(--text-3)] hover:text-rose-600 hover:bg-rose-50 p-1.5 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-rose-500',
+                'text-[var(--text-3)] hover:text-rose-600 hover:bg-rose-50 p-1.5 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-rose-500 cursor-pointer',
                 isCollapsed && 'mt-2'
               )}
               title="Log out"
@@ -155,8 +157,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
             >
               <LogOut className="w-4 h-4" />
             </button>
-          )}
-        </div>
+          </div>
+        ) : (
+          <Link
+            to="/login"
+            className={cn(
+              'flex items-center gap-2.5 p-2 rounded-[16px] bg-[#F8EDF2] hover:bg-[#F0D9E4] border border-[rgba(193,160,172,0.35)] text-xs font-semibold text-[#16131F] transition-all',
+              isCollapsed ? 'justify-center' : 'justify-between'
+            )}
+            title="Sign In to access all features"
+          >
+            <div className="flex items-center gap-2">
+              <div className="h-7 w-7 rounded-full bg-[#16131F] text-white flex items-center justify-center text-xs font-bold shrink-0">
+                <LogIn className="w-3.5 h-3.5" />
+              </div>
+              {!isCollapsed && <span>Sign In</span>}
+            </div>
+            {!isCollapsed && <span className="text-[10px] text-[var(--text-3)] font-mono">Guest</span>}
+          </Link>
+        )}
       </div>
     </aside>
   );

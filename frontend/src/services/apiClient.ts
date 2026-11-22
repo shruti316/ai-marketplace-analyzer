@@ -14,7 +14,7 @@ export const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 30000,
+  timeout: 60000,
   withCredentials: true, // Send HttpOnly refresh cookies across origins
 });
 
@@ -156,7 +156,15 @@ apiClient.interceptors.response.use(
     }
 
     if (error.code === 'ECONNABORTED') {
-      return Promise.reject(new Error('Request timed out. Please verify server connection and try again.'));
+      return Promise.reject(
+        new Error('Server request timed out. The Render backend may be waking up from sleep (cold start). Please retry in a few moments.')
+      );
+    }
+
+    if (!error.response) {
+      return Promise.reject(
+        new Error('Unable to reach TrustSphere backend service. The server may be waking up from cold sleep or network connectivity was interrupted.')
+      );
     }
 
     return Promise.reject(new Error(error.message || 'Network error encountered. Please check connectivity.'));
