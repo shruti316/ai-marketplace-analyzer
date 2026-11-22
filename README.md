@@ -2,6 +2,8 @@
 
 TrustSphere is an independent, evidence-driven product trust and listing intelligence platform designed to detect e-commerce anomalies, deceptive discounts, manipulated reviews, and merchant risks across Indian marketplaces including Amazon India, Flipkart, Myntra, Decathlon, and Croma.
 
+**Live Deployment**: [https://ai-marketplace-analyzer.vercel.app/](https://ai-marketplace-analyzer.vercel.app/)
+
 ![TrustSphere Preview](TrustSphere_Preview.png)
 
 ---
