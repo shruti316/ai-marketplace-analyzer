@@ -250,11 +250,12 @@ const ASPECT_KEYWORDS: Record<string, { label: string; keywords: string[] }> = {
   },
 };
 
-const NEGATION_WORDS = new Set(['not', "didn't", "don't", 'no', 'never', 'hardly', 'barely', 'scarcely', 'without', 'neither', 'nor', 'bilkul', 'nhi', 'nahi', 'mat']);
+const NEGATION_WORDS = new Set(['not', "didn't", "don't", 'no', 'never', 'hardly', 'barely', 'scarcely', 'without', 'neither', 'nor', 'nhi', 'nahi', 'mat']);
+const INTENSIFIER_WORDS = new Set(['very', 'extremely', 'really', 'super', 'bilkul', 'bohot', 'bahut', 'ekdum', 'so', 'too']);
 
 export class ReviewNlpEngine {
   /**
-   * Evaluates text sentiment using lexicon + Hinglish + scope-based negation.
+   * Evaluates text sentiment using lexicon + Hinglish + scope-based negation and intensifiers.
    */
   public analyzeSentenceSentiment(text: string): { score: number; tokens: string[] } {
     if (!text || !text.trim()) return { score: 0, tokens: [] };
@@ -266,15 +267,32 @@ export class ReviewNlpEngine {
     let matchCount = 0;
     let isNegated = false;
     let negationWindow = 0;
+    let isIntensified = false;
+    let intensifierWindow = 0;
 
     for (let i = 0; i < rawTokens.length; i++) {
       const token = rawTokens[i];
       const twoWordToken = i < rawTokens.length - 1 ? `${token} ${rawTokens[i + 1]}` : '';
 
+      // Check Hindi negation compound "bilkul nahi" / "bilkul nhi"
+      if (token === 'bilkul' && i < rawTokens.length - 1 && (rawTokens[i + 1] === 'nahi' || rawTokens[i + 1] === 'nhi')) {
+        isNegated = true;
+        negationWindow = 3;
+        i++; // consume compound
+        continue;
+      }
+
       // Check negation
       if (NEGATION_WORDS.has(token)) {
         isNegated = true;
         negationWindow = 3; // Negate the next 3 words
+        continue;
+      }
+
+      // Check intensifier (bilkul, bohot, ekdum, very, etc.)
+      if (INTENSIFIER_WORDS.has(token)) {
+        isIntensified = true;
+        intensifierWindow = 2; // Amplify the next 2 words
         continue;
       }
 
@@ -291,6 +309,9 @@ export class ReviewNlpEngine {
       }
 
       if (val !== 0) {
+        if (isIntensified && intensifierWindow > 0) {
+          val = val > 0 ? Math.min(1.0, val * 1.25) : Math.max(-1.0, val * 1.25);
+        }
         if (isNegated && negationWindow > 0) {
           // Negate the polarity: "not good" -> negative; "not bad" -> mildly positive
           val = val > 0 ? -Math.abs(val) * 0.85 : Math.abs(val) * 0.5;
@@ -302,6 +323,10 @@ export class ReviewNlpEngine {
       if (negationWindow > 0) {
         negationWindow -= consumed;
         if (negationWindow <= 0) isNegated = false;
+      }
+      if (intensifierWindow > 0) {
+        intensifierWindow -= consumed;
+        if (intensifierWindow <= 0) isIntensified = false;
       }
     }
 
