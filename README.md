@@ -7,6 +7,7 @@
 [![Target Ecosystems](https://img.shields.io/badge/Marketplaces-Amazon%20IN%20%7C%20Flipkart%20%7C%20Myntra-orange.svg)](docs/project-overview.md)
 
 An explainable, evidence-grounded multimodal machine learning platform for detecting policy anomalies, catalog deception, price gouging, review astroturfing, and cross-seller image hijacking across major Indian e-commerce ecosystems (**Amazon India**, **Flipkart**, and **Myntra**).
+Deployment Link:- https://ai-marketplace-analyzer.vercel.app/
 
 ---
 
