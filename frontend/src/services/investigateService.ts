@@ -75,6 +75,43 @@ export interface CompetingProductAlternative {
   retrieval_provenance: string;
 }
 
+export type RiskLevel = 'MINIMAL_RISK' | 'MODERATE_RISK' | 'HIGH_OBSERVED_RISK' | 'CRITICAL_RISK';
+
+export interface DimensionEvaluation {
+  dimension_key: 'product_quality' | 'seller_reliability' | 'listing_authenticity' | 'website_legitimacy';
+  dimension_name: string;
+  score: number | null;
+  status: 'ASSESSED' | 'UNASSESSED';
+  risk_level: RiskLevel;
+  confidence: number;
+  summary: string;
+  positive_signals: string[];
+  risk_factors: string[];
+  missing_data: string[];
+}
+
+export interface FiveDimensionTrustResult {
+  overall_trust_score: number;
+  overall_risk_level: RiskLevel;
+  recommendation: 'PROCEED_CONFIDENTLY' | 'PROCEED_WITH_CAUTION' | 'INVESTIGATE_FURTHER' | 'DO_NOT_RECOMMEND';
+  recommendation_rationale: string;
+  non_masking_applied: boolean;
+  non_masking_reason?: string;
+  dimensions: {
+    product_quality: DimensionEvaluation;
+    seller_reliability: DimensionEvaluation;
+    listing_authenticity: DimensionEvaluation;
+    website_legitimacy: DimensionEvaluation;
+  };
+  evidence: {
+    coverage_percent: number;
+    confidence_score: number;
+    supporting_evidence: string[];
+    contradicting_evidence: string[];
+    missing_evidence: string[];
+  };
+}
+
 export interface ProductIntelligenceReport {
   investigation_id: string;
   timestamp: string;
@@ -90,6 +127,7 @@ export interface ProductIntelligenceReport {
     verdict_headline: string;
     provenance: string;
   };
+  five_dimension_trust?: FiveDimensionTrustResult;
   section_1_overview: {
     title: string;
     brand: string;

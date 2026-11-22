@@ -41,8 +41,30 @@ export interface AspectFinding {
   top_praises: string[];
 }
 
+export interface FourWayClassification {
+  product_dissatisfaction: {
+    detected: boolean;
+    score: number; // 0 to 100 severity
+    summary: string;
+  };
+  manipulated_reviews: {
+    detected: boolean;
+    score: number; // 0 to 100 suspicion
+    summary: string;
+  };
+  authenticity_concerns: {
+    detected: boolean;
+    score: number; // 0 to 100 risk
+    summary: string;
+  };
+  insufficient_evidence: {
+    flagged: boolean;
+    summary: string;
+  };
+}
+
 export interface ReviewNlpReport {
-  status: 'EVALUATED' | 'NO_REVIEWS' | 'INSUFFICIENT_EVIDENCE';
+  status: 'EVALUATED' | 'NO_REVIEWS' | 'REVIEWS_UNAVAILABLE' | 'INSUFFICIENT_EVIDENCE';
   reviews_analyzed_count: number;
   overall_sentiment_score: number | null; // -1.0 to +1.0
   satisfaction_index: number | null; // 0 to 100
@@ -52,6 +74,7 @@ export interface ReviewNlpReport {
     negative_percentage: number;
   };
   aspects: AspectFinding[];
+  four_way_classification: FourWayClassification;
   duplicate_review_indicators: {
     duplicate_clusters_found: number;
     duplicate_reviews_count: number;
@@ -187,35 +210,43 @@ const NEGATIVE_LEXICON: Record<string, number> = {
   'paise barbad': -0.9,
 };
 
-// Aspect keywords dictionary
+// Aspect keywords dictionary - 9 Operational Dimensions
 const ASPECT_KEYWORDS: Record<string, { label: string; keywords: string[] }> = {
   quality: {
-    label: 'Product & Build Quality',
-    keywords: ['quality', 'material', 'build', 'stitching', 'plastic', 'fabric', 'durability', 'finish', 'durable', 'sturdy', 'broken', 'loose', 'scratch', 'torn', 'fragile', 'solid', 'premium'],
-  },
-  battery: {
-    label: 'Battery & Power',
-    keywords: ['battery', 'charging', 'charger', 'backup', 'drain', 'drains', 'mah', 'overheating', 'heating', 'heat', 'power', 'standby', 'battery backup', 'charge'],
+    label: 'Product Quality',
+    keywords: ['quality', 'material', 'fabric', 'texture', 'color', 'finish', 'finishing', 'look', 'feel', 'design', 'soft', 'comfortable', 'comfort'],
   },
   performance: {
-    label: 'Performance & Speed',
-    keywords: ['performance', 'speed', 'fast', 'slow', 'lag', 'lagging', 'hanging', 'hang', 'smooth', 'processor', 'sound', 'bass', 'audio', 'display', 'screen', 'camera', 'clarity', 'grip'],
+    label: 'Performance & Reliability',
+    keywords: ['performance', 'speed', 'fast', 'slow', 'lag', 'lagging', 'hanging', 'hang', 'smooth', 'processor', 'sound', 'bass', 'audio', 'display', 'screen', 'camera', 'clarity', 'grip', 'working', 'function'],
+  },
+  battery: {
+    label: 'Battery Life & Power',
+    keywords: ['battery', 'charging', 'charger', 'backup', 'drain', 'drains', 'mah', 'overheating', 'heating', 'heat', 'power', 'standby', 'battery backup', 'charge'],
+  },
+  build_quality: {
+    label: 'Build Quality & Durability',
+    keywords: ['build', 'durability', 'durable', 'sturdy', 'stitching', 'plastic', 'sole', 'hinge', 'broken', 'loose', 'scratch', 'torn', 'fragile', 'solid', 'premium', 'damage', 'tear'],
+  },
+  value_for_money: {
+    label: 'Value for Money',
+    keywords: ['value', 'price', 'worth', 'expensive', 'cheap', 'affordable', 'costly', 'paisa vasool', 'paisa wasool', 'waste of money', 'loot', 'paisa barbad', 'paise barbad', 'overpriced'],
   },
   delivery: {
     label: 'Delivery & Packaging',
-    keywords: ['delivery', 'packaging', 'package', 'box', 'courier', 'dispatch', 'arrived', 'shipping', 'seal', 'open', 'tampered', 'carton', 'delay', 'delivered', 'packing'],
+    keywords: ['delivery', 'packaging', 'package', 'box', 'courier', 'dispatch', 'arrived', 'shipping', 'seal', 'open', 'tampered', 'carton', 'delay', 'delivered', 'packing', 'broken box'],
   },
   authenticity: {
-    label: 'Authenticity & Genuine Sourcing',
-    keywords: ['genuine', 'original', 'fake', 'duplicate', 'counterfeit', 'first copy', 'copy', 'asli', 'nakli', 'serial', 'imei', 'barcode', 'qr', 'mfg', 'batch', 'hologram', 'authentic'],
+    label: 'Authenticity & Originality',
+    keywords: ['genuine', 'original', 'fake', 'duplicate', 'counterfeit', 'first copy', 'copy', 'asli', 'nakli', 'serial', 'imei', 'barcode', 'qr', 'mfg', 'batch', 'hologram', 'authentic', 'firstcopy', 'farzi'],
   },
   support: {
     label: 'Customer Support',
     keywords: ['service', 'support', 'warranty', 'center', 'technician', 'call', 'response', 'repairs', 'helpline', 'representative', 'customer care'],
   },
   refund: {
-    label: 'Return & Refund Experience',
-    keywords: ['return', 'refund', 'replacement', 'replace', 'reject', 'rejected', 'exchange', 'policy', 'money back'],
+    label: 'Returns & Refunds',
+    keywords: ['return', 'refund', 'replacement', 'replace', 'reject', 'rejected', 'exchange', 'policy', 'money back', 'no return'],
   },
 };
 
@@ -313,6 +344,27 @@ export class ReviewNlpEngine {
           top_complaints: [],
           top_praises: [],
         })),
+        four_way_classification: {
+          product_dissatisfaction: {
+            detected: false,
+            score: 0,
+            summary: 'No customer review data available to evaluate product dissatisfaction.',
+          },
+          manipulated_reviews: {
+            detected: false,
+            score: 0,
+            summary: 'No review submissions found to check for manipulation or astroturfing.',
+          },
+          authenticity_concerns: {
+            detected: false,
+            score: 0,
+            summary: 'No review evidence of counterfeit or duplicate complaints.',
+          },
+          insufficient_evidence: {
+            flagged: true,
+            summary: 'Zero customer reviews provided. Review dimension cannot be scored.',
+          },
+        },
         duplicate_review_indicators: {
           duplicate_clusters_found: 0,
           duplicate_reviews_count: 0,
@@ -398,10 +450,23 @@ export class ReviewNlpEngine {
         }
       }
 
-      // Match against aspects
+      // Match against aspects with clause-level sentiment analysis
+      const clauses = text.split(/(?<=[.!?])\s+|\s+(?:but|however|although|par|lekin)\s+/i).filter(Boolean);
       for (const [key, def] of Object.entries(ASPECT_KEYWORDS)) {
-        const matches = def.keywords.some(kw => text.toLowerCase().includes(kw));
-        if (matches) {
+        const matchingClauses = clauses.filter((c) => def.keywords.some((kw) => c.toLowerCase().includes(kw)));
+        if (matchingClauses.length > 0) {
+          for (const clause of matchingClauses) {
+            const clauseScore = this.analyzeSentenceSentiment(clause).score;
+            aspectMap[key].totalScore += clauseScore;
+            if (clauseScore >= 0.15) {
+              aspectMap[key].pos++;
+              if (aspectMap[key].praises.length < 3) aspectMap[key].praises.push(clause.trim().slice(0, 100));
+            } else if (clauseScore <= -0.15) {
+              aspectMap[key].neg++;
+              if (aspectMap[key].complaints.length < 3) aspectMap[key].complaints.push(clause.trim().slice(0, 100));
+            }
+          }
+        } else if (def.keywords.some((kw) => text.toLowerCase().includes(kw))) {
           aspectMap[key].totalScore += score;
           if (score >= 0.15) {
             aspectMap[key].pos++;
@@ -488,6 +553,51 @@ export class ReviewNlpEngine {
 
     const confidenceScore = total >= 10 ? 0.92 : total >= 3 ? 0.82 : 0.65;
 
+    // Compute 4-way classification
+    const qualityAspects = ['quality', 'performance', 'battery', 'build_quality'];
+    const qualityComplaints = qualityAspects.reduce((acc, k) => acc + (aspectMap[k]?.neg || 0), 0);
+    const qualityTotal = qualityAspects.reduce((acc, k) => acc + (aspectMap[k]?.pos || 0) + (aspectMap[k]?.neg || 0), 0);
+    const dissatScore = qualityTotal > 0 ? Math.round((qualityComplaints / qualityTotal) * 100) : (negPct > 35 ? negPct : 0);
+    const isProductDissatisfaction = dissatScore >= 35 || satisfactionIndex < 55;
+
+    const isManipulated = duplicates.size >= 2 || (dissonantCount > 0 && total >= 3) || (genericCount / total > 0.40 && total >= 5);
+    const manipScore = Math.min(100, (duplicates.size * 25) + (dissonantCount * 30) + (genericCount > 2 ? 20 : 0));
+
+    const isAuthenticityConcern = counterfeitComplaints > 0 || (aspectMap['authenticity']?.neg || 0) > 0;
+    const authScore = Math.min(100, counterfeitComplaints * 40 + (aspectMap['authenticity']?.neg || 0) * 35);
+
+    const isInsufficientEvidence = total < 3;
+
+    const fourWayClassification: FourWayClassification = {
+      product_dissatisfaction: {
+        detected: isProductDissatisfaction,
+        score: dissatScore,
+        summary: isProductDissatisfaction
+          ? `High product dissatisfaction detected (${dissatScore}% negative quality/performance feedback).`
+          : 'Low product dissatisfaction; reviews reflect normal baseline satisfaction.',
+      },
+      manipulated_reviews: {
+        detected: isManipulated,
+        score: manipScore,
+        summary: isManipulated
+          ? `Suspicious review manipulation detected (${duplicates.size} duplicate reviews, ${dissonantCount} rating dissonances).`
+          : 'No evidence of bot-farm astroturfing or review manipulation detected.',
+      },
+      authenticity_concerns: {
+        detected: isAuthenticityConcern,
+        score: authScore,
+        summary: isAuthenticityConcern
+          ? `Authenticity alerts present: ${counterfeitComplaints} review(s) explicitly warn of fake or counterfeit merchandise.`
+          : 'No explicit counterfeit or fake product complaints detected in reviews.',
+      },
+      insufficient_evidence: {
+        flagged: isInsufficientEvidence,
+        summary: isInsufficientEvidence
+          ? `Small sample size (${total} review(s) analyzed). Quantitative confidence is limited.`
+          : `Adequate sample size (${total} reviews analyzed across 9 operational dimensions).`,
+      },
+    };
+
     return {
       status: total >= 2 ? 'EVALUATED' : 'INSUFFICIENT_EVIDENCE',
       reviews_analyzed_count: total,
@@ -499,6 +609,7 @@ export class ReviewNlpEngine {
         negative_percentage: negPct,
       },
       aspects,
+      four_way_classification: fourWayClassification,
       duplicate_review_indicators: {
         duplicate_clusters_found: duplicates.size > 0 ? Math.floor(duplicates.size / 2) : 0,
         duplicate_reviews_count: duplicates.size,

@@ -1,6 +1,50 @@
 import { URL } from 'node:url';
 import { AppError } from '../../middleware/errorHandler';
-import { adapterRegistry, ExtractedProductData, PriceEvidenceItem } from './marketplace_adapters';
+import {
+  adapterRegistry,
+  ExtractedProductData,
+  PriceEvidenceItem,
+  PriceVerificationStatus,
+  PriceType,
+  ValidatedPriceItem,
+} from './marketplace_adapters';
+
+export function isJunkBotBlockTitle(t?: string | null): boolean {
+  if (!t) return true;
+  const clean = t.trim().toLowerCase();
+  if (clean.length < 3) return true;
+  return (
+    clean === 'amazon.in' ||
+    clean === 'amazon' ||
+    clean === 'flipkart.com' ||
+    clean === 'flipkart' ||
+    clean === 'myntra.com' ||
+    clean === 'myntra' ||
+    clean === 'decathlon.in' ||
+    clean === 'croma.com' ||
+    clean === 'croma' ||
+    clean === 'adidas' ||
+    clean === 'adidas india' ||
+    clean === 'robot check' ||
+    clean.includes('captcha') ||
+    clean.includes('access denied') ||
+    clean.includes('service unavailable') ||
+    clean.includes('503 service') ||
+    clean.includes('403 forbidden') ||
+    clean.includes('security check') ||
+    clean.includes('just a moment') ||
+    clean.includes('attention required') ||
+    clean.includes('are you human') ||
+    clean.includes('please wait') ||
+    clean.startsWith('ref=') ||
+    clean.startsWith('ref_') ||
+    clean.startsWith('asc_df') ||
+    clean.startsWith('mcid=') ||
+    clean.startsWith('http') ||
+    /^\d+$/.test(clean) ||
+    /^[A-Z0-9]{10}$/i.test(clean)
+  );
+}
 
 export interface ExtractedPriceResult {
   value: number | null;
@@ -9,7 +53,7 @@ export interface ExtractedPriceResult {
   method: string;
   confidence: number;
   timestamp: string;
-  validationStatus: 'CONFIRMED' | 'ESTIMATED' | 'UNAVAILABLE';
+  validationStatus: PriceVerificationStatus;
 }
 
 export class UrlRetrieverService {
@@ -152,45 +196,89 @@ export class UrlRetrieverService {
         const domPriceData = this.parseDomPrices(htmlChunk);
 
         // ===============================================================
-        // DETERMINISTIC SOURCE PRIORITY FOR PRICE
+        // LAYERED WATERFALL & PRICE CONFLICT RESOLUTION
         // ===============================================================
+        const candidates: Array<{ source: string; amount: number }> = [];
+        if (jsonLdData.price !== undefined && jsonLdData.price > 0) {
+          candidates.push({ source: 'JSON_LD', amount: jsonLdData.price });
+        }
+        if (embeddedStateData.price !== undefined && embeddedStateData.price > 0) {
+          candidates.push({ source: 'EMBEDDED_STATE', amount: embeddedStateData.price });
+        }
+        if (metaData.observed_price !== undefined && metaData.observed_price !== null && metaData.observed_price > 0) {
+          candidates.push({ source: 'OPEN_GRAPH_META', amount: metaData.observed_price });
+        }
+        if (domPriceData.price !== undefined && domPriceData.price !== null && domPriceData.price > 0) {
+          candidates.push({ source: 'DOM_SEMANTIC', amount: domPriceData.price });
+        }
+
         let resolvedPrice: number | null = null;
         let resolvedMrp: number | null = null;
         let resolvedOfferPrice: number | null = null;
         let priceExtractionSource: ExtractedPriceResult['source'] = 'NONE';
         let priceConfidence = 0.50;
+        let verificationStatus: PriceVerificationStatus = 'NOT_FOUND';
+        let conflictingSources: Array<{ source: string; amount: number }> | undefined = undefined;
 
+        // Check for conflicts between independent candidates (>15% discrepancy)
+        if (candidates.length >= 2) {
+          const amounts = candidates.map((c) => c.amount);
+          const minVal = Math.min(...amounts);
+          const maxVal = Math.max(...amounts);
+          if ((maxVal - minVal) / maxVal > 0.15) {
+            verificationStatus = 'CONFLICTING_SOURCES';
+            conflictingSources = candidates;
+          }
+        }
+
+        // Waterfall priority: JSON-LD -> Embedded State -> Meta Tags -> DOM Semantic -> URL Query -> Slug
         if (jsonLdData.price !== undefined && jsonLdData.price > 0) {
           resolvedPrice = jsonLdData.price;
           resolvedMrp = jsonLdData.mrp || null;
           priceExtractionSource = 'JSON_LD';
           priceConfidence = 0.98;
+          if (verificationStatus !== 'CONFLICTING_SOURCES') {
+            verificationStatus = candidates.length >= 2 ? 'VERIFIED' : 'VERIFIED';
+          }
         } else if (embeddedStateData.price !== undefined && embeddedStateData.price > 0) {
           resolvedPrice = embeddedStateData.price;
           resolvedMrp = embeddedStateData.mrp || null;
           priceExtractionSource = 'EMBEDDED_STATE';
           priceConfidence = 0.97;
+          if (verificationStatus !== 'CONFLICTING_SOURCES') {
+            verificationStatus = candidates.length >= 2 ? 'VERIFIED' : 'VERIFIED';
+          }
         } else if (metaData.observed_price !== undefined && metaData.observed_price !== null && metaData.observed_price > 0) {
           resolvedPrice = metaData.observed_price;
           resolvedMrp = metaData.mrp || null;
           priceExtractionSource = 'OPEN_GRAPH_META';
           priceConfidence = 0.92;
+          if (verificationStatus !== 'CONFLICTING_SOURCES') {
+            verificationStatus = 'PARTIALLY_VERIFIED';
+          }
         } else if (domPriceData.price !== undefined && domPriceData.price !== null && domPriceData.price > 0) {
           resolvedPrice = domPriceData.price;
           resolvedMrp = domPriceData.mrp || null;
           resolvedOfferPrice = domPriceData.effective_offer_price || null;
           priceExtractionSource = 'DOM_SEMANTIC';
           priceConfidence = 0.88;
+          if (verificationStatus !== 'CONFLICTING_SOURCES') {
+            verificationStatus = 'PARTIALLY_VERIFIED';
+          }
         } else if (urlPriceData.price !== null) {
           resolvedPrice = urlPriceData.price;
           resolvedMrp = urlPriceData.mrp || null;
           priceExtractionSource = 'URL_QUERY_HINT';
           priceConfidence = 0.80;
+          verificationStatus = 'UNVERIFIED';
         } else if (slugData.observed_price !== null && slugData.observed_price !== undefined && slugData.observed_price > 0) {
           resolvedPrice = slugData.observed_price;
           resolvedMrp = slugData.mrp || null;
           priceExtractionSource = 'SLUG_DERIVED';
           priceConfidence = 0.75;
+          verificationStatus = 'UNVERIFIED';
+        } else {
+          verificationStatus = 'NOT_FOUND';
         }
 
         // Secondary MRP resolution if price was found but MRP was omitted in that layer
@@ -204,13 +292,19 @@ export class UrlRetrieverService {
         }
 
         // Title resolution: Structured data -> Embedded state -> Clean meta -> Slug
-        const resolvedTitle = (jsonLdData.title && jsonLdData.title.length > 3)
-          ? jsonLdData.title
-          : (embeddedStateData.title && embeddedStateData.title.length > 3)
-          ? embeddedStateData.title
-          : (metaData.title && metaData.title.length > 3)
-          ? metaData.title
-          : slugData.title;
+        // CRITICAL: Strictly reject junk / bot-block / generic domain titles at every stage!
+        let resolvedTitle = slugData.title;
+        if (jsonLdData.title && jsonLdData.title.length > 3 && !isJunkBotBlockTitle(jsonLdData.title)) {
+          resolvedTitle = jsonLdData.title;
+        } else if (embeddedStateData.title && embeddedStateData.title.length > 3 && !isJunkBotBlockTitle(embeddedStateData.title)) {
+          resolvedTitle = embeddedStateData.title;
+        } else if (metaData.title && metaData.title.length > 3 && !isJunkBotBlockTitle(metaData.title)) {
+          resolvedTitle = metaData.title;
+        } else if (slugData.title && !isJunkBotBlockTitle(slugData.title)) {
+          resolvedTitle = slugData.title;
+        } else {
+          resolvedTitle = 'Marketplace Product Listing';
+        }
 
         // Brand resolution
         const resolvedBrand = jsonLdData.brand || embeddedStateData.brand || metaTags['og:brand'] || metaTags['product:brand'] || slugData.brand;
@@ -226,8 +320,46 @@ export class UrlRetrieverService {
           discount = Math.round(((resolvedMrp - resolvedPrice) / resolvedMrp) * 100);
         }
 
-        const isLiveExtracted = Boolean(resolvedPrice || jsonLdData.title || embeddedStateData.title || metaData.title);
+        const isLiveExtracted = Boolean(resolvedPrice || (jsonLdData.title && !isJunkBotBlockTitle(jsonLdData.title)) || (embeddedStateData.title && !isJunkBotBlockTitle(embeddedStateData.title)));
         const nowIso = new Date().toISOString();
+
+        // Construct ValidatedPriceItem
+        const priceType: PriceType = (resolvedPrice !== null && resolvedMrp !== null && resolvedPrice < resolvedMrp)
+          ? 'DISCOUNTED_PRICE'
+          : 'SELLING_PRICE';
+
+        const validatedPrice: ValidatedPriceItem = {
+          value: resolvedPrice,
+          currency: 'INR',
+          price_type: priceType,
+          source: (priceExtractionSource === 'JSON_LD'
+            ? 'JSON_LD'
+            : priceExtractionSource === 'EMBEDDED_STATE'
+            ? 'EMBEDDED_STATE'
+            : priceExtractionSource === 'OPEN_GRAPH_META'
+            ? 'OPEN_GRAPH_META'
+            : priceExtractionSource === 'DOM_SEMANTIC'
+            ? 'DOM_SEMANTIC'
+            : priceExtractionSource === 'URL_QUERY_HINT'
+            ? 'FALLBACK_URL'
+            : priceExtractionSource === 'SLUG_DERIVED'
+            ? 'RETAILER_ADAPTER'
+            : 'FALLBACK_URL') as ValidatedPriceItem['source'],
+          extraction_method: priceExtractionSource,
+          confidence: priceConfidence,
+          verification_status: verificationStatus,
+          extracted_at: nowIso,
+          explanation: verificationStatus === 'VERIFIED'
+            ? 'Corroborated by high-confidence structured metadata from product listing.'
+            : verificationStatus === 'CONFLICTING_SOURCES'
+            ? `Price sources disagree across page layers (${candidates.map((c) => `${c.source}: ₹${c.amount}`).join(', ')}). High candidate prioritized with warning.`
+            : verificationStatus === 'PARTIALLY_VERIFIED'
+            ? 'Extracted from a single layer on the webpage; uncorroborated by secondary structured source.'
+            : verificationStatus === 'NOT_FOUND'
+            ? 'Price not found on page or listing is gated behind anti-bot challenge.'
+            : 'Derived from URL parameters or slug hints only.',
+          conflicting_sources: conflictingSources,
+        };
 
         // Construct 4 Distinct Price Concepts (Price Evidence)
         const priceEvidence: PriceEvidenceItem[] = [];
@@ -294,6 +426,14 @@ export class UrlRetrieverService {
             explanation: 'Fewer than 2 independent market offers found across monitored platforms (insufficient data to establish reference market price).',
           },
           price_evidence: priceEvidence,
+          validated_price: validatedPrice,
+          price_verification_status: verificationStatus,
+          price_diagnostics: {
+            status: verificationStatus,
+            extracted_source: priceExtractionSource,
+            conflicting_sources: conflictingSources,
+            note: validatedPrice.explanation || '',
+          },
           main_image_url: resolvedImage,
           extraction_provenance: (priceExtractionSource === 'JSON_LD' || priceExtractionSource === 'EMBEDDED_STATE')
             ? 'LIVE_STRUCTURED_PAGE'
@@ -309,11 +449,34 @@ export class UrlRetrieverService {
 
     const finalPrice = urlPriceData.price || slugData.observed_price || null;
     const finalMrp = urlPriceData.mrp || slugData.mrp || (finalPrice ? Math.round(finalPrice * 1.4) : null);
+    const fallbackStatus: PriceVerificationStatus = finalPrice !== null ? 'UNVERIFIED' : 'NOT_FOUND';
+    const fallbackValidatedPrice: ValidatedPriceItem = {
+      value: finalPrice,
+      currency: 'INR',
+      price_type: finalPrice ? 'SELLING_PRICE' : 'SELLING_PRICE',
+      source: slugData.observed_price ? 'RETAILER_ADAPTER' : 'FALLBACK_URL',
+      extraction_method: finalPrice ? 'URL_OR_SLUG_FALLBACK' : 'NONE',
+      confidence: finalPrice ? 0.60 : 0.0,
+      verification_status: fallbackStatus,
+      extracted_at: new Date().toISOString(),
+      explanation: finalPrice
+        ? 'Derived from URL parameters or fallback adapter defaults. Unverified against live DOM.'
+        : 'Price could not be verified from available page data or the retailer challenged automated access.',
+    };
+
     return {
       ...slugData,
+      title: !isJunkBotBlockTitle(slugData.title) ? slugData.title : 'Marketplace Product Listing',
       observed_price: finalPrice,
       mrp: finalMrp,
       discount_percent: (finalPrice && finalMrp && finalMrp > finalPrice) ? Math.round(((finalMrp - finalPrice) / finalMrp) * 100) : null,
+      validated_price: fallbackValidatedPrice,
+      price_verification_status: fallbackStatus,
+      price_diagnostics: {
+        status: fallbackStatus,
+        extracted_source: finalPrice ? 'URL_OR_SLUG_FALLBACK' : 'NETWORK_RESTRICTED_OR_BLOCKED',
+        note: finalPrice ? 'Unverified price from URL' : 'Automated access restricted or price not found on page. Manual entry available.',
+      },
       retrieval_status: finalPrice !== null ? 'CONFIRMED' : 'PRICE_UNAVAILABLE',
     };
   }

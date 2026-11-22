@@ -11,6 +11,7 @@ import { investigationRepository } from '../investigation_history/investigation_
 import { PipelineInvestigationInput } from './investigate.schemas';
 import { ExtractedProductData } from './marketplace_adapters';
 import { reviewNlpEngine } from './review_nlp_engine';
+import { decoupledTrustEngine, FiveDimensionTrustResult } from './decoupled_trust_engine';
 
 export interface StructuredAspectItem {
   key: string;
@@ -55,6 +56,7 @@ export interface ProductIntelligenceReport {
     verdict_headline: string;
     provenance: string;
   };
+  five_dimension_trust: FiveDimensionTrustResult;
   section_1_overview: {
     title: string;
     brand: string;
@@ -548,57 +550,39 @@ export class InvestigationOrchestrator {
       inferResult = this.createInferenceFallback(title, brand, price, mrp, isSteepDiscountAnomaly);
     }
 
-    // Dynamic trust score calculation from real signals
-    const titleHash = Array.from(title || '').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-    const priceMod = (price || 0) % 17;
-    const variance = ((titleHash * 31 + priceMod) % 9) - 4; // -4 to +4
+    // Decoupled 5-Dimension Trust Assessment Engine with Non-Masking Invariant
+    const fiveDimensionResult = decoupledTrustEngine.evaluateFiveDimensions({
+      url: parsedUrl,
+      platformName: marketplace,
+      domainStatus: websiteTrust.trust_tier,
+      isLookalike: websiteTrust.trust_tier === 'SUSPECTED_IMPERSONATION',
+      productTitle: title,
+      brand,
+      category,
+      observedPrice: price,
+      mrp,
+      effectiveOfferPrice: (extractedData as any).effective_offer_price || null,
+      referenceMarketPrice: (extractedData as any).reference_market_price?.median || null,
+      priceVerificationStatus: (extractedData as any).price_verification_status || (price ? 'PARTIALLY_VERIFIED' : 'NOT_FOUND'),
+      validatedPrice: (extractedData as any).validated_price || null,
+      sellerName: sellerTrust.seller_name,
+      sellerRating: sellerTrust.rating_summary.average_rating,
+      fulfillmentType: sellerTrust.fulfillment_channel,
+      claimedStarRating: (input as any).rating,
+      ratingsCount: (input as any).ratings_count,
+      nlpReport,
+    });
 
-    let baseTrustScore = 84 + variance;
-
-    // Platform & Retailer Evidence Foundation
-    if (websiteTrust.trust_tier === 'LEGITIMATE_RETAILER') {
-      baseTrustScore = 93 + Math.round(variance * 0.5);
-    } else if (websiteTrust.trust_tier === 'VERIFIED_MARKETPLACE') {
-      baseTrustScore = 89 + Math.round(variance * 0.5);
-    } else if (websiteTrust.trust_tier === 'INDEPENDENT_WEBSTORE') {
-      baseTrustScore = 75 + variance;
-    }
-
-    // Direct Brand Fulfillment Bonus
-    if (sellerTrust.seller_tier === 'DIRECT_BRAND_FLAGSHIP') {
-      baseTrustScore = Math.max(baseTrustScore, 92);
-    }
-
-    // Price Anomaly Penalty (only if steep discount anomaly > 55%)
-    if (isSteepDiscountAnomaly) {
-      baseTrustScore = Math.min(baseTrustScore, 36);
-    }
-
-    // Customer Review Sentiment Influence (only when real reviews exist)
-    if (hasReviews && nlpReport.overall_sentiment_score !== null) {
-      if (nlpReport.overall_sentiment_score < -0.30) {
-        baseTrustScore -= 18;
-      } else if (nlpReport.overall_sentiment_score > 0.40) {
-        baseTrustScore = Math.min(100, baseTrustScore + 5);
-      }
-    }
-
-    // Counterfeit Review Complaint Penalty
-    if (nlpReport.suspicious_patterns.counterfeit_complaints_count > 0) {
-      baseTrustScore -= 25;
-    }
-
-    let mlRiskTier: 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL' = isSteepDiscountAnomaly ? 'HIGH' : 'LOW';
-    if (baseTrustScore < 40) mlRiskTier = 'HIGH';
-    else if (baseTrustScore < 65) mlRiskTier = 'MODERATE';
-    else mlRiskTier = 'LOW';
-
-    let mlTrustScore = Math.max(10, Math.min(100, baseTrustScore));
-
-    // Impersonation Guard
-    if (websiteTrust.trust_tier === 'SUSPECTED_IMPERSONATION') {
+    const mlTrustScore = fiveDimensionResult.overall_trust_score;
+    let mlRiskTier: 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL' = 'LOW';
+    if (fiveDimensionResult.overall_risk_level === 'CRITICAL_RISK') {
       mlRiskTier = 'CRITICAL';
-      mlTrustScore = Math.min(mlTrustScore, 18);
+    } else if (fiveDimensionResult.overall_risk_level === 'HIGH_OBSERVED_RISK') {
+      mlRiskTier = 'HIGH';
+    } else if (fiveDimensionResult.overall_risk_level === 'MODERATE_RISK') {
+      mlRiskTier = 'MODERATE';
+    } else {
+      mlRiskTier = 'LOW';
     }
 
     const identifiedGaps = (inferResult?.identified_gaps || []).map((g: any) => ({
@@ -757,6 +741,7 @@ export class InvestigationOrchestrator {
         verdict_headline: suitabilityAssessment.recommendation_title,
         provenance: extractedData.extraction_provenance,
       },
+      five_dimension_trust: fiveDimensionResult,
       section_1_overview: {
         title,
         brand,

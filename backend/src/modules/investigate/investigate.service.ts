@@ -172,6 +172,9 @@ export class InvestigateService {
         suggested_price: extracted?.observed_price || null,
         suggested_mrp: extracted?.mrp || null,
         discount_percentage: extracted?.discount_percent || null,
+        validated_price: extracted?.validated_price || null,
+        price_verification_status: extracted?.price_verification_status || 'NOT_FOUND',
+        price_diagnostics: extracted?.price_diagnostics || null,
         main_image_url: extracted?.main_image_url || null,
         provenance: extracted?.extraction_provenance || 'LIVE_PAGE_EXTRACTION',
         retrieval_status: extracted?.retrieval_status || 'CONFIRMED',
@@ -303,6 +306,9 @@ export class InvestigateService {
       effective_offer_price: extracted.effective_offer_price || null,
       reference_market_price: extracted.reference_market_price || null,
       price_evidence: extracted.price_evidence || [],
+      validated_price: extracted.validated_price || null,
+      price_verification_status: extracted.price_verification_status || (extracted.observed_price ? 'PARTIALLY_VERIFIED' : 'NOT_FOUND'),
+      price_diagnostics: extracted.price_diagnostics || null,
       main_image_url: extracted.main_image_url || null,
       provenance: extracted.extraction_provenance,
       retrieval_status: extracted.retrieval_status || (isLive ? 'CONFIRMED' : 'PRICE_UNAVAILABLE'),
@@ -336,12 +342,24 @@ export class InvestigateService {
     }
 
     if (!cleanSlug && path.length > 2) {
-      // Find the most descriptive non-numeric slug segment
+      // Find the most descriptive non-numeric slug segment, strictly filtering out tracking and referral tokens
       const segments = path.split('/').filter(Boolean);
       const descriptive = segments.filter(
-        (s) => s !== 'p' && s !== 'dp' && s !== 'gp' && s !== 'product' && !/^\d+$/.test(s) && s.length > 3
+        (s) =>
+          s !== 'p' &&
+          s !== 'dp' &&
+          s !== 'gp' &&
+          s !== 'product' &&
+          !s.startsWith('ref=') &&
+          !s.startsWith('ref_') &&
+          !s.startsWith('asc_df') &&
+          !s.startsWith('mcid=') &&
+          !s.startsWith('tag=') &&
+          !/^[A-Z0-9]{10}$/i.test(s) &&
+          !/^\d+$/.test(s) &&
+          s.length > 3
       );
-      cleanSlug = descriptive.length > 0 ? descriptive[descriptive.length - 1] : segments[0] || '';
+      cleanSlug = descriptive.length > 0 ? descriptive[0] : '';
     }
 
     const title = cleanSlug
@@ -353,7 +371,10 @@ export class InvestigateService {
     const lower = (cleanSlug + ' ' + title).toLowerCase();
 
     let brand = 'Generic';
-    if (lower.includes('souled-store') || lower.includes('souled store')) brand = 'The Souled Store';
+    if (lower.includes('layasa')) brand = 'Layasa';
+    else if (lower.includes('decathlon') || lower.includes('jogflow') || lower.includes('kalenji') || lower.includes('kiprun')) brand = 'Decathlon';
+    else if (lower.includes('croma')) brand = 'Croma';
+    else if (lower.includes('souled-store') || lower.includes('souled store')) brand = 'The Souled Store';
     else if (lower.includes('plum')) brand = 'Plum';
     else if (lower.includes('minimalist')) brand = 'Minimalist';
     else if (lower.includes('cetaphil')) brand = 'Cetaphil';

@@ -23,7 +23,18 @@ export class DecathlonAdapter implements MarketplaceAdapter {
   }
 
   extractFromMetadata(url: URL, meta: Record<string, string>): Partial<ExtractedProductData> {
-    const title = meta['og:title'] || meta['title'] || '';
+    let title = meta['og:title'] || meta['title'] || '';
+    const cleanLower = title.toLowerCase().trim();
+    if (
+      cleanLower === 'decathlon' ||
+      cleanLower === 'decathlon india' ||
+      cleanLower === 'decathlon.in' ||
+      cleanLower.includes('access denied') ||
+      cleanLower.includes('robot check') ||
+      cleanLower.includes('captcha')
+    ) {
+      title = '';
+    }
     const image = meta['og:image'] || '';
     const priceStr = meta['product:price:amount'] || meta['og:price:amount'] || meta['price'] || '';
     const price = parseFloat(priceStr) || 0;
