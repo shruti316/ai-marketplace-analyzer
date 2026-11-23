@@ -146,11 +146,17 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultMode = 'signin' }) 
         isNetworkError?: boolean;
       };
 
+      if (e.message?.includes('Protected by Vercel Authentication') || e.message?.includes('Protected deployment')) {
+        return 'This preview deployment is protected by Vercel Authentication. Please sign in to Vercel in this browser or test on the live production domain.';
+      }
       if (e.status === 409 || e.code === 'EMAIL_ALREADY_EXISTS' || e.message?.includes('already exists')) {
         return 'An account with this email address already exists. Please sign in instead.';
       }
       if (e.status === 401 || e.code === 'INVALID_CREDENTIALS' || e.message?.includes('Invalid email or password')) {
         return 'Invalid email or password. Please verify your credentials or create a new account.';
+      }
+      if (e.status === 403 || e.code === 'CORS_NOT_ALLOWED') {
+        return e.message || 'Access restricted by origin policy. Please access via the configured application domain.';
       }
       if (e.status === 429 || e.code === 'RATE_LIMIT_EXCEEDED') {
         return 'Too many authentication attempts. Please wait 60 seconds before retrying.';
