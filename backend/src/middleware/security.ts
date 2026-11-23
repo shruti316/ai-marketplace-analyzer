@@ -55,6 +55,8 @@ export function buildCorsMiddleware(): (req: Request, res: Response, next: NextF
       // Credentialed requests must never match a pure wildcard '*'
       const isAllowed =
         allowed.filter((p) => p !== '*').includes(origin) ||
+        // Always permit any Vercel deployment (*.vercel.app) for preview branches & staging
+        Boolean(origin && /^https:\/\/[a-z0-9\-]+(\.vercel\.app)$/i.test(origin)) ||
         allowed.some((pattern) => {
           if (pattern === '*') return false;
           if (pattern.startsWith('https://*.') || pattern.startsWith('http://*.')) {

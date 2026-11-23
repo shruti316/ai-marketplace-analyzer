@@ -343,6 +343,18 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultMode = 'signin' }) 
                   <div className="space-y-1 flex-1">
                     <p className="font-semibold">{mode === 'signin' ? 'Sign In Error' : 'Registration Error'}</p>
                     <p className="leading-relaxed">{serverError}</p>
+                    {mode === 'register' && serverError.includes('already exists') && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMode('signin');
+                          setServerError(null);
+                        }}
+                        className="mt-1 inline-flex items-center gap-1 text-[11px] font-bold text-[#8C1D2B] underline hover:text-[#5C0D1B] cursor-pointer"
+                      >
+                        Switch to Sign In Tab →
+                      </button>
+                    )}
                     {(serverError.includes('cold sleep') || serverError.includes('waking up') || serverError.includes('timed out')) && (
                       <button
                         type="button"

@@ -38,9 +38,27 @@ export class TrustSphereApiError extends Error {
   }
 }
 
-// Determine base API URL (in dev, proxy routes /api to http://127.0.0.1:5000; in prod on Vercel, set to Render backend URL)
-const rawBaseUrl = (import.meta.env.VITE_API_BASE_URL || '').trim();
-const API_BASE_URL = rawBaseUrl.endsWith('/') ? rawBaseUrl.slice(0, -1) : rawBaseUrl;
+/**
+ * Determines base API URL.
+ * 1. In browser environments on Vercel (*.vercel.app), use same-origin relative URL ('')
+ *    so all API requests flow through Vercel's edge proxy rewrite (/api/(.*) -> Render).
+ *    This completely eliminates cross-origin browser CORS preflight blocking and guarantees
+ *    that preview deployments receive real backend HTTP responses.
+ * 2. In SSR, unit test runners, or when an explicit absolute override is provided, fallback to VITE_API_BASE_URL.
+ */
+function resolveApiBaseUrl(): string {
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    if (hostname.endsWith('.vercel.app')) {
+      return '';
+    }
+  }
+
+  const rawBaseUrl = (import.meta.env.VITE_API_BASE_URL || '').trim();
+  return rawBaseUrl.endsWith('/') ? rawBaseUrl.slice(0, -1) : rawBaseUrl;
+}
+
+const API_BASE_URL = resolveApiBaseUrl();
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
