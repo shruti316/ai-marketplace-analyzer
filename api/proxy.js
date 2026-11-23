@@ -12,7 +12,7 @@ export const config = {
 
 const ALLOWED_METHODS = new Set(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD']);
 const MAX_PAYLOAD_BYTES = 10 * 1024 * 1024; // 10 Megabytes max (supports image OCR uploads)
-const BACKEND_HOST = 'ai-marketplace-backend-9c29.onrender.com';
+const BACKEND_HOST = process.env.BACKEND_HOST || 'ai-marketplace-backend-9c29.onrender.com';
 const TIMEOUT_MS = 75000; // 75 seconds for Render free tier cold starts
 
 export default function handler(req, res) {
