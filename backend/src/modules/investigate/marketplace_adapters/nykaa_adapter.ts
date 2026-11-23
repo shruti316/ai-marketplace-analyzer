@@ -80,19 +80,11 @@ export class NykaaAdapter implements MarketplaceAdapter {
     const qPrice = parseFloat(url.searchParams.get('price') || url.searchParams.get('selling_price') || '');
     const qMrp = parseFloat(url.searchParams.get('mrp') || '');
 
-    const observedPrice = !isNaN(qPrice) && qPrice > 0
-      ? Math.round(qPrice)
-      : isFashion
-      ? 899
-      : lower.includes('combo') || lower.includes('routine') || lower.includes('kit')
-      ? 699
-      : 449;
-
-    const mrp = !isNaN(qMrp) && qMrp > observedPrice
-      ? Math.round(qMrp)
-      : Math.round(observedPrice * 1.5);
-
-    const discount = Math.round(((mrp - observedPrice) / mrp) * 100);
+    const observedPrice = !isNaN(qPrice) && qPrice > 0 ? Math.round(qPrice) : null;
+    const mrp = !isNaN(qMrp) && qMrp > 0 ? Math.round(qMrp) : null;
+    const discount = observedPrice !== null && mrp !== null && mrp > observedPrice
+      ? Math.round(((mrp - observedPrice) / mrp) * 100)
+      : null;
 
     return {
       title,
@@ -106,7 +98,7 @@ export class NykaaAdapter implements MarketplaceAdapter {
       discount_percent: discount,
       availability: 'IN_STOCK',
       seller_name: 'Nykaa E-Retail Private Limited (Authorized Flagship)',
-      seller_rating: 4.7,
+      seller_rating: null,
       fulfillment_type: 'Nykaa Direct Certified Logistics',
       main_image_url: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=600&auto=format&fit=crop&q=80',
       gallery_images: [],

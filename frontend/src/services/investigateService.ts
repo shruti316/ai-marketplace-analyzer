@@ -90,6 +90,31 @@ export interface DimensionEvaluation {
   missing_data: string[];
 }
 
+export interface ModalityContribution {
+  key: 'pricing' | 'seller' | 'reviews' | 'vision' | 'ocr' | 'platform';
+  title: string;
+  modality_name: string;
+  status: 'EVALUATED' | 'NOT_PROVIDED' | 'UNASSESSED';
+  raw_score: number | null;
+  delta: number;
+  max_pts: number;
+  status_label: string;
+  description: string;
+}
+
+export interface ScoreBreakdown {
+  baseline: number;
+  contributions: ModalityContribution[];
+  subtotal_before_caps: number;
+  boundary_clamp_adjustment?: number;
+  non_masking_applied: boolean;
+  non_masking_penalty: number;
+  sparse_evidence_applied: boolean;
+  sparse_evidence_penalty: number;
+  final_trust_score: number;
+  mathematical_identity_verified: boolean;
+}
+
 export interface FiveDimensionTrustResult {
   overall_trust_score: number;
   overall_risk_level: RiskLevel;
@@ -103,6 +128,7 @@ export interface FiveDimensionTrustResult {
     listing_authenticity: DimensionEvaluation;
     website_legitimacy: DimensionEvaluation;
   };
+  score_breakdown?: ScoreBreakdown;
   evidence: {
     coverage_percent: number;
     confidence_score: number;
@@ -135,9 +161,9 @@ export interface ProductIntelligenceReport {
     sku_identifier: string;
     marketplace: string;
     listing_url: string;
-    observed_price_inr: number;
-    claimed_mrp_inr: number;
-    discount_percentage: number;
+    observed_price_inr: number | null;
+    claimed_mrp_inr: number | null;
+    discount_percentage: number | null;
     effective_offer_price_inr?: number | null;
     reference_market_price?: any | null;
     price_evidence?: any[];
@@ -149,22 +175,22 @@ export interface ProductIntelligenceReport {
   };
   section_2_website_trust: WebsiteTrustAssessment;
   section_3_seller_trust: {
-    seller_name: string;
+    seller_name: string | null;
     seller_tier: string;
     seller_trust_score: number;
     risk_tier: string;
-    fulfillment_channel: string;
+    fulfillment_channel: string | null;
     fulfillment_risk: string;
     rating_summary: {
-      average_rating: number;
+      average_rating: number | null;
       total_ratings_estimate: string;
       is_rating_satisfactory: boolean;
     };
     pricing_integrity: {
       is_steep_discount_anomaly: boolean;
-      discount_percentage: number;
-      observed_price_inr: number;
-      claimed_mrp_inr: number;
+      discount_percentage: number | null;
+      observed_price_inr: number | null;
+      claimed_mrp_inr: number | null;
       category_corridor_status: string;
       anomaly_explanation: string;
     };

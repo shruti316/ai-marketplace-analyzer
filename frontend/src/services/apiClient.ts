@@ -5,6 +5,39 @@ export const TOKEN_STORAGE_KEY = 'trustsphere_token';
 export const USER_STORAGE_KEY = 'trustsphere_user';
 export const REFRESH_TOKEN_STORAGE_KEY = 'trustsphere_refresh_token';
 
+/**
+ * Standardized TrustSphere API Error with HTTP status and diagnostic categorization.
+ */
+export class TrustSphereApiError extends Error {
+  public status?: number;
+  public code?: string;
+  public isTimeout?: boolean;
+  public isNetworkError?: boolean;
+  public isColdStart?: boolean;
+  public retryAfter?: number;
+
+  constructor(
+    message: string,
+    options?: {
+      status?: number;
+      code?: string;
+      isTimeout?: boolean;
+      isNetworkError?: boolean;
+      isColdStart?: boolean;
+      retryAfter?: number;
+    }
+  ) {
+    super(message);
+    this.name = 'TrustSphereApiError';
+    this.status = options?.status;
+    this.code = options?.code;
+    this.isTimeout = options?.isTimeout;
+    this.isNetworkError = options?.isNetworkError;
+    this.isColdStart = options?.isColdStart;
+    this.retryAfter = options?.retryAfter;
+  }
+}
+
 // Determine base API URL (in dev, proxy routes /api to http://127.0.0.1:5000; in prod on Vercel, set to Render backend URL)
 const rawBaseUrl = (import.meta.env.VITE_API_BASE_URL || '').trim();
 const API_BASE_URL = rawBaseUrl.endsWith('/') ? rawBaseUrl.slice(0, -1) : rawBaseUrl;
@@ -14,7 +47,7 @@ export const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 60000,
+  timeout: 75000, // 75-second timeout to accommodate Render free-tier cold starts
   withCredentials: true, // Send HttpOnly refresh cookies across origins
 });
 
@@ -134,12 +167,14 @@ apiClient.interceptors.response.use(
       // Handle Rate Limiting (429)
       if (status === 429) {
         const retryAfter = data?.retryAfter || 60;
-        const rateLimitError = new Error(
-          data?.message || `Rate limit exceeded. Please wait ${retryAfter} seconds before retrying.`
+        const msg = data?.message || `Rate limit exceeded. Please wait ${retryAfter} seconds before retrying.`;
+        return Promise.reject(
+          new TrustSphereApiError(msg, {
+            status: 429,
+            code: 'RATE_LIMIT_EXCEEDED',
+            retryAfter,
+          })
         );
-        (rateLimitError as unknown as { code: string; retryAfter: number }).code = 'RATE_LIMIT_EXCEEDED';
-        (rateLimitError as unknown as { code: string; retryAfter: number }).retryAfter = retryAfter;
-        return Promise.reject(rateLimitError);
       }
 
       // Extract descriptive error message
@@ -149,24 +184,57 @@ apiClient.interceptors.response.use(
         (data as unknown as { msg?: string })?.msg ||
         `Request failed with HTTP status ${status}`;
 
-      const customError = new Error(message);
-      (customError as unknown as { code?: string; status?: number }).code = data?.code;
-      (customError as unknown as { code?: string; status?: number }).status = status;
-      return Promise.reject(customError);
+      return Promise.reject(
+        new TrustSphereApiError(message, {
+          status,
+          code: data?.code,
+        })
+      );
     }
 
     if (error.code === 'ECONNABORTED') {
       return Promise.reject(
-        new Error('Server request timed out. The Render backend may be waking up from sleep (cold start). Please retry in a few moments.')
+        new TrustSphereApiError(
+          'Server request timed out after 75 seconds. The cloud backend may be waking up from sleep (cold start).',
+          {
+            isTimeout: true,
+            isColdStart: true,
+            code: 'TIMEOUT',
+          }
+        )
       );
     }
 
     if (!error.response) {
+      const isOffline = typeof navigator !== 'undefined' && navigator.onLine === false;
+      if (isOffline) {
+        return Promise.reject(
+          new TrustSphereApiError(
+            'Internet connection appears to be offline. Please verify network connectivity.',
+            {
+              isNetworkError: true,
+              code: 'OFFLINE',
+            }
+          )
+        );
+      }
+
       return Promise.reject(
-        new Error('Unable to reach TrustSphere backend service. The server may be waking up from cold sleep or network connectivity was interrupted.')
+        new TrustSphereApiError(
+          'Unable to reach TrustSphere backend service. The server may be waking up from cold sleep or network was interrupted.',
+          {
+            isNetworkError: true,
+            isColdStart: true,
+            code: 'UNREACHABLE',
+          }
+        )
       );
     }
 
-    return Promise.reject(new Error(error.message || 'Network error encountered. Please check connectivity.'));
+    return Promise.reject(
+      new TrustSphereApiError(error.message || 'Network error encountered. Please check connectivity.', {
+        isNetworkError: true,
+      })
+    );
   }
 );

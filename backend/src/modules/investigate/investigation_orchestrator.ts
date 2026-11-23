@@ -78,14 +78,14 @@ export interface ProductIntelligenceReport {
   };
   section_2_website_trust: WebsiteTrustAssessment;
   section_3_seller_trust: {
-    seller_name: string;
+    seller_name: string | null;
     seller_tier: string;
     seller_trust_score: number;
     risk_tier: string;
-    fulfillment_channel: string;
+    fulfillment_channel: string | null;
     fulfillment_risk: string;
     rating_summary: {
-      average_rating: number;
+      average_rating: number | null;
       total_ratings_estimate: string;
       is_rating_satisfactory: boolean;
     };
@@ -269,7 +269,7 @@ export class InvestigationOrchestrator {
     const hasMrp = typeof extractedData.mrp === 'number' && extractedData.mrp > 0;
     const mrp: number | null = hasMrp
       ? extractedData.mrp!
-      : (typeof input.mrp_inr === 'number' && input.mrp_inr > 0 ? input.mrp_inr : (price ? Math.round(price * 1.4) : null));
+      : (typeof input.mrp_inr === 'number' && input.mrp_inr > 0 ? input.mrp_inr : null);
     const discountPercent = price && mrp && mrp > price ? Math.round(((mrp - price) / mrp) * 100) : 0;
     const marketplace = extractedData.marketplace || 'Online Marketplace';
 
@@ -529,7 +529,12 @@ export class InvestigationOrchestrator {
     }
 
     const hasReviews = inferReviews.length > 0;
-    const nlpReport = reviewNlpEngine.analyzeReviews(inferReviews);
+    const nlpReport = reviewNlpEngine.analyzeReviews(inferReviews, {
+      claimedStarRating: (input as any).rating ?? (extractedData as any).claimed_star_rating ?? null,
+      ratingsCount: (input as any).ratings_count ?? (extractedData as any).ratings_count ?? null,
+      category,
+      productTitle: title,
+    });
 
     let inferResult: any = null;
     if (hasReviews) {
@@ -568,9 +573,11 @@ export class InvestigationOrchestrator {
       sellerName: sellerTrust.seller_name,
       sellerRating: sellerTrust.rating_summary.average_rating,
       fulfillmentType: sellerTrust.fulfillment_channel,
-      claimedStarRating: (input as any).rating,
-      ratingsCount: (input as any).ratings_count,
+      claimedStarRating: (input as any).rating ?? (extractedData as any).claimed_star_rating ?? null,
+      ratingsCount: (input as any).ratings_count ?? (extractedData as any).ratings_count ?? null,
       nlpReport,
+      hasVisionProvided: visualFindings.evaluation_state === 'COMPLETED' && visualFindings.image_uploaded,
+      hasOcrExtracted: visualFindings.packaging_ocr?.compliance_status === 'TEXT_EXTRACTED_SUCCESSFULLY',
     });
 
     const mlTrustScore = fiveDimensionResult.overall_trust_score;
@@ -592,9 +599,9 @@ export class InvestigationOrchestrator {
     }));
 
     const reviewSection: ProductIntelligenceReport['section_5_review_intelligence'] = {
-      overall_sentiment_score: nlpReport.overall_sentiment_score,
-      satisfaction_index: nlpReport.satisfaction_index,
-      aspects: nlpReport.aspects.map(a => ({
+      overall_sentiment_score: hasReviews ? nlpReport.overall_sentiment_score : null,
+      satisfaction_index: hasReviews ? nlpReport.satisfaction_index : null,
+      aspects: hasReviews ? nlpReport.aspects.map(a => ({
         key: a.key,
         display_name: a.display_name,
         sentiment_score: a.sentiment_score,
@@ -607,18 +614,26 @@ export class InvestigationOrchestrator {
         status: a.status,
         top_complaints: a.top_complaints,
         top_praises: a.top_praises,
-      })),
-      rating_review_dissonance_detected: nlpReport.suspicious_patterns.rating_review_dissonance_detected,
-      positive_themes: nlpReport.positive_themes,
-      negative_themes: nlpReport.negative_themes,
-      complaints: nlpReport.complaints,
-      reviews_analyzed_count: nlpReport.reviews_analyzed_count,
-      sample_reviews: inferReviews.map(r => ({
-        review_text: r,
-        rating: 4.0,
-        sentiment: 'POSITIVE',
-      })),
-      status: nlpReport.status === 'EVALUATED' ? 'EVALUATED' : 'NO_REVIEWS',
+      })) : [],
+      rating_review_dissonance_detected: hasReviews ? nlpReport.suspicious_patterns.rating_review_dissonance_detected : false,
+      positive_themes: hasReviews ? nlpReport.positive_themes : [],
+      negative_themes: hasReviews ? nlpReport.negative_themes : [],
+      complaints: hasReviews ? nlpReport.complaints : [],
+      reviews_analyzed_count: hasReviews ? nlpReport.reviews_analyzed_count : 0,
+      sample_reviews: hasReviews
+        ? inferReviews.map((r: any) => {
+            const text = typeof r === 'string' ? r : r.review_text || '';
+            const sent = reviewNlpEngine.analyzeSentenceSentiment(text);
+            const label = sent.score >= 0.15 ? 'POSITIVE' : (sent.score <= -0.15 ? 'CONCERN' : 'NEUTRAL');
+            const equivRating = Math.max(1, Math.min(5, Math.round(((sent.score + 1.0) / 2.0) * 4.0 + 1.0)));
+            return {
+              review_text: text,
+              rating: typeof r === 'object' && typeof r.rating === 'number' ? r.rating : equivRating,
+              sentiment: label,
+            };
+          })
+        : [],
+      status: hasReviews ? (nlpReport.status === 'EVALUATED' ? 'EVALUATED' : 'NO_REVIEWS') : 'NO_REVIEWS',
     };
 
     // ----------------------------------------------------
@@ -659,7 +674,7 @@ export class InvestigationOrchestrator {
       },
       {
         modality: 'Review NLP ABSA',
-        listing_score: nlpReport.satisfaction_index ?? 75,
+        listing_score: hasReviews ? nlpReport.satisfaction_index : null,
         genuine_benchmark: 82,
         status: hasReviews ? 'EVALUATED' : 'NOT_PROVIDED',
       },
@@ -916,54 +931,8 @@ export class InvestigationOrchestrator {
           ]
         : [],
       review_summary: {
-        overall_sentiment_score: 0.76,
-        aspect_findings: {
-          material_durability: {
-            display_name: 'Material & Durability',
-            sentiment_score: 0.78,
-            mention_count: 5,
-            positive_mentions: 5,
-            negative_mentions: 0,
-            sentiment_label: 'POSITIVE',
-            defect_risk_level: 'LOW',
-          },
-          comfort_fit: {
-            display_name: 'Comfort & Ergonomics',
-            sentiment_score: 0.82,
-            mention_count: 5,
-            positive_mentions: 5,
-            negative_mentions: 0,
-            sentiment_label: 'POSITIVE',
-            defect_risk_level: 'LOW',
-          },
-          packaging_compliance: {
-            display_name: 'Packaging & Box',
-            sentiment_score: 0.70,
-            mention_count: 4,
-            positive_mentions: 4,
-            negative_mentions: 0,
-            sentiment_label: 'POSITIVE',
-            defect_risk_level: 'LOW',
-          },
-          authenticity_trust: {
-            display_name: 'Authenticity & Trust',
-            sentiment_score: 0.84,
-            mention_count: 6,
-            positive_mentions: 6,
-            negative_mentions: 0,
-            sentiment_label: 'POSITIVE',
-            defect_risk_level: 'LOW',
-          },
-          price_value: {
-            display_name: 'Price-to-Value',
-            sentiment_score: 0.80,
-            mention_count: 5,
-            positive_mentions: 5,
-            negative_mentions: 0,
-            sentiment_label: 'POSITIVE',
-            defect_risk_level: 'LOW',
-          },
-        },
+        overall_sentiment_score: null,
+        aspect_findings: {},
       },
     };
   }

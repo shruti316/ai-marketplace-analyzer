@@ -61,9 +61,9 @@ export interface ExtractedProductData {
     note: string;
   };
   availability: string;
-  seller_name: string;
-  seller_rating?: number;
-  fulfillment_type: string;
+  seller_name: string | null;
+  seller_rating?: number | null;
+  fulfillment_type: string | null;
   main_image_url?: string;
   gallery_images: string[];
   specs: Record<string, string>;

@@ -56,24 +56,28 @@ export class MyntraAdapter implements MarketplaceAdapter {
     else if (title.split(' ')[0]?.length > 2) brand = title.split(' ')[0];
 
     let category = 'Apparel / Fashion';
-    let price = 1299;
-    let mrp = 2599;
-
     if (lower.match(/facewash|face-wash|face wash|cleanser|moisturiser|moisturizer|serum|sunscreen|lotion|cream|skincare|skin-care/)) {
       category = 'Beauty & Personal Care';
-      price = 449;
-      mrp = 799;
     } else if (lower.match(/shoe|sneaker|runner|footwear|trainer/)) {
       category = 'Footwear / Shoes';
-      price = 2499;
-      mrp = 4999;
     } else if (lower.match(/jacket|coat|parka|bomber|blazer|windcheater/)) {
       category = "Women's Jackets / Outerwear";
-      price = 1499;
-      mrp = 2999;
     }
 
-    const discount = mrp > 0 ? Math.round(((mrp - price) / mrp) * 100) : 0;
+    let price: number | null = null;
+    let mrp: number | null = null;
+
+    const qPrice = url.searchParams.get('price') || url.searchParams.get('sp') || url.searchParams.get('cost') || url.searchParams.get('selling_price');
+    if (qPrice && !isNaN(Number(qPrice)) && Number(qPrice) > 0) {
+      price = Math.round(Number(qPrice));
+    }
+
+    const qMrp = url.searchParams.get('mrp') || url.searchParams.get('original_price');
+    if (qMrp && !isNaN(Number(qMrp)) && Number(qMrp) > 0) {
+      mrp = Math.round(Number(qMrp));
+    }
+
+    const discount = price !== null && mrp !== null && mrp > price ? Math.round(((mrp - price) / mrp) * 100) : null;
     const resolvedImage = getCategoryFallbackImage(category, title);
 
     return {
@@ -87,9 +91,9 @@ export class MyntraAdapter implements MarketplaceAdapter {
       currency: 'INR',
       discount_percent: discount,
       availability: 'IN_STOCK',
-      seller_name: 'Omnitech Retail / Myntra Direct Partner',
-      seller_rating: 4.4,
-      fulfillment_type: 'Myntra Verified Logistics',
+      seller_name: null,
+      seller_rating: null,
+      fulfillment_type: null,
       main_image_url: resolvedImage,
       gallery_images: [resolvedImage],
       specs: {

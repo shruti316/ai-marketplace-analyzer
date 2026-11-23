@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { MarketplaceNetworkVisual } from './MarketplaceNetworkVisual';
+import { TrustSphereApiError } from '../../services/apiClient';
 
 const loginSchema = z.object({
   email: z.string().trim().email('Please enter a valid email address'),
@@ -51,12 +52,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultMode = 'signin' }) 
   const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const [isSlowResponse, setIsSlowResponse] = useState<boolean>(false);
+  const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
 
   const { login, register: registerUser, isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   const slowTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/dashboard';
 
@@ -110,20 +113,69 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultMode = 'signin' }) 
 
   const isSubmitting = isLoginSubmitting || isRegisterSubmitting;
 
-  // Track slow responses to alert user of Render cold starts gracefully
+  // Track slow responses to alert user of Render cold starts gracefully with active seconds counter
   useEffect(() => {
     if (isSubmitting) {
+      setElapsedSeconds(0);
       slowTimerRef.current = setTimeout(() => {
         setIsSlowResponse(true);
-      }, 4000);
+      }, 3500);
+      intervalRef.current = setInterval(() => {
+        setElapsedSeconds((prev) => prev + 1);
+      }, 1000);
     } else {
       if (slowTimerRef.current) clearTimeout(slowTimerRef.current);
+      if (intervalRef.current) clearInterval(intervalRef.current);
       setIsSlowResponse(false);
+      setElapsedSeconds(0);
     }
     return () => {
       if (slowTimerRef.current) clearTimeout(slowTimerRef.current);
+      if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, [isSubmitting]);
+
+  const formatAuthError = (err: unknown, defaultMsg: string): string => {
+    if (err instanceof TrustSphereApiError || (err && typeof err === 'object')) {
+      const e = err as {
+        status?: number;
+        code?: string;
+        message?: string;
+        isTimeout?: boolean;
+        isColdStart?: boolean;
+        isNetworkError?: boolean;
+      };
+
+      if (e.status === 409 || e.code === 'EMAIL_ALREADY_EXISTS' || e.message?.includes('already exists')) {
+        return 'An account with this email address already exists. Please sign in instead.';
+      }
+      if (e.status === 401 || e.code === 'INVALID_CREDENTIALS' || e.message?.includes('Invalid email or password')) {
+        return 'Invalid email or password. Please verify your credentials or create a new account.';
+      }
+      if (e.status === 429 || e.code === 'RATE_LIMIT_EXCEEDED') {
+        return 'Too many authentication attempts. Please wait 60 seconds before retrying.';
+      }
+      if (e.status === 400) {
+        return e.message || 'Validation error: please verify your input fields.';
+      }
+      if (e.status && e.status >= 500) {
+        return `Backend service error (HTTP ${e.status}). The server may be restarting; please retry in a moment.`;
+      }
+      if (e.code === 'OFFLINE') {
+        return 'Internet connection offline. Please check your network and retry.';
+      }
+      if (e.isTimeout || e.code === 'TIMEOUT') {
+        return 'The cloud backend took longer than 75s to wake up from cold sleep. Please click submit again now that the container has initialized.';
+      }
+      if (e.code === 'UNREACHABLE' || (e.message && (e.message.includes('waking up') || e.message.includes('cold sleep')))) {
+        return 'The backend server is waking up from cold sleep (Render free tier). Please retry now that the server has had time to boot.';
+      }
+      if (e.message) {
+        return e.message;
+      }
+    }
+    return defaultMsg;
+  };
 
   const onLoginSubmit = async (data: LoginFormData) => {
     setServerError(null);
@@ -135,21 +187,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultMode = 'signin' }) 
       });
       navigate(from, { replace: true });
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        if (
-          err.message.includes('Invalid email or password') ||
-          err.message.includes('INVALID_CREDENTIALS') ||
-          err.message.includes('401')
-        ) {
-          setServerError('Invalid email or password. Please verify your credentials or create a new account.');
-        } else if (err.message.includes('waking up') || err.message.includes('timed out')) {
-          setServerError('The backend server is waking up from cold sleep (Render free tier). Please retry in 10 seconds.');
-        } else {
-          setServerError(err.message);
-        }
-      } else {
-        setServerError('Authentication failed. Please check your credentials and try again.');
-      }
+      setServerError(formatAuthError(err, 'Authentication failed. Please check your credentials and try again.'));
     }
   };
 
@@ -164,17 +202,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultMode = 'signin' }) 
       });
       navigate(from, { replace: true });
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        if (err.message.includes('already exists') || err.message.includes('EMAIL_ALREADY_EXISTS')) {
-          setServerError('An account with this email address already exists. Please sign in instead.');
-        } else if (err.message.includes('waking up') || err.message.includes('timed out')) {
-          setServerError('The backend server is waking up from cold sleep (Render free tier). Please retry in 10 seconds.');
-        } else {
-          setServerError(err.message);
-        }
-      } else {
-        setServerError('Registration failed. Please check your details and try again.');
-      }
+      setServerError(formatAuthError(err, 'Registration failed. Please check your details and try again.'));
     }
   };
 
@@ -312,19 +340,36 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultMode = 'signin' }) 
               {serverError && (
                 <div className="p-3.5 rounded-xl bg-[#FDE4E4] border border-[#FECDD3] text-[#8C1D2B] text-xs flex items-start gap-2.5 animate-fadeIn">
                   <AlertCircle className="w-4 h-4 text-[#D63B4B] shrink-0 mt-0.5" />
-                  <div className="space-y-0.5 flex-1">
+                  <div className="space-y-1 flex-1">
                     <p className="font-semibold">{mode === 'signin' ? 'Sign In Error' : 'Registration Error'}</p>
                     <p className="leading-relaxed">{serverError}</p>
+                    {(serverError.includes('cold sleep') || serverError.includes('waking up') || serverError.includes('timed out')) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setServerError(null);
+                          if (mode === 'signin') {
+                            handleLoginSubmit(onLoginSubmit)();
+                          } else {
+                            handleRegisterSubmit(onRegisterSubmit)();
+                          }
+                        }}
+                        className="mt-1 inline-flex items-center gap-1 text-[11px] font-bold text-[#8C1D2B] underline hover:text-[#5C0D1B] cursor-pointer"
+                      >
+                        <RefreshCw className="w-3 h-3" />
+                        Retry Submission Now
+                      </button>
+                    )}
                   </div>
                 </div>
               )}
 
-              {/* Render Cold-Start In-Flight Warning */}
+              {/* Render Cold-Start In-Flight Warning with Active Timer */}
               {isSlowResponse && isSubmitting && (
                 <div className="p-3 rounded-xl bg-[#FEF3C7] border border-[#FDE68A] text-[#92400E] text-xs flex items-center gap-2.5 animate-pulse">
                   <RefreshCw className="w-4 h-4 text-[#E09A12] shrink-0 animate-spin" />
                   <span className="leading-snug">
-                    Connecting to Render backend engine... (Free tier instances spin up in ~30–45s).
+                    Connecting to Render backend engine ({elapsedSeconds}s elapsed)... Free tier instances wake from sleep in ~30–45s. Your request will process automatically.
                   </span>
                 </div>
               )}

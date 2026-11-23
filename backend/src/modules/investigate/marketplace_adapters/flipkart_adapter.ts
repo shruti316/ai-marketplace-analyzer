@@ -132,11 +132,9 @@ export class FlipkartAdapter implements MarketplaceAdapter {
     const qMrp = url.searchParams.get('mrp') || url.searchParams.get('original_price');
     if (qMrp && !isNaN(Number(qMrp)) && Number(qMrp) > 0) {
       mrp = Math.round(Number(qMrp));
-    } else if (price !== null && (mrp === null || mrp < price)) {
-      mrp = Math.round(price * 1.5);
     }
 
-    const discount = price !== null && mrp !== null && mrp > 0 ? Math.round(((mrp - price) / mrp) * 100) : null;
+    const discount = price !== null && mrp !== null && mrp > price ? Math.round(((mrp - price) / mrp) * 100) : null;
     const resolvedImage = getCategoryFallbackImage(category, title);
 
     return {
@@ -150,9 +148,9 @@ export class FlipkartAdapter implements MarketplaceAdapter {
       currency: 'INR',
       discount_percent: discount,
       availability: 'IN_STOCK',
-      seller_name: 'RetailNet / Flipkart Assured Partner',
-      seller_rating: 4.1,
-      fulfillment_type: 'F-Assured Fulfilled',
+      seller_name: null,
+      seller_rating: null,
+      fulfillment_type: null,
       main_image_url: resolvedImage,
       gallery_images: [resolvedImage],
       specs,
