@@ -808,14 +808,14 @@ export class DecoupledTrustEngine {
     contributions.push({
       key: 'vision',
       title: 'Computer Vision & Hashing',
-      modality_name: 'Computer Vision (ResNet-18 / CLIP)',
+      modality_name: 'Computer Vision (ZeroGPU CLIP / Offline ResNet-18)',
       status: isVisionProvided ? 'EVALUATED' : 'NOT_PROVIDED',
       raw_score: isVisionProvided ? 85 : null,
       delta: visionDelta,
       max_pts: 10,
-      status_label: isVisionProvided ? 'ResNet-18 / CLIP Match' : 'Zero-Penalty Invariant',
+      status_label: isVisionProvided ? 'CLIP / ResNet-18 Match' : 'Zero-Penalty Invariant',
       description: isVisionProvided
-        ? 'ResNet-18 visual embeddings and CLIP feature verification completed. Visual similarity indicates image consistency only — not proof of authentic merchandise.'
+        ? 'Live ZeroGPU CLIP (ViT-B/32) forward pass and offline ResNet-18 catalog embeddings match. Visual similarity indicates image design consistency only — not physical merchandise authenticity.'
         : 'Zero-penalty invariant active: No packaging image submitted, zero score penalty applied.',
     });
 

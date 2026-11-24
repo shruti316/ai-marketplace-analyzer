@@ -129,6 +129,42 @@ async function runManualPriceSparseEvidenceTests() {
   assert(res4.recommendation === 'INVESTIGATE_FURTHER' || res4.recommendation === 'DO_NOT_RECOMMEND', 'Severe anomaly prevents PROCEED_CONFIDENTLY / CAUTION');
   assert(res4.score_breakdown.mathematical_identity_verified, 'Score breakdown mathematical identity holds true');
 
+  // -------------------------------------------------------------------------
+  // TEST 5: Manual Price with Verified Reviews but Unverified Seller
+  // -------------------------------------------------------------------------
+  console.log('\n--- TEST 5: Manual Price + Verified Reviews + Unverified Seller ---');
+  const verifiedReviews: ReviewItem[] = [
+    { review_text: 'Authentic watch, works perfectly as described.', rating: 5, source_marketplace: 'Sonata Watches', validation_status: 'VERIFIED_CORRESPONDENCE' },
+    { review_text: 'Comfortable strap and accurate timekeeping.', rating: 5, source_marketplace: 'Sonata Watches', validation_status: 'VERIFIED_CORRESPONDENCE' },
+  ];
+  const nlpVerified = reviewNlpEngine.analyzeReviews(verifiedReviews, {
+    category: 'Watches',
+    productTitle: 'Sonata Poze SP8005LKM03W Watch',
+    targetMarketplace: 'Sonata Watches',
+  });
+  const inputVerifiedReviewsUnverifiedSeller: FiveDimensionInput = {
+    url: new URL('https://www.sonatawatches.in/product/sonata-poze-sp8005lkm03w.html'),
+    platformName: 'Sonata Watches',
+    productTitle: 'Sonata Poze SP8005LKM03W Watch',
+    brand: 'Sonata',
+    category: 'Watches',
+    observedPrice: 1025,
+    mrp: 1145,
+    priceVerificationStatus: 'MANUALLY_ENTERED',
+    sellerName: null, // Unverified seller
+    sellerRating: null,
+    nlpReport: nlpVerified,
+    hasVisionProvided: false,
+    hasOcrExtracted: false,
+  };
+  const res5 = decoupledTrustEngine.evaluateFiveDimensions(inputVerifiedReviewsUnverifiedSeller);
+  assert(res5.dimensions.seller_reliability.status === 'UNASSESSED', 'Seller reliability is UNASSESSED when merchant details are missing');
+  assert(res5.overall_trust_score <= 68, `Trust score capped at <= 68 under manual price guard (actual: ${res5.overall_trust_score})`);
+  assert(res5.evidence.confidence_score <= 0.52, `Confidence capped at <= 0.52 (actual: ${res5.evidence.confidence_score})`);
+  assert(res5.recommendation === 'PROCEED_WITH_CAUTION', 'Recommendation is strictly PROCEED_WITH_CAUTION');
+  assert(res5.score_breakdown.sparse_evidence_applied, 'Sparse evidence guard was triggered by manual price');
+  assert(res5.score_breakdown.mathematical_identity_verified, 'Score breakdown mathematical identity holds true');
+
   console.log('\n=============================================================================');
   console.log(`TEST RESULTS: ${passed}/${total} passed (${((passed / total) * 100).toFixed(1)}%)`);
   if (passed === total) {
