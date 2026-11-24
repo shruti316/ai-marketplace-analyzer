@@ -21,14 +21,20 @@ router.get('/health', async (_req: Request, res: Response) => {
     if (probe.healthy) {
       dbStatus = 'connected';
       latencyMs = probe.latencyMs;
+      // Retain detailed operational telemetry in protected server-side logs
+      console.info(`[HEALTH CHECK] Database connected successfully (latency: ${probe.latencyMs}ms)`);
+    } else {
+      console.warn(`[HEALTH CHECK WARNING] Database probe returned unhealthy: ${probe.error || 'unknown error'}`);
     }
-  } catch {
+  } catch (err: unknown) {
     dbStatus = 'disconnected';
+    console.error('[HEALTH CHECK ERROR] Database connectivity check failed:', err instanceof Error ? err.message : err);
   }
 
   const isHealthy = dbStatus === 'connected';
   const statusCode = isHealthy ? 200 : 503;
 
+  // Minimal public response: confirms operational status without leaking internal cluster latency or database metadata
   res.status(statusCode).json({
     status: isHealthy ? 'healthy' : 'degraded',
     service: 'ai-marketplace-trust-backend',
@@ -36,8 +42,7 @@ router.get('/health', async (_req: Request, res: Response) => {
     timestamp,
     uptimeSeconds,
     database: {
-      status: dbStatus,
-      ...(latencyMs !== undefined ? { latencyMs } : {})
+      status: dbStatus
     }
   });
 });

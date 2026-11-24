@@ -88,20 +88,24 @@ export class AuthService {
     ipAddress?: string | null,
     rememberMe = true
   ): Promise<AuthSessionResult> {
-    const user = await authRepository.findByEmail(email);
+    const cleanEmail = email.toLowerCase().trim();
+    const user = await authRepository.findByEmail(cleanEmail);
 
     if (!user) {
+      console.warn(`[AUTH] Login failed: User not found for email "${cleanEmail}" (IP: ${ipAddress || 'unknown'})`);
       throw new UnauthorizedError('Invalid email or password', 'INVALID_CREDENTIALS');
     }
 
     // Invariant: Never permit inactive users to authenticate
     const isActive = Boolean(user.is_active);
     if (!isActive) {
+      console.warn(`[AUTH] Login failed: Account inactive for email "${cleanEmail}"`);
       throw new UnauthorizedError('Account is inactive or disabled', 'ACCOUNT_INACTIVE');
     }
 
     // Invariant: Never permit the inactive bootstrap system account to authenticate
     if (user.id === HISTORICAL_BOOTSTRAP_USER_ID) {
+      console.warn(`[AUTH] Login failed: Attempt to authenticate locked bootstrap account "${cleanEmail}"`);
       throw new UnauthorizedError(
         'Bootstrap system account is locked for interactive login',
         'ACCOUNT_LOCKED'
@@ -112,14 +116,17 @@ export class AuthService {
     let isValidPassword = false;
     try {
       isValidPassword = await verify(user.password_hash, password);
-    } catch {
+    } catch (err: unknown) {
+      console.warn(`[AUTH] Password hash verification decoding error for "${cleanEmail}":`, err instanceof Error ? err.message : err);
       isValidPassword = false;
     }
 
     if (!isValidPassword) {
+      console.warn(`[AUTH] Login failed: Incorrect password for "${cleanEmail}" (IP: ${ipAddress || 'unknown'})`);
       throw new UnauthorizedError('Invalid email or password', 'INVALID_CREDENTIALS');
     }
 
+    console.info(`[AUTH] Login successful for user "${cleanEmail}" (${user.id}) with role "${user.role}"`);
     return this.createSessionAndTokens(user, userAgent, ipAddress, rememberMe);
   }
 

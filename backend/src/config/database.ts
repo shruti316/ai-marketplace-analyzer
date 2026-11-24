@@ -102,13 +102,36 @@ export async function checkDatabaseHealth(): Promise<{
 }
 
 /**
+ * Set of transient connection error codes that warrant an automatic retry during container warm-up.
+ */
+const TRANSIENT_DB_ERRORS = new Set([
+  'PROTOCOL_CONNECTION_LOST',
+  'ECONNRESET',
+  'ETIMEDOUT',
+  'ER_CON_COUNT_ERROR',
+  'PROTOCOL_ENQUEUE_AFTER_FATAL_ERROR'
+]);
+
+/**
  * Safely executes a parameterized query using the shared application runtime pool.
  * Architectural Invariant: multipleStatements is false, preventing stacked SQL injection.
+ * Includes automated single-retry with backoff for transient connection recovery.
  */
 export async function query<T extends RowDataPacket[]>(sql: string, params: unknown[] = []): Promise<T> {
   const pool = getApplicationPool();
-  const [rows] = await pool.query<T>(sql, params);
-  return rows;
+  try {
+    const [rows] = await pool.query<T>(sql, params);
+    return rows;
+  } catch (err: unknown) {
+    const code = (err as { code?: string })?.code;
+    if (code && TRANSIENT_DB_ERRORS.has(code)) {
+      console.warn(`[DATABASE POOL] Transient error (${code}) encountered. Retrying query once after 500ms backoff...`);
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      const [rows] = await pool.query<T>(sql, params);
+      return rows;
+    }
+    throw err;
+  }
 }
 
 /**
@@ -121,11 +144,23 @@ export async function queryOne<T extends RowDataPacket>(sql: string, params: unk
 
 /**
  * Safely executes a parameterized DML statement (INSERT, UPDATE, DELETE) and returns the ResultSetHeader.
+ * Includes automated single-retry with backoff for transient connection recovery.
  */
 export async function execute(sql: string, params: unknown[] = []): Promise<ResultSetHeader> {
   const pool = getApplicationPool();
-  const [result] = await pool.execute<ResultSetHeader>(sql, params as any);
-  return result;
+  try {
+    const [result] = await pool.execute<ResultSetHeader>(sql, params as any);
+    return result;
+  } catch (err: unknown) {
+    const code = (err as { code?: string })?.code;
+    if (code && TRANSIENT_DB_ERRORS.has(code)) {
+      console.warn(`[DATABASE POOL] Transient error (${code}) encountered. Retrying execute once after 500ms backoff...`);
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      const [result] = await pool.execute<ResultSetHeader>(sql, params as any);
+      return result;
+    }
+    throw err;
+  }
 }
 
 /**
