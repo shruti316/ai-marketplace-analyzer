@@ -171,10 +171,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultMode = 'signin' }) 
         return 'Internet connection offline. Please check your network and retry.';
       }
       if (e.isTimeout || e.code === 'TIMEOUT') {
-        return 'The cloud backend took longer than 75s to wake up from cold sleep. Please click submit again now that the container has initialized.';
+        return 'Connecting to TrustSphere cloud engine took longer than 75s. Please click "Retry Submission Now" now that the container has initialized.';
       }
       if (e.code === 'UNREACHABLE' || (e.message && (e.message.includes('waking up') || e.message.includes('cold sleep')))) {
-        return 'The backend server is waking up from cold sleep (Render free tier). Please retry now that the server has had time to boot.';
+        return 'Connecting to TrustSphere cloud engine... Container instance is initializing. Please click "Retry Submission Now" in a few seconds.';
       }
       if (e.message) {
         return e.message;
@@ -361,7 +361,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultMode = 'signin' }) 
                         Switch to Sign In Tab →
                       </button>
                     )}
-                    {(serverError.includes('cold sleep') || serverError.includes('waking up') || serverError.includes('timed out')) && (
+                    {(serverError.includes('initializing') || serverError.includes('retry') || serverError.includes('moment') || serverError.includes('timed out') || serverError.includes('cold sleep') || serverError.includes('waking up')) && (
                       <button
                         type="button"
                         onClick={() => {
@@ -382,12 +382,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultMode = 'signin' }) 
                 </div>
               )}
 
-              {/* Render Cold-Start In-Flight Warning with Active Timer */}
+              {/* Cloud Container In-Flight Wake-Up Timer */}
               {isSlowResponse && isSubmitting && (
                 <div className="p-3 rounded-xl bg-[#FEF3C7] border border-[#FDE68A] text-[#92400E] text-xs flex items-center gap-2.5 animate-pulse">
                   <RefreshCw className="w-4 h-4 text-[#E09A12] shrink-0 animate-spin" />
                   <span className="leading-snug">
-                    Connecting to Render backend engine ({elapsedSeconds}s elapsed)... Free tier instances wake from sleep in ~30–45s. Your request will process automatically.
+                    Connecting to TrustSphere cloud engine ({elapsedSeconds}s elapsed)... Container instances wake on demand (~30–45s). Your request will process automatically.
                   </span>
                 </div>
               )}

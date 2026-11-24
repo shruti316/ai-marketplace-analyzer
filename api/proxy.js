@@ -94,7 +94,14 @@ export default function handler(req, res) {
   const urlObj = new URL(req.url, 'http://localhost');
   urlObj.searchParams.delete('path'); // Remove Vercel rewrite parameter
   const qs = urlObj.searchParams.toString();
-  const targetPath = `/api/${cleanPath}${qs ? '?' + qs : ''}`;
+
+  let upstreamPath = `/api/${cleanPath}`;
+  if (cleanPath === 'live') {
+    upstreamPath = '/live';
+  } else if (cleanPath === 'ready') {
+    upstreamPath = '/ready';
+  }
+  const targetPath = `${upstreamPath}${qs ? '?' + qs : ''}`;
 
   // 5. Header Sanitization and Hop-by-Hop Filtering
   const hopByHopHeaders = new Set([
