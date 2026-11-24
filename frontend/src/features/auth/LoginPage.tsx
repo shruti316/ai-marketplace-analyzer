@@ -62,7 +62,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultMode = 'signin' }) 
   const slowTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/dashboard';
+  const rawFrom = (location.state as { from?: { pathname: string } })?.from?.pathname;
+  const from = (rawFrom && rawFrom !== '/login' && rawFrom !== '/register' && rawFrom !== '/signup' && rawFrom !== '/')
+    ? rawFrom
+    : '/dashboard';
 
   // Automatically redirect authenticated users to /dashboard
   useEffect(() => {
@@ -86,6 +89,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultMode = 'signin' }) 
     handleSubmit: handleLoginSubmit,
     formState: { errors: loginErrors, isSubmitting: isLoginSubmitting },
     reset: resetLoginForm,
+    setValue: setLoginValue,
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -101,6 +105,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultMode = 'signin' }) 
     handleSubmit: handleRegisterSubmit,
     formState: { errors: registerErrors, isSubmitting: isRegisterSubmitting },
     reset: resetRegisterForm,
+    getValues: getRegisterValues,
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
@@ -321,9 +326,13 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultMode = 'signin' }) 
                       <button
                         type="button"
                         onClick={() => {
+                          const typedEmail = getRegisterValues('email');
                           setMode('signin');
                           setServerError(null);
                           setServerErrorCode(null);
+                          if (typedEmail) {
+                            setLoginValue('email', typedEmail);
+                          }
                         }}
                         className="mt-1 inline-flex items-center gap-1 text-[11px] font-bold text-[#8C1D2B] underline hover:text-[#5C0D1B] cursor-pointer"
                       >
