@@ -51,36 +51,50 @@ async function runSonataAcceptanceTest() {
   assert(retrieval.price_diagnostics?.status === 'BLOCKED' || retrieval.price_diagnostics?.status === 'NOT_FOUND', 'Anti-bot / Cloudflare challenge honestly reported');
 
   // -------------------------------------------------------------------------
-  // STEP 2: Category-Specific Aspect Discovery (Watches ABSA)
+  // STEP 2: Category-Specific Aspect Discovery & Provenance Quarantine (Watches ABSA)
   // -------------------------------------------------------------------------
-  console.log('\n--- STEP 2: Category-Specific Aspect Discovery (Watches ABSA) ---');
+  console.log('\n--- STEP 2: Category-Specific Aspect Discovery & Provenance Quarantine ---');
+  // Reviews marked as TEST_DATA / FIXTURE because Sonata live page was Cloudflare blocked
   const watchReviews = [
-    { review_text: 'The green dial looks stunning and the brass case finishing is very classy.', rating: 5 },
-    { review_text: 'Mesh metal strap fits comfortably on the wrist and clasp is sturdy.', rating: 5 },
-    { review_text: 'Original Titan Sonata watch with official warranty card in box.', rating: 5 },
-    { review_text: 'Timekeeping is accurate quartz movement, accurate to the second.', rating: 4 },
+    { review_text: 'The green dial looks stunning and the brass case finishing is very classy.', rating: 5, source_type: 'TEST_FIXTURE' as const, validation_status: 'TEST_DATA' as const },
+    { review_text: 'Mesh metal strap fits comfortably on the wrist and clasp is sturdy.', rating: 5, source_type: 'TEST_FIXTURE' as const, validation_status: 'TEST_DATA' as const },
+    { review_text: 'Original Titan Sonata watch with official warranty card in box.', rating: 5, source_type: 'TEST_FIXTURE' as const, validation_status: 'TEST_DATA' as const },
+    { review_text: 'Timekeeping is accurate quartz movement, accurate to the second.', rating: 4, source_type: 'TEST_FIXTURE' as const, validation_status: 'TEST_DATA' as const },
   ];
 
   const nlpReport = reviewNlpEngine.analyzeReviews(watchReviews, {
-    claimedStarRating: 4.8,
-    ratingsCount: 320,
+    claimedStarRating: null, // Cloudflare blocked, no live stars extracted
+    ratingsCount: null,
     category: 'Watches',
     productTitle: retrieval.title,
+    targetModel: 'SP8005LKM03W',
+    targetMarketplace: 'Sonata Watches',
   });
 
   console.log('NLP Analyzed Aspects:', nlpReport.aspects.map(a => `${a.display_name}: ${a.sentiment_label}`));
+  console.log('Provenance Status:', {
+    provenance_status: nlpReport.provenance_status,
+    is_production_eligible: nlpReport.is_production_eligible,
+    status: nlpReport.status,
+    provenance_note: nlpReport.provenance_note,
+  });
+
   const aspectNames = nlpReport.aspects.map(a => a.display_name);
   assert(aspectNames.includes('Design & Aesthetics'), 'Watches ABSA includes Design & Aesthetics');
   assert(aspectNames.includes('Comfort & Wearability'), 'Watches ABSA includes Comfort & Wearability');
   assert(aspectNames.includes('Timekeeping & Accuracy'), 'Watches ABSA includes Timekeeping & Accuracy');
   assert(aspectNames.includes('Seller Experience & Authenticity'), 'Watches ABSA includes Seller Experience & Authenticity');
-  assert(nlpReport.sentiment_distribution.positive_percentage > 70, 'Positive sentiment correctly quantified');
+  assert(nlpReport.is_production_eligible === false, 'Test fixtures are strictly quarantined (is_production_eligible: false)');
+  assert(nlpReport.provenance_status === 'TEST_FIXTURE_EXCLUDED', 'Provenance marked as TEST_FIXTURE_EXCLUDED');
+  assert(nlpReport.status === 'TEST_DATA_EXCLUDED', 'Review analysis status marked as TEST_DATA_EXCLUDED');
 
   // -------------------------------------------------------------------------
-  // STEP 3: Decoupled 5-Dimension Trust Assessment on Sonata Poze Watch
+  // STEP 3: Decoupled 5-Dimension Trust Assessment on Sonata Poze Watch (Manual Price Entry)
   // -------------------------------------------------------------------------
-  console.log('\n--- STEP 3: Decoupled 5-Dimension Trust Assessment ---');
-  // With manual price entry from official price tag: Observed ₹1,025, MRP ₹1,145
+  console.log('\n--- STEP 3: Decoupled 5-Dimension Trust Assessment (Manual Price Entry) ---');
+  // Manual price entry from official price tag: Observed ₹1,025, MRP ₹1,145
+  // Price verification status: MANUALLY_ENTERED
+  // Quarantined reviews: is_production_eligible is false
   const fiveDimensionResult = decoupledTrustEngine.evaluateFiveDimensions({
     url: new URL(testUrl),
     platformName: 'Sonata Watches',
@@ -89,12 +103,13 @@ async function runSonataAcceptanceTest() {
     category: 'Watches',
     observedPrice: 1025,
     mrp: 1145,
+    priceVerificationStatus: 'MANUALLY_ENTERED',
     sellerName: 'Titan Company Limited',
     sellerRating: 4.9,
     fulfillmentType: 'Direct Brand Fulfillment',
-    claimedStarRating: 4.8,
-    ratingsCount: 320,
-    nlpReport,
+    claimedStarRating: null, // Not accessible due to Cloudflare block
+    ratingsCount: null,
+    nlpReport, // Quarantined test fixtures
     hasVisionProvided: false,
     hasOcrExtracted: false,
   });
@@ -104,15 +119,20 @@ async function runSonataAcceptanceTest() {
     overall_risk_level: fiveDimensionResult.overall_risk_level,
     recommendation: fiveDimensionResult.recommendation,
     coverage: `${fiveDimensionResult.evidence.coverage_percent}%`,
+    confidence: fiveDimensionResult.evidence.confidence_score,
     website_score: fiveDimensionResult.dimensions.website_legitimacy.score,
     seller_score: fiveDimensionResult.dimensions.seller_reliability.score,
     authenticity_score: fiveDimensionResult.dimensions.listing_authenticity.score,
     quality_score: fiveDimensionResult.dimensions.product_quality.score,
   });
 
-  assert(fiveDimensionResult.overall_trust_score >= 80, `Overall trust score is high for official Titan brand store (${fiveDimensionResult.overall_trust_score}/100)`);
-  assert(fiveDimensionResult.overall_risk_level === 'MINIMAL_RISK', 'Risk level is MINIMAL_RISK');
-  assert(fiveDimensionResult.recommendation === 'PROCEED_CONFIDENTLY', 'Recommendation is PROCEED_CONFIDENTLY for fully verified brand listing');
+  assert(fiveDimensionResult.dimensions.product_quality.status === 'UNASSESSED', 'Product quality remains UNASSESSED because test reviews are quarantined');
+  assert(fiveDimensionResult.dimensions.product_quality.score === null, 'Product quality score is null');
+  assert(fiveDimensionResult.dimensions.listing_authenticity.score! <= 70, `Listing authenticity score capped at <= 70 for manual price (${fiveDimensionResult.dimensions.listing_authenticity.score})`);
+  assert(fiveDimensionResult.overall_trust_score <= 68, `Sparse evidence caps trust score at <= 68 (actual: ${fiveDimensionResult.overall_trust_score}/100)`);
+  assert(fiveDimensionResult.overall_risk_level === 'MODERATE_RISK', 'Risk level is MODERATE_RISK');
+  assert(fiveDimensionResult.recommendation === 'PROCEED_WITH_CAUTION', 'Sparse evidence & self-reported price enforces PROCEED_WITH_CAUTION, never PROCEED_CONFIDENTLY');
+  assert(fiveDimensionResult.evidence.confidence_score <= 0.52, `Overall confidence capped at <= 0.52 (actual: ${fiveDimensionResult.evidence.confidence_score})`);
   assert(fiveDimensionResult.dimensions.seller_reliability.score! >= 90, 'Titan Company Limited recognized as official brand flagship');
   assert(fiveDimensionResult.score_breakdown.mathematical_identity_verified, 'Score breakdown mathematical identity holds true');
 

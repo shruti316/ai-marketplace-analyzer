@@ -124,11 +124,15 @@ export class DecoupledTrustEngine {
     const riskFactors: string[] = [];
     const missingData: string[] = [];
 
-    const hasNlp = nlpReport && nlpReport.status === 'EVALUATED' && nlpReport.reviews_analyzed_count > 0;
+    const hasNlp = Boolean(nlpReport && nlpReport.is_production_eligible !== false && (nlpReport.status === 'EVALUATED' || nlpReport.status === 'INSUFFICIENT_EVIDENCE') && nlpReport.reviews_analyzed_count > 0);
     const hasStars = typeof claimedStarRating === 'number' && claimedStarRating > 0;
 
     if (!hasNlp && !hasStars) {
-      missingData.push('No customer reviews or star ratings found on this listing');
+      if (nlpReport && nlpReport.is_production_eligible === false && nlpReport.provenance_note) {
+        missingData.push(`Review analysis quarantined: ${nlpReport.provenance_note}`);
+      } else {
+        missingData.push('No customer reviews or star ratings found on this listing');
+      }
       return {
         dimension_key: 'product_quality',
         dimension_name: 'Product Quality',
@@ -136,7 +140,9 @@ export class DecoupledTrustEngine {
         status: 'UNASSESSED',
         risk_level: 'MODERATE_RISK',
         confidence: 0.15,
-        summary: 'Customer reviews and ratings are unavailable for this product. Quality cannot be empirically assessed.',
+        summary: nlpReport?.is_production_eligible === false
+          ? `Customer reviews were quarantined (${nlpReport.provenance_status}). Product quality cannot be empirically scored from unverified or test reviews.`
+          : 'Customer reviews and ratings are unavailable for this product. Quality cannot be empirically assessed.',
         positive_signals: [],
         risk_factors: [],
         missing_data: missingData,
@@ -146,7 +152,7 @@ export class DecoupledTrustEngine {
     let qualityScore = 70; // baseline
     let confidence = 0.50;
 
-    if (hasNlp) {
+    if (hasNlp && nlpReport) {
       const sat = nlpReport.satisfaction_index ?? 50;
       const negPct = nlpReport.sentiment_distribution.negative_percentage;
       const posPct = nlpReport.sentiment_distribution.positive_percentage;
@@ -379,6 +385,10 @@ export class DecoupledTrustEngine {
     } else if (priceVerificationStatus === 'CONFLICTING_SOURCES') {
       riskFactors.push('Price mismatch detected across sources: extracted price sources disagree by >15% (possible variant mismatch or conditional coupon)');
       score -= 15;
+    } else if (priceVerificationStatus === 'MANUALLY_ENTERED') {
+      missingData.push('Price manually entered by user. Automated marketplace verification unavailable; corridor score provisional.');
+      confidence = Math.min(confidence, 0.40);
+      score = Math.min(score, 70);
     } else if (priceVerificationStatus === 'NOT_FOUND') {
       missingData.push('Live price unverified from automated fetch; manual price entry requires verification');
       confidence -= 0.15;
@@ -430,6 +440,11 @@ export class DecoupledTrustEngine {
         riskFactors.push('Listing title contains explicit replica or counterfeit indicator keywords');
         score = Math.min(score, 18);
       }
+    }
+
+    if (priceVerificationStatus === 'MANUALLY_ENTERED') {
+      score = Math.min(score, 70);
+      confidence = Math.min(confidence, 0.40);
     }
 
     score = Math.max(10, Math.min(98, score));
@@ -611,7 +626,10 @@ export class DecoupledTrustEngine {
 
     // Evidence coverage calculation
     const coveragePercent = Math.round((assessedDimensions.length / 4.0) * 100);
-    const avgConfidence = assessedDimensions.length > 0
+    const isManualPrice = input?.priceVerificationStatus === 'MANUALLY_ENTERED';
+    const isSparseEvidence = assessedDimensions.length <= 2 || coveragePercent < 75 || product_quality.score === null || isManualPrice;
+
+    let avgConfidence = assessedDimensions.length > 0
       ? (
           (product_quality.confidence || 0) +
           (seller_reliability.confidence || 0) +
@@ -619,6 +637,10 @@ export class DecoupledTrustEngine {
           (website_legitimacy.confidence || 0)
         ) / 4.0
       : 0.50;
+
+    if (isSparseEvidence) {
+      avgConfidence = Math.min(0.52, avgConfidence);
+    }
 
     // -------------------------------------------------------------------------
     // SCORE BREAKDOWN & ATTRIBUTABLE MODALITY DELTAS
@@ -631,23 +653,29 @@ export class DecoupledTrustEngine {
     let pricingLabel = 'Unassessed';
     let pricingDesc = 'Listing price unverified from automated fetch.';
     if (listing_authenticity.status === 'ASSESSED' && listing_authenticity.score !== null) {
-      const s = listing_authenticity.score;
-      if (s >= 80) {
-        pricingDelta = +14;
-        pricingLabel = 'Normal Retail Corridor';
-        pricingDesc = 'Observed price aligns within genuine category retail corridor.';
-      } else if (s >= 65) {
-        pricingDelta = +6;
-        pricingLabel = 'Acceptable Corridor';
-        pricingDesc = 'Minor discount variance within promotional boundaries.';
-      } else if (s >= 45) {
-        pricingDelta = -10;
-        pricingLabel = 'Steep Discount Risk';
-        pricingDesc = 'Steep discount observed outside standard retail corridor.';
+      if (isManualPrice) {
+        pricingDelta = +4;
+        pricingLabel = 'Self-Reported Price';
+        pricingDesc = 'Price manually entered by user. Automated marketplace verification was blocked or unavailable.';
       } else {
-        pricingDelta = -22;
-        pricingLabel = 'Steep Anomaly Risk';
-        pricingDesc = 'Severe price anomaly detected (>65% below genuine market corridor).';
+        const s = listing_authenticity.score;
+        if (s >= 80) {
+          pricingDelta = +14;
+          pricingLabel = 'Normal Retail Corridor';
+          pricingDesc = 'Observed price aligns within genuine category retail corridor.';
+        } else if (s >= 65) {
+          pricingDelta = +6;
+          pricingLabel = 'Acceptable Corridor';
+          pricingDesc = 'Minor discount variance within promotional boundaries.';
+        } else if (s >= 45) {
+          pricingDelta = -10;
+          pricingLabel = 'Steep Discount Risk';
+          pricingDesc = 'Steep discount observed outside standard retail corridor.';
+        } else {
+          pricingDelta = -22;
+          pricingLabel = 'Steep Anomaly Risk';
+          pricingDesc = 'Severe price anomaly detected (>65% below genuine market corridor).';
+        }
       }
     }
     contributions.push({
@@ -829,8 +857,6 @@ export class DecoupledTrustEngine {
       assessedDimensions[0] || { key: '', name: '', score: 50, weight: 0 }
     );
 
-    const isSparseEvidence = assessedDimensions.length <= 2 || coveragePercent < 75 || product_quality.score === null;
-
     if (minScoreItem.score < 40) {
       nonMaskingApplied = true;
       nonMaskingReason = `Critical risk detected in ${minScoreItem.name} (${minScoreItem.score}/100). High scores in platform legitimacy or other dimensions cannot mask high defect or authenticity risk.`;
@@ -874,7 +900,9 @@ export class DecoupledTrustEngine {
       rationale = nonMaskingReason || 'Significant concerns identified in product quality, pricing corridor, or seller history.';
     } else if (overallRiskLevel === 'MODERATE_RISK') {
       recommendation = 'PROCEED_WITH_CAUTION';
-      if (isSparseEvidence && product_quality.score === null) {
+      if (isSparseEvidence && isManualPrice) {
+        rationale = `Assessment is based on sparse evidence (${coveragePercent}% coverage) with self-reported pricing and unverified customer reviews. Trust score capped at ${finalScore}/100. Proceed with caution.`;
+      } else if (isSparseEvidence && product_quality.score === null) {
         rationale = `Assessment is based on sparse evidence (${coveragePercent}% coverage). Customer reviews and empirical product quality are unassessed. Proceed with caution.`;
       } else if (isSparseEvidence) {
         rationale = `Assessment is based on partial evidence (${coveragePercent}% coverage). Merchant track record or product data is unverified. Proceed with caution.`;
@@ -885,7 +913,9 @@ export class DecoupledTrustEngine {
       // Minimal Risk band: Guard against sparse evidence masking
       if (isSparseEvidence) {
         recommendation = 'PROCEED_WITH_CAUTION';
-        rationale = `Assessment is based on partial evidence (${coveragePercent}% coverage). While platform parameters are healthy, empirical product quality is unassessed. Proceed with caution.`;
+        rationale = isManualPrice
+          ? `Assessment is based on sparse evidence (${coveragePercent}% coverage) with self-reported pricing. Empirical product quality is unassessed. Trust score capped at ${finalScore}/100. Proceed with caution.`
+          : `Assessment is based on partial evidence (${coveragePercent}% coverage). While platform parameters are healthy, empirical product quality is unassessed. Proceed with caution.`;
       } else {
         recommendation = 'PROCEED_CONFIDENTLY';
         rationale = 'All evaluated dimensions indicate healthy parameters, verified seller governance, and genuine market pricing.';

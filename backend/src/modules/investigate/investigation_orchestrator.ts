@@ -10,7 +10,7 @@ import { hfGradioClient } from '../trust/hf_gradio.client';
 import { investigationRepository } from '../investigation_history/investigation_history.repository';
 import { PipelineInvestigationInput } from './investigate.schemas';
 import { ExtractedProductData } from './marketplace_adapters';
-import { reviewNlpEngine } from './review_nlp_engine';
+import { reviewNlpEngine, ReviewItem } from './review_nlp_engine';
 import { decoupledTrustEngine, FiveDimensionTrustResult } from './decoupled_trust_engine';
 
 export interface StructuredAspectItem {
@@ -136,7 +136,10 @@ export interface ProductIntelligenceReport {
       review_text: string;
       sentiment?: string;
     }>;
-    status: 'EVALUATED' | 'NO_REVIEWS';
+    provenance_status?: string;
+    is_production_eligible?: boolean;
+    provenance_note?: string;
+    status: 'EVALUATED' | 'NO_REVIEWS' | 'TEST_DATA_EXCLUDED' | 'UNVERIFIED_EXCLUDED';
   };
   section_6_visual_packaging: {
     evaluation_state: 'NOT_PROVIDED' | 'NOT_EVALUATED' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
@@ -527,23 +530,53 @@ export class InvestigationOrchestrator {
     // ----------------------------------------------------
     // STEP 5: Multimodal Inference & ABSA Sentiment via Python
     // ----------------------------------------------------
-    let inferReviews: string[] = [];
+    let inferReviewItems: ReviewItem[] = [];
     if (Array.isArray(input.reviews) && input.reviews.length > 0) {
-      inferReviews = (input.reviews as any[])
-        .map((r: any) => (typeof r === 'string' ? r : r?.review_text || ''))
-        .filter((text: string) => text.trim().length > 0);
+      inferReviewItems = (input.reviews as any[])
+        .map((r: any) => {
+          if (typeof r === 'string') {
+            return {
+              review_text: r.trim(),
+              source_type: 'MANUAL_USER_IMPORT' as const,
+              validation_status: 'UNVERIFIED' as const,
+            };
+          }
+          return {
+            review_text: (r.review_text || '').trim(),
+            rating: typeof r.rating === 'number' ? r.rating : undefined,
+            reviewer_name: r.reviewer_name,
+            date: r.date,
+            verified_purchase: r.verified_purchase,
+            source_type: r.source_type || 'MANUAL_USER_IMPORT',
+            source_marketplace: r.source_marketplace || marketplace,
+            source_url: r.source_url,
+            product_model: r.product_model,
+            retrieval_method: r.retrieval_method,
+            retrieval_timestamp: r.retrieval_timestamp,
+            validation_status: r.validation_status || 'UNVERIFIED',
+          };
+        })
+        .filter((item: ReviewItem) => item.review_text.length > 0);
     } else if (typeof input.reviews === 'string' && (input.reviews as string).trim().length > 0) {
-      inferReviews = [(input.reviews as string).trim()];
+      inferReviewItems = [{
+        review_text: (input.reviews as string).trim(),
+        source_type: 'MANUAL_USER_IMPORT',
+        validation_status: 'UNVERIFIED',
+      }];
     }
 
-    const hasReviews = inferReviews.length > 0;
-    const nlpReport = reviewNlpEngine.analyzeReviews(inferReviews, {
+    const hasReviews = inferReviewItems.length > 0;
+    const inferReviews = inferReviewItems.map(i => i.review_text);
+
+    const nlpReport = reviewNlpEngine.analyzeReviews(inferReviewItems, {
       claimedStarRating: (input as any).rating ?? (extractedData as any).claimed_star_rating ?? null,
       ratingsCount: (input as any).ratings_count ?? (extractedData as any).ratings_count ?? null,
       publishedReviewCount: (input as any).ratings_count ?? (extractedData as any).ratings_count ?? null,
-      retrievedReviewCount: inferReviews.length,
+      retrievedReviewCount: inferReviewItems.length,
       category,
       productTitle: title,
+      targetModel: (extractedData as any).sku_identifier || (input as any).sku || null,
+      targetMarketplace: marketplace,
     });
 
     let inferResult: any = null;
@@ -646,7 +679,10 @@ export class InvestigationOrchestrator {
             };
           })
         : [],
-      status: hasReviews ? (nlpReport.status === 'EVALUATED' ? 'EVALUATED' : 'NO_REVIEWS') : 'NO_REVIEWS',
+      provenance_status: nlpReport.provenance_status,
+      is_production_eligible: nlpReport.is_production_eligible,
+      provenance_note: nlpReport.provenance_note,
+      status: nlpReport.status === 'EVALUATED' ? 'EVALUATED' : (nlpReport.status === 'TEST_DATA_EXCLUDED' ? 'TEST_DATA_EXCLUDED' : (nlpReport.status === 'UNVERIFIED_EXCLUDED' ? 'UNVERIFIED_EXCLUDED' : 'NO_REVIEWS')),
     };
 
     // ----------------------------------------------------

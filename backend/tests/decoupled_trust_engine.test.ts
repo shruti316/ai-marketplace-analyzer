@@ -126,16 +126,17 @@ function runTests() {
   // -------------------------------------------------------------------------
   console.log('\n--- TEST 5: Comprehensive Full-Evidence Genuine Listing ---');
   const positiveReviews = [
-    { review_text: 'Excellent product, solid build quality and super fast delivery!' },
-    { review_text: 'Original genuine brand product. 100% satisfied with performance.' },
-    { review_text: 'Bahut achha product hai, packaging bhi shandar thi.' },
-    { review_text: 'Original Titan watch with warranty card inside.' }
+    { review_text: 'Excellent product, solid build quality and super fast delivery!', source_marketplace: 'Amazon India', validation_status: 'VERIFIED_CORRESPONDENCE' as const },
+    { review_text: 'Original genuine brand product. 100% satisfied with performance.', source_marketplace: 'Amazon India', validation_status: 'VERIFIED_CORRESPONDENCE' as const },
+    { review_text: 'Bahut achha product hai, packaging bhi shandar thi.', source_marketplace: 'Amazon India', validation_status: 'VERIFIED_CORRESPONDENCE' as const },
+    { review_text: 'Original Titan watch with warranty card inside.', source_marketplace: 'Amazon India', validation_status: 'VERIFIED_CORRESPONDENCE' as const }
   ];
   const nlpPositive = reviewNlpEngine.analyzeReviews(positiveReviews, {
     claimedStarRating: 4.7,
     ratingsCount: 2400,
     category: 'Watches',
     productTitle: 'Titan Neo Analog Watch',
+    targetMarketplace: 'Amazon India',
   });
   const inputFullGenuine: FiveDimensionInput = {
     url: new URL('https://www.amazon.in/dp/B08XYZ1234'),

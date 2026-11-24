@@ -18,12 +18,22 @@
  * 7. Explainable outputs with aspect mentions, positive/negative themes, and honest limitations.
  */
 
+export type ReviewSourceType = 'LIVE_SCRAPED' | 'MANUAL_USER_IMPORT' | 'CROSS_MARKETPLACE_CORRESPONDENCE' | 'TEST_FIXTURE';
+export type ReviewValidationStatus = 'VERIFIED_CORRESPONDENCE' | 'MODEL_MISMATCH' | 'UNVERIFIED' | 'TEST_DATA';
+
 export interface ReviewItem {
   review_text: string;
   rating?: number; // 1 to 5
   reviewer_name?: string;
   date?: string;
   verified_purchase?: boolean;
+  source_type?: ReviewSourceType;
+  source_marketplace?: string;
+  source_url?: string;
+  product_model?: string;
+  retrieval_method?: 'AUTOMATED_SCRAPE' | 'MANUAL_IMPORT' | 'CATALOG_INDEX' | 'FIXTURE';
+  retrieval_timestamp?: string;
+  validation_status?: ReviewValidationStatus;
 }
 
 export interface AspectFinding {
@@ -64,7 +74,10 @@ export interface FourWayClassification {
 }
 
 export interface ReviewNlpReport {
-  status: 'EVALUATED' | 'NO_REVIEWS' | 'REVIEWS_UNAVAILABLE' | 'INSUFFICIENT_EVIDENCE' | 'BLOCKED';
+  status: 'EVALUATED' | 'NO_REVIEWS' | 'REVIEWS_UNAVAILABLE' | 'INSUFFICIENT_EVIDENCE' | 'BLOCKED' | 'TEST_DATA_EXCLUDED' | 'UNVERIFIED_EXCLUDED';
+  provenance_status: 'VERIFIED_LIVE' | 'MANUAL_VERIFIED' | 'TEST_FIXTURE_EXCLUDED' | 'UNVERIFIED_EXCLUDED' | 'NO_REVIEWS';
+  is_production_eligible: boolean;
+  provenance_note?: string;
   published_review_count?: number | null;
   retrieved_review_count: number;
   reviews_analyzed_count: number;
@@ -147,6 +160,11 @@ const POSITIVE_LEXICON: Record<string, number> = {
   pretty: 0.7,
   decent: 0.35,
   delightful: 0.85,
+  sleek: 0.8,
+  easy: 0.7,
+  better: 0.65,
+  promptly: 0.7,
+  undamaged: 0.75,
   // Hinglish
   'paisa vasool': 0.9,
   badiya: 0.85,
@@ -189,6 +207,13 @@ const POSITIVE_LEXICON: Record<string, number> = {
   'बढ़िया उत्पाद': 0.9,
   'शानदार लुक': 0.9,
   'पैसा वसूल': 0.9,
+  'उम्दा': 0.9,
+  'आरामदायक': 0.85,
+  'साफ़': 0.75,
+  'साफ': 0.75,
+  'बेहतर': 0.8,
+  'जचता': 0.75,
+  'जचती': 0.75,
 };
 
 const NEGATIVE_LEXICON: Record<string, number> = {
@@ -288,6 +313,11 @@ const NEGATIVE_LEXICON: Record<string, number> = {
   'बेकार': -0.85,
   'बकवास': -0.9,
   'रद्दी': -0.85,
+  'बर्बादी': -0.9,
+  'पूरी बर्बादी': -0.95,
+  'डुप्लीकेट': -0.95,
+  'धोखाधड़ी': -0.95,
+  'टूट गया': -0.9,
   'फर्जी': -0.95,
   'चोरी': -0.95,
   'बंद': -0.7,
@@ -511,7 +541,7 @@ export function isAspectRelevantForCategory(aspectKey: string, category?: string
 
 const NEGATION_WORDS = new Set(['not', "didn't", "don't", 'no', 'never', 'hardly', 'barely', 'scarcely', 'without', 'neither', 'nor', 'nhi', 'nahi', 'mat', 'नहीं', 'न', 'मत', 'बिना']);
 const INTENSIFIER_WORDS = new Set(['very', 'extremely', 'really', 'super', 'bilkul', 'bohot', 'bahut', 'ekdum', 'so', 'too', 'बहुत', 'बिल्कुल', 'एकदम', 'काफी']);
-const DIMINISHER_WORDS = new Set(['thoda', 'thodi', 'thoda sa', 'slightly', 'minor', 'little', 'somewhat', 'थोड़ा', 'हल्का']);
+const DIMINISHER_WORDS = new Set(['thoda', 'thodi', 'thoda sa', 'slightly', 'minor', 'little', 'somewhat', 'chhota mota', 'chota mota', 'chhota', 'chota', 'थोड़ा', 'हल्का', 'छोटा मोटा']);
 
 export class ReviewNlpEngine {
   /**
@@ -525,9 +555,9 @@ export class ReviewNlpEngine {
     const rawTokens = lower.split(/\s+/).filter(Boolean);
 
     // Balanced neutral idioms
-    if (lower.match(/\b(neither (?:good|great) nor (?:bad|poor)|theek thaak|theek-thaak|ठीक ठाक|ठीक-ठाक|काम चल जाता|average experience|average product|nothing special)\b/)) {
+    if (lower.match(/\b(neither (?:too )?(?:good|great) nor (?:too )?(?:bad|poor)|theek thaak|theek-thaak|ठीक ठाक|ठीक-ठाक|काम चल जाता|काम चलाऊ|कामचलाऊ|average experience|average product|nothing special|okayish|plain|na bahut accha na|na bahut accha|ना बहुत अच्छा ना बहुत खराब|औसत दर्जे|औसत काम)\b/i)) {
       // If no strong catastrophic terms (fake, broken, nakli, toot gaya), score as balanced neutral
-      if (!lower.match(/\b(fake|nakli|broken|scam|fraud|dhokha|chori|toot|worst|ghatiya|barbad)\b/)) {
+      if (!lower.match(/\b(fake|nakli|broken|scam|fraud|dhokha|chori|toot|worst|ghatiya|barbad|बर्बाद|नकली|धोखा|धोखाधड़ी)\b/)) {
         return { score: 0.05, tokens: rawTokens };
       }
     }
@@ -649,6 +679,8 @@ export class ReviewNlpEngine {
       retrievedReviewCount?: number | null;
       category?: string | null;
       productTitle?: string | null;
+      targetModel?: string | null;
+      targetMarketplace?: string | null;
     }
   ): ReviewNlpReport {
     // Normalize input into ReviewItem[]
@@ -666,6 +698,9 @@ export class ReviewNlpEngine {
     if (items.length === 0) {
       return {
         status: 'NO_REVIEWS',
+        provenance_status: 'NO_REVIEWS',
+        is_production_eligible: false,
+        provenance_note: 'No customer reviews provided on this listing.',
         published_review_count: options?.publishedReviewCount ?? (typeof options?.ratingsCount === 'number' ? options.ratingsCount : null),
         retrieved_review_count: 0,
         reviews_analyzed_count: 0,
@@ -726,6 +761,54 @@ export class ReviewNlpEngine {
         confidence_score: 0.50,
         limitations: ['No customer reviews provided on this listing. Review sentiment is unverified (not penalized).'],
       };
+    }
+
+    // Provenance validation & quarantine checks
+    let hasTestFixture = false;
+    let hasModelMismatch = false;
+    let hasUnverified = false;
+
+    items.forEach(item => {
+      if (item.validation_status === 'TEST_DATA' || item.source_type === 'TEST_FIXTURE' || item.retrieval_method === 'FIXTURE') {
+        hasTestFixture = true;
+      } else if (
+        item.validation_status === 'MODEL_MISMATCH' ||
+        (options?.targetModel && item.product_model && !options.targetModel.toLowerCase().includes(item.product_model.toLowerCase()) && !item.product_model.toLowerCase().includes(options.targetModel.toLowerCase()))
+      ) {
+        hasModelMismatch = true;
+      } else if (item.validation_status === 'UNVERIFIED' || item.source_type === 'CROSS_MARKETPLACE_CORRESPONDENCE' || !item.source_marketplace) {
+        hasUnverified = true;
+      }
+    });
+
+    let provenanceStatus: ReviewNlpReport['provenance_status'] = 'VERIFIED_LIVE';
+    let isProductionEligible = true;
+    let reportStatus: ReviewNlpReport['status'] = items.length >= 2 ? 'EVALUATED' : 'INSUFFICIENT_EVIDENCE';
+    let provenanceNote: string | undefined = undefined;
+
+    if (hasTestFixture) {
+      provenanceStatus = 'TEST_FIXTURE_EXCLUDED';
+      isProductionEligible = false;
+      reportStatus = 'TEST_DATA_EXCLUDED';
+      provenanceNote = 'Review items flagged as TEST_DATA or benchmark fixture. Quarantined and strictly excluded from live production trust scoring.';
+    } else if (hasModelMismatch) {
+      provenanceStatus = 'UNVERIFIED_EXCLUDED';
+      isProductionEligible = false;
+      reportStatus = 'UNVERIFIED_EXCLUDED';
+      provenanceNote = 'Review items correspond to a different product model or variant. Cross-marketplace correspondence mismatch; excluded from production scoring.';
+    } else if (hasUnverified) {
+      provenanceStatus = 'UNVERIFIED_EXCLUDED';
+      isProductionEligible = false;
+      reportStatus = 'UNVERIFIED_EXCLUDED';
+      provenanceNote = 'Review items lack verified live marketplace provenance or source URL corroboration. Excluded from production scoring.';
+    } else if (items.some(i => i.source_type === 'MANUAL_USER_IMPORT')) {
+      provenanceStatus = 'MANUAL_VERIFIED';
+      isProductionEligible = true;
+      provenanceNote = 'Manually imported reviews verified with product model correspondence.';
+    } else {
+      provenanceStatus = 'VERIFIED_LIVE';
+      isProductionEligible = true;
+      provenanceNote = 'All review items verified with genuine marketplace provenance and matching product model.';
     }
 
     let totalSentiment = 0;
@@ -977,8 +1060,15 @@ export class ReviewNlpEngine {
       },
     };
 
+    if (!isProductionEligible && provenanceNote) {
+      limitations.push(`Provenance quarantine active: ${provenanceNote}`);
+    }
+
     return {
-      status: total >= 2 ? 'EVALUATED' : 'INSUFFICIENT_EVIDENCE',
+      status: reportStatus,
+      provenance_status: provenanceStatus,
+      is_production_eligible: isProductionEligible,
+      provenance_note: provenanceNote,
       published_review_count: options?.publishedReviewCount ?? (typeof options?.ratingsCount === 'number' ? options.ratingsCount : null),
       retrieved_review_count: options?.retrievedReviewCount ?? total,
       reviews_analyzed_count: total,

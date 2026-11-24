@@ -79,15 +79,17 @@ async function runFullIntegrationTrace() {
     console.log(`Overall Trust Score:          ${report.summary.overall_trust_score}/100`);
     console.log(`Overall Risk Tier:            ${report.summary.overall_risk_tier}`);
     console.log(`Verdict Headline:             ${report.summary.verdict_headline}`);
-    console.log(`Confidence Score:             ${report.summary.confidence_score}`);
+    console.log(`Confidence Score:             ${report.five_dimension_trust.evidence.confidence_score}`);
     console.log(`Mathematical Breakdown:`);
-    console.log(`  Baseline:                   50`);
+    console.log(`  Baseline:                   ${report.five_dimension_trust.score_breakdown.baseline}`);
     console.log(`  Modalities:`);
-    report.summary.score_breakdown?.contributions?.forEach(c => {
+    report.five_dimension_trust.score_breakdown.contributions.forEach(c => {
       console.log(`    - ${c.title.padEnd(28)}: ${c.delta > 0 ? `+${c.delta}` : c.delta} pts (${c.status_label})`);
     });
-    console.log(`  Final Score:                ${report.summary.score_breakdown?.final_trust_score}`);
-    console.log(`  Identity Verified:          ${report.summary.score_breakdown?.mathematical_identity_verified}`);
+    console.log(`  Subtotal:                   ${report.five_dimension_trust.score_breakdown.subtotal_before_caps}`);
+    console.log(`  Sparse Evidence Penalty:    ${report.five_dimension_trust.score_breakdown.sparse_evidence_penalty}`);
+    console.log(`  Final Score:                ${report.five_dimension_trust.score_breakdown.final_trust_score}`);
+    console.log(`  Identity Verified:          ${report.five_dimension_trust.score_breakdown.mathematical_identity_verified}`);
 
     console.log('\n--- STAGE 7: Buying Recommendation ---');
     console.log(`Recommendation Tier:          ${report.section_9_buying_recommendation.recommendation_tier}`);
