@@ -64,7 +64,9 @@ export interface FourWayClassification {
 }
 
 export interface ReviewNlpReport {
-  status: 'EVALUATED' | 'NO_REVIEWS' | 'REVIEWS_UNAVAILABLE' | 'INSUFFICIENT_EVIDENCE';
+  status: 'EVALUATED' | 'NO_REVIEWS' | 'REVIEWS_UNAVAILABLE' | 'INSUFFICIENT_EVIDENCE' | 'BLOCKED';
+  published_review_count?: number | null;
+  retrieved_review_count: number;
   reviews_analyzed_count: number;
   overall_sentiment_score: number | null; // -1.0 to +1.0
   satisfaction_index: number | null; // 0 to 100
@@ -72,6 +74,7 @@ export interface ReviewNlpReport {
     positive_percentage: number;
     neutral_percentage: number;
     negative_percentage: number;
+    mixed_percentage: number;
   };
   aspects: AspectFinding[];
   four_way_classification: FourWayClassification;
@@ -128,7 +131,23 @@ const POSITIVE_LEXICON: Record<string, number> = {
   nice: 0.5,
   premium: 0.8,
   solid: 0.7,
-  // Hinglish / Hindi
+  outstanding: 0.9,
+  pleased: 0.8,
+  crisp: 0.75,
+  vivid: 0.75,
+  flawless: 0.95,
+  elegant: 0.85,
+  stunning: 0.9,
+  classy: 0.8,
+  accurate: 0.8,
+  comfortably: 0.8,
+  beautiful: 0.85,
+  stylish: 0.8,
+  attractive: 0.75,
+  pretty: 0.7,
+  decent: 0.35,
+  delightful: 0.85,
+  // Hinglish
   'paisa vasool': 0.9,
   badiya: 0.85,
   badhiya: 0.85,
@@ -139,6 +158,8 @@ const POSITIVE_LEXICON: Record<string, number> = {
   jabardast: 0.9,
   asli: 0.85,
   sahi: 0.7,
+  theek: 0.15,
+  'theek hai': 0.15,
   'bahut accha': 0.9,
   'bohot accha': 0.9,
   'bahut achha': 0.9,
@@ -146,6 +167,28 @@ const POSITIVE_LEXICON: Record<string, number> = {
   lajawab: 0.9,
   'ekdum sahi': 0.85,
   faydemand: 0.75,
+  // Hindi (Devanagari)
+  'सुंदर': 0.85,
+  'शानदार': 0.9,
+  'बढ़िया': 0.9,
+  'उत्कृष्ट': 0.9,
+  'अच्छा': 0.7,
+  'अच्छी': 0.7,
+  'अच्छे': 0.7,
+  'बेहतरीन': 0.9,
+  'लाजवाब': 0.9,
+  'असली': 0.85,
+  'पसंद': 0.75,
+  'खुश': 0.75,
+  'संतुष्ट': 0.8,
+  'मस्त': 0.8,
+  'सही': 0.7,
+  'किफायती': 0.75,
+  'मजबूत': 0.8,
+  'सुखद': 0.75,
+  'बढ़िया उत्पाद': 0.9,
+  'शानदार लुक': 0.9,
+  'पैसा वसूल': 0.9,
 };
 
 const NEGATIVE_LEXICON: Record<string, number> = {
@@ -195,7 +238,7 @@ const NEGATIVE_LEXICON: Record<string, number> = {
   regret: -0.8,
   refused: -0.6,
   unresponsive: -0.7,
-  // Hinglish / Hindi
+  // Hinglish
   bekar: -0.85,
   bekaar: -0.85,
   kharab: -0.8,
@@ -231,6 +274,30 @@ const NEGATIVE_LEXICON: Record<string, number> = {
   'not working': -0.9,
   'stopped working': -0.9,
   'waste of money': -0.9,
+  // Hindi (Devanagari)
+  'घटिया': -0.9,
+  'नकली': -0.95,
+  'धोखा': -0.95,
+  'टूटा': -0.9,
+  'टूटी': -0.9,
+  'टूटे': -0.9,
+  'बर्बाद': -0.9,
+  'पैसे बर्बाद': -0.95,
+  'पैसा बर्बाद': -0.95,
+  'खराब': -0.85,
+  'बेकार': -0.85,
+  'बकवास': -0.9,
+  'रद्दी': -0.85,
+  'फर्जी': -0.95,
+  'चोरी': -0.95,
+  'बंद': -0.7,
+  'मत खरीदो': -0.9,
+  'मत खरीदना': -0.9,
+  'मत लो': -0.9,
+  'मत लेना': -0.9,
+  'नुकसान': -0.8,
+  'कचरा': -0.85,
+  'लूट': -0.9,
 };
 
 // Aspect keywords dictionary - 11 Operational Dimensions
@@ -287,6 +354,147 @@ export const ASPECT_KEYWORDS: Record<string, { label: string; aliases?: string[]
   },
 };
 
+/**
+ * Dynamic Category Aspect Resolver.
+ * Customizes ABSA dimensions based on product category:
+ * - Watches: Build Quality, Design, Comfort, Durability, Timekeeping, Battery, Packaging, Delivery, Seller Experience
+ * - Electronics: Battery, Performance, Heating, Display, Camera, Connectivity, Build Quality, Software
+ * - Fashion: Fabric, Fit, Comfort, Stitching, Colour, Durability, Sizing
+ */
+export function getAspectsForCategory(
+  category?: string | null,
+  title?: string | null
+): Record<string, { label: string; aliases?: string[]; keywords: string[] }> {
+  const combined = `${category || ''} ${title || ''}`.toLowerCase();
+
+  // 1. WATCHES
+  if (combined.match(/\b(watch|watches|smartwatch|analog|quartz|dial|chronograph|timepiece|sonata|titan|casio|fastrack|fossil)\b/)) {
+    return {
+      build_quality: {
+        label: 'Build Quality',
+        aliases: ['material_build', 'quality'],
+        keywords: ['build', 'case', 'brass', 'metal', 'stainless steel', 'glass', 'mineral glass', 'bezel', 'finish', 'finishing', 'casing', 'heavy', 'solid', 'sturdy', 'premium', 'flimsy', 'cheap metal', 'accha', 'badiya', 'bekar', 'ganda'],
+      },
+      design: {
+        label: 'Design & Aesthetics',
+        keywords: ['design', 'dial', 'green dial', 'color', 'colour', 'look', 'looks', 'appearance', 'aesthetic', 'stylish', 'attractive', 'beautiful', 'shandar', 'mast', 'classy', 'elegant', 'pretty', 'cute', 'finish'],
+      },
+      comfort: {
+        label: 'Comfort & Wearability',
+        aliases: ['comfort_usability'],
+        keywords: ['comfort', 'comfortable', 'strap', 'metal strap', 'chain', 'clasp', 'mesh', 'fit', 'fitting', 'wrist', 'wear', 'lightweight', 'heavy', 'tight', 'loose', 'pain', 'easy to wear'],
+      },
+      durability: {
+        label: 'Durability & Water Resistance',
+        aliases: ['durability_reliability'],
+        keywords: ['durability', 'durable', 'scratch', 'water resistant', 'waterproof', 'splash', 'damage', 'lasting', 'long lasting', 'broke', 'broken', 'rust', 'cracked', 'tut gaya', 'toot gaya', 'tuta'],
+      },
+      timekeeping: {
+        label: 'Timekeeping & Accuracy',
+        keywords: ['time', 'accuracy', 'accurate', 'quartz', 'analog', 'ticking', 'second hand', 'movement', 'losing time', 'slow', 'fast', 'stopped', 'not working', 'chal nahi raha', 'chalna band'],
+      },
+      battery: {
+        label: 'Battery & Movement',
+        aliases: ['battery_power'],
+        keywords: ['battery', 'cell', 'quartz movement', 'dead battery', 'battery replacement', 'battery life', 'power', 'battery khatam', 'running'],
+      },
+      packaging: {
+        label: 'Packaging & Presentation',
+        aliases: ['packaging_delivery'],
+        keywords: ['box', 'packaging', 'watch box', 'tin', 'cushion', 'pillow', 'seal', 'open', 'tampered', 'carton', 'packed', 'packing', 'damage box', 'gift box'],
+      },
+      delivery: {
+        label: 'Delivery & Transit',
+        keywords: ['delivery', 'courier', 'dispatch', 'arrived', 'shipping', 'fast delivery', 'delayed', 'delay', 'delivered', 'on time', 'late'],
+      },
+      seller_experience: {
+        label: 'Seller Experience & Authenticity',
+        aliases: ['authenticity', 'support'],
+        keywords: ['seller', 'genuine', 'original', 'authentic', 'fake', 'duplicate', 'first copy', 'warranty', 'warranty card', 'service center', 'titan', 'sonata', 'asli', 'nakli', 'authorized', 'bill', 'invoice'],
+      },
+    };
+  }
+
+  // 2. ELECTRONICS
+  if (combined.match(/\b(phone|mobile|smartphone|laptop|earphone|headphone|audio|tws|electronics|camera|tablet|tv|speaker|charger)\b/)) {
+    return {
+      battery: {
+        label: 'Battery & Power',
+        aliases: ['battery_power'],
+        keywords: ['battery', 'charging', 'charger', 'backup', 'drain', 'drains', 'draining', 'mah', 'power', 'standby', 'battery backup', 'fast charge', 'battery khatam'],
+      },
+      performance: {
+        label: 'Performance & Speed',
+        keywords: ['performance', 'speed', 'fast', 'slow', 'lag', 'lagging', 'hanging', 'hang', 'smooth', 'processor', 'ram', 'fps', 'multitasking', 'sound', 'bass', 'audio', 'sound quality'],
+      },
+      heating: {
+        label: 'Heating & Thermal Management',
+        keywords: ['heating', 'heat', 'overheating', 'warm', 'hot', 'garam', 'temperature', 'thermal', 'garam ho raha'],
+      },
+      display: {
+        label: 'Display & Screen Quality',
+        keywords: ['display', 'screen', 'amoled', 'lcd', 'brightness', 'colors', 'resolution', 'touch', 'refresh rate', 'clarity', 'glass'],
+      },
+      camera: {
+        label: 'Camera & Imaging',
+        keywords: ['camera', 'photo', 'picture', 'video', 'sensor', 'lens', 'megapixels', 'selfie', 'night mode', 'clarity', 'focus', 'zoom'],
+      },
+      connectivity: {
+        label: 'Connectivity & Network',
+        keywords: ['connectivity', 'bluetooth', 'wifi', 'wi-fi', '5g', '4g', 'network', 'signal', 'range', 'pairing', 'disconnect', 'call quality'],
+      },
+      build_quality: {
+        label: 'Build Quality & Materials',
+        aliases: ['material_build'],
+        keywords: ['build', 'material', 'plastic', 'metal', 'glass', 'body', 'cheap plastic', 'solid', 'sturdy', 'build quality', 'finish', 'flimsy'],
+      },
+      software: {
+        label: 'Software & UI Experience',
+        keywords: ['software', 'ui', 'os', 'android', 'ios', 'update', 'bug', 'bugs', 'crash', 'bloatware', 'ads', 'features', 'interface'],
+      },
+    };
+  }
+
+  // 3. FASHION & APPAREL
+  if (combined.match(/\b(clothing|apparel|dress|shirt|tshirt|t-shirt|pant|jeans|jacket|coat|saree|kurta|kurti|fashion|hoodie|trouser|shoe|footwear)\b/)) {
+    return {
+      fabric: {
+        label: 'Fabric & Material',
+        aliases: ['material_build'],
+        keywords: ['fabric', 'material', 'cloth', 'cotton', 'polyester', 'silk', 'denim', 'linen', 'soft', 'texture', 'heavy', 'lightweight', 'breathable', 'kapda', 'leather', 'sole'],
+      },
+      fit: {
+        label: 'Fit & Silhouette',
+        keywords: ['fit', 'fitting', 'slim', 'regular', 'relaxed', 'loose', 'shape', 'cut', 'oversized', 'tight', 'flattering'],
+      },
+      comfort: {
+        label: 'Comfort & Wearability',
+        aliases: ['comfort_usability'],
+        keywords: ['comfort', 'comfortable', 'uncomfortable', 'soft', 'skin friendly', 'itchy', 'sweat', 'summer', 'daily wear', 'irritation', 'cushion'],
+      },
+      stitching: {
+        label: 'Stitching & Finishing',
+        keywords: ['stitching', 'stitch', 'seam', 'seams', 'thread', 'hem', 'buttons', 'zipper', 'loose thread', 'torn', 'stitching quality'],
+      },
+      colour: {
+        label: 'Colour & Vibrancy',
+        keywords: ['color', 'colour', 'shade', 'print', 'pattern', 'fade', 'fading', 'faded', 'bleeding', 'wash', 'vibrant', 'dull', 'bright'],
+      },
+      durability: {
+        label: 'Durability & Longevity',
+        aliases: ['durability_reliability'],
+        keywords: ['durability', 'durable', 'lasting', 'shrink', 'shrinkage', 'tear', 'rip', 'pilling', 'lint', 'washed', 'after wash'],
+      },
+      sizing: {
+        label: 'Sizing & Proportions',
+        keywords: ['size', 'sizing', 'length', 'waist', 'chest', 'sleeve', 'small', 'large', 'true to size', 'chart', 'measurement', 'chota', 'bada'],
+      },
+    };
+  }
+
+  return ASPECT_KEYWORDS;
+}
+
 export function isAspectRelevantForCategory(aspectKey: string, category?: string | null, title?: string | null): boolean {
   const combined = `${category || ''} ${title || ''}`.toLowerCase();
   
@@ -301,8 +509,9 @@ export function isAspectRelevantForCategory(aspectKey: string, category?: string
   return true;
 }
 
-const NEGATION_WORDS = new Set(['not', "didn't", "don't", 'no', 'never', 'hardly', 'barely', 'scarcely', 'without', 'neither', 'nor', 'nhi', 'nahi', 'mat']);
-const INTENSIFIER_WORDS = new Set(['very', 'extremely', 'really', 'super', 'bilkul', 'bohot', 'bahut', 'ekdum', 'so', 'too']);
+const NEGATION_WORDS = new Set(['not', "didn't", "don't", 'no', 'never', 'hardly', 'barely', 'scarcely', 'without', 'neither', 'nor', 'nhi', 'nahi', 'mat', 'नहीं', 'न', 'मत', 'बिना']);
+const INTENSIFIER_WORDS = new Set(['very', 'extremely', 'really', 'super', 'bilkul', 'bohot', 'bahut', 'ekdum', 'so', 'too', 'बहुत', 'बिल्कुल', 'एकदम', 'काफी']);
+const DIMINISHER_WORDS = new Set(['thoda', 'thodi', 'thoda sa', 'slightly', 'minor', 'little', 'somewhat', 'थोड़ा', 'हल्का']);
 
 export class ReviewNlpEngine {
   /**
@@ -311,8 +520,17 @@ export class ReviewNlpEngine {
   public analyzeSentenceSentiment(text: string): { score: number; tokens: string[] } {
     if (!text || !text.trim()) return { score: 0, tokens: [] };
 
-    const lower = text.toLowerCase().replace(/[,.?!;:()\[\]"']/g, ' ');
+    // Support Devanagari full stop (।) and standard punctuation
+    const lower = text.toLowerCase().replace(/[,.?!;:()\[\]"'|।]/g, ' ');
     const rawTokens = lower.split(/\s+/).filter(Boolean);
+
+    // Balanced neutral idioms
+    if (lower.match(/\b(neither (?:good|great) nor (?:bad|poor)|theek thaak|theek-thaak|ठीक ठाक|ठीक-ठाक|काम चल जाता|average experience|average product|nothing special)\b/)) {
+      // If no strong catastrophic terms (fake, broken, nakli, toot gaya), score as balanced neutral
+      if (!lower.match(/\b(fake|nakli|broken|scam|fraud|dhokha|chori|toot|worst|ghatiya|barbad)\b/)) {
+        return { score: 0.05, tokens: rawTokens };
+      }
+    }
 
     let score = 0;
     let matchCount = 0;
@@ -320,6 +538,8 @@ export class ReviewNlpEngine {
     let negationWindow = 0;
     let isIntensified = false;
     let intensifierWindow = 0;
+    let isDiminished = false;
+    let diminisherWindow = 0;
 
     for (let i = 0; i < rawTokens.length; i++) {
       const token = rawTokens[i];
@@ -327,8 +547,8 @@ export class ReviewNlpEngine {
       const threeWordToken = i < rawTokens.length - 2 ? `${token} ${rawTokens[i + 1]} ${rawTokens[i + 2]}` : '';
       const twoWordToken = i < rawTokens.length - 1 ? `${token} ${rawTokens[i + 1]}` : '';
 
-      // Check Hindi negation compound "bilkul nahi" / "bilkul nhi"
-      if (token === 'bilkul' && i < rawTokens.length - 1 && (rawTokens[i + 1] === 'nahi' || rawTokens[i + 1] === 'nhi')) {
+      // Check Hindi negation compound "bilkul nahi" / "bilkul nhi" / "बिल्कुल नहीं"
+      if ((token === 'bilkul' || token === 'बिल्कुल') && i < rawTokens.length - 1 && (rawTokens[i + 1] === 'nahi' || rawTokens[i + 1] === 'nhi' || rawTokens[i + 1] === 'नहीं')) {
         isNegated = true;
         negationWindow = 3;
         i++; // consume compound
@@ -346,6 +566,14 @@ export class ReviewNlpEngine {
       if (INTENSIFIER_WORDS.has(token)) {
         isIntensified = true;
         intensifierWindow = 2; // Amplify the next 2 words
+        continue;
+      }
+
+      // Check diminisher (thoda, minor, slightly)
+      if (DIMINISHER_WORDS.has(token) || (twoWordToken && DIMINISHER_WORDS.has(twoWordToken))) {
+        isDiminished = true;
+        diminisherWindow = 3;
+        if (twoWordToken && DIMINISHER_WORDS.has(twoWordToken)) i++;
         continue;
       }
 
@@ -371,6 +599,14 @@ export class ReviewNlpEngine {
         if (isIntensified && intensifierWindow > 0) {
           val = val > 0 ? Math.min(1.0, val * 1.25) : Math.max(-1.0, val * 1.25);
         }
+        if (isDiminished && diminisherWindow > 0) {
+          val = val * 0.4; // Soften impact of minor complaint or praise
+        }
+        // Check post-diminisher lookahead (e.g., "heating issue hai thoda sa", "slow slightly")
+        const lookaheadTokens = rawTokens.slice(i + consumed, i + consumed + 3).join(' ');
+        if (lookaheadTokens.match(/\b(thoda sa|thoda|thodi|minor|slightly|little|somewhat|थोड़ा|हल्का)\b/)) {
+          val = val * 0.4;
+        }
         if (isNegated && negationWindow > 0) {
           // Negate the polarity: "not good" -> negative; "not bad" -> mildly positive
           val = val > 0 ? -Math.abs(val) * 0.85 : Math.abs(val) * 0.5;
@@ -391,6 +627,10 @@ export class ReviewNlpEngine {
         intensifierWindow -= consumed;
         if (intensifierWindow <= 0) isIntensified = false;
       }
+      if (diminisherWindow > 0) {
+        diminisherWindow -= consumed;
+        if (diminisherWindow <= 0) isDiminished = false;
+      }
     }
 
     const normalizedScore = matchCount > 0 ? Math.max(-1.0, Math.min(1.0, score / Math.max(1, Math.sqrt(matchCount)))) : 0;
@@ -405,6 +645,8 @@ export class ReviewNlpEngine {
     options?: {
       claimedStarRating?: number | null;
       ratingsCount?: number | null;
+      publishedReviewCount?: number | null;
+      retrievedReviewCount?: number | null;
       category?: string | null;
       productTitle?: string | null;
     }
@@ -419,15 +661,18 @@ export class ReviewNlpEngine {
         .filter(r => r && typeof r.review_text === 'string' && r.review_text.trim().length > 0);
     }
 
+    const categoryAspects = getAspectsForCategory(options?.category, options?.productTitle);
+
     if (items.length === 0) {
       return {
         status: 'NO_REVIEWS',
+        published_review_count: options?.publishedReviewCount ?? (typeof options?.ratingsCount === 'number' ? options.ratingsCount : null),
+        retrieved_review_count: 0,
         reviews_analyzed_count: 0,
         overall_sentiment_score: null,
         satisfaction_index: null,
-        sentiment_distribution: { positive_percentage: 0, neutral_percentage: 0, negative_percentage: 0 },
-        aspects: Object.entries(ASPECT_KEYWORDS)
-          .filter(([key]) => isAspectRelevantForCategory(key, options?.category, options?.productTitle))
+        sentiment_distribution: { positive_percentage: 0, neutral_percentage: 0, negative_percentage: 0, mixed_percentage: 0 },
+        aspects: Object.entries(categoryAspects)
           .map(([key, def]) => ({
             key,
             display_name: def.label,
@@ -487,6 +732,7 @@ export class ReviewNlpEngine {
     let positiveCount = 0;
     let neutralCount = 0;
     let negativeCount = 0;
+    let mixedCount = 0;
 
     let dissonantCount = 0;
     let genericCount = 0;
@@ -494,7 +740,7 @@ export class ReviewNlpEngine {
     const observations: string[] = [];
 
     const aspectMap: Record<string, { pos: number; neg: number; neutral: number; totalScore: number; praises: string[]; complaints: string[] }> = {};
-    for (const key of Object.keys(ASPECT_KEYWORDS)) {
+    for (const key of Object.keys(categoryAspects)) {
       aspectMap[key] = { pos: 0, neg: 0, neutral: 0, totalScore: 0, praises: [], complaints: [] };
     }
 
@@ -537,6 +783,19 @@ export class ReviewNlpEngine {
         neutralCount++;
       }
 
+      // Check for mixed sentiment in single review
+      const clauses = text.split(/(?<=[.!?])\s+|\s+(?:but|however|although|par|lekin|magar|kintu|parantu)\s+/i).filter(Boolean);
+      let clausePos = false;
+      let clauseNeg = false;
+      clauses.forEach(c => {
+        const cs = this.analyzeSentenceSentiment(c).score;
+        if (cs >= 0.18) clausePos = true;
+        if (cs <= -0.18) clauseNeg = true;
+      });
+      if (clausePos && clauseNeg) {
+        mixedCount++;
+      }
+
       // Star rating vs text dissonance
       if (typeof item.rating === 'number') {
         if (item.rating >= 4 && score <= -0.30) {
@@ -548,9 +807,8 @@ export class ReviewNlpEngine {
         }
       }
 
-      // Match against aspects with clause-level sentiment analysis
-      const clauses = text.split(/(?<=[.!?])\s+|\s+(?:but|however|although|par|lekin|magar|kintu|parantu)\s+/i).filter(Boolean);
-      for (const [key, def] of Object.entries(ASPECT_KEYWORDS)) {
+      // Match against category-specific aspects with clause-level sentiment analysis
+      for (const [key, def] of Object.entries(categoryAspects)) {
         const matchingClauses = clauses.filter((c) => def.keywords.some((kw) => c.toLowerCase().includes(kw)));
         if (matchingClauses.length > 0) {
           for (const clause of matchingClauses) {
@@ -608,12 +866,9 @@ export class ReviewNlpEngine {
       }
     }
 
-    // Aspect findings - filtered to category-relevant dimensions
-    const relevantAspectEntries = Object.entries(ASPECT_KEYWORDS)
-      .filter(([key]) => isAspectRelevantForCategory(key, options?.category, options?.productTitle));
-
-    const aspects: AspectFinding[] = relevantAspectEntries.map(([key, def]) => {
-      const data = aspectMap[key];
+    // Aspect findings - using dynamic category-specific aspects
+    const aspects: AspectFinding[] = Object.entries(categoryAspects).map(([key, def]) => {
+      const data = aspectMap[key] || { pos: 0, neg: 0, neutral: 0, totalScore: 0, praises: [], complaints: [] };
       const mentions = data.pos + data.neg + data.neutral;
       if (mentions === 0) {
         return {
@@ -724,6 +979,8 @@ export class ReviewNlpEngine {
 
     return {
       status: total >= 2 ? 'EVALUATED' : 'INSUFFICIENT_EVIDENCE',
+      published_review_count: options?.publishedReviewCount ?? (typeof options?.ratingsCount === 'number' ? options.ratingsCount : null),
+      retrieved_review_count: options?.retrievedReviewCount ?? total,
       reviews_analyzed_count: total,
       overall_sentiment_score: avgScore,
       satisfaction_index: satisfactionIndex,
@@ -731,6 +988,7 @@ export class ReviewNlpEngine {
         positive_percentage: posPct,
         neutral_percentage: neuPct,
         negative_percentage: negPct,
+        mixed_percentage: Math.round((mixedCount / total) * 100),
       },
       aspects,
       four_way_classification: fourWayClassification,

@@ -122,7 +122,15 @@ export interface ProductIntelligenceReport {
     positive_themes: string[];
     negative_themes: string[];
     complaints: string[];
+    published_review_count?: number | null;
+    retrieved_review_count?: number;
     reviews_analyzed_count: number;
+    sentiment_distribution?: {
+      positive_percentage: number;
+      neutral_percentage: number;
+      negative_percentage: number;
+      mixed_percentage: number;
+    };
     sample_reviews: Array<{
       rating?: number;
       review_text: string;
@@ -532,6 +540,8 @@ export class InvestigationOrchestrator {
     const nlpReport = reviewNlpEngine.analyzeReviews(inferReviews, {
       claimedStarRating: (input as any).rating ?? (extractedData as any).claimed_star_rating ?? null,
       ratingsCount: (input as any).ratings_count ?? (extractedData as any).ratings_count ?? null,
+      publishedReviewCount: (input as any).ratings_count ?? (extractedData as any).ratings_count ?? null,
+      retrievedReviewCount: inferReviews.length,
       category,
       productTitle: title,
     });
@@ -619,7 +629,10 @@ export class InvestigationOrchestrator {
       positive_themes: hasReviews ? nlpReport.positive_themes : [],
       negative_themes: hasReviews ? nlpReport.negative_themes : [],
       complaints: hasReviews ? nlpReport.complaints : [],
+      published_review_count: nlpReport.published_review_count,
+      retrieved_review_count: nlpReport.retrieved_review_count,
       reviews_analyzed_count: hasReviews ? nlpReport.reviews_analyzed_count : 0,
+      sentiment_distribution: nlpReport.sentiment_distribution,
       sample_reviews: hasReviews
         ? inferReviews.map((r: any) => {
             const text = typeof r === 'string' ? r : r.review_text || '';
@@ -874,7 +887,7 @@ export class InvestigationOrchestrator {
 
   private createManualFallbackData(input: PipelineInvestigationInput): ExtractedProductData {
     const p = typeof input.observed_price_inr === 'number' && input.observed_price_inr > 0 ? input.observed_price_inr : null;
-    const m = typeof input.mrp_inr === 'number' && input.mrp_inr > 0 ? input.mrp_inr : (p ? Math.round(p * 1.4) : null);
+    const m = typeof input.mrp_inr === 'number' && input.mrp_inr > 0 ? input.mrp_inr : null;
     return {
       title: input.product_title || 'Marketplace Product Listing',
       brand: input.brand || 'Generic',

@@ -87,16 +87,15 @@ export class GenericEcomAdapter implements MarketplaceAdapter {
 
     const discount = price !== null && mrp !== null && mrp > price ? Math.round(((mrp - price) / mrp) * 100) : null;
 
-    const resolvedImage = getCategoryFallbackImage(category, title);
-
-    const isDirectBrandStore = host.includes('nike') || host.includes('adidas') || host.includes('plum') || host.includes('nykaa');
+    const isDirectBrandStore = host.includes('nike') || host.includes('adidas') || host.includes('plum') || host.includes('nykaa') || host.includes('sonata');
+    const identifier = this.extractIdentifier(url) || 'SKU_UNKNOWN';
 
     return {
       title: title || 'Product Listing',
       brand,
       category,
-      model: `MOD-${Date.now().toString().slice(-6)}`,
-      sku_or_asin: this.extractIdentifier(url) || 'SKU_UNKNOWN',
+      model: identifier,
+      sku_or_asin: identifier,
       observed_price: price,
       mrp,
       currency: 'INR',
@@ -105,8 +104,8 @@ export class GenericEcomAdapter implements MarketplaceAdapter {
       seller_name: isDirectBrandStore ? marketplace : null,
       seller_rating: null,
       fulfillment_type: isDirectBrandStore ? 'Direct Brand Fulfillment' : null,
-      main_image_url: resolvedImage,
-      gallery_images: [resolvedImage],
+      main_image_url: undefined,
+      gallery_images: [],
       specs: {},
       marketplace,
       raw_url: url.toString(),

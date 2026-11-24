@@ -93,8 +93,6 @@ export class CromaAdapter implements MarketplaceAdapter {
       ? Math.round(((mrp - price) / mrp) * 100)
       : null;
 
-    const fallbackImage = getCategoryFallbackImage(category, title);
-
     return {
       title,
       brand,
@@ -109,8 +107,8 @@ export class CromaAdapter implements MarketplaceAdapter {
       seller_name: 'Infiniti Retail Limited (Tata Croma)',
       seller_rating: null,
       fulfillment_type: 'Tata Croma Authorized Store Dispatch',
-      main_image_url: fallbackImage,
-      gallery_images: [fallbackImage],
+      main_image_url: undefined,
+      gallery_images: [],
       specs: {
         'Authorized Retailer': 'Infiniti Retail Limited (A Tata Enterprise)',
         'Warranty': 'Official Brand Warranty with Croma Lifetime Service Support',

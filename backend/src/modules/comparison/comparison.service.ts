@@ -87,7 +87,7 @@ export class ComparisonService {
         const brand = custom?.brand || 'Brand Verified';
         const category = custom?.category || 'Apparel & Clothing';
         const price = custom?.observed_price_inr || 1499;
-        const mrp = custom?.mrp_inr || Math.round(price * 1.4);
+        const mrp = custom?.mrp_inr || price;
         const platform = custom?.marketplace?.toLowerCase().includes('amazon')
           ? 'PLATFORM_AMAZON_IN'
           : custom?.marketplace?.toLowerCase().includes('myntra')

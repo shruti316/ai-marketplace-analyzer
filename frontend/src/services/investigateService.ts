@@ -118,7 +118,7 @@ export interface ScoreBreakdown {
 export interface FiveDimensionTrustResult {
   overall_trust_score: number;
   overall_risk_level: RiskLevel;
-  recommendation: 'PROCEED_CONFIDENTLY' | 'PROCEED_WITH_CAUTION' | 'INVESTIGATE_FURTHER' | 'DO_NOT_RECOMMEND';
+  recommendation: 'PROCEED_CONFIDENTLY' | 'PROCEED_WITH_CAUTION' | 'INVESTIGATE_FURTHER' | 'DO_NOT_RECOMMEND' | 'INSUFFICIENT_EVIDENCE';
   recommendation_rationale: string;
   non_masking_applied: boolean;
   non_masking_reason?: string;
@@ -219,7 +219,15 @@ export interface ProductIntelligenceReport {
     positive_themes: string[];
     negative_themes: string[];
     complaints: string[];
+    published_review_count?: number | null;
+    retrieved_review_count?: number;
     reviews_analyzed_count: number;
+    sentiment_distribution?: {
+      positive_percentage: number;
+      neutral_percentage: number;
+      negative_percentage: number;
+      mixed_percentage: number;
+    };
     sample_reviews: Array<{
       rating?: number;
       review_text: string;

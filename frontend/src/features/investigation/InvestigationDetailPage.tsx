@@ -1295,6 +1295,8 @@ export const InvestigationDetailPage: React.FC = () => {
                         ? 'bg-emerald-600 text-white border-emerald-700'
                         : fiveTrust.recommendation === 'PROCEED_WITH_CAUTION'
                         ? 'bg-amber-500 text-white border-amber-600'
+                        : fiveTrust.recommendation === 'INSUFFICIENT_EVIDENCE'
+                        ? 'bg-slate-600 text-white border-slate-700'
                         : 'bg-rose-600 text-white border-rose-700'
                     }`}>
                       {fiveTrust.recommendation.replace(/_/g, ' ')}

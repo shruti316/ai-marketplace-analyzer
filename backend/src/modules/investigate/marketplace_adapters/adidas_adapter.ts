@@ -83,8 +83,6 @@ export class AdidasAdapter implements MarketplaceAdapter {
       ? Math.round(((mrp - price) / mrp) * 100)
       : null;
 
-    const fallbackImage = getCategoryFallbackImage(category, title);
-
     return {
       title,
       brand,
@@ -99,8 +97,8 @@ export class AdidasAdapter implements MarketplaceAdapter {
       seller_name: 'Adidas India Marketing Private Limited',
       seller_rating: null,
       fulfillment_type: 'Direct Factory Brand Fulfillment',
-      main_image_url: fallbackImage,
-      gallery_images: [fallbackImage],
+      main_image_url: undefined,
+      gallery_images: [],
       specs: {
         'Brand Manufacturer': 'Adidas India Marketing Pvt Ltd',
         'Authentication Status': '100% Genuine Direct Factory Dispatch',

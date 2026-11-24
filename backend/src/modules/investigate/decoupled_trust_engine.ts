@@ -45,7 +45,7 @@ export interface ScoreBreakdown {
 export interface FiveDimensionTrustResult {
   overall_trust_score: number; // 0 to 100
   overall_risk_level: RiskLevel;
-  recommendation: 'PROCEED_CONFIDENTLY' | 'PROCEED_WITH_CAUTION' | 'INVESTIGATE_FURTHER' | 'DO_NOT_RECOMMEND';
+  recommendation: 'PROCEED_CONFIDENTLY' | 'PROCEED_WITH_CAUTION' | 'INVESTIGATE_FURTHER' | 'DO_NOT_RECOMMEND' | 'INSUFFICIENT_EVIDENCE';
   recommendation_rationale: string;
   non_masking_applied: boolean;
   non_masking_reason?: string;
@@ -349,6 +349,25 @@ export class DecoupledTrustEngine {
     const positiveSignals: string[] = [];
     const riskFactors: string[] = [];
     const missingData: string[] = [];
+
+    // If price is completely unavailable and no counterfeit reviews detected, mark UNASSESSED
+    if (!observedPrice && !mrp && (!nlpReport || !nlpReport.four_way_classification?.authenticity_concerns?.detected)) {
+      missingData.push('Live price unverified from automated fetch; pricing corridor unassessed');
+      return {
+        dimension_key: 'listing_authenticity',
+        dimension_name: 'Listing Authenticity',
+        score: null,
+        status: 'UNASSESSED',
+        risk_level: 'MODERATE_RISK',
+        confidence: 0.30,
+        summary: priceVerificationStatus === 'BLOCKED'
+          ? 'Listing pricing unassessed: Automated retrieval was blocked by platform anti-bot/Cloudflare challenge.'
+          : 'Listing pricing unassessed: Price data unavailable from listing.',
+        positive_signals: [],
+        risk_factors: [],
+        missing_data: missingData,
+      };
+    }
 
     let score = 85; // baseline for valid product listings
     let confidence = 0.75;
@@ -844,7 +863,10 @@ export class DecoupledTrustEngine {
     let recommendation: FiveDimensionTrustResult['recommendation'];
     let rationale: string;
 
-    if (overallRiskLevel === 'CRITICAL_RISK') {
+    if (coveragePercent < 50 || assessedDimensions.length <= 1) {
+      recommendation = 'INSUFFICIENT_EVIDENCE';
+      rationale = `Critical marketplace dimensions are unassessed (${coveragePercent}% coverage). Insufficient evidence to establish buyer trust. Additional data required.`;
+    } else if (overallRiskLevel === 'CRITICAL_RISK') {
       recommendation = 'DO_NOT_RECOMMEND';
       rationale = nonMaskingReason || 'Severe risk factors identified. Purchase is strongly discouraged.';
     } else if (overallRiskLevel === 'HIGH_OBSERVED_RISK') {
@@ -860,8 +882,14 @@ export class DecoupledTrustEngine {
         rationale = 'Listing is generally acceptable, but minor concerns or missing secondary data warrant review.';
       }
     } else {
-      recommendation = 'PROCEED_CONFIDENTLY';
-      rationale = 'All evaluated dimensions indicate healthy parameters, verified seller governance, and genuine market pricing.';
+      // Minimal Risk band: Guard against sparse evidence masking
+      if (isSparseEvidence) {
+        recommendation = 'PROCEED_WITH_CAUTION';
+        rationale = `Assessment is based on partial evidence (${coveragePercent}% coverage). While platform parameters are healthy, empirical product quality is unassessed. Proceed with caution.`;
+      } else {
+        recommendation = 'PROCEED_CONFIDENTLY';
+        rationale = 'All evaluated dimensions indicate healthy parameters, verified seller governance, and genuine market pricing.';
+      }
     }
 
     const scoreBreakdown: ScoreBreakdown = {

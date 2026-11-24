@@ -164,7 +164,6 @@ export class AmazonIndiaAdapter implements MarketplaceAdapter {
     }
 
     const discount = price !== null && mrp !== null && mrp > price ? Math.round(((mrp - price) / mrp) * 100) : null;
-    const resolvedImage = getCategoryFallbackImage(category, title);
 
     return {
       title,
@@ -180,8 +179,8 @@ export class AmazonIndiaAdapter implements MarketplaceAdapter {
       seller_name: null,
       seller_rating: null,
       fulfillment_type: null,
-      main_image_url: resolvedImage,
-      gallery_images: [resolvedImage],
+      main_image_url: undefined,
+      gallery_images: [],
       specs,
       marketplace: this.platformName,
       raw_url: url.toString(),

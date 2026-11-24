@@ -16,6 +16,7 @@ import {
   Layers,
   AlertTriangle,
   Check,
+  ShoppingBag,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { toast } from 'sonner';
@@ -54,6 +55,9 @@ export const detectPlatform = (newUrl: string): string | null => {
   if (trimmed.includes('amazon.in')) return 'Amazon India';
   if (trimmed.includes('flipkart.com')) return 'Flipkart';
   if (trimmed.includes('myntra.com')) return 'Myntra';
+  if (trimmed.includes('sonatawatches.in')) return 'Sonata Official Store (Titan)';
+  if (trimmed.includes('decathlon.in')) return 'Decathlon India';
+  if (trimmed.includes('croma.com')) return 'Croma';
   if (trimmed.includes('nykaa.com') || trimmed.includes('nykaa.in')) return 'Nykaa';
   if (trimmed.includes('nike.com') || trimmed.includes('nike.in')) return 'Nike India';
   if (trimmed.includes('plumgoodness.com')) return 'Plum Goodness';
@@ -69,37 +73,8 @@ export const detectPlatform = (newUrl: string): string | null => {
   return null;
 };
 
-export function getFallbackImageByMetadata(category?: string | null, title?: string | null): string {
-  const combined = ((category || '') + ' ' + (title || '')).toLowerCase();
-
-  if (combined.match(/\b(apple|iphone)\b/)) {
-    return 'https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=600&auto=format&fit=crop&q=80';
-  }
-  if (combined.match(/\b(samsung|galaxy)\b/)) {
-    return 'https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=600&auto=format&fit=crop&q=80';
-  }
-  if (combined.match(/\b(phone|mobile|smartphone|oneplus|pixel|redmi|realme|poco)\b/)) {
-    return 'https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=600&auto=format&fit=crop&q=80';
-  }
-  if (combined.match(/earphone|headphone|airdope|earbud|audio|tws|neckband|soundbar|speaker|bose|sony/)) {
-    return 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&auto=format&fit=crop&q=80';
-  }
-  if (combined.match(/facewash|face-wash|cleanser|moisturi|serum|sunscreen|cream|lotion|soap|scrub|skin|hair|beauty|shampoo|nykaa|plum|minimalist|cetaphil/)) {
-    return 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=600&auto=format&fit=crop&q=80';
-  }
-  if (combined.match(/jacket|puffer|coat|outerwear|bomber|parka|blazer|windcheater/)) {
-    return 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600&auto=format&fit=crop&q=80';
-  }
-  if (combined.match(/shoe|sneaker|runner|footwear|boot|sandal|trainer/)) {
-    return 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80';
-  }
-  if (combined.match(/watch|smartwatch|band|wearable/)) {
-    return 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop&q=80';
-  }
-  if (combined.match(/tshirt|t-shirt|shirt|hoodie|pant|trouser|apparel|dress|kurta|saree/)) {
-    return 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=600&auto=format&fit=crop&q=80';
-  }
-  return 'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=600&auto=format&fit=crop&q=80';
+export function getFallbackImageByMetadata(_category?: string | null, _title?: string | null): string | undefined {
+  return undefined;
 }
 
 // Preset catalog datasets for quick evaluation
@@ -449,8 +424,8 @@ export const ComparisonsPage: React.FC = () => {
         : `cand_${Date.now()}_${slotIdx}`;
 
       let imgUrl = (res as any).main_image_url || (isCatalog ? (res.product as any)?.image_url : null);
-      if (!imgUrl || (imgUrl.includes('1542291026-7eec264c27ff') && !isFootwear)) {
-        imgUrl = getFallbackImageByMetadata(category, rawTitle);
+      if (imgUrl && imgUrl.includes('1542291026-7eec264c27ff') && !isFootwear) {
+        imgUrl = null;
       }
 
       setCardSlots((prev) => {
@@ -484,11 +459,13 @@ export const ComparisonsPage: React.FC = () => {
         const isFootwear = lowerC.match(/shoe|sneaker|runner|footwear|boot|sandal|trainer/);
         const isAudio = lowerC.match(/earphone|headphone|airdope|earbud|audio|tws/);
         const isPhone = lowerC.match(/\b(phone|mobile|smartphone|iphone|galaxy|pixel|oneplus|redmi|realme|poco)\b/);
+        const isWatch = lowerC.match(/watch|quartz|analog|dial|wrist|wearable|sonata|titan/);
 
         const brandFallback = lowerC.includes('apple') || lowerC.includes('iphone') ? 'Apple'
           : lowerC.includes('samsung') || lowerC.includes('galaxy') ? 'Samsung'
           : lowerC.includes('oneplus') ? 'OnePlus'
           : lowerC.includes('google') || lowerC.includes('pixel') ? 'Google'
+          : lowerC.includes('sonata') ? 'Sonata'
           : lowerC.includes('plum') ? 'Plum'
           : lowerC.includes('minimalist') ? 'Minimalist'
           : lowerC.includes('cetaphil') ? 'Cetaphil'
@@ -498,14 +475,15 @@ export const ComparisonsPage: React.FC = () => {
           : lowerC.includes('adidas') ? 'Adidas'
           : title.split(' ')[0] || 'Brand';
 
-        const categoryFallback = isPhone ? 'Mobile Phones & Smartphones'
+        const categoryFallback = isWatch ? 'Watches'
+          : isPhone ? 'Mobile Phones & Smartphones'
           : isBeauty ? 'Skincare & Cleansers'
           : isFootwear ? 'Footwear / Shoes'
           : isAudio ? 'Electronics / Audio'
           : 'Apparel & Clothing';
 
         const priceFallback = urlParamPrice || undefined;
-        const mrpFallback = urlParamMrp || (priceFallback ? Math.round(priceFallback * 1.25) : undefined);
+        const mrpFallback = urlParamMrp || priceFallback || undefined;
         const priceNotFound = !priceFallback;
         const resolvedId = slot.id.startsWith('slot_') ? `cand_${Date.now()}_${slotIdx}` : slot.id;
 
@@ -522,7 +500,7 @@ export const ComparisonsPage: React.FC = () => {
             marketplace: platform,
             price: priceFallback,
             mrp: mrpFallback,
-            imageUrl: next[slotIdx].uploadedImageBase64 || next[slotIdx].imageUrl || getFallbackImageByMetadata(categoryFallback, title),
+            imageUrl: next[slotIdx].uploadedImageBase64 || next[slotIdx].imageUrl || null,
             seller: `${platform} Verified Merchant`,
             priceNotFound,
           };
@@ -1065,17 +1043,17 @@ export const ComparisonsPage: React.FC = () => {
                   {hasDetails ? (
                     <div className="p-3.5 rounded-xl bg-[#F8EDF2]/40 border border-[rgba(193,160,172,0.35)] space-y-3">
                       <div className="flex items-start gap-3">
-                        {(slot.uploadedImageBase64 || slot.imageUrl || displayTitle) && (
+                        {slot.uploadedImageBase64 || slot.imageUrl ? (
                           <img
-                            src={
-                              slot.uploadedImageBase64 ||
-                              (slot.imageUrl && (!slot.imageUrl.includes('1542291026-7eec264c27ff') || slot.category?.toLowerCase().includes('shoe') || slot.category?.toLowerCase().includes('footwear'))
-                                ? slot.imageUrl
-                                : getFallbackImageByMetadata(slot.category, displayTitle))
-                            }
+                            src={slot.uploadedImageBase64 || slot.imageUrl!}
                             alt={displayTitle || 'Product Preview'}
                             className="w-14 h-14 rounded-lg object-contain bg-white p-1 border border-[rgba(193,160,172,0.35)] shrink-0"
                           />
+                        ) : (
+                          <div className="w-14 h-14 rounded-lg flex flex-col items-center justify-center bg-white p-1 border border-[rgba(193,160,172,0.35)] text-slate-400 shrink-0">
+                            <ShoppingBag className="w-5 h-5 text-slate-300" />
+                            <span className="text-[7px] text-slate-400 mt-0.5">No Photo</span>
+                          </div>
                         )}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">

@@ -96,8 +96,6 @@ export class DecathlonAdapter implements MarketplaceAdapter {
       ? Math.round(((mrp - price) / mrp) * 100)
       : null;
 
-    const fallbackImage = getCategoryFallbackImage(category, title);
-
     return {
       title,
       brand,
@@ -112,8 +110,8 @@ export class DecathlonAdapter implements MarketplaceAdapter {
       seller_name: 'Decathlon Sports India',
       seller_rating: null,
       fulfillment_type: 'Direct Brand Warehouse Dispatch',
-      main_image_url: fallbackImage,
-      gallery_images: [fallbackImage],
+      main_image_url: undefined,
+      gallery_images: [],
       specs: {
         'Retail Entity': 'Decathlon Sports India Pvt Ltd',
         'Official Brand': brand,

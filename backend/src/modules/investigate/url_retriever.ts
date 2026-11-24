@@ -157,6 +157,8 @@ export class UrlRetrieverService {
     // Initial deterministic baseline extraction from adapter slug
     const slugData = adapter.extractFromSlug(url);
     const urlPriceData = this.extractPriceFromUrl(url);
+    let wasBlocked = false;
+    let blockReason = '';
 
     try {
       // Safe, non-invasive fetch with 7-second timeout
@@ -178,12 +180,22 @@ export class UrlRetrieverService {
 
       clearTimeout(timeout);
 
-      if (response && response.ok) {
-        const text = await response.text();
-        const htmlChunk = text;
+      if (response) {
+        if (!response.ok) {
+          if (response.status === 403 || response.status === 503 || response.status === 429) {
+            wasBlocked = true;
+            blockReason = `HTTP ${response.status} Anti-Bot Gate`;
+          }
+        } else {
+          const text = await response.text();
+          if (text.includes('Attention Required! | Cloudflare') || text.includes('Robot Check') || text.includes('security check') || text.includes('captcha')) {
+            wasBlocked = true;
+            blockReason = 'Cloudflare / CAPTCHA Bot Challenge';
+          } else {
+            const htmlChunk = text;
 
-        // Layer 1: JSON-LD Structured Data
-        const jsonLdData = this.parseJsonLd(htmlChunk);
+            // Layer 1: JSON-LD Structured Data
+            const jsonLdData = this.parseJsonLd(htmlChunk);
 
         // Layer 2: Embedded Page State (__NEXT_DATA__, Nuxt, inline hydration blobs)
         const embeddedStateData = this.parseEmbeddedState(htmlChunk);
@@ -442,24 +454,33 @@ export class UrlRetrieverService {
           retrieval_timestamp: nowIso,
           retrieval_status: resolvedPrice !== null ? 'CONFIRMED' : 'PRICE_UNAVAILABLE',
         };
+          }
+        }
       }
     } catch {
       // Fallback gracefully to slug extraction if live network retrieval is blocked
     }
 
     const finalPrice = urlPriceData.price || slugData.observed_price || null;
-    const finalMrp = urlPriceData.mrp || slugData.mrp || (finalPrice ? Math.round(finalPrice * 1.4) : null);
-    const fallbackStatus: PriceVerificationStatus = finalPrice !== null ? 'UNVERIFIED' : 'NOT_FOUND';
+    const finalMrp = urlPriceData.mrp || slugData.mrp || null; // Invariant: Never invent MRP via multipliers
+    const fallbackStatus: PriceVerificationStatus = wasBlocked
+      ? 'BLOCKED'
+      : finalPrice !== null
+      ? 'UNVERIFIED'
+      : 'NOT_FOUND';
+
     const fallbackValidatedPrice: ValidatedPriceItem = {
       value: finalPrice,
       currency: 'INR',
       price_type: finalPrice ? 'SELLING_PRICE' : 'SELLING_PRICE',
-      source: slugData.observed_price ? 'RETAILER_ADAPTER' : 'FALLBACK_URL',
-      extraction_method: finalPrice ? 'URL_OR_SLUG_FALLBACK' : 'NONE',
+      source: slugData.observed_price ? 'RETAILER_ADAPTER' : (finalPrice ? 'FALLBACK_URL' : 'RETAILER_ADAPTER'),
+      extraction_method: wasBlocked ? 'ACCESS_BLOCKED' : (finalPrice ? 'URL_OR_SLUG_FALLBACK' : 'NONE'),
       confidence: finalPrice ? 0.60 : 0.0,
       verification_status: fallbackStatus,
       extracted_at: new Date().toISOString(),
-      explanation: finalPrice
+      explanation: wasBlocked
+        ? `Automated retrieval was blocked by marketplace access restrictions (${blockReason || 'Anti-Bot Protection'}). Manual price and details entry available.`
+        : finalPrice
         ? 'Derived from URL parameters or fallback adapter defaults. Unverified against live DOM.'
         : 'Price could not be verified from available page data or the retailer challenged automated access.',
     };
@@ -474,8 +495,10 @@ export class UrlRetrieverService {
       price_verification_status: fallbackStatus,
       price_diagnostics: {
         status: fallbackStatus,
-        extracted_source: finalPrice ? 'URL_OR_SLUG_FALLBACK' : 'NETWORK_RESTRICTED_OR_BLOCKED',
-        note: finalPrice ? 'Unverified price from URL' : 'Automated access restricted or price not found on page. Manual entry available.',
+        extracted_source: wasBlocked ? 'NETWORK_ACCESS_BLOCKED' : (finalPrice ? 'URL_OR_SLUG_FALLBACK' : 'NETWORK_RESTRICTED_OR_BLOCKED'),
+        note: wasBlocked
+          ? `Automated page access was blocked (${blockReason || 'Anti-Bot Challenge'}). Manual entry available.`
+          : finalPrice ? 'Unverified price from URL' : 'Automated access restricted or price not found on page. Manual entry available.',
       },
       retrieval_status: finalPrice !== null ? 'CONFIRMED' : 'PRICE_UNAVAILABLE',
     };
