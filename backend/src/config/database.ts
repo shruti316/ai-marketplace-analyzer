@@ -69,6 +69,13 @@ export async function closeApplicationPool(): Promise<void> {
 }
 
 /**
+ * Injects a mock pool for isolated unit tests.
+ */
+export function setApplicationPoolForTesting(pool: Pool | null): void {
+  applicationPool = pool;
+}
+
+/**
  * Health check probe for the application database connection.
  * Executes a lightweight `SELECT 1` ping and measures round-trip latency.
  */
