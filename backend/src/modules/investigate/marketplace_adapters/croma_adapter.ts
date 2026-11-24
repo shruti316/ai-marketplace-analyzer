@@ -87,15 +87,11 @@ export class CromaAdapter implements MarketplaceAdapter {
     const qMrp = url.searchParams.get('mrp');
     if (qMrp && !isNaN(Number(qMrp)) && Number(qMrp) > 0) {
       mrp = Math.round(Number(qMrp));
-    } else if (price !== null) {
-      mrp = Math.round(price * 1.25);
     }
 
     const discount = price !== null && mrp !== null && mrp > price
       ? Math.round(((mrp - price) / mrp) * 100)
       : null;
-
-    const fallbackImage = getCategoryFallbackImage(category, title);
 
     return {
       title,
@@ -109,10 +105,10 @@ export class CromaAdapter implements MarketplaceAdapter {
       discount_percent: discount,
       availability: 'IN_STOCK',
       seller_name: 'Infiniti Retail Limited (Tata Croma)',
-      seller_rating: 4.6,
+      seller_rating: null,
       fulfillment_type: 'Tata Croma Authorized Store Dispatch',
-      main_image_url: fallbackImage,
-      gallery_images: [fallbackImage],
+      main_image_url: undefined,
+      gallery_images: [],
       specs: {
         'Authorized Retailer': 'Infiniti Retail Limited (A Tata Enterprise)',
         'Warranty': 'Official Brand Warranty with Croma Lifetime Service Support',

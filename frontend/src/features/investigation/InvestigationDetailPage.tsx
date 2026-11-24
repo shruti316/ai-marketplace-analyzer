@@ -555,59 +555,20 @@ export const InvestigationDetailPage: React.FC = () => {
     },
   ];
 
-  // 3. ABSA Aspect Sentiment Data matching exact 5 canonical aspects
-  const combinedCategoryText = ((cleanTitle || '') + ' ' + (s1.category || '')).toLowerCase();
-  const isCategoryPhone = Boolean(combinedCategoryText.match(/\b(phone|mobile|smartphone|iphone|galaxy|pixel|oneplus|redmi|realme|poco)\b/));
-  const isCategoryBeauty = Boolean(combinedCategoryText.match(/facewash|face-wash|cleanser|moisturi|serum|sunscreen|cream|lotion|soap|scrub|skin|hair|beauty|shampoo|nykaa|plum|minimalist|cetaphil/));
-  const isCategoryFootwear = Boolean(combinedCategoryText.match(/shoe|sneaker|runner|footwear|boot|sandal|trainer/));
+  // 3. ABSA Aspect Sentiment Data - strictly derived from actual review aspects
+  const hasReviews = Boolean(s5 && s5.status === 'EVALUATED' && (s5.reviews_analyzed_count || 0) > 0);
 
-  const canonicalAspectList = [
-    {
-      aspect: isCategoryPhone
-        ? 'Display & Hardware Quality'
-        : isCategoryFootwear
-        ? 'Material & Sole Durability'
-        : isCategoryBeauty
-        ? 'Active Formulation Quality'
-        : 'Material & Build Durability',
-      defaultSat: 86,
-    },
-    {
-      aspect: isCategoryPhone
-        ? 'Battery & Fast Charging'
-        : isCategoryFootwear
-        ? 'Comfort & Cushioning'
-        : isCategoryBeauty
-        ? 'Skin Feel & Hydration'
-        : 'Comfort & Everyday Usability',
-      defaultSat: 84,
-    },
-    { aspect: 'Packaging & Box Integrity', defaultSat: 82 },
-    {
-      aspect: isCategoryPhone
-        ? 'Authenticity & IMEI Verification'
-        : 'Authenticity & Genuineness',
-      defaultSat: 90,
-    },
-    { aspect: 'Price-to-Value Proposition', defaultSat: 83 },
-  ];
-
-  const absaAspectData = canonicalAspectList.map((item) => {
-    const matched = s5.aspects?.find((a) =>
-      a.display_name.toLowerCase().includes(item.aspect.toLowerCase().split(' ')[0]) ||
-      item.aspect.toLowerCase().includes(a.display_name.toLowerCase().split(' ')[0])
-    );
-    const satisfaction = matched?.satisfaction_pct
-      ?? (matched?.sentiment_score ? Math.round(Math.max(10, Math.min(98, ((matched.sentiment_score + 1.0) / 2.0) * 100))) : item.defaultSat);
-    return {
-      aspect: item.aspect,
-      Satisfaction: satisfaction,
-      Positive: matched?.positive_mentions ?? Math.round(satisfaction * 0.15 + 2),
-      Negative: matched?.negative_mentions ?? Math.round((100 - satisfaction) * 0.08),
-    };
-  });
-
-  const hasReviews = true;
+  const absaAspectData = hasReviews && s5.aspects && s5.aspects.length > 0
+    ? s5.aspects
+        .filter((a) => (a.mention_count || 0) > 0)
+        .map((a) => ({
+          aspect: a.display_name,
+          Satisfaction: a.satisfaction_pct ?? Math.round(Math.max(0, Math.min(100, (((a.sentiment_score ?? 0) + 1.0) / 2.0) * 100))),
+          Positive: a.positive_mentions ?? 0,
+          Negative: a.negative_mentions ?? 0,
+          Mentions: a.mention_count ?? 0,
+        }))
+    : [];
 
   // Category-isolated alternatives for Section 8 (Strict category match: phone -> phone, jacket -> jacket, beauty -> beauty, shoes -> shoes, audio -> audio) (BUG 7)
   const productTitleLower = (cleanTitle + ' ' + (s1.category || '')).toLowerCase();
@@ -1334,6 +1295,8 @@ export const InvestigationDetailPage: React.FC = () => {
                         ? 'bg-emerald-600 text-white border-emerald-700'
                         : fiveTrust.recommendation === 'PROCEED_WITH_CAUTION'
                         ? 'bg-amber-500 text-white border-amber-600'
+                        : fiveTrust.recommendation === 'INSUFFICIENT_EVIDENCE'
+                        ? 'bg-slate-600 text-white border-slate-700'
                         : 'bg-rose-600 text-white border-rose-700'
                     }`}>
                       {fiveTrust.recommendation.replace(/_/g, ' ')}
@@ -1422,19 +1385,19 @@ export const InvestigationDetailPage: React.FC = () => {
                 <li className="flex items-start gap-2.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
                   <span>
-                    <strong className="text-[#16131F]">Safe Pricing Corridor:</strong> Discount is {s1.discount_percentage}%, which aligns with genuine seasonal discounts and avoids fake pricing traps.
+                    <strong className="text-[#16131F]">Pricing Corridor:</strong> {s1.discount_percentage !== null ? `Discount is ${s1.discount_percentage}%, which aligns with genuine category corridor.` : 'Standard catalog pricing verified.'}
                   </span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
                   <span>
-                    <strong className="text-[#16131F]">Established Merchant:</strong> {s3.seller_name} maintains a ★ {s3.rating_summary.average_rating} rating with platform-managed Prime / F-Assured logistics.
+                    <strong className="text-[#16131F]">Merchant Profile:</strong> {s3.seller_name ? `${s3.seller_name} ${s3.rating_summary.average_rating ? `(★ ${s3.rating_summary.average_rating})` : ''} via ${s3.fulfillment_channel || 'Marketplace Logistics'}.` : 'Standard third-party merchant profile.'}
                   </span>
                 </li>
                 <li className="flex items-start gap-2.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
+                  <span className={`w-1.5 h-1.5 rounded-full ${hasReviews ? 'bg-emerald-500' : 'bg-slate-400'} mt-1.5 shrink-0`} />
                   <span>
-                    <strong className="text-[#16131F]">Positive Customer Reviews:</strong> Over {s5.satisfaction_index || 85}% positive sentiment regarding fabric, stitching, and packaging.
+                    <strong className="text-[#16131F]">Customer Reviews:</strong> {hasReviews ? `Over ${s5.satisfaction_index ?? 75}% positive customer sentiment across ${s5.reviews_analyzed_count} analyzed reviews.` : 'Modality unassessed (0 reviews analyzed; zero score penalty applied).'}
                   </span>
                 </li>
               </ul>
@@ -1881,10 +1844,10 @@ export const InvestigationDetailPage: React.FC = () => {
                     <span>Aspect-Based Sentiment (NLP ABSA)</span>
                   </span>
                   <span className="text-[10px] font-mono text-[var(--text-3)]">
-                    {s5.reviews_analyzed_count || 5} Reviews Analyzed
+                    {s5.reviews_analyzed_count ?? 0} Reviews Analyzed
                   </span>
                 </div>
-                {hasReviews ? (
+                {hasReviews && absaAspectData.length > 0 ? (
                   <div className="h-64 w-full">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart
@@ -1937,9 +1900,11 @@ export const InvestigationDetailPage: React.FC = () => {
                 ) : (
                   <div className="h-64 w-full flex flex-col items-center justify-center p-6 text-center rounded-xl bg-[var(--canvas)]/40 border border-dashed border-[var(--line)]">
                     <MessageSquare className="w-8 h-8 text-[var(--text-3)] mb-2 stroke-[1.5]" />
-                    <p className="text-sm font-semibold text-[#16131F]">No reviews found for this listing</p>
+                    <p className="text-sm font-semibold text-[#16131F]">No customer reviews analyzed for this listing</p>
                     <p className="text-xs text-[var(--text-3)] max-w-xs mt-1">
-                      No customer reviews could be extracted from this listing. Review modality is marked unavailable.
+                      {s5.reviews_analyzed_count === 0
+                        ? 'Zero customer text reviews could be extracted. Review aspect sentiment is unassessed (zero-penalty invariant applied).'
+                        : 'Analyzed reviews did not contain sufficient aspect-specific mentions for graphical breakdown.'}
                     </p>
                   </div>
                 )}
@@ -1962,6 +1927,19 @@ export const InvestigationDetailPage: React.FC = () => {
                 </span>
               </div>
 
+              {/* Rating Review Dissonance Warning */}
+              {s5.rating_review_dissonance_detected && (
+                <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-start gap-2.5">
+                  <AlertTriangle className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+                  <div>
+                    <strong>Rating vs Review Discordance Detected: </strong>
+                    <span>
+                      Marketplace aggregate star rating indicates elevated buyer dissatisfaction, contrasting with the small positive text review sample. To prevent positive sampling bias, the quality score is anchored in the aggregate rating.
+                    </span>
+                  </div>
+                </div>
+              )}
+
               {/* Identified Risk Gaps */}
               {s4.defect_matrix && s4.defect_matrix.length > 0 ? (
                 <ul className="space-y-1.5 text-xs pt-1">
@@ -1983,20 +1961,20 @@ export const InvestigationDetailPage: React.FC = () => {
               )}
 
               {/* Aspect Satisfaction Quick-Pills */}
-              {hasReviews && s5.aspects && s5.aspects.length > 0 ? (
+              {hasReviews && absaAspectData.length > 0 ? (
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-2 border-t border-[var(--line)]">
-                  {s5.aspects.map((asp, idx) => (
+                  {absaAspectData.map((asp, idx) => (
                     <div key={idx} className="p-2.5 rounded-lg bg-[var(--canvas)] border border-[var(--line)] text-center">
-                      <div className="text-[10px] text-[var(--text-3)] truncate">{asp.display_name}</div>
-                      <div className="text-sm font-bold text-emerald-700 tabular-nums">
-                        {asp.satisfaction_pct ?? Math.round((asp.sentiment_score ?? 0.8) * 100)}%
+                      <div className="text-[10px] text-[var(--text-3)] truncate">{asp.aspect}</div>
+                      <div className={`text-sm font-bold tabular-nums ${asp.Satisfaction >= 60 ? 'text-emerald-700' : 'text-amber-700'}`}>
+                        {asp.Satisfaction}%
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
                 <div className="p-3 text-xs text-[var(--text-3)] italic text-center border-t border-[var(--line)]">
-                  Review aspects unavailable (0 customer reviews analyzed).
+                  Review aspects unassessed ({s5.reviews_analyzed_count ?? 0} customer reviews analyzed).
                 </div>
               )}
             </div>
@@ -2030,7 +2008,7 @@ export const InvestigationDetailPage: React.FC = () => {
                   <div className="p-4 rounded-xl bg-[var(--canvas)] border border-[var(--line)] space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] font-mono text-[var(--text-3)] uppercase font-semibold">2. Feature Extractor</span>
-                      <span className="text-[10px] font-mono text-[var(--accent)] font-bold">ResNet-50 / CLIP</span>
+                      <span className="text-[10px] font-mono text-[var(--accent)] font-bold">ResNet-18 / CLIP ViT-B/32</span>
                     </div>
                     <div className="text-sm font-bold text-[#16131F] flex items-center gap-2">
                       <Layers className="w-4 h-4 text-[var(--accent)]" />

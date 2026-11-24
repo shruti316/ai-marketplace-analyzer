@@ -7,6 +7,7 @@ import { NykaaAdapter } from './nykaa_adapter';
 import { DecathlonAdapter } from './decathlon_adapter';
 import { CromaAdapter } from './croma_adapter';
 import { AdidasAdapter } from './adidas_adapter';
+import { SonataWatchAdapter } from './sonata_adapter';
 import { GenericEcomAdapter } from './generic_adapter';
 
 export * from './adapter_interface';
@@ -17,6 +18,7 @@ export * from './nykaa_adapter';
 export * from './decathlon_adapter';
 export * from './croma_adapter';
 export * from './adidas_adapter';
+export * from './sonata_adapter';
 export * from './generic_adapter';
 
 export class MarketplaceAdapterRegistry {
@@ -31,6 +33,7 @@ export class MarketplaceAdapterRegistry {
       new DecathlonAdapter(),
       new CromaAdapter(),
       new AdidasAdapter(),
+      new SonataWatchAdapter(),
       new GenericEcomAdapter(),
     ];
   }

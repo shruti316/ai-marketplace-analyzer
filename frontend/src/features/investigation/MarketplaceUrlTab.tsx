@@ -137,15 +137,90 @@ export const MarketplaceUrlTab: React.FC<MarketplaceUrlTabProps> = () => {
       return;
     }
 
-    // Unsupported marketplace warning
-    setDetectedPlatform(null);
-    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
-      setValidationError(
-        'Marketplace not currently covered. TrustSphere currently supports automated extraction from Amazon India (amazon.in), Flipkart (flipkart.com), and Myntra (myntra.com).'
-      );
-    } else {
-      setValidationError('Please enter a valid URL beginning with https:// or http://');
+    // 4. Sonata Brand Store Detection
+    if (trimmed.includes('sonatawatches.in')) {
+      const sonataMatch = inputUrl.match(/(?:[-_/])([a-z0-9]{8,15})\.html/i) || inputUrl.match(/([a-z0-9]{8,15})$/i);
+      setDetectedPlatform({
+        name: 'Sonata Official Store (Titan)',
+        id: 'sonata',
+        iconColor: '#0D9488',
+        detectedId: sonataMatch ? sonataMatch[1].toUpperCase() : undefined,
+        idType: 'Model / SKU',
+      });
+      return;
     }
+
+    // 5. Decathlon Detection
+    if (trimmed.includes('decathlon.in')) {
+      const decMatch = inputUrl.match(/\/p\/([0-9]+)/i);
+      setDetectedPlatform({
+        name: 'Decathlon India',
+        id: 'decathlon',
+        iconColor: '#0082C3',
+        detectedId: decMatch ? decMatch[1] : undefined,
+        idType: 'Item Code',
+      });
+      return;
+    }
+
+    // 6. Croma Detection
+    if (trimmed.includes('croma.com')) {
+      const cromaMatch = inputUrl.match(/\/p\/([0-9]+)/i);
+      setDetectedPlatform({
+        name: 'Croma',
+        id: 'croma',
+        iconColor: '#128085',
+        detectedId: cromaMatch ? cromaMatch[1] : undefined,
+        idType: 'SKU',
+      });
+      return;
+    }
+
+    // 7. Adidas Detection
+    if (trimmed.includes('adidas.co.in') || trimmed.includes('adidas.com')) {
+      const adiMatch = inputUrl.match(/\/([A-Z0-9]{5,8})\.html/i) || inputUrl.match(/\/p\/([A-Z0-9]{5,8})/i);
+      setDetectedPlatform({
+        name: 'Adidas India',
+        id: 'adidas',
+        iconColor: '#000000',
+        detectedId: adiMatch ? adiMatch[1].toUpperCase() : undefined,
+        idType: 'Article Number',
+      });
+      return;
+    }
+
+    // 8. Nykaa Detection
+    if (trimmed.includes('nykaa.com') || trimmed.includes('nykaa.in')) {
+      const nykaaMatch = inputUrl.match(/\/p\/([0-9]+)/i);
+      setDetectedPlatform({
+        name: 'Nykaa',
+        id: 'nykaa',
+        iconColor: '#FC2779',
+        detectedId: nykaaMatch ? nykaaMatch[1] : undefined,
+        idType: 'Product ID',
+      });
+      return;
+    }
+
+    // 9. Verified Webstore / Other Brand Store Detection
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+      let hostname = '';
+      try {
+        hostname = new URL(inputUrl).hostname;
+      } catch {
+        hostname = 'Retail Webstore';
+      }
+      setDetectedPlatform({
+        name: hostname.replace(/^www\./, ''),
+        id: 'verified_webstore',
+        iconColor: '#6366F1',
+        idType: 'Listing Identifier',
+      });
+      return;
+    }
+
+    setDetectedPlatform(null);
+    setValidationError('Please enter a valid URL beginning with https:// or http://');
   };
 
   const handlePaste = async () => {

@@ -90,15 +90,11 @@ export class DecathlonAdapter implements MarketplaceAdapter {
     const qMrp = url.searchParams.get('mrp');
     if (qMrp && !isNaN(Number(qMrp)) && Number(qMrp) > 0) {
       mrp = Math.round(Number(qMrp));
-    } else if (price !== null) {
-      mrp = Math.round(price * 1.35);
     }
 
     const discount = price !== null && mrp !== null && mrp > price
       ? Math.round(((mrp - price) / mrp) * 100)
       : null;
-
-    const fallbackImage = getCategoryFallbackImage(category, title);
 
     return {
       title,
@@ -112,10 +108,10 @@ export class DecathlonAdapter implements MarketplaceAdapter {
       discount_percent: discount,
       availability: 'IN_STOCK',
       seller_name: 'Decathlon Sports India',
-      seller_rating: 4.7,
+      seller_rating: null,
       fulfillment_type: 'Direct Brand Warehouse Dispatch',
-      main_image_url: fallbackImage,
-      gallery_images: [fallbackImage],
+      main_image_url: undefined,
+      gallery_images: [],
       specs: {
         'Retail Entity': 'Decathlon Sports India Pvt Ltd',
         'Official Brand': brand,

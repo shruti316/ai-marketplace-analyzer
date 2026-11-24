@@ -77,15 +77,11 @@ export class AdidasAdapter implements MarketplaceAdapter {
     const qMrp = url.searchParams.get('mrp');
     if (qMrp && !isNaN(Number(qMrp)) && Number(qMrp) > 0) {
       mrp = Math.round(Number(qMrp));
-    } else if (price !== null) {
-      mrp = Math.round(price * 1.3);
     }
 
     const discount = price !== null && mrp !== null && mrp > price
       ? Math.round(((mrp - price) / mrp) * 100)
       : null;
-
-    const fallbackImage = getCategoryFallbackImage(category, title);
 
     return {
       title,
@@ -99,10 +95,10 @@ export class AdidasAdapter implements MarketplaceAdapter {
       discount_percent: discount,
       availability: 'IN_STOCK',
       seller_name: 'Adidas India Marketing Private Limited',
-      seller_rating: 4.8,
+      seller_rating: null,
       fulfillment_type: 'Direct Factory Brand Fulfillment',
-      main_image_url: fallbackImage,
-      gallery_images: [fallbackImage],
+      main_image_url: undefined,
+      gallery_images: [],
       specs: {
         'Brand Manufacturer': 'Adidas India Marketing Pvt Ltd',
         'Authentication Status': '100% Genuine Direct Factory Dispatch',

@@ -83,30 +83,29 @@ export class GenericEcomAdapter implements MarketplaceAdapter {
     const qMrp = url.searchParams.get('mrp') || url.searchParams.get('original_price');
     if (qMrp && !isNaN(Number(qMrp)) && Number(qMrp) > 0) {
       mrp = Math.round(Number(qMrp));
-    } else if (price !== null && (mrp === null || mrp < price)) {
-      mrp = Math.round(price * 1.4);
     }
 
-    const discount = price !== null && mrp !== null && mrp > 0 ? Math.round(((mrp - price) / mrp) * 100) : null;
+    const discount = price !== null && mrp !== null && mrp > price ? Math.round(((mrp - price) / mrp) * 100) : null;
 
-    const resolvedImage = getCategoryFallbackImage(category, title);
+    const isDirectBrandStore = host.includes('nike') || host.includes('adidas') || host.includes('plum') || host.includes('nykaa') || host.includes('sonata');
+    const identifier = this.extractIdentifier(url) || 'SKU_UNKNOWN';
 
     return {
       title: title || 'Product Listing',
       brand,
       category,
-      model: `MOD-${Date.now().toString().slice(-6)}`,
-      sku_or_asin: this.extractIdentifier(url) || 'SKU_UNKNOWN',
+      model: identifier,
+      sku_or_asin: identifier,
       observed_price: price,
       mrp,
       currency: 'INR',
       discount_percent: discount,
       availability: 'IN_STOCK',
-      seller_name: marketplace,
-      seller_rating: 4.5,
-      fulfillment_type: 'Direct Brand Fulfillment',
-      main_image_url: resolvedImage,
-      gallery_images: [resolvedImage],
+      seller_name: isDirectBrandStore ? marketplace : null,
+      seller_rating: null,
+      fulfillment_type: isDirectBrandStore ? 'Direct Brand Fulfillment' : null,
+      main_image_url: undefined,
+      gallery_images: [],
       specs: {},
       marketplace,
       raw_url: url.toString(),

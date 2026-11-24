@@ -185,7 +185,7 @@ export const DashboardPage: React.FC = () => {
     return 'Good evening';
   }, []);
 
-  const firstName = user?.fullName?.split(' ')[0] || 'Shruti';
+  const firstName = user?.fullName?.split(' ')[0] || user?.email?.split('@')[0] || 'User';
 
   // Filters & sorting for recent investigations
   const [filterVerdict, setFilterVerdict] = useState<'All' | 'Verified' | 'Double-Check' | 'Flagged'>('All');

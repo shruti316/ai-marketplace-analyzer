@@ -587,18 +587,38 @@ export const InvestigationWorkspacePage: React.FC = () => {
 
           {/* Price Not Found Banner */}
           {priceNotFound && (
-            <div className="p-3 rounded-xl bg-[var(--warn-bg)] border border-[var(--warn)]/30 text-xs text-[var(--warn-ink)] flex items-center justify-between font-medium mt-1">
-              <div className="flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-[var(--warn)] shrink-0" />
-                <span>{priceDiagnosticsNote || 'Price could not be verified from the available page data. Enter price manually below or retry.'}</span>
+            <div className="p-3 sm:p-4 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex flex-col sm:flex-row sm:items-center justify-between gap-3 font-medium mt-1 shadow-xs">
+              <div className="flex items-start sm:items-center gap-2.5">
+                <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5 sm:mt-0" />
+                <div className="space-y-0.5">
+                  <p className="font-semibold text-amber-950">Marketplace Anti-Bot Protection Active</p>
+                  <p className="text-[11px] text-amber-800 leading-relaxed">
+                    {priceDiagnosticsNote || 'Amazon/marketplace anti-bot challenge prevented live DOM price extraction. Enter observed price below or upload packaging/screenshot for OCR verification.'}
+                  </p>
+                </div>
               </div>
-              <button
-                type="button"
-                onClick={() => handleAutoFill()}
-                className="text-[11px] font-bold text-[var(--ink)] underline hover:text-[var(--accent)] cursor-pointer"
-              >
-                Retry Auto-Fill
-              </button>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const el = document.getElementById('input-observed-price');
+                    if (el) {
+                      el.focus();
+                      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-white border border-amber-300 text-[11px] font-bold text-amber-900 hover:bg-amber-100 transition-colors cursor-pointer"
+                >
+                  Enter Price Manually
+                </button>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="px-3 py-1.5 rounded-xl bg-amber-600 text-white text-[11px] font-bold hover:bg-amber-700 transition-colors cursor-pointer"
+                >
+                  Upload OCR Image
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -744,6 +764,7 @@ export const InvestigationWorkspacePage: React.FC = () => {
                   <div className="space-y-1">
                     <label className="text-[11px] font-mono text-[var(--text-3)]">Observed Price (₹)</label>
                     <input
+                      id="input-observed-price"
                       type="number"
                       value={observedPrice}
                       onChange={(e) => {

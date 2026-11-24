@@ -72,7 +72,7 @@ export class AmazonIndiaAdapter implements MarketplaceAdapter {
 
     const title = cleanSlug
       ? cleanSlug.replace(/[-_+]/g, ' ').replace(/\s+/g, ' ').trim().replace(/\b\w/g, (c) => c.toUpperCase())
-      : 'Amazon India Marketplace Item';
+      : `Amazon Product (${asin})`;
 
     const lower = (cleanSlug + ' ' + title).toLowerCase();
 
@@ -161,12 +161,9 @@ export class AmazonIndiaAdapter implements MarketplaceAdapter {
     const qMrp = url.searchParams.get('mrp') || url.searchParams.get('original_price');
     if (qMrp && !isNaN(Number(qMrp)) && Number(qMrp) > 0) {
       mrp = Math.round(Number(qMrp));
-    } else if (price !== null && (mrp === null || mrp < price)) {
-      mrp = Math.round(price * 1.4);
     }
 
-    const discount = price !== null && mrp !== null && mrp > 0 ? Math.round(((mrp - price) / mrp) * 100) : null;
-    const resolvedImage = getCategoryFallbackImage(category, title);
+    const discount = price !== null && mrp !== null && mrp > price ? Math.round(((mrp - price) / mrp) * 100) : null;
 
     return {
       title,
@@ -179,16 +176,16 @@ export class AmazonIndiaAdapter implements MarketplaceAdapter {
       currency: 'INR',
       discount_percent: discount,
       availability: 'IN_STOCK',
-      seller_name: 'Appario Retail / Amazon Verified Merchant',
-      seller_rating: 4.3,
-      fulfillment_type: 'Fulfilled by Amazon (FBA)',
-      main_image_url: resolvedImage,
-      gallery_images: [resolvedImage],
+      seller_name: null,
+      seller_rating: null,
+      fulfillment_type: null,
+      main_image_url: undefined,
+      gallery_images: [],
       specs,
       marketplace: this.platformName,
       raw_url: url.toString(),
       extraction_provenance: 'MARKETPLACE_SLUG_DERIVED',
-      extraction_confidence: 0.92,
+      extraction_confidence: cleanSlug ? 0.85 : 0.60,
       retrieval_timestamp: new Date().toISOString(),
     };
   }

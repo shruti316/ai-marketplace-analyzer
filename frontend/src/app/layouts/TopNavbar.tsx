@@ -122,7 +122,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onOpenMobileMenu, onOpenCo
             </div>
             <div className="hidden xl:flex flex-col text-left leading-tight">
               <span className="text-xs font-semibold text-[#16131F] truncate max-w-[100px]">
-                {user.fullName || 'Shruti'}
+                {user.fullName || user.email || 'User'}
               </span>
               <span className="text-[10px] text-[var(--text-3)] capitalize font-mono">
                 {user.role?.toLowerCase() || 'Viewer'}
@@ -131,7 +131,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onOpenMobileMenu, onOpenCo
             <button
               onClick={async () => {
                 await logout();
-                navigate('/');
+                navigate('/login', { replace: true });
               }}
               className="p-1.5 text-[var(--text-3)] hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
               title="Sign Out"

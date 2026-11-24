@@ -13,11 +13,16 @@ export interface ProductComparisonDimension {
   id: string;
   label: string; // e.g. "Product A (Kotty Jacket)"
   shortName: string; // e.g. "Product A"
-  trustScore: number;
-  priceScore: number;
-  merchantScore: number;
-  reviewScore: number;
-  specScore: number;
+  productQuality?: number;
+  sellerReliability?: number;
+  listingAuthenticity?: number;
+  websiteLegitimacy?: number;
+  overallTrust?: number;
+  trustScore?: number;
+  priceScore?: number;
+  merchantScore?: number;
+  reviewScore?: number;
+  specScore?: number;
   isWinner?: boolean;
 }
 
@@ -40,19 +45,19 @@ export const MultiProductRadarChart: React.FC<MultiProductRadarChartProps> = ({
 }) => {
   if (!products || products.length === 0) return null;
 
-  // Transform into Recharts Radar format
+  // Transform into Recharts Radar format - 5 Standardized Dimensions
   const dimensions = [
-    { key: 'trustScore', label: 'Authenticity & Trust' },
-    { key: 'priceScore', label: 'Price Competitiveness' },
-    { key: 'merchantScore', label: 'Merchant Credibility' },
-    { key: 'reviewScore', label: 'Review Sentiment' },
-    { key: 'specScore', label: 'Specification Match' },
+    { key: 'productQuality', fallback: 'reviewScore', label: 'Product Quality' },
+    { key: 'sellerReliability', fallback: 'merchantScore', label: 'Seller Reliability' },
+    { key: 'listingAuthenticity', fallback: 'priceScore', label: 'Listing Authenticity' },
+    { key: 'websiteLegitimacy', fallback: 'specScore', label: 'Website Legitimacy' },
+    { key: 'overallTrust', fallback: 'trustScore', label: 'Overall Trust' },
   ];
 
   const radarData = dimensions.map((dim) => {
     const row: Record<string, any> = { dimension: dim.label, fullMark: 100 };
     products.forEach((p, idx) => {
-      row[`product_${idx}`] = (p as any)[dim.key] ?? 75;
+      row[`product_${idx}`] = (p as any)[dim.key] ?? (p as any)[dim.fallback] ?? 75;
     });
     return row;
   });

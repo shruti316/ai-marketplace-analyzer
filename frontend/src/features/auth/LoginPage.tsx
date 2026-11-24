@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { MarketplaceNetworkVisual } from './MarketplaceNetworkVisual';
+import { extractApiError } from '../../services/errorExtractor';
 
 const loginSchema = z.object({
   email: z.string().trim().email('Please enter a valid email address'),
@@ -50,15 +51,21 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultMode = 'signin' }) 
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
   const [serverError, setServerError] = useState<string | null>(null);
+  const [serverErrorCode, setServerErrorCode] = useState<string | null>(null);
   const [isSlowResponse, setIsSlowResponse] = useState<boolean>(false);
+  const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
 
   const { login, register: registerUser, isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   const slowTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/dashboard';
+  const rawFrom = (location.state as { from?: { pathname: string } })?.from?.pathname;
+  const from = (rawFrom && rawFrom !== '/login' && rawFrom !== '/register' && rawFrom !== '/signup' && rawFrom !== '/')
+    ? rawFrom
+    : '/dashboard';
 
   // Automatically redirect authenticated users to /dashboard
   useEffect(() => {
@@ -82,6 +89,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultMode = 'signin' }) 
     handleSubmit: handleLoginSubmit,
     formState: { errors: loginErrors, isSubmitting: isLoginSubmitting },
     reset: resetLoginForm,
+    setValue: setLoginValue,
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -97,6 +105,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultMode = 'signin' }) 
     handleSubmit: handleRegisterSubmit,
     formState: { errors: registerErrors, isSubmitting: isRegisterSubmitting },
     reset: resetRegisterForm,
+    getValues: getRegisterValues,
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
@@ -110,20 +119,33 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultMode = 'signin' }) 
 
   const isSubmitting = isLoginSubmitting || isRegisterSubmitting;
 
-  // Track slow responses to alert user of Render cold starts gracefully
+  // Track slow responses to alert user of Render cold starts gracefully with active seconds counter
   useEffect(() => {
     if (isSubmitting) {
+      setElapsedSeconds(0);
       slowTimerRef.current = setTimeout(() => {
         setIsSlowResponse(true);
-      }, 4000);
+      }, 3500);
+      intervalRef.current = setInterval(() => {
+        setElapsedSeconds((prev) => prev + 1);
+      }, 1000);
     } else {
       if (slowTimerRef.current) clearTimeout(slowTimerRef.current);
+      if (intervalRef.current) clearInterval(intervalRef.current);
       setIsSlowResponse(false);
+      setElapsedSeconds(0);
     }
     return () => {
       if (slowTimerRef.current) clearTimeout(slowTimerRef.current);
+      if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, [isSubmitting]);
+
+  const formatAuthError = (err: unknown, defaultMsg: string): string => {
+    const extracted = extractApiError(err, defaultMsg);
+    setServerErrorCode(extracted.code || null);
+    return extracted.message;
+  };
 
   const onLoginSubmit = async (data: LoginFormData) => {
     setServerError(null);
@@ -135,21 +157,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultMode = 'signin' }) 
       });
       navigate(from, { replace: true });
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        if (
-          err.message.includes('Invalid email or password') ||
-          err.message.includes('INVALID_CREDENTIALS') ||
-          err.message.includes('401')
-        ) {
-          setServerError('Invalid email or password. Please verify your credentials or create a new account.');
-        } else if (err.message.includes('waking up') || err.message.includes('timed out')) {
-          setServerError('The backend server is waking up from cold sleep (Render free tier). Please retry in 10 seconds.');
-        } else {
-          setServerError(err.message);
-        }
-      } else {
-        setServerError('Authentication failed. Please check your credentials and try again.');
-      }
+      setServerError(formatAuthError(err, 'Authentication failed. Please check your credentials and try again.'));
     }
   };
 
@@ -164,17 +172,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultMode = 'signin' }) 
       });
       navigate(from, { replace: true });
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        if (err.message.includes('already exists') || err.message.includes('EMAIL_ALREADY_EXISTS')) {
-          setServerError('An account with this email address already exists. Please sign in instead.');
-        } else if (err.message.includes('waking up') || err.message.includes('timed out')) {
-          setServerError('The backend server is waking up from cold sleep (Render free tier). Please retry in 10 seconds.');
-        } else {
-          setServerError(err.message);
-        }
-      } else {
-        setServerError('Registration failed. Please check your details and try again.');
-      }
+      setServerError(formatAuthError(err, 'Registration failed. Please check your details and try again.'));
     }
   };
 
@@ -266,6 +264,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultMode = 'signin' }) 
                   onClick={() => {
                     setMode('signin');
                     setServerError(null);
+                    setServerErrorCode(null);
                     resetLoginForm();
                   }}
                   className={`py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
@@ -284,6 +283,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultMode = 'signin' }) 
                   onClick={() => {
                     setMode('register');
                     setServerError(null);
+                    setServerErrorCode(null);
                     resetRegisterForm();
                   }}
                   className={`py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
@@ -312,19 +312,61 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultMode = 'signin' }) 
               {serverError && (
                 <div className="p-3.5 rounded-xl bg-[#FDE4E4] border border-[#FECDD3] text-[#8C1D2B] text-xs flex items-start gap-2.5 animate-fadeIn">
                   <AlertCircle className="w-4 h-4 text-[#D63B4B] shrink-0 mt-0.5" />
-                  <div className="space-y-0.5 flex-1">
-                    <p className="font-semibold">{mode === 'signin' ? 'Sign In Error' : 'Registration Error'}</p>
+                  <div className="space-y-1 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="font-semibold">{mode === 'signin' ? 'Sign In Error' : 'Registration Error'}</p>
+                      {serverErrorCode && (
+                        <span className="font-mono text-[10px] tracking-wider uppercase bg-[#FECDD3] text-[#8C1D2B] px-1.5 py-0.5 rounded font-semibold select-all">
+                          {serverErrorCode}
+                        </span>
+                      )}
+                    </div>
                     <p className="leading-relaxed">{serverError}</p>
+                    {mode === 'register' && (serverError.includes('already exists') || serverErrorCode === 'EMAIL_ALREADY_EXISTS') && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const typedEmail = getRegisterValues('email');
+                          setMode('signin');
+                          setServerError(null);
+                          setServerErrorCode(null);
+                          if (typedEmail) {
+                            setLoginValue('email', typedEmail);
+                          }
+                        }}
+                        className="mt-1 inline-flex items-center gap-1 text-[11px] font-bold text-[#8C1D2B] underline hover:text-[#5C0D1B] cursor-pointer"
+                      >
+                        Switch to Sign In Tab →
+                      </button>
+                    )}
+                    {(serverError.includes('initializing') || serverError.includes('retry') || serverError.includes('moment') || serverError.includes('timed out') || serverError.includes('cold sleep') || serverError.includes('waking up') || serverErrorCode === 'TIMEOUT' || serverErrorCode === 'GATEWAY_TIMEOUT') && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setServerError(null);
+                          setServerErrorCode(null);
+                          if (mode === 'signin') {
+                            handleLoginSubmit(onLoginSubmit)();
+                          } else {
+                            handleRegisterSubmit(onRegisterSubmit)();
+                          }
+                        }}
+                        className="mt-1 inline-flex items-center gap-1 text-[11px] font-bold text-[#8C1D2B] underline hover:text-[#5C0D1B] cursor-pointer"
+                      >
+                        <RefreshCw className="w-3 h-3" />
+                        Retry Submission Now
+                      </button>
+                    )}
                   </div>
                 </div>
               )}
 
-              {/* Render Cold-Start In-Flight Warning */}
+              {/* Cloud Container In-Flight Wake-Up Timer */}
               {isSlowResponse && isSubmitting && (
                 <div className="p-3 rounded-xl bg-[#FEF3C7] border border-[#FDE68A] text-[#92400E] text-xs flex items-center gap-2.5 animate-pulse">
                   <RefreshCw className="w-4 h-4 text-[#E09A12] shrink-0 animate-spin" />
                   <span className="leading-snug">
-                    Connecting to Render backend engine... (Free tier instances spin up in ~30–45s).
+                    Connecting to TrustSphere cloud engine ({elapsedSeconds}s elapsed)... Container instances wake on demand (~30–45s). Your request will process automatically.
                   </span>
                 </div>
               )}

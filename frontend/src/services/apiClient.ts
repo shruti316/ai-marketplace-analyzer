@@ -1,20 +1,77 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { ApiErrorResponse } from '../types/api';
+import { extractApiError, safeString } from './errorExtractor';
+
+export { extractApiError, safeString };
+export type { ExtractedApiError } from './errorExtractor';
 
 export const TOKEN_STORAGE_KEY = 'trustsphere_token';
 export const USER_STORAGE_KEY = 'trustsphere_user';
 export const REFRESH_TOKEN_STORAGE_KEY = 'trustsphere_refresh_token';
 
-// Determine base API URL (in dev, proxy routes /api to http://127.0.0.1:5000; in prod on Vercel, set to Render backend URL)
-const rawBaseUrl = (import.meta.env.VITE_API_BASE_URL || '').trim();
-const API_BASE_URL = rawBaseUrl.endsWith('/') ? rawBaseUrl.slice(0, -1) : rawBaseUrl;
+/**
+ * Standardized TrustSphere API Error with HTTP status and diagnostic categorization.
+ * Invariant: message is guaranteed to be a valid non-empty string and never "[object Object]".
+ */
+export class TrustSphereApiError extends Error {
+  public status?: number;
+  public code?: string;
+  public isTimeout?: boolean;
+  public isNetworkError?: boolean;
+  public isColdStart?: boolean;
+  public retryAfter?: number;
+
+  constructor(
+    message: string | unknown,
+    options?: {
+      status?: number;
+      code?: string;
+      isTimeout?: boolean;
+      isNetworkError?: boolean;
+      isColdStart?: boolean;
+      retryAfter?: number;
+    }
+  ) {
+    const cleanMsg = safeString(message) || 'An unexpected API error occurred.';
+    super(cleanMsg);
+    this.name = 'TrustSphereApiError';
+    this.status = options?.status;
+    this.code = options?.code;
+    this.isTimeout = options?.isTimeout;
+    this.isNetworkError = options?.isNetworkError;
+    this.isColdStart = options?.isColdStart;
+    this.retryAfter = options?.retryAfter;
+  }
+}
+
+/**
+ * Determines base API URL.
+ * 1. In browser environments on Vercel (*.vercel.app), use same-origin relative URL ('')
+ *    so all API requests flow through Vercel's edge proxy rewrite (/api/(.*) -> Render).
+ *    This completely eliminates cross-origin browser CORS preflight blocking and guarantees
+ *    that preview deployments receive real backend HTTP responses.
+ * 2. In SSR, unit test runners, or when an explicit absolute override is provided, fallback to VITE_API_BASE_URL.
+ */
+function resolveApiBaseUrl(): string {
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    if (hostname.endsWith('.vercel.app')) {
+      return '';
+    }
+  }
+
+  const rawBaseUrl = (import.meta.env.VITE_API_BASE_URL || '').trim();
+  return rawBaseUrl.endsWith('/') ? rawBaseUrl.slice(0, -1) : rawBaseUrl;
+}
+
+const API_BASE_URL = resolveApiBaseUrl();
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 60000,
+  timeout: 75000, // 75-second timeout to accommodate Render free-tier cold starts
   withCredentials: true, // Send HttpOnly refresh cookies across origins
 });
 
@@ -56,7 +113,7 @@ apiClient.interceptors.response.use(
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
     if (error.response) {
-      const { status, data } = error.response;
+      const { status } = error.response;
       const url = originalRequest?.url || '';
 
       // Skip refresh attempt on login, register, or refresh endpoints themselves
@@ -131,42 +188,32 @@ apiClient.interceptors.response.use(
         }
       }
 
-      // Handle Rate Limiting (429)
-      if (status === 429) {
-        const retryAfter = data?.retryAfter || 60;
-        const rateLimitError = new Error(
-          data?.message || `Rate limit exceeded. Please wait ${retryAfter} seconds before retrying.`
-        );
-        (rateLimitError as unknown as { code: string; retryAfter: number }).code = 'RATE_LIMIT_EXCEEDED';
-        (rateLimitError as unknown as { code: string; retryAfter: number }).retryAfter = retryAfter;
-        return Promise.reject(rateLimitError);
-      }
+      // Extract descriptive error message with unified extractor
+      const extracted = extractApiError(error);
 
-      // Extract descriptive error message
-      const message =
-        data?.message ||
-        (data as unknown as { error?: string })?.error ||
-        (data as unknown as { msg?: string })?.msg ||
-        `Request failed with HTTP status ${status}`;
-
-      const customError = new Error(message);
-      (customError as unknown as { code?: string; status?: number }).code = data?.code;
-      (customError as unknown as { code?: string; status?: number }).status = status;
-      return Promise.reject(customError);
-    }
-
-    if (error.code === 'ECONNABORTED') {
       return Promise.reject(
-        new Error('Server request timed out. The Render backend may be waking up from sleep (cold start). Please retry in a few moments.')
+        new TrustSphereApiError(extracted.message, {
+          status: extracted.status || status,
+          code: extracted.code,
+          isTimeout: extracted.isTimeout,
+          isNetworkError: extracted.isNetworkError,
+          isColdStart: extracted.isColdStart,
+          retryAfter: extracted.retryAfter,
+        })
       );
     }
 
-    if (!error.response) {
-      return Promise.reject(
-        new Error('Unable to reach TrustSphere backend service. The server may be waking up from cold sleep or network connectivity was interrupted.')
-      );
-    }
-
-    return Promise.reject(new Error(error.message || 'Network error encountered. Please check connectivity.'));
+    // Handles timeouts, dropped network requests, or unreachable container errors
+    const extracted = extractApiError(error);
+    return Promise.reject(
+      new TrustSphereApiError(extracted.message, {
+        status: extracted.status,
+        code: extracted.code,
+        isTimeout: extracted.isTimeout,
+        isNetworkError: extracted.isNetworkError,
+        isColdStart: extracted.isColdStart,
+        retryAfter: extracted.retryAfter,
+      })
+    );
   }
 );

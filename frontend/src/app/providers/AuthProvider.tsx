@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { User, LoginCredentials, RegisterCredentials } from '../../types/auth';
-import { authService } from '../../services/authService';
+import { authService, isTokenExpired } from '../../services/authService';
 
 interface AuthContextType {
   user: User | null;
@@ -30,7 +30,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     async function checkAuth() {
       const storedToken = authService.getStoredToken();
       if (!storedToken) {
-        // Attempt silent refresh via HttpOnly cookie before giving up
+        // Attempt silent refresh via HttpOnly cookie or fallback storage before giving up
         try {
           const refreshedToken = await authService.refreshSession();
           if (refreshedToken && isMounted) {
@@ -41,7 +41,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             return;
           }
         } catch {
-          // No active session cookie
+          // No active session
         }
 
         if (isMounted) {
@@ -52,6 +52,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
 
+      // If token is locally known to be expired, perform immediate session refresh
+      if (isTokenExpired(storedToken)) {
+        try {
+          const refreshedToken = await authService.refreshSession();
+          if (refreshedToken && isMounted) {
+            const currentUser = await authService.getCurrentUser();
+            setUser(currentUser);
+            setToken(refreshedToken);
+            setIsLoading(false);
+            return;
+          }
+        } catch {
+          // Refresh failed - session expired or revoked
+          if (isMounted) {
+            setUser(null);
+            setToken(null);
+            authService.logout();
+            setIsLoading(false);
+          }
+          return;
+        }
+      }
+
       try {
         const currentUser = await authService.getCurrentUser();
         if (isMounted) {
@@ -59,25 +82,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setToken(storedToken);
         }
       } catch (err: unknown) {
-        // Attempt silent refresh before logging user out
-        try {
-          const refreshedToken = await authService.refreshSession();
-          if (refreshedToken && isMounted) {
-            const currentUser = await authService.getCurrentUser();
-            setUser(currentUser);
-            setToken(refreshedToken);
-            return;
-          }
-        } catch {
-          // Refresh failed
-        }
-
-        const errorObj = err as { code?: string; message?: string };
+        const errorObj = err as { code?: string; message?: string; status?: number };
         const isAuthRejection =
+          errorObj?.status === 401 ||
           errorObj?.code === 'TOKEN_INVALID' ||
           errorObj?.code === 'TOKEN_EXPIRED' ||
           errorObj?.code === 'USER_NOT_FOUND' ||
           errorObj?.code === 'ACCOUNT_INACTIVE' ||
+          errorObj?.code === 'AUTHENTICATION_REQUIRED' ||
           errorObj?.message?.includes('401') ||
           errorObj?.message?.includes('Unauthorized');
 
