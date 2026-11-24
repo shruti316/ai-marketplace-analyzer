@@ -76,6 +76,7 @@ export default function handler(req, res) {
     cleanPath === 'v1' ||
     cleanPath === 'health' ||
     cleanPath.startsWith('health/') ||
+    cleanPath === 'ready' ||
     cleanPath === 'live';
 
   if (!isPermittedRoute) {

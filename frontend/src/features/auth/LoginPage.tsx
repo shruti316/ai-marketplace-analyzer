@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { MarketplaceNetworkVisual } from './MarketplaceNetworkVisual';
-import { TrustSphereApiError } from '../../services/apiClient';
+import { extractApiError } from '../../services/errorExtractor';
 
 const loginSchema = z.object({
   email: z.string().trim().email('Please enter a valid email address'),
@@ -51,6 +51,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultMode = 'signin' }) 
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
   const [serverError, setServerError] = useState<string | null>(null);
+  const [serverErrorCode, setServerErrorCode] = useState<string | null>(null);
   const [isSlowResponse, setIsSlowResponse] = useState<boolean>(false);
   const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
 
@@ -136,51 +137,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultMode = 'signin' }) 
   }, [isSubmitting]);
 
   const formatAuthError = (err: unknown, defaultMsg: string): string => {
-    if (err instanceof TrustSphereApiError || (err && typeof err === 'object')) {
-      const e = err as {
-        status?: number;
-        code?: string;
-        message?: string;
-        isTimeout?: boolean;
-        isColdStart?: boolean;
-        isNetworkError?: boolean;
-      };
-
-      if (e.message?.includes('Protected by Vercel Authentication') || e.message?.includes('Protected deployment')) {
-        return 'This preview deployment is protected by Vercel Authentication. Please sign in to Vercel in this browser or test on the live production domain.';
-      }
-      if (e.status === 409 || e.code === 'EMAIL_ALREADY_EXISTS' || e.message?.includes('already exists')) {
-        return 'An account with this email address already exists. Please sign in instead.';
-      }
-      if (e.status === 401 || e.code === 'INVALID_CREDENTIALS' || e.message?.includes('Invalid email or password')) {
-        return 'Invalid email or password. Please verify your credentials or create a new account.';
-      }
-      if (e.status === 403 || e.code === 'CORS_NOT_ALLOWED') {
-        return e.message || 'Access restricted by origin policy. Please access via the configured application domain.';
-      }
-      if (e.status === 429 || e.code === 'RATE_LIMIT_EXCEEDED') {
-        return 'Too many authentication attempts. Please wait 60 seconds before retrying.';
-      }
-      if (e.status === 400) {
-        return e.message || 'Validation error: please verify your input fields.';
-      }
-      if (e.status && e.status >= 500) {
-        return `Backend service error (HTTP ${e.status}). The server may be restarting; please retry in a moment.`;
-      }
-      if (e.code === 'OFFLINE') {
-        return 'Internet connection offline. Please check your network and retry.';
-      }
-      if (e.isTimeout || e.code === 'TIMEOUT') {
-        return 'Connecting to TrustSphere cloud engine took longer than 75s. Please click "Retry Submission Now" now that the container has initialized.';
-      }
-      if (e.code === 'UNREACHABLE' || (e.message && (e.message.includes('waking up') || e.message.includes('cold sleep')))) {
-        return 'Connecting to TrustSphere cloud engine... Container instance is initializing. Please click "Retry Submission Now" in a few seconds.';
-      }
-      if (e.message) {
-        return e.message;
-      }
-    }
-    return defaultMsg;
+    const extracted = extractApiError(err, defaultMsg);
+    setServerErrorCode(extracted.code || null);
+    return extracted.message;
   };
 
   const onLoginSubmit = async (data: LoginFormData) => {
@@ -300,6 +259,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultMode = 'signin' }) 
                   onClick={() => {
                     setMode('signin');
                     setServerError(null);
+                    setServerErrorCode(null);
                     resetLoginForm();
                   }}
                   className={`py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
@@ -318,6 +278,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultMode = 'signin' }) 
                   onClick={() => {
                     setMode('register');
                     setServerError(null);
+                    setServerErrorCode(null);
                     resetRegisterForm();
                   }}
                   className={`py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
@@ -347,25 +308,34 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultMode = 'signin' }) 
                 <div className="p-3.5 rounded-xl bg-[#FDE4E4] border border-[#FECDD3] text-[#8C1D2B] text-xs flex items-start gap-2.5 animate-fadeIn">
                   <AlertCircle className="w-4 h-4 text-[#D63B4B] shrink-0 mt-0.5" />
                   <div className="space-y-1 flex-1">
-                    <p className="font-semibold">{mode === 'signin' ? 'Sign In Error' : 'Registration Error'}</p>
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="font-semibold">{mode === 'signin' ? 'Sign In Error' : 'Registration Error'}</p>
+                      {serverErrorCode && (
+                        <span className="font-mono text-[10px] tracking-wider uppercase bg-[#FECDD3] text-[#8C1D2B] px-1.5 py-0.5 rounded font-semibold select-all">
+                          {serverErrorCode}
+                        </span>
+                      )}
+                    </div>
                     <p className="leading-relaxed">{serverError}</p>
-                    {mode === 'register' && serverError.includes('already exists') && (
+                    {mode === 'register' && (serverError.includes('already exists') || serverErrorCode === 'EMAIL_ALREADY_EXISTS') && (
                       <button
                         type="button"
                         onClick={() => {
                           setMode('signin');
                           setServerError(null);
+                          setServerErrorCode(null);
                         }}
                         className="mt-1 inline-flex items-center gap-1 text-[11px] font-bold text-[#8C1D2B] underline hover:text-[#5C0D1B] cursor-pointer"
                       >
                         Switch to Sign In Tab →
                       </button>
                     )}
-                    {(serverError.includes('initializing') || serverError.includes('retry') || serverError.includes('moment') || serverError.includes('timed out') || serverError.includes('cold sleep') || serverError.includes('waking up')) && (
+                    {(serverError.includes('initializing') || serverError.includes('retry') || serverError.includes('moment') || serverError.includes('timed out') || serverError.includes('cold sleep') || serverError.includes('waking up') || serverErrorCode === 'TIMEOUT' || serverErrorCode === 'GATEWAY_TIMEOUT') && (
                       <button
                         type="button"
                         onClick={() => {
                           setServerError(null);
+                          setServerErrorCode(null);
                           if (mode === 'signin') {
                             handleLoginSubmit(onLoginSubmit)();
                           } else {

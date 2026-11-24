@@ -1,5 +1,9 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { ApiErrorResponse } from '../types/api';
+import { extractApiError, safeString } from './errorExtractor';
+
+export { extractApiError, safeString };
+export type { ExtractedApiError } from './errorExtractor';
 
 export const TOKEN_STORAGE_KEY = 'trustsphere_token';
 export const USER_STORAGE_KEY = 'trustsphere_user';
@@ -7,6 +11,7 @@ export const REFRESH_TOKEN_STORAGE_KEY = 'trustsphere_refresh_token';
 
 /**
  * Standardized TrustSphere API Error with HTTP status and diagnostic categorization.
+ * Invariant: message is guaranteed to be a valid non-empty string and never "[object Object]".
  */
 export class TrustSphereApiError extends Error {
   public status?: number;
@@ -17,7 +22,7 @@ export class TrustSphereApiError extends Error {
   public retryAfter?: number;
 
   constructor(
-    message: string,
+    message: string | unknown,
     options?: {
       status?: number;
       code?: string;
@@ -27,7 +32,8 @@ export class TrustSphereApiError extends Error {
       retryAfter?: number;
     }
   ) {
-    super(message);
+    const cleanMsg = safeString(message) || 'An unexpected API error occurred.';
+    super(cleanMsg);
     this.name = 'TrustSphereApiError';
     this.status = options?.status;
     this.code = options?.code;
@@ -107,7 +113,7 @@ apiClient.interceptors.response.use(
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
     if (error.response) {
-      const { status, data } = error.response;
+      const { status } = error.response;
       const url = originalRequest?.url || '';
 
       // Skip refresh attempt on login, register, or refresh endpoints themselves
@@ -182,76 +188,31 @@ apiClient.interceptors.response.use(
         }
       }
 
-      // Handle Rate Limiting (429)
-      if (status === 429) {
-        const retryAfter = data?.retryAfter || 60;
-        const msg = data?.message || `Rate limit exceeded. Please wait ${retryAfter} seconds before retrying.`;
-        return Promise.reject(
-          new TrustSphereApiError(msg, {
-            status: 429,
-            code: 'RATE_LIMIT_EXCEEDED',
-            retryAfter,
-          })
-        );
-      }
-
-      // Extract descriptive error message
-      const message =
-        data?.message ||
-        (data as unknown as { error?: string })?.error ||
-        (data as unknown as { msg?: string })?.msg ||
-        `Request failed with HTTP status ${status}`;
+      // Extract descriptive error message with unified extractor
+      const extracted = extractApiError(error);
 
       return Promise.reject(
-        new TrustSphereApiError(message, {
-          status,
-          code: data?.code,
+        new TrustSphereApiError(extracted.message, {
+          status: extracted.status || status,
+          code: extracted.code,
+          isTimeout: extracted.isTimeout,
+          isNetworkError: extracted.isNetworkError,
+          isColdStart: extracted.isColdStart,
+          retryAfter: extracted.retryAfter,
         })
       );
     }
 
-    if (error.code === 'ECONNABORTED') {
-      return Promise.reject(
-        new TrustSphereApiError(
-          'Server request timed out after 75 seconds. The cloud backend may be waking up from sleep (cold start).',
-          {
-            isTimeout: true,
-            isColdStart: true,
-            code: 'TIMEOUT',
-          }
-        )
-      );
-    }
-
-    if (!error.response) {
-      const isOffline = typeof navigator !== 'undefined' && navigator.onLine === false;
-      if (isOffline) {
-        return Promise.reject(
-          new TrustSphereApiError(
-            'Internet connection appears to be offline. Please verify network connectivity.',
-            {
-              isNetworkError: true,
-              code: 'OFFLINE',
-            }
-          )
-        );
-      }
-
-      return Promise.reject(
-        new TrustSphereApiError(
-          'Unable to reach TrustSphere backend service. The server may be waking up from cold sleep or network was interrupted.',
-          {
-            isNetworkError: true,
-            isColdStart: true,
-            code: 'UNREACHABLE',
-          }
-        )
-      );
-    }
-
+    // Handles timeouts, dropped network requests, or unreachable container errors
+    const extracted = extractApiError(error);
     return Promise.reject(
-      new TrustSphereApiError(error.message || 'Network error encountered. Please check connectivity.', {
-        isNetworkError: true,
+      new TrustSphereApiError(extracted.message, {
+        status: extracted.status,
+        code: extracted.code,
+        isTimeout: extracted.isTimeout,
+        isNetworkError: extracted.isNetworkError,
+        isColdStart: extracted.isColdStart,
+        retryAfter: extracted.retryAfter,
       })
     );
   }
